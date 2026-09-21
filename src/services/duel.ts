@@ -3,8 +3,8 @@
 // contre un serveur, seul ce fichier changera.
 
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, evaluerLAttaque, jouer, taillesDesFactions } from '../jeu/duel.ts';
-import type { Coup, Duel, Niveau, TaillesDesFactions } from '../jeu/duel.ts';
+import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, prevoirLAttaque, taillesDesFactions } from '../jeu/duel.ts';
+import type { Duel, Niveau, Prevision, TaillesDesFactions } from '../jeu/duel.ts';
 import { composerLEpreuve } from '../jeu/epreuve.ts';
 import type { Definitions, Epreuve } from '../jeu/epreuve.ts';
 import { hasardDuSysteme } from '../jeu/hasard.ts';
@@ -50,15 +50,23 @@ export async function preparerUnDuel(niveau: Niveau): Promise<{ terrain: Terrain
   };
 }
 
-// Ce que ferait une carte de la main si le joueur réussissait son épreuve.
-export const prevoirLAttaque = (terrain: Terrain, duel: Duel, carte: CarteIndex): Omit<Coup, 'cote' | 'carte' | 'reussi'> => evaluerLAttaque(duel, duel.aLaMain, carte, terrain.tailles, REGLES);
+// Début de manche : l'ordinateur pose son mot.
+export const motDeLOrdinateur = (terrain: Terrain, duel: Duel): CarteIndex => choisirPourLOrdinateur(duel, terrain.niveau, hasardDuSysteme, terrain.tailles, REGLES);
 
-export const poserLEpreuve = (terrain: Terrain, carte: CarteIndex): Epreuve => composerLEpreuve(carte, terrain.definitions, terrain.visibles, terrain.masques, hasardDuSysteme);
+// Ce que donnerait la manche si le joueur répondait par cette carte : son attaque, et celle qu'il recevrait.
+export function prevoirLaManche(terrain: Terrain, duel: Duel, carte: CarteIndex, adverse: CarteIndex): { mienne: Prevision; sienne: Prevision } {
+  return { mienne: prevoirLAttaque(duel, 'joueur', carte, adverse, terrain.tailles, REGLES), sienne: prevoirLAttaque(duel, 'adversaire', adverse, carte, terrain.tailles, REGLES) };
+}
 
-export const jouerLaCarte = (terrain: Terrain, duel: Duel, idCarte: string, reussi: boolean): Duel => jouer(duel, idCarte, reussi, hasardDuSysteme, terrain.tailles, REGLES);
+// L'épreuve sur un mot. L'autre mot de la manche est écarté des leurres : sa définition sera demandée à son tour.
+export function poserLEpreuve(terrain: Terrain, carte: CarteIndex, autreMotDeLaManche: CarteIndex): Epreuve {
+  return composerLEpreuve(carte, terrain.definitions, terrain.visibles.filter((c) => c.id !== autreMotDeLaManche.id), terrain.masques, hasardDuSysteme);
+}
 
-// Le tour de l'ordinateur : il choisit sa carte, et connaît son mot ou non selon son niveau.
-export function tourDeLOrdinateur(terrain: Terrain, duel: Duel): Duel {
-  const carte = choisirPourLOrdinateur(duel, terrain.niveau, hasardDuSysteme, terrain.tailles, REGLES);
-  return jouer(duel, carte.id, hasardDuSysteme() < REGLES.reussiteDeLOrdinateur[terrain.niveau], hasardDuSysteme, terrain.tailles, REGLES);
+// Règle la manche : le joueur a su (ou non) retrouver son mot, puis parer le mot adverse ; l'ordinateur, lui,
+// connaît son mot et pare celui du joueur selon les chances de son niveau.
+export function reglerLaManche(terrain: Terrain, duel: Duel, carte: CarteIndex, adverse: CarteIndex, reussi: boolean, pare: boolean): Duel {
+  const chances = chancesDeLOrdinateur(terrain.niveau, carte, REGLES);
+  const savoirs = { joueurReussit: reussi, joueurPare: pare, adversaireReussit: hasardDuSysteme() < chances.reussir, adversairePare: hasardDuSysteme() < chances.parer };
+  return jouerLaManche(duel, carte.id, adverse.id, savoirs, hasardDuSysteme, terrain.tailles, REGLES);
 }

@@ -240,8 +240,8 @@ button {
 .jauge__pv { font-family: var(--police-chiffres); font-weight: 700; font-size: 1.3rem; line-height: 1; min-width: 1.4em; text-align: right; }
 
 .duel__table { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.duel__mot-en-jeu { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
-.duel__mot-en-jeu > .tim, .duel__mot-en-jeu > .deck__vide { width: 100%; }
+.duel__mot-pose { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
+.duel__mot-pose > .tim, .duel__mot-pose > .deck__vide { width: 100%; }
 .duel__blocage { font-family: var(--police-mention); font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); }
 .duel__definition { font-size: 0.82rem; font-style: italic; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 /* Sur un grand écran, la définition se lit déjà sur le timbre. */
@@ -261,7 +261,18 @@ button {
   background: var(--carte-fond); border: 1px solid var(--filet); border-radius: var(--rayon); box-shadow: var(--ombre);
 }
 @media (min-width: 768px) { .duel__action { position: static; margin: 0; padding: 0; border: 0; box-shadow: none; } }
+/* Le bouton qui fait avancer le duel reste lui aussi sous le pouce, en bas de l'écran du téléphone. */
+.duel__suite { position: sticky; bottom: calc(var(--hauteur-navigation) + env(safe-area-inset-bottom) + 8px); z-index: 5; display: flex; }
+.duel__suite .bouton { flex: 1; box-shadow: var(--ombre); }
+@media (min-width: 768px) { .duel__suite { position: static; } .duel__suite .bouton { flex: 0 0 auto; box-shadow: none; } }
 .duel__verdict { margin: 0; font-size: 1.05rem; }
+.duel__verdict .entete__surtitre { display: block; }
+.duel__si-parade { white-space: nowrap; }
+.duel__lecon { display: grid; gap: 6px; }
+.duel__lecon .entete__surtitre { margin: 0; }
+.epreuve__rappel { margin: 0; text-align: center; font-size: 0.9rem; font-weight: 700; }
+.epreuve__rappel[data-reussi='true'] { color: var(--rarete-peu-commune); }
+.epreuve__rappel[data-reussi='false'] { color: var(--accent); }
 .duel__verdict[data-reussi='true'] strong { color: var(--rarete-peu-commune); }
 .duel__verdict[data-reussi='false'] strong { color: var(--accent); }
 .duel__abandon { align-self: center; font-size: 0.88rem; opacity: 0.8; }

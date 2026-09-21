@@ -3,7 +3,7 @@ import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
-import { defenseEnJeu } from '../config/equilibrage.ts';
+import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
@@ -82,7 +82,7 @@ export function Collection() {
       recentes: (a, b) => sauvegarde.cartes[b.id].obtenueLe - sauvegarde.cartes[a.id].obtenueLe,
       alphabet: () => 0,
       rarete: (a, b) => RARETES.indexOf(b.rarete) - RARETES.indexOf(a.rarete),
-      attaque: (a, b) => b.attaque - a.attaque,
+      attaque: (a, b) => attaqueEnJeu(b.attaque, b.rarete) - attaqueEnJeu(a.attaque, a.rarete),
       defense: (a, b) => defenseEnJeu(b.defense, b.rarete) - defenseEnJeu(a.defense, a.rarete),
     };
     return filtrees.sort((a, b) => ordres[tri](a, b) || a.mot.localeCompare(b.mot, 'fr'));

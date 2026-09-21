@@ -9,7 +9,7 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 
 **Le site en ligne : https://raphaelferrandis-code.github.io/mots/**
 
-**État d'avancement : phase 3 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les doublons deviennent de l'Encre, et la collection se filtre et se sauvegarde sur l'appareil. **Le duel est jouable** : on compose un deck de dix cartes, on affronte l'ordinateur à trois niveaux, et pour attaquer il faut retrouver la définition de son mot parmi quatre. Cinq bonnes réponses sur un mot : il est « maîtrisé », et son timbre reçoit un cachet daté. Prochaine étape : la phase 4 (sons, finitions, accessibilité, testeurs).
+**État d'avancement : phase 3 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les doublons deviennent de l'Encre, et la collection se filtre et se sauvegarde sur l'appareil. **Le duel est jouable**, mot contre mot : on compose un deck de dix cartes et l'on affronte l'ordinateur à trois niveaux. À chaque manche il pose un mot, on lui répond par une carte ; pour attaquer il faut retrouver la définition de son mot parmi quatre, et pour parer, celle du mot adverse — qui change à chaque duel. Un mot rare frappe plus fort. Cinq bonnes réponses sur un mot : il est « maîtrisé », et son timbre reçoit un cachet daté. Prochaine étape : la phase 4 (sons, finitions, accessibilité, testeurs).
 
 ## Mise en ligne
 
@@ -63,7 +63,7 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | `data/exclusions.txt` | Mots qui n'y entrent jamais. |
 | `data/hors-serie.txt` | Cartes Hors-série ajoutées à la main (`mot = Titre de la carte`), en plus des records trouvés automatiquement. |
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |
-| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus de défense, **et tout le duel** (points de vie, poids de la défense, bonus, force et réussite de l'ordinateur, récompenses, seuil de maîtrise). Après une modification : `npm test` puis `npm run simulation:collection`. |
+| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus d'attaque et de défense des cartes rares, **et tout le duel** (points de vie, poids de la défense, parade, bonus, rareté et réussite des mots de l'ordinateur, récompenses, seuil de maîtrise). Après une modification : `npm test` puis `npm run simulation:collection`. |
 
 ## Ce que le pipeline produit
 

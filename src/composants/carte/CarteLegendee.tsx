@@ -2,7 +2,7 @@
 // timbres sont affichés en petit (deck, main du duel), là où le texte gravé sur le timbre devient trop fin pour être lu.
 
 import type { ComponentProps } from 'react';
-import { defenseEnJeu } from '../../config/equilibrage.ts';
+import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { Carte } from './Carte.tsx';
 
 export function CarteLegendee(props: ComponentProps<typeof Carte>) {
@@ -12,7 +12,7 @@ export function CarteLegendee(props: ComponentProps<typeof Carte>) {
       <Carte {...props} />
       <figcaption aria-hidden="true">
         <strong lang="fr">{carte.mot}</strong>
-        <span>{carte.type} · {carte.attaque} / {defenseEnJeu(carte.defense, carte.rarete)}</span>
+        <span>{carte.type} · {attaqueEnJeu(carte.attaque, carte.rarete)} / {defenseEnJeu(carte.defense, carte.rarete)}</span>
       </figcaption>
     </figure>
   );

@@ -4,11 +4,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { EQUILIBRAGE, attaqueEnJeu } from '../config/equilibrage.ts';
 import { nomDuLot } from '../partage/lots.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition, Nature, Rarete } from '../partage/types.ts';
 import { contientLeMot, masquerLeMot, trahitLeMot } from '../partage/famille.ts';
-import { NIVEAUX, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, evaluerLAttaque, forceDeLaCarte, jouer, meilleurDeck, taillesDesFactions } from './duel.ts';
+import { NIVEAUX, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, forceDeLaCarte, jouerLaManche, meilleurDeck, prevoirLAttaque, taillesDesFactions } from './duel.ts';
 import type { Duel } from './duel.ts';
 import { composerLEpreuve } from './epreuve.ts';
 import { hasardReproductible } from './hasard.ts';
@@ -26,23 +26,38 @@ const carte = (mot: string, champs: Partial<CarteIndex> = {}): CarteIndex => ({ 
 const NATURES: Nature[] = ['Nom', 'Adjectif', 'Verbe', 'Adverbe'];
 const RARETES_DE_TEST: Rarete[] = ['Commune', 'Peu commune', 'Rare', 'Épique', 'Légendaire'];
 const EDITION: CarteIndex[] = Array.from({ length: 300 }, (_, i) => carte(`mot${i}`, {
-  id: `mot${i}`, type: NATURES[i % 4], rarete: RARETES_DE_TEST[i % 5], attaque: 1 + (i % 10), defense: 1 + ((i * 7) % 10), faction: i % 6 === 0 ? 'Arabe' : 'Latin',
+  // Dans chaque rareté, toutes les forces existent : l'attaque et la défense tournent à des rythmes différents.
+  id: `mot${i}`, type: NATURES[i % 4], rarete: RARETES_DE_TEST[i % 5], attaque: 1 + (Math.floor(i / 5) % 10), defense: 1 + ((Math.floor(i / 5) * 3) % 10), faction: i % 6 === 0 ? 'Arabe' : 'Latin',
 }));
 const TAILLES = taillesDesFactions(EDITION);
 const DECK = EDITION.slice(0, 10);
 const AUTRE_DECK = EDITION.slice(10, 20);
 
-// Un duel dont on choisit les cartes en jeu et la main, pour vérifier les calculs un par un.
-function situation(main: CarteIndex[], enJeu: CarteIndex | null, adverse: CarteIndex | null): Duel {
-  const camp = { pv: REGLES.pointsDeVie, pioche: [], defausse: [] };
-  return { manche: 1, aLaMain: 'joueur', premier: 'joueur', vainqueur: null, coups: [], camps: { joueur: { ...camp, main, enJeu }, adversaire: { ...camp, main: [carte('riposte')], enJeu: adverse } } };
+// Un duel dont on choisit les mains, pour vérifier les calculs un par un.
+function situation(mainDuJoueur: CarteIndex[], mainAdverse: CarteIndex[], precedentes: { joueur?: CarteIndex; adversaire?: CarteIndex } = {}): Duel {
+  const camp = (cote: string) => ({ pv: REGLES.pointsDeVie, pioche: [carte(`pioche-1-${cote}`), carte(`pioche-2-${cote}`)], defausse: [] });
+  return { manche: 1, vainqueur: null, manches: [], camps: { joueur: { ...camp('joueur'), main: mainDuJoueur, derniere: precedentes.joueur ?? null }, adversaire: { ...camp('adverse'), main: mainAdverse, derniere: precedentes.adversaire ?? null } } };
 }
+const TOUT_REUSSI = { joueurReussit: true, joueurPare: false, adversaireReussit: true, adversairePare: false };
 
 describe("chiffres d'équilibrage du duel", () => {
   it('un deck donne de quoi former une main, et les chances de l\'ordinateur sont des probabilités', () => {
     assert.ok(REGLES.tailleDuDeck > REGLES.cartesEnMain + 1);
-    for (const niveau of NIVEAUX) assert.ok(REGLES.reussiteDeLOrdinateur[niveau] > 0 && REGLES.reussiteDeLOrdinateur[niveau] <= 1);
     assert.ok(REGLES.partDeLaDefense >= 0 && REGLES.partDeLaDefense <= 1);
+    assert.ok(REGLES.partDesDegatsApresParade >= 0 && REGLES.partDesDegatsApresParade <= 1);
+    for (const niveau of NIVEAUX) for (const rarete of [...RARETES_DE_TEST, 'Hors-série' as const]) {
+      const chances = chancesDeLOrdinateur(niveau, carte('mot', { rarete }), REGLES);
+      for (const chance of [chances.reussir, chances.parer]) assert.ok(chance >= 0 && chance <= 1, `${niveau}, ${rarete} : ${chance}`);
+    }
+  });
+  it('un mot rare est puissant : plus la rareté monte, plus le bonus d\'attaque monte, et moins l\'ordinateur pare', () => {
+    const raretes = [...RARETES_DE_TEST, 'Hors-série' as const];
+    for (let i = 1; i < raretes.length; i++) {
+      assert.ok(attaqueEnJeu(5, raretes[i]) >= attaqueEnJeu(5, raretes[i - 1]));
+      assert.ok(chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i] }), REGLES).parer <= chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i - 1] }), REGLES).parer);
+    }
+    assert.ok(attaqueEnJeu(5, 'Légendaire') > attaqueEnJeu(5, 'Commune'));
+    assert.ok(attaqueEnJeu(10, 'Légendaire') > EQUILIBRAGE.statMaximale, "le bonus d'attaque n'est pas plafonné");
   });
   it("l'Encre d'une journée de duels acharnée reste en dessous de quelques paquets", () => {
     let sauvegarde = nouvelleSauvegarde(T0, 0);
@@ -52,36 +67,44 @@ describe("chiffres d'équilibrage du duel", () => {
 });
 
 describe('déroulement du duel', () => {
-  it('distribue la main, retourne un premier mot en jeu et tire au sort celui qui commence', () => {
+  it('distribue trois cartes à chaque camp, sans mot en jeu ni premier joueur', () => {
     const duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(1), REGLES);
     for (const camp of [duel.camps.joueur, duel.camps.adversaire]) {
       assert.equal(camp.pv, REGLES.pointsDeVie);
       assert.equal(camp.main.length, REGLES.cartesEnMain);
-      assert.ok(camp.enJeu !== null);
-      assert.equal(camp.main.length + camp.pioche.length + 1, REGLES.tailleDuDeck);
+      assert.equal(camp.main.length + camp.pioche.length, REGLES.tailleDuDeck);
+      assert.equal(camp.derniere, null);
     }
-    const premiers = new Set(Array.from({ length: 40 }, (_, i) => commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(i), REGLES).premier));
-    assert.deepEqual([...premiers].sort(), ['adversaire', 'joueur']);
-    const sansMotDeDepart = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(1), { ...REGLES, motEnJeuAuDepart: false });
-    assert.equal(sansMotDeDepart.camps.joueur.enJeu, null);
+    assert.equal(duel.manche, 1);
   });
 
-  it('calcule les dégâts : attaque, moins la part de la défense adverse, au moins le minimum', () => {
+  it('calcule les dégâts : attaque en jeu, moins la part de la défense d\'en face, au moins le minimum', () => {
     const regles = { ...REGLES, partDeLaDefense: 1 };
     const fort = carte('fort', { attaque: 9, type: 'Adverbe' });
-    assert.equal(evaluerLAttaque(situation([fort], null, carte('mur', { defense: 4 })), 'joueur', fort, TAILLES, regles).degats, 5);
-    assert.equal(evaluerLAttaque(situation([fort], null, carte('mur', { defense: 10 })), 'joueur', fort, TAILLES, regles).degats, regles.degatsMinimum);
-    assert.equal(evaluerLAttaque(situation([fort], null, null), 'joueur', fort, TAILLES, regles).degats, 9, 'sans mot en jeu adverse, aucune défense');
-    // La moitié de la défense seulement, et le bonus de défense des cartes rares compte.
+    const prevoir = (enFace: CarteIndex, r = regles) => prevoirLAttaque(situation([fort], [enFace]), 'joueur', fort, enFace, TAILLES, r);
+    assert.equal(prevoir(carte('mur', { defense: 4 })).degats, 5);
+    assert.equal(prevoir(carte('mur', { defense: 10 })).degats, regles.degatsMinimum);
+    // La moitié de la défense seulement ; le bonus de défense des cartes rares compte, celui d'attaque aussi.
     const moitie = { ...REGLES, partDeLaDefense: 0.5 };
-    assert.equal(evaluerLAttaque(situation([fort], null, carte('mur', { defense: 4 })), 'joueur', fort, TAILLES, moitie).degats, 7);
-    assert.equal(evaluerLAttaque(situation([fort], null, carte('mur', { defense: 4, rarete: 'Légendaire' })), 'joueur', fort, TAILLES, moitie).defenseAdverse, (4 + EQUILIBRAGE.bonusDefenseParRarete['Légendaire']) / 2);
+    assert.equal(prevoir(carte('mur', { defense: 4 }), moitie).degats, 7);
+    assert.equal(prevoir(carte('mur', { defense: 4, rarete: 'Légendaire' }), moitie).bloques, (4 + EQUILIBRAGE.bonusDefenseParRarete['Légendaire']) / 2);
+    const rare = carte('rare', { attaque: 9, type: 'Adverbe', rarete: 'Légendaire' });
+    const duRare = prevoirLAttaque(situation([rare], [carte('mur')]), 'joueur', rare, carte('mur', { defense: 4 }), TAILLES, moitie);
+    assert.equal(duRare.bonusDeRarete, EQUILIBRAGE.bonusAttaqueParRarete['Légendaire']);
+    assert.equal(duRare.degats, 7 + EQUILIBRAGE.bonusAttaqueParRarete['Légendaire']);
+  });
+
+  it('une parade réduit les dégâts, arrondis en faveur de celui qui pare', () => {
+    const regles = { ...REGLES, partDeLaDefense: 0, partDesDegatsApresParade: 0.5 };
+    const degatsSiParee = (attaque: number): number => { const c = carte('a', { attaque, type: 'Adverbe' }); return prevoirLAttaque(situation([c], [carte('b')]), 'joueur', c, carte('b'), TAILLES, regles).degatsSiParee; };
+    assert.deepEqual([1, 2, 5, 8].map(degatsSiParee), [0, 1, 2, 4]);
   });
 
   it('applique le triangle des types : Nom > Adjectif > Verbe > Nom, adverbes neutres', () => {
     const bonus = (attaquant: Nature, defenseur: Nature): number => {
       const c = carte('a', { type: attaquant });
-      return evaluerLAttaque(situation([c], null, carte('d', { type: defenseur })), 'joueur', c, TAILLES, REGLES).bonusDeType;
+      const d = carte('d', { type: defenseur });
+      return prevoirLAttaque(situation([c], [d]), 'joueur', c, d, TAILLES, REGLES).bonusDeType;
     };
     assert.equal(bonus('Nom', 'Adjectif'), REGLES.bonusDeType);
     assert.equal(bonus('Adjectif', 'Verbe'), REGLES.bonusDeType);
@@ -96,7 +119,7 @@ describe('déroulement du duel', () => {
     const tailles = new Map([['Latin', 900], ['Arabe', 84]]);
     const bonus = (faction: string, precedente: string | null): number => {
       const c = carte('a', { faction });
-      return evaluerLAttaque(situation([c], precedente ? carte('p', { faction: precedente }) : null, null), 'joueur', c, tailles, REGLES).bonusDeFaction;
+      return prevoirLAttaque(situation([c], [carte('d')], { joueur: precedente ? carte('p', { faction: precedente }) : undefined }), 'joueur', c, carte('d'), tailles, REGLES).bonusDeFaction;
     };
     assert.equal(bonus('Latin', 'Latin'), REGLES.bonusDeFaction);
     assert.equal(bonus('Arabe', 'Arabe'), REGLES.bonusDePetiteFaction);
@@ -104,92 +127,120 @@ describe('déroulement du duel', () => {
     assert.equal(bonus('Latin', null), 0);
   });
 
-  it('une attaque réussie blesse, un mot qui échappe ne fait rien ; dans les deux cas la carte devient le mot en jeu', () => {
-    const depart = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(3), REGLES);
-    const cote = depart.aLaMain;
-    const autre = cote === 'joueur' ? 'adversaire' : 'joueur';
-    const jouee = depart.camps[cote].main[0];
+  it('règle les deux attaques de la manche : réussie, échappée, parée', () => {
+    const mien = carte('mien', { attaque: 8, defense: 2, type: 'Adverbe' });
+    const sien = carte('sien', { attaque: 6, defense: 4, type: 'Adverbe' });
+    const depart = situation([mien, carte('reste')], [sien, carte('autre')]);
+    const prevueDuJoueur = prevoirLAttaque(depart, 'joueur', mien, sien, TAILLES, REGLES);
+    const prevueAdverse = prevoirLAttaque(depart, 'adversaire', sien, mien, TAILLES, REGLES);
+    const regler = (savoirs: Partial<typeof TOUT_REUSSI>): Duel => jouerLaManche(depart, mien.id, sien.id, { ...TOUT_REUSSI, ...savoirs }, hasardReproductible(1), TAILLES, REGLES);
 
-    const reussi = jouer(depart, jouee.id, true, hasardReproductible(4), TAILLES, REGLES);
-    const attendu = evaluerLAttaque(depart, cote, jouee, TAILLES, REGLES).degats;
-    assert.equal(reussi.camps[autre].pv, REGLES.pointsDeVie - attendu);
-    assert.equal(reussi.coups[0].degats, attendu);
+    const plein = regler({});
+    assert.equal(plein.camps.adversaire.pv, REGLES.pointsDeVie - prevueDuJoueur.degats);
+    assert.equal(plein.camps.joueur.pv, REGLES.pointsDeVie - prevueAdverse.degats);
+    assert.deepEqual([plein.manches[0].joueur.infliges, plein.manches[0].adversaire.infliges], [prevueDuJoueur.degats, prevueAdverse.degats]);
 
-    const rate = jouer(depart, jouee.id, false, hasardReproductible(4), TAILLES, REGLES);
-    assert.equal(rate.camps[autre].pv, REGLES.pointsDeVie);
-    assert.equal(rate.coups[0].degats, 0);
+    const echappe = regler({ joueurReussit: false, adversaireReussit: false });
+    assert.deepEqual([echappe.camps.joueur.pv, echappe.camps.adversaire.pv], [REGLES.pointsDeVie, REGLES.pointsDeVie]);
+    assert.equal(echappe.manches[0].joueur.reussie, false);
 
-    for (const apres of [reussi, rate]) {
-      assert.equal(apres.camps[cote].enJeu?.id, jouee.id);
-      assert.equal(apres.camps[cote].main.length, REGLES.cartesEnMain, 'le camp a pioché');
-      assert.ok(!apres.camps[cote].main.some((c) => c.id === jouee.id));
-      assert.deepEqual(apres.camps[cote].defausse.map((c) => c.id), [depart.camps[cote].enJeu!.id], "l'ancien mot en jeu part à la défausse");
-      assert.equal(apres.aLaMain, autre);
+    const pare = regler({ joueurPare: true, adversairePare: true });
+    assert.equal(pare.camps.joueur.pv, REGLES.pointsDeVie - prevueAdverse.degatsSiParee);
+    assert.equal(pare.camps.adversaire.pv, REGLES.pointsDeVie - prevueDuJoueur.degatsSiParee);
+    assert.ok(pare.manches[0].adversaire.paree && pare.manches[0].joueur.paree);
+    // Parer une attaque qui ne porte pas ne compte pas comme une parade.
+    assert.equal(regler({ adversaireReussit: false, joueurPare: true }).manches[0].adversaire.paree, false);
+
+    for (const apres of [plein, echappe, pare]) {
+      assert.equal(apres.manche, 2);
+      assert.equal(apres.camps.joueur.derniere?.id, mien.id);
+      assert.deepEqual(apres.camps.joueur.defausse.map((c) => c.id), [mien.id]);
+      assert.ok(!apres.camps.joueur.main.some((c) => c.id === mien.id));
     }
-    assert.throws(() => jouer(depart, 'carte-inconnue', true, hasardReproductible(4), TAILLES, REGLES));
+    assert.throws(() => jouerLaManche(depart, 'carte-inconnue', sien.id, TOUT_REUSSI, hasardReproductible(1), TAILLES, REGLES));
+    assert.throws(() => jouerLaManche(depart, mien.id, 'carte-inconnue', TOUT_REUSSI, hasardReproductible(1), TAILLES, REGLES));
   });
 
   it('ne perd aucune carte en route, même quand la défausse reforme la pioche', () => {
-    let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(8), { ...REGLES, pointsDeVie: 100_000 });
+    const regles = { ...REGLES, pointsDeVie: 100_000, manchesMaximum: 40 };
+    let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(8), regles);
     const hasard = hasardReproductible(9);
     for (let i = 0; i < 38 && duel.vainqueur === null; i++) {
-      duel = jouer(duel, duel.camps[duel.aLaMain].main[0].id, true, hasard, TAILLES, { ...REGLES, pointsDeVie: 100_000 });
+      duel = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, TOUT_REUSSI, hasard, TAILLES, regles);
       for (const [camp, deck] of [[duel.camps.joueur, DECK], [duel.camps.adversaire, AUTRE_DECK]] as const) {
-        const toutes = [...camp.main, ...camp.pioche, ...camp.defausse, ...(camp.enJeu ? [camp.enJeu] : [])].map((c) => c.id).sort();
+        const toutes = [...camp.main, ...camp.pioche, ...camp.defausse].map((c) => c.id).sort();
         assert.deepEqual(toutes, deck.map((c) => c.id).sort());
         assert.equal(camp.main.length, REGLES.cartesEnMain);
       }
     }
+    assert.equal(duel.manche, 39);
   });
 
-  it('se termine quand un camp tombe à zéro, ou à la limite de manches au profit du mieux portant', () => {
-    let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), { ...REGLES, pointsDeVie: 1 });
-    const premier = duel.aLaMain;
-    duel = jouer(duel, duel.camps[premier].main[0].id, true, hasardReproductible(6), TAILLES, REGLES);
-    assert.equal(duel.vainqueur, premier);
-    assert.throws(() => jouer(duel, duel.camps[duel.aLaMain].main[0].id, true, hasardReproductible(6), TAILLES, REGLES));
+  it("l'attaque du joueur part la première : s'il terrasse l'ordinateur, l'attaque adverse ne porte pas", () => {
+    const regles = { ...REGLES, pointsDeVie: 1 };
+    const duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), regles);
+    const fin = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, TOUT_REUSSI, hasardReproductible(6), TAILLES, regles);
+    assert.equal(fin.vainqueur, 'joueur');
+    assert.equal(fin.camps.joueur.pv, 1);
+    assert.equal(fin.manches[0].adversaire.infliges, 0);
+    assert.equal(fin.manche, 1);
+    assert.throws(() => jouerLaManche(fin, fin.camps.joueur.main[0].id, fin.camps.adversaire.main[0].id, TOUT_REUSSI, hasardReproductible(6), TAILLES, regles));
+    // Si le mot du joueur lui échappe, c'est l'ordinateur qui l'emporte.
+    const perdu = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, { ...TOUT_REUSSI, joueurReussit: false }, hasardReproductible(6), TAILLES, regles);
+    assert.equal(perdu.vainqueur, 'adversaire');
+    assert.equal(perdu.camps.joueur.pv, 0);
+  });
 
-    // Personne ne réussit jamais, sauf le joueur une seule fois : à la limite, il gagne aux points.
+  it('à la limite de manches, le mieux portant l\'emporte ; à égalité, match nul', () => {
     const regles = { ...REGLES, manchesMaximum: 3 };
-    let long = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), regles);
-    let coups = 0;
-    while (long.vainqueur === null) { long = jouer(long, long.camps[long.aLaMain].main[0].id, long.aLaMain === 'joueur' && coups < 2, hasardReproductible(7), TAILLES, regles); coups++; }
-    assert.equal(coups, 6, 'trois manches de deux coups');
-    assert.equal(long.manche, 3);
-    assert.equal(long.vainqueur, 'joueur');
-
-    let nul = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), regles);
-    while (nul.vainqueur === null) nul = jouer(nul, nul.camps[nul.aLaMain].main[0].id, false, hasardReproductible(7), TAILLES, regles);
+    const jouerTout = (savoirs: (manche: number) => typeof TOUT_REUSSI): Duel => {
+      let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), regles);
+      while (duel.vainqueur === null) duel = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, savoirs(duel.manche), hasardReproductible(7), TAILLES, regles);
+      return duel;
+    };
+    const rien = { joueurReussit: false, joueurPare: false, adversaireReussit: false, adversairePare: false };
+    const nul = jouerTout(() => rien);
     assert.equal(nul.vainqueur, 'nul');
+    assert.equal(nul.manches.length, 3);
+    assert.equal(nul.manche, 3);
+    assert.equal(jouerTout((manche) => ({ ...rien, joueurReussit: manche === 2 })).vainqueur, 'joueur');
+    assert.equal(jouerTout((manche) => ({ ...rien, adversaireReussit: manche === 1 })).vainqueur, 'adversaire');
   });
 });
 
 describe("l'ordinateur", () => {
-  it('reçoit un deck des mêmes raretés, sans carte du joueur ni doublon, et de force comparable selon le niveau', () => {
+  it('reçoit un deck sans carte du joueur ni doublon, de la rareté voulue par le niveau', () => {
     const deckDuJoueur = meilleurDeck(EDITION.filter((_, i) => i % 3 === 0), REGLES);
-    const forceMoyenne = (deck: CarteIndex[]): number => deck.reduce((s, c) => s + forceDeLaCarte(c), 0) / deck.length;
-    const moyennes = NIVEAUX.map((niveau) => {
-      const forces: number[] = [];
-      for (let graine = 0; graine < 30; graine++) {
-        const deck = deckDeLOrdinateur(deckDuJoueur, EDITION, niveau, hasardReproductible(graine), REGLES);
-        assert.deepEqual(deck.map((c) => c.rarete), deckDuJoueur.map((c) => c.rarete));
-        assert.equal(new Set([...deck, ...deckDuJoueur].map((c) => c.id)).size, 2 * REGLES.tailleDuDeck);
-        forces.push(forceMoyenne(deck));
-      }
-      return forces.reduce((a, b) => a + b, 0) / forces.length;
-    });
-    // Un deck faible (loin du plafond des forces) : l'ordinateur suit l'écart demandé, à un point près.
-    const faible = EDITION.filter((c) => forceDeLaCarte(c) <= 9).slice(0, 10);
+    const rang = (c: CarteIndex): number => RARETES_DE_TEST.indexOf(c.rarete);
     for (const niveau of NIVEAUX) {
-      const deck = deckDeLOrdinateur(faible, EDITION, niveau, hasardReproductible(2), REGLES);
-      assert.ok(Math.abs(forceMoyenne(deck) - forceMoyenne(faible) - REGLES.ecartDeForceDeLOrdinateur[niveau]) <= 1, niveau);
+      for (let graine = 0; graine < 20; graine++) {
+        const deck = deckDeLOrdinateur(deckDuJoueur, EDITION, niveau, hasardReproductible(graine), REGLES);
+        assert.equal(new Set([...deck, ...deckDuJoueur].map((c) => c.id)).size, 2 * REGLES.tailleDuDeck);
+        const crans = REGLES.cransDeRareteDeLOrdinateur[niveau];
+        deck.forEach((c, i) => {
+          const attendu = Math.min(RARETES_DE_TEST.length - 1, rang(deckDuJoueur[i]) + crans);
+          assert.ok(rang(c) >= Math.floor(attendu) && rang(c) <= Math.ceil(attendu), `${niveau} : ${deckDuJoueur[i].rarete} → ${c.rarete}`);
+        });
+      }
     }
-    assert.ok(moyennes[0] <= moyennes[2], 'le deck du niveau Difficile est au moins aussi fort que celui du niveau Facile');
+    // Une carte Hors-série trouve une carte Hors-série en face, quel que soit le niveau.
+    const horsSerie = ['a', 'b', 'c'].map((mot) => carte(mot, { id: `hs-${mot}`, rarete: 'Hors-série' }));
+    assert.equal(deckDeLOrdinateur([horsSerie[0]], [...EDITION, ...horsSerie], 'Difficile', hasardReproductible(1), REGLES)[0].rarete, 'Hors-série');
   });
 
-  it('joue au hasard en Facile, et sa meilleure attaque aux autres niveaux', () => {
-    const main = [carte('faible', { attaque: 2 }), carte('fort', { attaque: 9 }), carte('moyen', { attaque: 5 })];
-    const duel = situation(main, null, carte('mur', { defense: 2 }));
+  it('à rareté égale, vise des cartes de la force de celles du joueur', () => {
+    const regles = { ...REGLES, cransDeRareteDeLOrdinateur: { 'Facile': 0, 'Normal': 0, 'Difficile': 0 }, ecartDeForceDeLOrdinateur: { 'Facile': -2, 'Normal': 0, 'Difficile': 2 } };
+    const forceMoyenne = (deck: CarteIndex[]): number => deck.reduce((s, c) => s + forceDeLaCarte(c), 0) / deck.length;
+    const moyen = EDITION.filter((c) => forceDeLaCarte(c) >= 8 && forceDeLaCarte(c) <= 14).slice(0, 10);
+    for (const niveau of NIVEAUX) {
+      const deck = deckDeLOrdinateur(moyen, EDITION, niveau, hasardReproductible(2), regles);
+      assert.ok(Math.abs(forceMoyenne(deck) - forceMoyenne(moyen) - regles.ecartDeForceDeLOrdinateur[niveau]) <= 1, niveau);
+    }
+  });
+
+  it('pose son mot au hasard en Facile, et sa carte la plus solide aux autres niveaux', () => {
+    const main = [carte('faible', { attaque: 2, defense: 2 }), carte('fort', { attaque: 9, defense: 8 }), carte('moyen', { attaque: 5, defense: 5 })];
+    const duel = situation([carte('x')], main);
     assert.equal(choisirPourLOrdinateur(duel, 'Normal', hasardReproductible(1), TAILLES, REGLES).mot, 'fort');
     assert.equal(choisirPourLOrdinateur(duel, 'Difficile', hasardReproductible(1), TAILLES, REGLES).mot, 'fort');
     const choix = new Set(Array.from({ length: 60 }, (_, i) => choisirPourLOrdinateur(duel, 'Facile', hasardReproductible(i), TAILLES, REGLES).mot));
@@ -253,6 +304,13 @@ describe('épreuve de maîtrise', () => {
       assert.equal(epreuve.propositions.length, 4);
       for (const [, piege] of pieges) assert.ok(!epreuve.propositions.includes(piege), piege);
     }
+  });
+
+  it('retire le renvoi « → voir … » qui termine certaines définitions', () => {
+    const definitions = new Map(DEFINITIONS);
+    definitions.set(EDITION[0].id, [{ texte: 'Mot ou forme incorrecte, ou dont le sens est altéré. → voir impropriété et solécisme', quiz: true }]);
+    const epreuve = composerLEpreuve(EDITION[0], definitions, EDITION, [], hasardReproductible(3));
+    assert.equal(epreuve.propositions[epreuve.bonne], 'Mot ou forme incorrecte, ou dont le sens est altéré.');
   });
 
   it('respecte les mots masqués par le joueur, et pose quand même les cartes sans définition utilisable', () => {

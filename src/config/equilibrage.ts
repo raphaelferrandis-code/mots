@@ -3,7 +3,8 @@
 // Tous les chiffres qui règlent le jeu sont ici, et nulle part ailleurs.
 // Raphaël peut les modifier sans toucher au reste du code.
 // Après une modification : « npm test » (des tests vérifient que l'économie reste saine),
-// puis « npm run simulation:collection » pour voir l'effet sur la durée de la collection.
+// puis « npm run simulation:collection » pour voir l'effet sur la durée de la collection,
+// ou « npm run simulation:duel » pour voir l'effet sur la durée et la difficulté des duels.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Finition, Rarete } from '../partage/types.ts';
@@ -26,6 +27,19 @@ export const EQUILIBRAGE = {
     'Épique': 1,
     'Légendaire': 2,
     'Hors-série': 3,
+  } satisfies Record<Rarete, number>,
+
+  // Points d'attaque ajoutés selon la rareté : « un mot rare est puissant, mais difficile à maîtriser ».
+  // L'attaque brute vient des lettres du mot et ne dépend pas de la rareté (mesuré : 5,2 de moyenne pour une
+  // Commune, 5,6 pour une Légendaire) ; sans ce bonus, une carte rare ne frappait pas plus fort qu'une autre.
+  // Ce bonus n'est pas plafonné : une Légendaire peut dépasser 10 d'attaque, ce qu'aucune carte courante n'atteint.
+  bonusAttaqueParRarete: {
+    'Commune': 0,
+    'Peu commune': 0,
+    'Rare': 1,
+    'Épique': 2,
+    'Légendaire': 3,
+    'Hors-série': 4,
   } satisfies Record<Rarete, number>,
 
   // ── Paquets ───────────────────────────────────────────────────────────────
@@ -86,26 +100,28 @@ export const EQUILIBRAGE = {
   },
 
   // ── Duel ──────────────────────────────────────────────────────────────────
+  // Une manche : l'ordinateur pose un mot, le joueur lui répond par une carte ; le joueur doit retrouver la définition
+  // de son mot (son attaque porte) puis celle du mot adverse (il pare). L'attaque du joueur part la première.
+  // ⚠️ Tous ces chiffres ont été réglés avec « npm run simulation:duel » (rapport : data/simulation-duel.md).
+  // Cible du brief : 6 à 10 manches par partie. Mesuré avec ces réglages : 5 à 9 manches selon les joueurs.
   duel: {
     tailleDuDeck: 10,
     cartesEnMain: 3,
-    pointsDeVie: 20,
-    // Une manche = chaque camp a joué une fois. Au-delà de cette limite, le camp qui a le plus de points de vie gagne.
+    pointsDeVie: 25,
+    // Au-delà de cette limite, le camp qui a le plus de points de vie gagne (égalité : match nul).
     manchesMaximum: 20,
-    // Au début du duel, chaque camp retourne la première carte de son deck : c'est son premier mot en jeu.
-    // Sans cela, la toute première attaque ne rencontre aucune défense et emporte d'un coup la moitié des points de vie :
-    // mesuré au simulateur, celui qui commence gagne alors 85 % des parties, contre 51 à 58 % avec un mot de départ.
-    motEnJeuAuDepart: true,
-    // Temps pour retrouver la définition de son mot parmi quatre.
+    // Temps pour retrouver une définition parmi quatre (deux épreuves par manche : son mot, puis le mot adverse).
     secondesPourRepondre: 15,
 
-    // Dégâts d'une attaque réussie = attaque + bonus − part de la défense du mot adverse en jeu (au moins degatsMinimum).
-    // ⚠️ Réglé avec « npm run simulation:duel » (cible : 6 à 10 manches par partie). Le brief prévoyait la défense entière
-    // (part = 1). Mesuré : dès que le joueur aligne ses dix meilleures cartes, attaque et défense, notées sur la même
-    // échelle, s'annulent — 7 attaques réussies sur 10 ne font que le minimum et une partie dure 15 manches.
-    // À 0,75 : 6 à 9 manches, et une attaque réussie sur 6 seulement est réduite au minimum.
-    partDeLaDefense: 0.75,
+    // Dégâts d'une attaque qui porte = attaque de la carte + bonus − part de la défense de la carte d'en face
+    // (au moins degatsMinimum). Le brief prévoyait la défense entière (part = 1). Mesuré : attaque et défense étant
+    // notées sur la même échelle, elles s'annulent dès que les decks sont bons — la moitié des attaques ne font
+    // que 1 dégât et les parties s'éternisent. À 0,5 : 2 % d'attaques à 1 dégât pour une collection moyenne.
+    partDeLaDefense: 0.5,
     degatsMinimum: 1,
+    // La parade : qui retrouve la définition du mot adverse ne reçoit qu'une part des dégâts (arrondie en sa faveur :
+    // 5 dégâts parés n'en font plus que 2). Mesuré : un bon lecteur pare 7 à 9 attaques sur 10, un joueur hésitant 5 à 8.
+    partDesDegatsApresParade: 0.5,
     // Triangle des types : Nom > Adjectif > Verbe > Nom. Les adverbes sont neutres.
     bonusDeType: 2,
     // Bonus si la carte précédente du même camp était de la même faction ; plus fort pour une petite faction,
@@ -114,15 +130,26 @@ export const EQUILIBRAGE = {
     bonusDePetiteFaction: 2,
     petiteFactionJusquA: 160, // nombre de cartes de la faction dans l'édition
 
-    // Le deck de l'ordinateur copie les raretés du deck du joueur, avec des cartes de force comparable
-    // (force = attaque + défense). Écart visé, carte par carte : positif = un peu plus fortes que celles du joueur.
-    // Mesuré au simulateur pour un « bon lecteur » : il gagne presque toujours en Facile, environ 2 parties sur 3
-    // en Normal et 1 sur 3 en Difficile (davantage avec une très grande collection).
-    ecartDeForceDeLOrdinateur: { 'Facile': 0, 'Normal': 1, 'Difficile': 1 },
+    // ── L'ordinateur ──
+    // Son deck répond carte pour carte à celui du joueur. Aux niveaux élevés, ses mots sont plus rares que ceux du
+    // joueur, de ce nombre de crans (Commune → Peu commune → Rare → Épique → Légendaire) : plus forts, et surtout plus
+    // difficiles à parer. C'est le réglage qui pèse le plus sur la difficulté. (1,5 = un cran ou deux, au hasard.)
+    // Victoires mesurées, avec une collection moyenne, en Facile / Normal / Difficile :
+    //   joueur hésitant 91 % / 57 % / 9 % · bon lecteur 99 % / 87 % / 44 % · expert 100 % / 95 % / 77 %
+    //   · bon lecteur qui connaît son deck par cœur 100 % / 91 % / 73 %.
+    cransDeRareteDeLOrdinateur: { 'Facile': 0, 'Normal': 1, 'Difficile': 2 },
+    // Dans cette rareté, il reçoit des cartes de force comparable à celles du joueur (force = attaque + défense).
+    // Écart visé, carte par carte : positif = un peu plus fortes. Pèse surtout face aux débutants, dont les cartes sont faibles.
+    ecartDeForceDeLOrdinateur: { 'Facile': 1, 'Normal': 0, 'Difficile': 0 },
     // Chaque carte de l'ordinateur est tirée au hasard parmi les N cartes dont la force est la plus proche de la force visée.
     cartesProchesPourLOrdinateur: 6,
-    // L'ordinateur ne passe pas l'épreuve de maîtrise : il réussit selon une chance fixe.
-    reussiteDeLOrdinateur: { 'Facile': 0.5, 'Normal': 0.7, 'Difficile': 0.9 },
+    // L'ordinateur ne passe pas l'épreuve de maîtrise : il connaît son propre mot selon une chance fixe…
+    reussiteDeLOrdinateur: { 'Facile': 0.65, 'Normal': 0.85, 'Difficile': 0.9 },
+    // …et il pare le mot du joueur d'autant moins souvent que ce mot est rare (chance = rareté × niveau).
+    paradeDeLOrdinateur: {
+      selonLaRarete: { 'Commune': 0.7, 'Peu commune': 0.6, 'Rare': 0.45, 'Épique': 0.3, 'Légendaire': 0.15, 'Hors-série': 0.1 } satisfies Record<Rarete, number>,
+      selonLeNiveau: { 'Facile': 0.7, 'Normal': 1, 'Difficile': 1 },
+    },
 
     // Récompenses. Les victoires suivantes de la journée rapportent moins, pour que l'Encre du duel ne remplace pas les paquets.
     encreParVictoire: { 'Facile': 20, 'Normal': 30, 'Difficile': 45 },
@@ -138,6 +165,10 @@ export const EQUILIBRAGE = {
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.
   paquetsEntreDeuxRappelsDExport: 100,
 };
+
+export function attaqueEnJeu(attaque: number, rarete: Rarete): number {
+  return attaque + EQUILIBRAGE.bonusAttaqueParRarete[rarete];
+}
 
 export function defenseEnJeu(defense: number, rarete: Rarete): number {
   return Math.min(EQUILIBRAGE.statMaximale, defense + EQUILIBRAGE.bonusDefenseParRarete[rarete]);

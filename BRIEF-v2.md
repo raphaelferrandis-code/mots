@@ -1,7 +1,7 @@
 # Brief projet v2 — Jeu de cartes à collectionner des mots de la langue française
 
 *Nom de code : **MOTS** (piste sérieuse pour le nom définitif : « Mots de Maîtres », à vérifier à l'INPI).*
-*Version 2.4 du 21 septembre 2026 (phase 3 : le duel, réglé au simulateur — voir §5.4, §5.5 et `data/simulation-duel.md`) — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
+*Version 2.5 du 21 septembre 2026 (phase 3 : le duel « mot contre mot » avec parade, réglé au simulateur — voir §5.4, §5.5 et `data/simulation-duel.md`) — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
 
 > **Légende :** 🟡 = proposition par défaut **encore à confirmer par Raphaël** (liste au §10.2). Tout le reste est validé.
 
@@ -151,7 +151,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 **Défense (1 à 10) — « richesse du mot » :** score combinant le nombre de sens, le nombre de synonymes et le nombre de mots dérivés recensés par le Wiktionnaire, ramené sur 1–10 par percentile.
 *(Le seul nombre de sens ne suffit pas : plus de la moitié des mots n'ont qu'un sens, et presque toutes les Légendaires auraient une défense de 1.)*
 
-**Bonus de rareté :** un petit bonus de stats par rareté (par défaut +0 / +0 / +1 / +1 / +2 en défense, plafonné à 10), réglable dans le fichier d'équilibrage, pour qu'une carte rare ne soit jamais décevante.
+**Bonus de rareté :** un bonus de stats par rareté, réglable dans le fichier d'équilibrage, pour qu'une carte rare ne soit jamais décevante : +0 / +0 / +1 / +1 / +2 en défense (plafonnée à 10), et 🟡 +0 / +0 / +1 / +2 / +3 en attaque, **non plafonnée** (+3 en défense et +4 en attaque pour les Hors-série). Le bonus d'attaque a été ajouté avec le duel « mot contre mot » (§5.4) : mesuré, l'attaque brute ne dépend pas de la rareté, et sans lui un mot rare ne frappait pas plus fort qu'un mot courant.
 
 **Type :** Nom, Verbe, Adjectif, Adverbe.
 
@@ -241,7 +241,7 @@ Deux niveaux de fichiers, pour que l'application reste légère sur mobile :
 *(Exemples réels, tirés de la première génération. Le format exact est décrit dans `src/partage/types.ts`, partagé entre le pipeline et le jeu.)*
 
 - `version` est la date d'extraction du Wiktionnaire : deux générations faites à partir des mêmes données donnent exactement le même résultat.
-- `defense` est la note brute ; le bonus de rareté est appliqué par le jeu, d'après `equilibrage.ts`.
+- `attaque` et `defense` sont les notes brutes ; les bonus de rareté sont appliqués par le jeu, d'après `equilibrage.ts`.
 - `quiz` indique si la définition peut servir de question en duel ; une définition peut aussi porter un `registre` (« Familier », « Injurieux »…) pour pouvoir être masquée.
 - `frequence` est exprimée en occurrences par million de mots ; `prevalence` est la part des gens qui connaissent le mot, en % ; `attestation` n'est présent que si la date est connue.
 - Le lot d'une carte se calcule à partir de son identifiant (`src/partage/lots.ts`).
@@ -292,39 +292,43 @@ Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et d
 
 ### 5.4 Duel contre l'IA
 
+> **Version du 21 septembre 2026 (soir) : le duel « mot contre mot », avec parade.** Décidé par Raphaël après le premier essai : avec un deck de dix cartes, le joueur connaît vite toutes ses définitions, et l'épreuve devient une formalité. Désormais il est aussi interrogé sur **les mots de l'adversaire**, qui changent à chaque duel. Les chiffres marqués 🟡 ont été réglés au simulateur (`data/simulation-duel.md`) et restent à confirmer par Raphaël après essai.
+
 **Mise en place**
-- **Deck de 10 cartes** composé par le joueur. **20 points de vie** chacun. **3 cartes en main.**
-- Chaque camp possède un seul emplacement : son **mot en jeu** (la dernière carte qu'il a posée). Il sert de défenseur.
-- 🟡 **Au début du duel, chaque camp retourne la première carte de son deck : c'est son premier mot en jeu.** (Ajout de la phase 3, mesuré au simulateur : sans cela, la toute première attaque ne rencontre aucune défense et emporte la moitié des points de vie ; celui qui commence gagnait 85 % des parties. Avec un mot de départ : 51 à 58 %.)
-- Le premier joueur est tiré au sort.
-- **Deck de l'IA** : tiré dans l'Édition 1 avec les mêmes raretés que le deck du joueur, 🟡 **et des cartes de force comparable** (force = attaque + défense) : égales en Facile, un peu plus fortes (+1) en Normal et en Difficile. Sans cela, un joueur qui aligne ses dix meilleures cartes écrasait un ordinateur aux cartes tirées au hasard. Le duel reste ainsi équitable quel que soit l'avancement de la collection.
+- **Deck de 10 cartes** composé par le joueur. 🟡 **25 points de vie** chacun. **3 cartes en main.**
 - **Construction du deck** (écran Deck) : on touche un timbre de sa collection pour l'ajouter, un timbre du deck pour le retirer ; le deck est enregistré dans la sauvegarde. Un bouton « Composer pour moi » aligne les dix cartes les plus fortes.
+- **Deck de l'IA** : il répond carte pour carte à celui du joueur. 🟡 Mêmes raretés en Facile ; **un cran plus rares en Normal, deux crans en Difficile** (Commune → Peu commune → Rare → Épique → Légendaire), avec des cartes de force comparable (force = attaque + défense). Des mots plus rares frappent plus fort et, surtout, sont plus difficiles à parer : c'est le réglage qui pèse le plus sur la difficulté. Qui joue des mots rares affronte des mots rares.
 
-**Déroulement d'un tour**
-1. **Choix** : le joueur **choisit** une carte de sa main. Il voit le mot en jeu adverse, et peut donc viser le triangle des types ou le bonus de faction. **En duel, les cartes en main n'affichent pas leur définition** (elle est imprimée sur la carte partout ailleurs) : sinon l'épreuve de maîtrise n'aurait plus de sens. On révise ses cartes dans la collection, on est interrogé en duel.
-2. **Épreuve de maîtrise** : le jeu affiche **4 définitions** — la bonne et 3 leurres tirés de mots de **même nature grammaticale et de rareté voisine**. Le joueur a **15 secondes** pour désigner celle de son mot. Seules les définitions marquées utilisables en quiz sont employées ; la définition demandée varie d'une fois sur l'autre quand le mot en a plusieurs.
-3. **Résolution**
-   - **Réussite** : la carte attaque. Dégâts = attaque + bonus − 🟡 **les trois quarts de la défense** du mot en jeu adverse, **minimum 1**. (La première version du brief retirait la défense entière. Mesuré au simulateur : dès que le joueur aligne ses meilleures cartes, attaque et défense — notées sur la même échelle — s'annulent ; 7 attaques réussies sur 10 ne faisaient que le minimum et une partie durait 15 manches. À 75 % : 6 à 9 manches. L'écran affiche directement ce que bloque chaque mot en jeu, le joueur n'a aucun calcul à faire.)
-   - **Échec ou temps écoulé** : « le mot vous échappe », pas d'attaque. **La bonne définition est affichée** : c'est le moment où l'on apprend.
-   - Dans les deux cas, la carte devient le nouveau mot en jeu du joueur (l'ancien part à la défausse), et le joueur pioche une carte.
-4. **Tour de l'IA** : même déroulement. Son épreuve de maîtrise est remplacée par un taux de réussite : Facile 50 % · Normal 70 % · Difficile 90 %. En Facile elle choisit sa carte au hasard ; en Normal et Difficile elle choisit la carte qui inflige le plus de dégâts.
+**Déroulement d'une manche**
+1. **L'ordinateur pose un mot** de sa main, face visible (sans sa définition) : au hasard en Facile, sa carte la plus solide sinon.
+2. **Le joueur lui répond** par une carte de sa main. Il voit le mot adverse, et peut donc viser le triangle des types, l'enchaînement d'une langue, ou une bonne défense ; l'écran annonce ce qu'il infligerait et ce qu'il recevrait. **En duel, les cartes n'affichent pas leur définition** (elle est imprimée sur la carte partout ailleurs) : on révise ses cartes dans la collection, on est interrogé en duel.
+3. **Épreuve sur son mot** : le jeu affiche **4 définitions** — la bonne et 3 leurres tirés de mots de **même nature grammaticale et de rareté voisine**. Le joueur a **15 secondes**. Trouvée : son attaque porte. Sinon, « le mot lui échappe » : pas d'attaque, et **la bonne définition est affichée** — c'est le moment où l'on apprend. Seules les définitions utilisables en quiz sont employées ; la définition demandée varie d'une fois sur l'autre quand le mot en a plusieurs, et le jeu préfère celle qui ne nomme pas un proche parent du mot.
+4. **Parade sur le mot adverse** : même épreuve, sur le mot de l'ordinateur. Trouvée : le joueur **pare**, et ne reçoit que 🟡 **la moitié des dégâts** (arrondie en sa faveur). Sinon il reçoit l'attaque entière, et la définition du mot s'affiche. Si le joueur possède lui aussi ce mot, une bonne réponse compte pour sa maîtrise.
+5. **Règlement** : l'attaque du joueur part la première ; si elle met l'ordinateur à zéro, le duel s'arrête là. Puis chacun pioche.
+- **L'ordinateur ne passe pas d'épreuve.** 🟡 Il connaît son propre mot 65 % du temps en Facile, 85 % en Normal, 90 % en Difficile (sinon son mot lui échappe). Et il pare le mot du joueur **d'autant moins souvent que ce mot est rare** : 70 % pour une Commune, 60 % Peu commune, 45 % Rare, 30 % Épique, 15 % Légendaire, 10 % Hors-série (chances multipliées par 0,7 en Facile).
 
-**Bonus**
+**Les dégâts**
+- Dégâts = attaque de la carte + bonus − 🟡 **la moitié de la défense** de la carte d'en face, **minimum 1**. (La première version du brief retirait la défense entière. Mesuré : attaque et défense étant notées sur la même échelle, elles s'annulent dès que les decks sont bons ; la moitié des attaques ne faisaient que 1 dégât.)
+- 🟡 **Bonus d'attaque par rareté** : +0 / +0 / +1 / +2 / +3 / +4 (Commune → Hors-série), **non plafonné** — l'attaque d'une Légendaire peut dépasser 10. C'est lui qui rend vrai le principe du §1, « un mot rare est puissant, mais difficile à maîtriser » : mesuré, l'attaque brute (les lettres du mot) ne dépend pas de la rareté (5,2 de moyenne pour une Commune, 5,6 pour une Légendaire), et une carte rare ne frappait donc pas plus fort qu'une autre. Le timbre affiche l'attaque bonus compris, comme il le fait déjà pour la défense.
 - **Triangle des types** (+2 dégâts) : Nom > Adjectif > Verbe > Nom. Les Adverbes sont neutres.
 - **Bonus de faction** : +1 dégât si la carte précédente jouée par le même camp était de la même faction ; **+2 pour les petites factions** (seuil défini dans le fichier d'équilibrage), car enchaîner deux mots venus de l'arabe est bien plus difficile que deux mots latins.
 
 **Fin de partie**
-- Un camp tombe à 0 point de vie : il perd.
+- Un camp tombe à 0 point de vie : il perd. (Les deux camps ne tombent jamais ensemble : l'attaque du joueur part la première.)
 - Deck épuisé : la défausse est mélangée et reforme le deck.
-- Limite de **20 tours** : le camp qui a le plus de points de vie gagne (égalité = match nul).
+- Limite de **20 manches** : le camp qui a le plus de points de vie gagne (égalité = match nul).
 - **Récompense** : de l'Encre en cas de victoire — 🟡 20 (Facile), 30 (Normal) ou 45 (Difficile) pour les 3 premières victoires de la journée, un quart ensuite — et 5 Encre de consolation en cas de défaite. Trente victoires en un jour rapportent moins de 4 paquets : le duel récompense, il ne remplace pas les paquets (un test le vérifie).
 - **Abandon** : quitter un duel en cours ne rapporte rien. Un duel interrompu n'est pas repris.
 - **Accessibilité** : le temps de réponse se règle (normal, doublé, sans limite) dans les Réglages.
 
-**Variantes de question (phase 4, si le temps le permet)** : « De quelle langue vient ce mot ? » en alternance avec la définition, pour que le joueur qui connaît son deck par cœur reste mis au défi.
+**Ce que donne le simulateur** (collection moyenne ; Facile / Normal / Difficile) : parties de 5 à 9 manches ; victoires d'un joueur hésitant 91 % / 57 % / 9 %, d'un bon lecteur 99 % / 87 % / 44 %, d'un expert 100 % / 95 % / 77 %, d'un bon lecteur qui connaît son deck par cœur 100 % / 91 % / 73 %. Ce dernier ne pare plus que 64 % des attaques en Difficile : l'épreuve ne redevient jamais une formalité.
+
+**Pistes écartées pour l'instant** (proposées le même jour) : « Maîtriser pour avancer » (la récompense vient des mots nouvellement maîtrisés, plus des victoires répétées) et « le deck du jour » (un défi quotidien avec dix cartes imposées, tirées de sa propre collection). Elles restent compatibles avec la parade.
+
+**Variantes de question (phase 4, si le temps le permet)** : « De quelle langue vient ce mot ? » en alternance avec la définition.
 
 ### 5.5 Simulateur d'équilibrage
-Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : des joueurs fictifs — hésitant, bon lecteur, expert, dont les chances de connaître un mot baissent avec sa rareté — ouvrent de vrais paquets, alignent leurs dix meilleures cartes et affrontent l'ordinateur aux trois niveaux, 3 000 duels par ligne. Le rapport donne la **durée d'une partie**, le taux de victoire du joueur, celui de celui qui commence, la part d'attaques réduites au minimum, des variantes « et si… » et une grille de réglage (points de vie × poids de la défense). **Cible : 6 à 10 manches par partie** — atteinte avec les réglages actuels (5,6 à 9,5 selon les profils). C'est l'outil qui permet à Raphaël de régler les chiffres sans jouer des centaines de parties.
+Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : des joueurs fictifs — hésitant, bon lecteur, expert, et « bon lecteur qui connaît son deck par cœur », dont les chances de retrouver une définition baissent avec la rareté du mot — ouvrent de vrais paquets, alignent leurs dix meilleures cartes et affrontent l'ordinateur aux trois niveaux, 3 000 duels par ligne. Le rapport donne la **durée d'une partie**, le taux de victoire du joueur, la part d'attaques à 1 dégât, la part d'attaques parées, le nombre de cartes rares dans les decks, et des variantes « et si… ». **Cible : 6 à 10 manches par partie** — à peu près atteinte avec les réglages actuels (5,2 à 9,3 selon les profils ; les plus courtes sont celles des joueurs qui alignent beaucoup de cartes rares). C'est l'outil qui permet à Raphaël de régler les chiffres sans jouer des centaines de parties.
 
 **Simulation de collection** (`npm run simulation:collection`) : simule des mois d'ouverture de paquets pour trois profils de joueur (occasionnel : 10 paquets par jour ; régulier : 30 ; acharné : 100) et affiche le temps nécessaire pour réunir 50 %, 90 % et 100 % de l'édition, le nombre de Légendaires par semaine et l'Encre gagnée. **Cible de départ : un joueur régulier termine l'édition en 6 mois à 1 an.** Cet outil sert à fixer la taille de l'édition, les taux de rareté et le prix des paquets, et à vérifier la règle de sécurité de l'économie (§5.2).
 
@@ -441,6 +445,7 @@ Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : de
 | 26 | Règles des finitions | **Validé** : finition tirée à part pour chaque carte ordinaire (brillante 1 sur 12, holographique 1 sur 80) ; chaque finition possédée compte à part ; seul un vrai doublon (carte et finition déjà possédées) devient de l'Encre, multipliée par 3 (brillante) ou 10 (holographique) |
 | 27 | Prix du paquet | **150 Encre** |
 | 28 | Idées retenues pour la suite | Cachet « Maîtrisé » daté sur le timbre quand le mot est maîtrisé en duel (**fait en phase 3** : griffe violette datée, après 5 bonnes réponses) ; séries par famille de mots ; album présenté en planches par langue avec emplacements vides secrets |
+| 30 | Duel « mot contre mot », avec parade | **Décidé le 21/09/2026** : à chaque manche, le joueur retrouve la définition de son mot (il attaque) **et celle du mot adverse** (il pare), puis les dégâts sont réglés. Raison : avec dix cartes, on connaît vite ses définitions ; les mots de l'adversaire, eux, changent à chaque duel. Et « plus un mot est rare, plus il fait de dégâts » |
 | 29 | Polices | **Playfair Display**, police libre livrée avec le jeu (choisie le 21/09/2026 parmi trois familles à l'essai) ; Barlow Condensed pour les petites mentions en capitales |
 
 ### 10.2 Propositions encore à confirmer (🟡)
@@ -455,9 +460,10 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
 | Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
-| Duel : poids de la défense | **75 %** de la défense adverse est retirée des dégâts, au lieu de 100 % dans la première version du brief (qui donnait des parties de 15 manches). Autres choix possibles : 50 % avec 30 points de vie (attaques plus franches, mais celui qui commence gagne 60 % des parties), ou 100 % avec 12 points de vie (la défense compte à plein, mais 7 attaques sur 10 ne font que 1 dégât) | §5.4, `data/simulation-duel.md` |
-| Duel : mot en jeu au départ | Chaque camp commence avec un mot en jeu tiré de son deck | §5.4 |
-| Duel : force de l'ordinateur | Mêmes raretés que le joueur, cartes de force égale (Facile) ou un peu supérieure (+1, Normal et Difficile). Un « bon lecteur » gagne presque toujours en Facile, 2 parties sur 3 en Normal, 1 sur 3 en Difficile | §5.4 |
+| Duel : points de vie et poids de la défense | **25 points de vie**, et **la moitié** de la défense d'en face retirée des dégâts (au lieu de 20 et de 100 % dans la première version du brief) : parties de 5 à 9 manches, presque plus d'attaques à 1 dégât | §5.4, `data/simulation-duel.md` |
+| Duel : un mot rare frappe plus fort | Bonus d'attaque par rareté +0 / +0 / +1 / +2 / +3 / +4, non plafonné (une Légendaire peut dépasser 10), affiché sur le timbre ; et l'ordinateur pare d'autant moins qu'un mot est rare | §5.4 |
+| Duel : la parade | Retrouver la définition du mot adverse divise par deux les dégâts reçus. L'attaque du joueur part la première | §5.4 |
+| Duel : niveaux de l'ordinateur | Mots de même rareté (Facile), un cran plus rares (Normal), deux crans (Difficile) ; il connaît son mot 65 / 85 / 90 % du temps. Difficile est vraiment difficile : un bon lecteur y gagne 44 % des parties, un joueur hésitant 9 % | §5.4 |
 | Duel : récompenses | 20 / 30 / 45 Encre par victoire, pleines pour les 3 premières victoires du jour puis un quart ; 5 Encre par défaite | §5.4 |
 | Définitions trop parlantes en duel | Le jeu préfère déjà, quand un mot a plusieurs définitions, celle qui ne nomme pas un proche parent du mot (« cabale » pour « cabalistique »). Pour 63 cartes, toutes les définitions le font : question trop facile. À traiter au prochain passage du pipeline, ou par une autre question (« De quelle langue vient ce mot ? ») | §5.4 |
 

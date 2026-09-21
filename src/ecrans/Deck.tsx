@@ -7,7 +7,7 @@ import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
-import { EQUILIBRAGE, defenseEnJeu } from '../config/equilibrage.ts';
+import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import { forceDeLaCarte, meilleurDeck, taillesDesFactions } from '../jeu/duel.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { cartesDuDeck } from '../jeu/progression.ts';
@@ -59,7 +59,7 @@ export function Deck() {
     const cherche = sansAccents(recherche.trim());
     const ordres: Record<Tri, (a: CarteIndex, b: CarteIndex) => number> = {
       force: (a, b) => forceDeLaCarte(b) - forceDeLaCarte(a),
-      attaque: (a, b) => b.attaque - a.attaque,
+      attaque: (a, b) => attaqueEnJeu(b.attaque, b.rarete) - attaqueEnJeu(a.attaque, a.rarete),
       defense: (a, b) => defenseEnJeu(b.defense, b.rarete) - defenseEnJeu(a.defense, a.rarete),
       rarete: (a, b) => RARETES.indexOf(b.rarete) - RARETES.indexOf(a.rarete),
       alphabet: () => 0,
@@ -120,10 +120,11 @@ export function Deck() {
           <details className="bloc repliable">
             <summary><h2>Comment bien composer</h2></summary>
             <ul className="regles">
-              <li><strong>Attaque et défense.</strong> Ta carte attaque avec son chiffre de gauche ; puis elle reste en jeu et te protège avec son chiffre de droite, jusqu'à ta carte suivante.</li>
+              <li><strong>Attaque et défense.</strong> À chaque manche, ta carte affronte celle de l'ordinateur : elle attaque avec son chiffre de gauche, et te protège avec son chiffre de droite.</li>
+              <li><strong>Un mot rare est puissant</strong> : son attaque est relevée (elle peut dépasser 10), et l'ordinateur le pare moins souvent. Mais plus tes mots sont rares, plus ceux de l'ordinateur le sont aussi — et il faudra les reconnaître pour parer.</li>
               <li><strong>Triangle des types</strong> (+{REGLES.bonusDeType} dégâts) : un nom bat un adjectif, un adjectif bat un verbe, un verbe bat un nom. Les adverbes sont neutres. Un deck varié a toujours la bonne réponse.</li>
               <li><strong>Enchaîner une langue</strong> : jouer deux mots de même origine à la suite donne +{REGLES.bonusDeFaction} dégât, et +{REGLES.bonusDePetiteFaction} pour les petites langues (arabe, gaulois, occitan…).</li>
-              <li><strong>Connaître ses mots.</strong> Pour attaquer, il faudra retrouver la définition du mot parmi quatre. Un mot rare est fort, mais il ne sert à rien si tu ne le connais pas : révise tes cartes dans ton album.</li>
+              <li><strong>Connaître ses mots.</strong> Pour attaquer, il faudra retrouver la définition de ton mot parmi quatre ; pour parer, celle du mot adverse. Un mot rare ne sert à rien si tu ne le connais pas : révise tes cartes dans ton album.</li>
             </ul>
           </details>
 

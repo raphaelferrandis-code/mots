@@ -28,7 +28,9 @@ const estVisible = (definition: Definition, masques: readonly Registre[]): boole
 function definitionsDeDuel(mot: string, definitions: readonly Definition[] | undefined, masques: readonly Registre[]): string[] {
   const utilisables = (definitions ?? []).filter((d) => d.quiz);
   const visibles = utilisables.filter((d) => estVisible(d, masques));
-  const textes = (visibles.length > 0 ? visibles : utilisables).map((d) => d.texte);
+  // Certaines définitions du Wiktionnaire se terminent par un renvoi (« → voir solécisme ») : il n'apprend rien,
+  // et ferait reconnaître la définition à sa seule forme.
+  const textes = (visibles.length > 0 ? visibles : utilisables).map((d) => d.texte.replace(/\s*→\s*voir\b.*$/i, '').trim());
   const discretes = textes.filter((texte) => !trahitLeMot(texte, mot));
   return discretes.length > 0 ? discretes : textes;
 }

@@ -6,7 +6,7 @@
 import { useId, useMemo, useRef } from 'react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import './timbre.css';
-import { defenseEnJeu } from '../../config/equilibrage.ts';
+import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
@@ -48,7 +48,7 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
     <div className="tim__papier">
       <div className="tim__impression">
         <div className="tim__haut">
-          <span className="tim__valeur"><small>Att.</small>{carte.attaque}</span>
+          <span className="tim__valeur"><small>Att.</small>{attaqueEnJeu(carte.attaque, carte.rarete)}</span>
           <span className="tim__emetteur"><small>Origine</small>{carte.faction}</span>
           <span className="tim__valeur"><small>Déf.</small>{defenseEnJeu(carte.defense, carte.rarete)}</span>
         </div>
@@ -78,7 +78,7 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
     </div>
   );
 
-  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${carte.attaque}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
+  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
   const commun = {
     className: 'tim',
     'data-niveau': niveau,
