@@ -61,7 +61,7 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | Fichier | À quoi il sert |
 |---|---|
 | `pipeline/config.ts` | Tous les réglages de fabrication : parts de chaque rareté, poids de la fréquence et de la prévalence, taille de l'édition, équilibre entre factions et entre types de mots, critères de qualité, regroupement des langues en factions. |
-| `data/coups-de-coeur.txt` | Mots qui entrent d'office dans l'édition. |
+| `data/coups-de-coeur.txt` | Mots qui entrent d'office dans l'édition. Leur rareté se calcule toute seule (pour un mot que les chercheurs n'ont pas mesuré : d'après sa seule fréquence, comparée à celle des mots mesurés). |
 | `data/exclusions.txt` | Mots qui n'y entrent jamais. |
 | `data/hors-serie.txt` | Cartes Hors-série ajoutées à la main (`mot = Titre de la carte`), en plus des records trouvés automatiquement. |
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |

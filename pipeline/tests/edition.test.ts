@@ -170,4 +170,12 @@ describe('assemblage des cartes', () => {
   it('n\'affiche pas une date de première apparition inconnue', () => {
     assert.equal(parId.get('détester-verbe')!.details.attestation, undefined);
   });
+  it('range un coup de cœur non mesuré parmi les mots mesurés', () => {
+    const avecZeugma = new Map(mots).set('zeugma|Nom', { mot: 'zeugma', nature: 'Nom', entrees: 1, etymologies: ['Du latin zeugma.'], synonymes: 0, derives: 0, attestation: null, lexique: lexique('Nom', 0.001, null),
+      sens: [{ definition: 'Figure de style qui rattache à un même mot deux termes disparates.', etiquettes: [], domaines: [] }] });
+    const raretes = new Map(assemblerCartes(avecZeugma, CONFIG, new Map(), new Set(['zeugma'])).map((c) => [c.index.id, c.index.rarete]));
+    assert.equal(raretes.get('zeugma-nom'), raretes.get('callipyge-adj'), 'moins fréquent que tous les mots mesurés : aussi rare que le plus rare d\'entre eux');
+    assert.equal(raretes.get('callipyge-adj'), parId.get('callipyge-adj')!.index.rarete, 'les mots mesurés ne bougent pas');
+    assert.equal(raretes.get('détester-verbe'), parId.get('détester-verbe')!.index.rarete);
+  });
 });

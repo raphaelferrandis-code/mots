@@ -25,6 +25,18 @@ export function rangs(valeurs: number[]): number[] {
   return resultat;
 }
 
+// Rang qu'aurait une valeur parmi des valeurs déjà triées, selon les mêmes règles que rangs() :
+// entre 0 et 1, et ex æquo avec les valeurs égales (le milieu de leur groupe).
+export function rangParmi(valeur: number, triees: number[]): number {
+  let debut = 0;
+  while (debut < triees.length && triees[debut] < valeur) debut++;
+  let fin = debut;
+  while (fin < triees.length && triees[fin] === valeur) fin++;
+  // Sans ex æquo, la valeur se glisse entre ses deux voisines.
+  const position = fin > debut ? (debut + fin - 1) / 2 : debut - 0.5;
+  return Math.min(1, Math.max(0, position / Math.max(1, triees.length - 1)));
+}
+
 // Transforme des valeurs quelconques en notes de 1 à 10 selon leur rang dans l'ensemble :
 // les 10 % les plus faibles ont 1, les 10 % les plus fortes ont 10.
 export function notesSurDix(valeurs: number[]): number[] {

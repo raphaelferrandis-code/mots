@@ -1,6 +1,6 @@
 # Rapport de génération des cartes
 
-*Généré par `npm run pipeline` en 30 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
+*Généré par `npm run pipeline` en 24 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
 
 ## 1. En bref
 
@@ -31,11 +31,11 @@
 | Rareté | Cartes | Part | Attaque moyenne | Défense moyenne (brute) | Défense moyenne (avec le bonus de rareté) | Connu de… (moyenne) |
 |---|---|---|---|---|---|---|
 | Hors-série | 16 | 0,0 % | 5,3 | 7,4 | 8,8 | 79,7 % |
-| Légendaire | 1 560 | 3,0 % | 5,7 | 4,4 | 6,3 | 17,8 % |
-| Épique | 3 644 | 7,0 % | 5,8 | 4,4 | 5,4 | 41,0 % |
-| Rare | 7 806 | 15,0 % | 5,9 | 4,6 | 5,5 | 63,8 % |
+| Légendaire | 1 561 | 3,0 % | 5,7 | 4,4 | 6,3 | 17,8 % |
+| Épique | 3 645 | 7,0 % | 5,8 | 4,4 | 5,4 | 41,0 % |
+| Rare | 7 808 | 15,0 % | 5,9 | 4,6 | 5,5 | 63,8 % |
 | Peu commune | 13 012 | 25,0 % | 5,7 | 5,0 | 5,0 | 84,5 % |
-| Commune | 26 015 | 50,0 % | 5,2 | 6,3 | 6,3 | 97,1 % |
+| Commune | 26 011 | 50,0 % | 5,2 | 6,3 | 6,3 | 97,1 % |
 
 | Type | Cartes | Part |
 |---|---|---|
@@ -85,9 +85,9 @@ Pour être éligible, une carte doit avoir une faction reconnue, une prévalence
 | Rareté | Cartes | Part | Attaque moyenne | Défense moyenne (brute) | Défense moyenne (avec le bonus de rareté) | Connu de… (moyenne) |
 |---|---|---|---|---|---|---|
 | Hors-série | 16 | 0,5 % | 5,6 | 6,4 | 7,9 | 79,7 % |
-| Légendaire | 90 | 3,0 % | 5,6 | 3,7 | 5,6 | 22,8 % |
-| Épique | 210 | 7,0 % | 5,6 | 4,4 | 5,4 | 37,7 % |
-| Rare | 450 | 14,9 % | 5,4 | 4,4 | 5,4 | 48,3 % |
+| Légendaire | 90 | 3,0 % | 5,6 | 3,8 | 5,7 | 22,9 % |
+| Épique | 210 | 7,0 % | 5,6 | 4,4 | 5,4 | 37,8 % |
+| Rare | 450 | 14,9 % | 5,4 | 4,3 | 5,3 | 48,3 % |
 | Peu commune | 750 | 24,9 % | 6,0 | 4,5 | 4,5 | 90,9 % |
 | Commune | 1 500 | 49,7 % | 5,2 | 6,6 | 6,6 | 97,4 % |
 
@@ -112,8 +112,8 @@ Pour être éligible, une carte doit avoir une faction reconnue, une prévalence
 | Type | Cartes | Part |
 |---|---|---|
 | Nom | 1 722 | 57,1 % |
-| Adjectif | 660 | 21,9 % |
-| Verbe | 597 | 19,8 % |
+| Adjectif | 659 | 21,9 % |
+| Verbe | 598 | 19,8 % |
 | Adverbe | 37 | 1,2 % |
 
 | Badge de registre | Cartes | Part |
@@ -123,9 +123,17 @@ Pour être éligible, une carte doit avoir une faction reconnue, une prévalence
 | Littéraire | 12 | 0,4 % |
 | Injurieux | 10 | 0,3 % |
 
-Cartes avec une date de première apparition : 1 037 (34,4 %).
+Cartes avec une date de première apparition : 1 036 (34,4 %).
 
-Coups de cœur ajoutés : procrastiner-verbe, procrastination-nom, sérendipité-nom, zeugma-nom, rodomontade-nom.
+Coups de cœur ajoutés (`data/coups-de-coeur.txt`). Quand la prévalence d'un mot n'est pas mesurée, sa rareté vient de sa seule fréquence, comparée à celle des mots mesurés :
+
+| Coup de cœur | Rareté | Fréquence (par million de mots) | Rareté calculée d'après… |
+|---|---|---|---|
+| procrastiner-verbe | Rare | 0,056 | la fréquence seule (prévalence non mesurée) |
+| procrastination-nom | Peu commune | 0,098 | la fréquence seule (prévalence non mesurée) |
+| sérendipité-nom | Légendaire | 0,006 | la fréquence seule (prévalence non mesurée) |
+| zeugma-nom | Rare | 0,028 | la fréquence seule (prévalence non mesurée) |
+| rodomontade-nom | Épique | 0,022 | la fréquence seule (prévalence non mesurée) |
 
 Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goulu → Latin, reggae → Anglais, rodomont → Italien, rodomontade → Italien, pyroclastique → Grec.
 
@@ -177,7 +185,7 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 ### Légendaire
 
-- **solicitor** *(Nom, Anglais, 5/1, connu de 20 %)* — Avocat d'affaires, au Royaume-Uni et au Canada.
+- **enclosure** *(Nom, Anglais, 5/2, connu de 31 % · attesté : 1804)* — Clôture, notamment dans le contexte seigneurial du début de la Renaissance et des révolutions agricoles.
 - **mousqueterie** *(Nom, Italien, 10/2, connu de 22 %)* — Décharge de plusieurs mousquets, de plusieurs fusils tirés en même temps.
 - **blédard** *(Nom, Arabe, 5/8, connu de 14 % · attesté : Vers 1920)* — Immigré dont les coutumes et la culture différentes sont encore visibles par manque d’intégration.
 - **souchet** *(Nom, Gaulois, 6/7, connu de 20 %)* — Plante monocotylédone de la famille des Cypéracées, dont les diverses espèces croissent dans les endroits humides.
@@ -194,9 +202,9 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 - **miton** *(Nom, Vieux français, 1/7, connu de 27 %)* — Gantelet d’une armure, ou partie du gantelet, qui ne recouvre que la moitié supérieur de la main, laissant les doigts découverts.
 - **carole** *(Nom, Latin, 2/6, connu de 27 % · attesté : XIIᵉ siècle)* — Forme de danse festive et populaire, très répandue au Moyen Âge, se présentant sous forme de chaîne ouverte ou fermée.
 - **mortaiser** *(Verbe, Vieux français, 4/1, connu de 31 % · attesté : 1302)* — Entailler le bois de façon à créer un logement qui reçoit une pièce de bois généralement amincie, appelée le tenon.
-- **shipchandler** *(Nom, Anglais, 10/1, connu de 17 %)* — Avitailleur, fournisseur d’accastillage.
+- **radôme** *(Nom, Anglais, 2/1, connu de 36 %)* — Abri en forme de dôme protégeant une antenne de radar, au sol, au sommet d'un bâtiment ou encore sur un véhicule.
 - **mignard** *(Adjectif, Francique, 4/2, connu de 33 %)* — Qui a de la gentillesse et de l’afféterie.
-- **hammerless** *(Nom, Anglais, 8/1, connu de 15 %)* — Fusil de chasse à percuteur central et sans chiens apparents.
+- **shipchandler** *(Nom, Anglais, 10/1, connu de 17 %)* — Avitailleur, fournisseur d’accastillage.
 
 ### Épique
 
@@ -234,8 +242,8 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 - **ingénier** *(Verbe, Latin, 3/1, connu de 59 %)* — Chercher, tâcher de trouver dans son esprit quelque moyen pour réussir.
 - **babil** *(Nom, Onomatopée, 3/2, connu de 37 %)* — Bavardage enfantin où le plaisir passe avant la volonté d’être compris.
 - **bonard** *(Adjectif, Vieux français, 3/1, connu de 66 %)* — Orthographe alternative de bonnard, bon en plus péjoratif.
-- **étale** *(Adjectif, Francique, 1/10, connu de 83 %)* — Qualifie la mer qui ne monte ni ne descend à la fin du flot ou du jusant.
-- **réversion** *(Nom, Latin, 6/4, connu de 47 %)* — Retour, droit de retour, en vertu duquel les biens dont une personne a disposé en faveur d’une autre lui reviennent quand celle…
+- **étale** *(Adjectif, Francique, 1/9, connu de 83 %)* — Qualifie la mer qui ne monte ni ne descend à la fin du flot ou du jusant.
+- **columbarium** *(Nom, Latin, 9/2, connu de 55 %)* — Édifice sépulcral dans les parois duquel étaient pratiquées des niches destinées à recevoir des urnes mortuaires.
 - **corroder** *(Verbe, Latin, 5/7, connu de 57 % · attesté : 1314)* — Ronger. Il se dit des substances qui, en vertu d’une qualité caustique, rongent, brûlent quelque partie du corps vivant ou de q…
 - **imprescriptible** *(Adjectif, Anglais, 10/1, connu de 81 %)* — Qui n’est pas susceptible de prescription.
 - **gaélique** *(Adjectif, Anglais, 8/6, connu de 63 % · attesté : 1614)* — En rapport avec les langues et la culture celtique d’Irlande et d’Écosse.
@@ -248,59 +256,59 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 - **matraquer** *(Verbe, Espagnol et portugais, 9/8, connu de 72 % · attesté : 1927)* — Marteler, répéter de façon très insistante (une publicité, en particulier), mitrailler.
 - **florentin** *(Adjectif, Italien, 6/9, connu de 86 %)* — Qui présente des caractéristiques propres à cette ville et à ses habitants.
-- **portant** *(Nom, Latin, 3/7, connu de 90 %)* — Chacun des montants en bois qui soutiennent les décors.
+- **embellie** *(Nom, Latin, 5/4, connu de 95 %)* — Amélioration du temps, devenant beau pour un moment, après une bourrasque, un grain violent ou un coup de vent obstiné.
 - **balayette** *(Nom, Gaulois, 10/6, connu de 93 % · attesté : XIXᵉ siècle)* — Petit balai, parfois sans manche.
 - **thermique** *(Nom, Grec, 10/4, connu de 95 %)* — Partie de la physique portant sur tout ce qui concerne la production et l’utilisation de la chaleur.
-- **scripte** *(Nom, Anglais, 5/1, connu de 95 %)* — Responsable de la continuité de la réalisation et de la tenue des documents auprès du réalisateur d’un film ou d’une émission.
-- **rêverie** *(Nom, Latin, 4/2, connu de 90 %)* — État de l’esprit occupé d’idées vagues qui l’intéressent, de pensées riantes ou tristes auxquelles il se laisse aller, où il se…
+- **myopathie** *(Nom, Anglais, 10/1, connu de 90 % · attesté : 1884)* — Maladie neuromusculaire se traduisant par une dégénérescence du tissu musculaire.
+- **cisaille** *(Nom, Latin, 4/5, connu de 91 % · attesté : 1214)* — Outil servant à découper des matériaux durs ou épais.
 - **calque** *(Nom, Italien, 8/8, connu de 91 %)* — Feuille de papier translucide servant à la reproduction d’un dessin par superposition.
-- **corner** *(Nom, Latin, 2/9, connu de 90 %)* — Faute, involontaire ou délibérée, au cours de laquelle un joueur envoie le ballon derrière sa propre ligne de but.
+- **souteneur** *(Nom, Latin, 3/9, connu de 91 %)* — Celui qui, vivant du gain d’un(e) prostitué(e), prétend assurer, en retour, sa protection.
 - **tabatière** *(Nom, Espagnol et portugais, 5/8, connu de 96 %)* — Petite boite où l’on met du tabac à priser.
 - **thermos** *(Nom, Grec, 5/4, connu de 96 %)* — Récipient isolant conservant la température d’un liquide pendant quelques heures.
 - **mystification** *(Nom, Grec, 10/4, connu de 90 % · attesté : Attesté en 1768)* — Action de mystifier, de berner, de duper.
-- **stretching** *(Nom, Anglais, 8/1, connu de 93 %)* — Mise en condition physique sur la base d’étirements.
+- **mohair** *(Nom, Anglais, 4/2, connu de 92 %)* — Laine provenant du poil des chèvres de race angora et permettant la confection d’étoffes soyeuses et légères.
 - **bédouin** *(Adjectif, Arabe, 4/8, connu de 85 %)* — Relatif aux communautés nomades, tribales.
-- **calcaire** *(Adjectif, Latin, 6/8, connu de 95 % · attesté : 1751)* — Qui est de la nature de la chaux, qui contient du carbonate de calcium.
-- **surinvestissement** *(Nom, Latin, 10/5, connu de 100 %)* — Investissement excédentaire par rapport au marché de l'entreprise ou à la valeur du bien dans lequel on investit.
-- **clairsemé** *(Adjectif, Latin, 6/4, connu de 90 %)* — Qui n’est pas serré, en parlant des végétaux, qui n’a pas poussé dru.
-- **vélomoteur** *(Nom, Latin, 7/4, connu de 96 %)* — Administrativement, motocyclette légère dont la cylindrée est comprise entre 50 et 124,9 cm³.
+- **funiculaire** *(Adjectif, Latin, 8/2, connu de 100 % · attesté : 1725)* — Qui est mis en mouvement par un ensemble de câbles ou de cordes.
+- **jonchée** *(Nom, Latin, 9/4, connu de 95 %)* — Arrangement d’herbes, de fleurs et de branchages disposé sur le sol, dans les rues, les églises, etc., lors d’une cérémonie.
+- **miséreux** *(Adjectif, Latin, 9/1, connu de 94 % · Vieilli)* — Qui donne l’impression d’une extrême pauvreté.
+- **parité** *(Nom, Latin, 2/9, connu de 90 %)* — Égalité, similitude entre des objets de même qualité, de même nature.
 - **embusquer** *(Verbe, Vieux français, 9/4, connu de 90 % · attesté : 1611)* — Parvenir à se dérober aux plus dures exigences du service militaire.
-- **filmographie** *(Nom, Anglais, 10/3, connu de 96 %)* — Liste des films d’un acteur, d’un metteur en scène.
+- **dribble** *(Nom, Anglais, 6/3, connu de 92 %)* — Dans les sports de balle, action consistant à esquiver son adversaire tout en conservant le ballon.
 
 ### Commune
 
-- **enlacer** *(Verbe, Latin, 3/6, connu de 93 %)* — Engager dans des cordons, des lacets, des rubans.
-- **lieutenant** *(Nom, Latin, 4/10, connu de 90 %)* — Celui qui est immédiatement au-dessous d’un chef, qu’il supplée dans certains cas.
-- **monde** *(Nom, Latin, 2/10, connu de 96 % · attesté : XIIᵉ siècle)* — Ensemble des choses et des êtres existants.
+- **abstenir** *(Verbe, Latin, 4/6, connu de 90 %)* — S’empêcher de faire quelque chose; se priver de l’usage de quelque chose.
+- **inceste** *(Nom, Latin, 3/8, connu de 90 %)* — Relation sexuelle illicite entre les personnes qui sont parentes ou alliées au degré prohibé par les lois civiles ou religieuses.
+- **décrassage** *(Nom, Latin, 7/6, connu de 100 %)* — Opération consistant à retirer le laitier flottant au-dessus de l'acier en fusion.
 - **tango** *(Nom, Espagnol et portugais, 1/8, connu de 91 %)* — Danse exécutée en couple et originaire du Río de la Plata.
 - **brasserie** *(Nom, Gaulois, 5/8, connu de 100 % · attesté : 1371)* — Société qui fabrique de la bière et la met en marché.
 - **tape** *(Nom, Onomatopée, 1/7, connu de 100 % · Familier)* — Coup de la main, soit ouverte, soit fermée.
 - **bloc** *(Nom, Allemand et néerlandais, 2/10, connu de 100 % · attesté : 1262)* — Masse, gros morceau d’une matière pesante et dure, telle que la pierre, le marbre, le fer non encore travaillés.
-- **débraillé** *(Adjectif, Latin, 6/2, connu de 95 % · attesté : 1694)* — Dépenaillé, dont la tenue vestimentaire est négligée.
-- **survêtement** *(Nom, Latin, 8/2, connu de 100 %)* — Vêtement porté en dessus d’un autre, et qui le couvre entièrement.
-- **syntaxe** *(Nom, Latin, 10/6, connu de 93 % · attesté : 1572)* — Arrangement des mots et construction des propositions dans la phrase selon les règles de la grammaire.
+- **vide** *(Adjectif, Latin, 2/10, connu de 100 %)* — Qui ne contient rien; qui est totalement dépourvu de.
+- **humeur** *(Nom, Latin, 4/10, connu de 100 %)* — État d’esprit plus ou moins durable, particulièrement en ce qu’il est plutôt agréable ou non.
+- **glouton** *(Nom, Latin, 2/8, connu de 100 %)* — Personne ou animal qui mange avidement sa nourriture.
 - **tapisserie** *(Nom, Grec, 6/8, connu de 100 % · attesté : XIVᵉ siècle)* — Ouvrage fait à l’aiguille sur du canevas, avec de la laine, de la soie, etc.
 - **braguette** *(Nom, Gaulois, 6/9, connu de 96 % · attesté : 1534)* — Ouverture sur le devant d’un pantalon, d’une culotte d’homme.
 - **surtout** *(Adverbe, Latin, 2/1, connu de 95 %)* — Principalement; plus que toute autre chose.
 - **corporation** *(Nom, Anglais, 8/6, connu de 95 % · attesté : 1672)* — Ensemble de personnes, considérées comme formant un tout au sens où elles partagent une caractéristique commune, notamment un m…
-- **lave** *(Nom, Italien, 2/9, connu de 90 % · attesté : 1739)* — , Roche en fusion rejetée par un volcan en éruption.
-- **fait** *(Nom, Latin, 2/10, connu de 100 %)* — Toute chose qui arrive, qui a lieu, qui a eu lieu.
+- **macédoine** *(Nom, Italien, 6/6, connu de 100 %)* — Association d’éléments hétéroclites, mosaïque.
+- **hôtellerie** *(Nom, Latin, 6/6, connu de 96 % · attesté : c. 1180)* — Corps de logis destiné à recevoir les étrangers, dans les grandes abbayes.
 - **anthropologie** *(Nom, Grec, 9/9, connu de 92 % · attesté : 1534)* — Branche des sciences qui étudie l'être humain sous tous ses aspects à la fois :
 - **milliardaire** *(Adjectif, Italien, 7/2, connu de 92 %)* — Qui possède un ou plusieurs milliards, qui est extrêmement riche.
 - **calotte** *(Nom, Occitan, 3/10, connu de 94 % · attesté : 1394)* — Espèce de petit bonnet qui ne couvre ordinairement que le haut de la tête et qui est surtout en usage parmi les gens d’Église.
-- **dominer** *(Verbe, Latin, 3/10, connu de 96 % · attesté : Xᵉ siècle)* — Commander souverainement, avoir une puissance absolue.
+- **chatouiller** *(Verbe, Latin, 8/9, connu de 95 %)* — Causer, par des attouchements légers et répétés, un tressaillement qui provoque le rire.
 
 ### Par faction
 
-**Latin** : zoologie *(peu commune)*, formule *(commune)*, apogée *(commune)*, roue *(commune)*, pigne *(rare)*, congénère *(peu commune)*, globalisation *(peu commune)*, cryptique *(rare)*, décharge *(commune)*, roulure *(rare)*, galaxie *(commune)*, obnubiler *(peu commune)*, allier *(commune)*, trifouiller *(commune)*
+**Latin** : grenaille *(peu commune)*, polonais *(commune)*, grammaire *(commune)*, clairvoyance *(commune)*, roulure *(rare)*, largesse *(peu commune)*, soufflerie *(peu commune)*, cryptique *(rare)*, ânerie *(commune)*, cornard *(rare)*, poison *(commune)*, obnubiler *(peu commune)*, ramener *(commune)*, dépuceler *(commune)*
 
 **Vieux français** : fourrière *(commune)*, billevesée *(rare)*, arraisonner *(rare)*, congédier *(commune)*, ramoner *(commune)*, rapetasser *(légendaire)*, crotte *(commune)*, fourrage *(peu commune)*, luger *(rare)*, marquage *(commune)*, papillote *(peu commune)*, degré *(commune)*, tôlier *(peu commune)*, brouet *(épique)*
 
-**Anglais** : skating *(épique)*, soda *(commune)*, prospection *(peu commune)*, électrocution *(peu commune)*, zapping *(peu commune)*, léviter *(peu commune)*, formaliser *(peu commune)*, snober *(commune)*, dumper *(épique)*, techno *(peu commune)*, écrasé *(commune)*, filmographie *(peu commune)*, infinitésimal *(peu commune)*, shipchandler *(légendaire)*
+**Anglais** : skating *(épique)*, soda *(commune)*, techno *(peu commune)*, chips *(peu commune)*, sélecteur *(peu commune)*, léviter *(peu commune)*, formaliser *(peu commune)*, snober *(commune)*, dumper *(épique)*, dérailleur *(peu commune)*, écrasé *(commune)*, dribble *(peu commune)*, infinitésimal *(peu commune)*, radôme *(légendaire)*
 
 **Grec** : mécanicien *(commune)*, presbyte *(peu commune)*, scaphandre *(commune)*, aérodynamique *(peu commune)*, troque *(peu commune)*, radiographie *(commune)*, oxyder *(commune)*, dynamisme *(commune)*, enthousiasme *(commune)*, réhydrater *(commune)*, tapisser *(commune)*, éclectique *(peu commune)*, antipathie *(peu commune)*, prototype *(commune)*
 
-**Italien** : gouache *(peu commune)*, cavalcade *(peu commune)*, mascarade *(commune)*, encadrer *(commune)*, médaillon *(commune)*, intrigue *(commune)*, isolateur *(rare)*, daube *(commune)*, saccager *(commune)*, diva *(commune)*, mousqueterie *(légendaire)*, forcé *(commune)*, pilote *(commune)*, bombarder *(commune)*
+**Italien** : gouache *(peu commune)*, cavalcade *(peu commune)*, contrebasse *(commune)*, encadrer *(commune)*, désinvolture *(commune)*, impolitesse *(commune)*, isolateur *(rare)*, salami *(commune)*, saccager *(commune)*, trombone *(commune)*, mousqueterie *(légendaire)*, forcé *(commune)*, décalcomanie *(commune)*, bombarder *(commune)*
 
 **Francique** : mijoter *(commune)*, patrouille *(commune)*, fourbir *(rare)*, défraîchi *(commune)*, zigounette *(peu commune)*, harder *(rare)*, motte *(peu commune)*, chouette *(commune)*, début *(commune)*, branlée *(commune)*, échevin *(rare)*, estoc *(rare)*, gourme *(rare)*, déguiser *(commune)*
 
@@ -426,51 +434,51 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 | kaiser | Allemand et néerlandais |  | De l’allemand Kaiser, dérivé du latin Caesar (« César, empereur romain »). |
 | panard | Occitan |  | (Adjectif) D’origine incertaine. Viendrait de l’occitan panard (« boiteux ») issu par substitution de suffixe de panet ( |
 | jungle | Anglais |  | De l’anglais jungle, lui-même du hindi जंगल, jaṅgal (« forêt ») ou de l’ourdou جنگل, jaṅgal, de même sens, issu du sansk |
-| antérieur | Latin |  | Du latin ante (« avant »). |
+| neutre | Latin |  | Du latin neuter (« ni l’un, ni l’autre », « indifférent », « neutre »), composé de ne et uter (inter. « qui des deux ? » |
 | barrer | Arabe |  | (Verbe 1) Dénominal de barre.Dérivé de barre, avec le suffixe -er. (Verbe 2) De l’arabe بَرًّا, barran (« dehors »). |
 | immodeste | Latin | modeste | De modeste, avec le préfixe in- modifié en im-. |
 | bonification | Vieux français | bonifier | De bonifier avec le suffixe -ation. |
 | voyeur | Vieux français |  | Dérivé de voir, avec le suffixe -eur, en ancien français veor (« guetteur »). |
-| portant | Latin | porter | Participe présent de porter. |
+| embellie | Latin | embellir | Déverbal de embellir. |
 | endiguer | Allemand et néerlandais | diguer | Verbedérivé de diguer, avec le préfixe en-. |
 | tisserand | Vieux français |  | De l’ancien français tissier (« tisserand ») avec la finale germanique -anc avec un ‹ d › non-étymologique comme dans al |
 | ribote | Vieux français |  | Attesté en ancien français sous la forme riboi, de riber et -ote → voir ribaud et ribaude. Pour « baratte » → voir ribot |
-| arborescence | Latin | arborescent | De arborescent avec le suffixe -ence. |
+| rééquilibrage | Latin | rééquilibrer | Dérivé de rééquilibrer, avec le suffixe -age. |
 | androïde | Grec |  | Du grec ancien ἀνδρός, andrós (« d’homme ») et εἶδος, eîdos (« aspect extérieur »). |
 | varech | Vieux français |  | Du normand, du norrois vágrek (« épave marine, ce qui est rejeté sur la côte »). Apparenté à l'anglais wreck et au néerl |
 | rétribuer | Latin |  | Du latin retribuere, « donner en échange, en retour ». |
 | formaliser | Anglais |  | Au sens pronominal,dérivé de formel, avec le suffixe -iser. Forme transitive, de l’anglais formalize (« rendre formel ») |
 | salade | Occitan |  | De l’occitan salada (« salée »), dérivé de sal (« sel »). |
 | misogynie | Grec |  | Du grec ancien μισογυνία, misogunía → voir misogyne et -ie. |
-| zélote | Latin |  | , adjectif) (1606) Emprunté au latin zelotes (« jaloux »), du grec ancien ζηλωτής, zêlôtḗs (« zélateur »). Le sens chrét |
-| prôner | Latin | prône | Dénominal de prône. |
+| éteignoir | Latin | éteindre | Dérivé du verbe éteindre avec le suffixe -oir. |
+| rencontrer | Latin | contre | Verbedérivé de encontrer, avec le préfixe re-, « venir en face », de encontre. → voir à l’encontre |
 | piperade | Occitan |  | De l'occitan (« salade de piments, omelette de piments »), piper en béarnais, dérivé du latin piper (« poivre »). |
-| sort | Latin |  | Du latin sors, sortis (« tirage au sort », « destin ») qui donne aussi sorte. |
+| impulsion | Latin |  | Du latin impulsio (« choc »). |
 | pourlécher | Latin | pour | (aucune) |
 | yearling | Anglais |  | De l’anglais yearling (« qui a un an »). |
-| hammerless | Anglais |  | De l’anglais (« sans marteau »). |
+| shipchandler | Anglais |  | De l’anglais ship chandler. |
 | rouste | Occitan |  | De l’occitan rosta (« raclée »). |
 | écologique | Allemand et néerlandais | écologie | Dérivé du nom écologie, avec le suffixe -ique. |
 | indigo | Espagnol et portugais |  | Du portugais índigo. |
-| surgir | Latin |  | Du latin surgere (« se lever, se dresser »). Voir aussi sourdre. |
+| compiler | Latin |  | Du latin compilare. |
 | escamoter | Espagnol et portugais |  | Peut-être de l'occitan escamotar ou escambotar, dérivé de escamar « effilocher », lui-même issu du latin squama « écaill |
 | surhomme | Allemand et néerlandais |  | Calque de l’allemand Übermensch,dérivé de homme, avec le préfixe sur-. |
 | pocher | Francique | poche | Dénominal de poche. Le sens de « faire un œil au beurre noir » peut venir aussi de l'ancien verbe poucher, « froisser av |
 | lampée | Onomatopée | lamper | De lamper. |
 | excellentissime | Italien |  | Emprunté à l’italien eccellentissimo, composé de excellent et du suffixe -issime. |
 | marabout | Espagnol et portugais |  | Du portugais maraboto, marabuto, lui-même de l’arabe مُرَابِطٌ (murâbiTũ), celui qui se رَابَطَ (râbaTa) : moine-soldat, |
-| profanation | Latin |  | Du latin profanatio. |
-| délocalisation | Latin | lieu | Ce mot est construit à partir du verbe « localiser » auquel sont ajoutés le préfixe dé- indiquant l’idée de « dehors » e |
+| conjonction | Latin |  | Du latin conjunctio qui donne l’ancien français conjoncion. |
+| superstructure | Latin | structure | Dérivé de structure, avec le préfixe super-. |
 | dynamisme | Grec | dynamique | Dérivé de dynamie, avec le suffixe -isme. |
-| radôme | Anglais | radar | De radar et de dôme. |
-| intimité | Latin | intime | Motdérivé de intime, avec le suffixe -ité. |
+| lurex | Anglais |  | Antonomase du nom de marque Lurex (Marque commerciale) (→ voir Lurex) dérivé de l’anglais lure (« attrait; appât »), ave |
+| momie | Latin |  | Du latin médiéval mummia, lui-même issu de l’arabe مومياء, mūmyāʾ (« mélange de poix et de bitume utilisé pour embaumer  |
 | délayer | Vieux français |  | Origine incertaine : peut-être du latin deliquare (« décanter, transvaser, éclaircir ») avec influence de l’ancien franç |
 | sabir | Espagnol et portugais |  | Altération de l’espagnol saber (« savoir »). |
 | crayonner | Latin | crayon | → voir crayon |
-| liturgie | Latin |  | Du latin liturgia, emprunté au grec ancien λειτουργία, leitourgía (« service pour le bien commun des citoyens »). |
-| historien | Latin | histoire | ystorien — (Fet des Romains). Dérivé savant de histoire avec le suffixe -ien. |
+| stérilisateur | Latin | stériliser | De stériliser avec le suffixe -ateur. |
+| bassine | Latin | bassin | → voir bassin |
 | refendre | Latin | fendre | Dérivé de fendre, avec le préfixe re-. |
-| réfutation | Latin |  | Du latin refutatio. |
+| gargouille | Latin |  | De l’ancien français gargouille, gargoule « gorge, tuyau de descente », composé de garg- (cf. jargon), du latin tardif g |
 | capitulaire | Latin |  | Du latin capitulum (« chapitre ») avec le suffixe -aire. |
 | médiatique | Anglais | média | Dérivé de média, avec le suffixe -ique. |
 | ornière | Vieux français |  | De l’ancien français ordiere (« ornière ») avec l’influence de orne (« rang »), du latin vulgaire *orbitaria → voir orbi |

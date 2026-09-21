@@ -63,7 +63,10 @@ process.stdout.write('\n');
 console.log('3/5 Fabrication des cartes (origines, stats, rareté)…');
 const { corrections, erreurs: correctionsIllisibles } = lireCorrections(chemin('data', 'corrections-factions.txt'));
 for (const ligne of correctionsIllisibles) console.warn(`    ⚠️ Ligne ignorée dans corrections-factions.txt (faction inconnue ?) : ${ligne}`);
-const cartes = assemblerCartes(mots, CONFIG, corrections);
+// Les coups de cœur comptent dès le calcul de la rareté : ceux dont la prévalence n'est pas mesurée
+// sont rangés parmi les mots mesurés (voir etapes/rarete.ts).
+const coupsDeCoeur = lireListe(chemin('data', 'coups-de-coeur.txt'));
+const cartes = assemblerCartes(mots, CONFIG, corrections, coupsDeCoeur);
 console.log(`    ${cartes.length.toLocaleString('fr-FR')} cartes possibles`);
 
 // Rang ultime : les mots qui détiennent un record, plus ceux de la liste de Raphaël (« mot = titre »).
@@ -83,7 +86,6 @@ console.log(`    ${horsSerie.length} cartes Hors-série`);
 
 console.log(`4/5 Composition de l'Édition ${CONFIG.edition.numero}…`);
 const exclusions = lireListe(chemin('data', 'exclusions.txt'));
-const coupsDeCoeur = lireListe(chemin('data', 'coups-de-coeur.txt'));
 const composition = composerEdition(cartes, { exclusions, coupsDeCoeur }, CONFIG.edition, CONFIG.rarete.parts);
 const journal = composition.journal;
 // Les cartes Hors-série s'ajoutent aux cartes ordinaires, sans prendre la place d'aucune.

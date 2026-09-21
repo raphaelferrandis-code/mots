@@ -35,7 +35,7 @@ const LONGUEUR_MAXIMALE_ETYMOLOGIE = 400;
 // Le Wiktionnaire écrit « Siècle à préciser » quand la date n'est pas connue.
 const DATE_INCONNUE = /à préciser/i;
 
-export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFIG, corrections: Map<string, string> = new Map()): CarteComplete[] {
+export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFIG, corrections: Map<string, string> = new Map(), coupsDeCoeur: Set<string> = new Set()): CarteComplete[] {
   const tous = [...mots.values()];
   // Les mots sans définition ne font pas de cartes, mais peuvent transmettre leur origine à leurs dérivés.
   const origines = resoudreOrigines(tous.map((m) => ({ cle: cle(m.mot, m.nature), mot: m.mot, etymologies: m.etymologies, base: m.lexique.base })), corrections);
@@ -48,6 +48,8 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
   const raretes = attribuerRaretes(
     jouables.map((m) => ({ id: idDeCarte(m.mot, m.nature), frequence: m.lexique.frequence, prevalence: m.lexique.prevalence, avis: m.lexique.avis })),
     config.rarete,
+    // Un coup de cœur vaut pour toutes les natures du mot.
+    new Set(jouables.filter((m) => coupsDeCoeur.has(m.mot)).map((m) => idDeCarte(m.mot, m.nature))),
   );
 
   return jouables.map((m, i) => {

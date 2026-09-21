@@ -1,8 +1,12 @@
 # COUPS DE CŒUR
 # Les mots écrits ici entrent d'office dans l'édition, même si les chercheurs n'ont pas mesuré
 # combien de gens les connaissent. Un mot par ligne. Les lignes qui commencent par # sont ignorées.
+#
+# Leur rareté se calcule toute seule. Quand les chercheurs n'ont pas mesuré le mot, elle vient de
+# sa seule fréquence, comparée à celle des mots mesurés : moins le mot est utilisé, plus il est rare.
+#
 # Après une modification : npm run pipeline, puis relire la fin du §4 de data/rapport.md
-# (il indique les mots ajoutés, et ceux qu'il est impossible d'ajouter).
+# (il indique les mots ajoutés avec leur rareté, et ceux qu'il est impossible d'ajouter).
 
 procrastiner
 procrastination

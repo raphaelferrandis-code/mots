@@ -151,9 +151,17 @@ export function redigerRapport(d: DonneesDuRapport): string {
   L.push(...tableau(['Badge de registre', 'Cartes', 'Part'], parTailleDecroissante(compter(edition, (c) => c.index.registre)).map(([r, n]) => [r, n, pourcent(n, edition.length)])));
   const datees = edition.filter((c) => c.details.attestation).length;
   L.push(`Cartes avec une date de première apparition : ${nombre(datees)} (${pourcent(datees, edition.length)}).`, '');
-  L.push(`Coups de cœur ajoutés : ${journal.coupsDeCoeurAjoutes.length ? journal.coupsDeCoeurAjoutes.join(', ') : 'aucun'}.`);
-  if (journal.coupsDeCoeurImpossibles.length) L.push('', 'Coups de cœur impossibles à ajouter :', ...journal.coupsDeCoeurImpossibles.map((m) => `- ${m}`));
-  L.push('', `Corrections d'origine faites à la main (\`data/corrections-factions.txt\`) : ${d.corrections.size ? [...d.corrections].map(([mot, origine]) => `${mot} → ${origine}`).join(', ') : 'aucune'}.`);
+  const coupsDeCoeur = journal.coupsDeCoeurAjoutes.flatMap((id) => edition.filter((c) => c.index.id === id));
+  if (coupsDeCoeur.length === 0) L.push('Coups de cœur ajoutés : aucun.', '');
+  else {
+    L.push("Coups de cœur ajoutés (`data/coups-de-coeur.txt`). Quand la prévalence d'un mot n'est pas mesurée, sa rareté vient de sa seule fréquence, comparée à celle des mots mesurés :", '');
+    L.push(...tableau(
+      ['Coup de cœur', 'Rareté', 'Fréquence (par million de mots)', "Rareté calculée d'après…"],
+      coupsDeCoeur.map((c) => [c.index.id, c.index.rarete, c.details.frequence, c.prevalenceMesuree ? `la fréquence et la prévalence (connu de ${c.details.prevalence} %)` : 'la fréquence seule (prévalence non mesurée)']),
+    ));
+  }
+  if (journal.coupsDeCoeurImpossibles.length) L.push('Coups de cœur impossibles à ajouter :', ...journal.coupsDeCoeurImpossibles.map((m) => `- ${m}`), '');
+  L.push(`Corrections d'origine faites à la main (\`data/corrections-factions.txt\`) : ${d.corrections.size ? [...d.corrections].map(([mot, origine]) => `${mot} → ${origine}`).join(', ') : 'aucune'}.`);
   if (d.correctionsIllisibles.length) L.push('', '⚠️ Lignes ignorées dans ce fichier (faction inconnue ?) :', ...d.correctionsIllisibles.map((l) => `- ${l}`));
   L.push('');
 

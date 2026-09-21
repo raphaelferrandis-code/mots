@@ -135,8 +135,8 @@ export const EQUILIBRAGE = {
     // joueur, de ce nombre de crans (Commune → Peu commune → Rare → Épique → Légendaire) : plus forts, et surtout plus
     // difficiles à parer. C'est le réglage qui pèse le plus sur la difficulté. (1,5 = un cran ou deux, au hasard.)
     // Victoires mesurées, avec une collection moyenne, en Facile / Normal / Difficile :
-    //   joueur hésitant 91 % / 57 % / 9 % · bon lecteur 99 % / 87 % / 44 % · expert 100 % / 95 % / 77 %
-    //   · bon lecteur qui connaît son deck par cœur 100 % / 91 % / 73 %.
+    //   joueur hésitant 92 % / 57 % / 9 % · bon lecteur 99 % / 88 % / 43 % · expert 100 % / 95 % / 77 %
+    //   · bon lecteur qui connaît son deck par cœur 100 % / 92 % / 72 %.
     cransDeRareteDeLOrdinateur: { 'Facile': 0, 'Normal': 1, 'Difficile': 2 },
     // Dans cette rareté, il reçoit des cartes de force comparable à celles du joueur (force = attaque + défense).
     // Écart visé, carte par carte : positif = un peu plus fortes. Pèse surtout face aux débutants, dont les cartes sont faibles.
