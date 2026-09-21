@@ -137,6 +137,14 @@ export function changerDePseudonyme(pseudo: string): void {
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, pseudo } });
 }
 
+// Le joueur quitte les joutes : pseudonyme, cote et compteurs de joutes repartent de zéro sur l'appareil.
+// Ce qu'il sait de ses mots (questions réussies, parades) lui reste : cela sert aussi à l'entraînement.
+// Le profil gardé par le serveur se supprime à part (src/services/joutes.ts).
+export function quitterLesJoutes(): void {
+  if (partie.etat !== 'prete') return;
+  enregistrer({ ...partie.sauvegarde, joutes: nouvelleSauvegarde(maintenant(), 0).joutes });
+}
+
 export function recevoirLaCoteDuServeur(cote: number): void {
   if (partie.etat !== 'prete' || partie.sauvegarde.joutes.cote === cote) return;
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });

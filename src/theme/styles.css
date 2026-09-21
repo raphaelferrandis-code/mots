@@ -247,6 +247,10 @@ button {
 .joute__pseudo { align-self: flex-start; font-size: 0.88rem; }
 .joute__refus { margin: 0; color: var(--accent); font-size: 0.92rem; }
 .joute__saisie { display: grid; gap: 8px; }
+.joute__accueil > * { max-width: 640px; }
+
+/* ── Confidentialité : une page à lire, en lignes courtes ───────────────── */
+.confidentialite .rubrique > * { max-width: 72ch; }
 .joute__saisie label { display: grid; gap: 2px; }
 .joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 4px; background: var(--carte-fond); width: 100%; }
 .joute__saisie input[aria-invalid='true'] { border-color: var(--accent); }

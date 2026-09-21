@@ -10,6 +10,7 @@ import { coteApres, ligueDe } from '../jeu/joute.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { LONGUEUR_DU_PSEUDO, examinerLePseudo } from '../jeu/pseudo.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
+import { lien } from '../navigation/routes.ts';
 import { RARETES } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
@@ -54,9 +55,14 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const [refus, setRefus] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
 
-  // Première visite (ou pseudonyme devenu inacceptable) : on en propose un, tiré des mots du jeu ; libre à lui d'en changer.
-  const pseudoValable = pseudo !== '' && examinerLePseudo(pseudo, PSEUDOS_INTERDITS).accepte;
-  useEffect(() => { if (!pseudoValable) void tirerUnPseudonyme().then(changerDePseudonyme); }, [pseudoValable]);
+  // Le joueur rejoint les joutes en validant son pseudonyme : avant cela, rien n'est enregistré ni envoyé au serveur
+  // (il est prévenu de ce qui sera envoyé : voir la page Confidentialité). Un pseudonyme vide = pas encore inscrit.
+  const inscrit = pseudo !== '';
+  const pseudoValable = inscrit && examinerLePseudo(pseudo, PSEUDOS_INTERDITS).accepte;
+  // Pseudonyme devenu inacceptable (la liste des mots refusés a changé) : le jeu lui en donne un autre, libre à lui d'en changer.
+  useEffect(() => { if (inscrit && !pseudoValable) void tirerUnPseudonyme().then(changerDePseudonyme); }, [inscrit, pseudoValable]);
+  // Pas encore inscrit : le jeu lui en propose un, tiré de ses mots, à garder ou à remplacer.
+  useEffect(() => { if (!inscrit && saisie === null) void tirerUnPseudonyme().then((tire) => setSaisie((actuelle) => actuelle ?? tire)); }, [inscrit, saisie]);
 
   // Le profil est publié à chaque visite et à chaque changement de pseudonyme ou de deck ; le service rend la cote s'il la tient.
   const cleDuProfil = `${pseudo}|${sauvegarde.deck.join(',')}`;
@@ -89,6 +95,35 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const cartes = edition.etat === 'pret' ? new Map(edition.donnees.cartes.map((c) => [c.id, c])) : null;
   const rang = classement.etat === 'pret' ? classement.donnees : null;
 
+  const formulaire = (
+    <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
+      <label htmlFor="pseudo"><strong>Pseudo public</strong><span className="texte-doux petit">{LONGUEUR_DU_PSEUDO.minimum}–{LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces ou tirets.</span></label>
+      <input id="pseudo" type="text" value={saisie ?? ''} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
+      {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
+      <div className="rangee-de-boutons">
+        <button type="submit" className="bouton" disabled={envoi || saisie === null}>{envoi ? 'Vérification…' : inscrit ? 'Valider' : 'Rejoindre les joutes'}</button>
+        <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => void tirerUnPseudonyme().then((tire) => { setSaisie(tire); setRefus(null); })}>M'en proposer un</button>
+        {pseudoValable && <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => { setSaisie(null); setRefus(null); }}>Annuler</button>}
+      </div>
+    </form>
+  );
+
+  if (!inscrit) {
+    return (
+      <div className="panneaux joutes">
+        <section className="rubrique panneaux__large joute__accueil">
+          <h2>Rejoindre les joutes classées</h2>
+          <p>Affronte le double d'autres joueurs — leur deck, joué par l'ordinateur — et grimpe au classement, de la ligue Apprenti à la ligue Immortel.</p>
+          <p className="texte-doux petit">
+            En rejoignant les joutes, ton pseudonyme, ta cote et ton deck sont envoyés au serveur du jeu. Les autres joueurs voient ton pseudonyme,
+            ta cote et les raretés de ton deck. Tu peux tout supprimer quand tu veux : <a href={lien({ ecran: 'confidentialite' })}>page Confidentialité</a>.
+          </p>
+          {formulaire}
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="panneaux joutes">
       <section className="rubrique">
@@ -108,18 +143,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             {publication.etat === 'erreur' && <p className="joute__refus" role="alert">{publication.message}</p>}
             <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Modifier le pseudo</button>
           </>
-        ) : (
-          <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
-            <label htmlFor="pseudo"><strong>Pseudo public</strong><span className="texte-doux petit">{LONGUEUR_DU_PSEUDO.minimum}–{LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces ou tirets.</span></label>
-            <input id="pseudo" type="text" value={saisie} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
-            {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
-            <div className="rangee-de-boutons">
-              <button type="submit" className="bouton" disabled={envoi}>{envoi ? 'Vérification…' : 'Valider'}</button>
-              <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => void tirerUnPseudonyme().then((tire) => { setSaisie(tire); setRefus(null); })}>M'en proposer un</button>
-              {pseudoValable && <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => { setSaisie(null); setRefus(null); }}>Annuler</button>}
-            </div>
-          </form>
-        )}
+        ) : formulaire}
       </section>
 
       <section className="rubrique">

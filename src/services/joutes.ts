@@ -17,6 +17,7 @@ import type { ProfilDeJoute } from '../jeu/joute.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import { cleDuPseudo, examinerLePseudo } from '../jeu/pseudo.ts';
 import { chargerEdition } from './cartes.ts';
+import { quitterLesJoutes, toutEffacer } from './partie.ts';
 import { creerLeClient } from './supabase.ts';
 import type { Session } from './supabase.ts';
 
@@ -36,6 +37,10 @@ export type ServeurDeJoutes = {
   commencer(adversaire: ProfilDeJoute): Promise<number | null>;
   terminer(ticket: number | null, resultat: Resultat): Promise<{ avant: number; apres: number } | null>;
   classement(pseudo: string, cote: number): Promise<Classement>;
+  // Cet appareil a-t-il un compte sur le serveur ? (Il peut en rester un alors que la partie a été effacée.)
+  aUnCompte(): boolean;
+  // Le droit à l'effacement : retire du serveur le profil du joueur, ses joutes et son compte anonyme.
+  supprimer(): Promise<void>;
 };
 
 export async function tirerUnPseudonyme(): Promise<string> {
@@ -62,6 +67,8 @@ const serveurLocal: ServeurDeJoutes = {
 
   commencer: async () => null,
   terminer: async () => null,
+  aUnCompte: () => false, // sans serveur, rien ne quitte l'appareil
+  supprimer: async () => {},
 
   async classement(pseudo, cote) {
     const autres = await joueursMaison();
@@ -109,6 +116,15 @@ function serveurSupabase(): ServeurDeJoutes {
     commencer: (adversaire) => client.appeler<number>('commencer_une_joute', { p_adversaire: adversaire.id }),
     terminer: (ticket, resultat) => client.appeler<{ avant: number; apres: number }>('terminer_une_joute', { p_ticket: ticket, p_resultat: resultat }),
     classement: () => client.appeler<Classement>('classement'),
+
+    aUnCompte: () => client.aUneSession(),
+
+    // Un appareil sans compte n'a jamais rien envoyé : on n'en ouvre pas un pour le supprimer aussitôt.
+    async supprimer() {
+      if (!client.aUneSession()) return;
+      await chacunSonTour(() => client.appeler<null>('supprimer_mon_profil'));
+      client.oublierLaSession();
+    },
   };
 }
 
@@ -122,3 +138,15 @@ function vraiServeurPermis(): boolean {
 
 const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '';
 export const serveurDeJoutes: ServeurDeJoutes = serveurRegle && vraiServeurPermis() ? serveurSupabase() : serveurLocal;
+
+// Quitter les joutes, ou effacer toute sa partie : le serveur d'abord. S'il ne répond pas, rien n'est effacé
+// sur l'appareil, et le joueur peut réessayer — sinon il perdrait le moyen de retirer son profil du classement.
+export async function supprimerMonProfilDeJoute(): Promise<void> {
+  await serveurDeJoutes.supprimer();
+  quitterLesJoutes();
+}
+
+export async function effacerLaPartieEtLeProfil(): Promise<void> {
+  await serveurDeJoutes.supprimer();
+  await toutEffacer();
+}

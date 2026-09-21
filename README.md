@@ -107,7 +107,7 @@ Après une modification, lancer `npm run build` et `npm test`, puis vérifier l�
 | `src/partage/` | Ce que le pipeline et le jeu ont en commun (format des cartes, valeur des lettres, reconnaissance d'un mot et de sa famille dans une définition) |
 | `src/config/` | Les chiffres d'équilibrage du jeu |
 | `src/theme/` | **Le thème** du site : `theme.css` contient les couleurs, polices et mesures ; `styles.css` la mise en page |
-| `src/ecrans/` | Un fichier par écran (Accueil, Ouverture de paquet, Collection, Fiche carte, Deck, Duel, Réglages ; et `Galerie`, une page de contrôle des timbres visible seulement avec `npm run dev`, à l'adresse `#/galerie`) |
+| `src/ecrans/` | Un fichier par écran (Accueil, Ouverture de paquet, Collection, Fiche carte, Deck, Duel, Réglages, Confidentialité ; et `Galerie`, une page de contrôle des timbres visible seulement avec `npm run dev`, à l'adresse `#/galerie`) |
 | `src/composants/` | Les éléments réutilisés : la barre de navigation, les en-têtes |
 | `src/composants/carte/` | **Le timbre** : son dessin (`Carte.tsx`, `timbre.css`), ses cachets d'origine et de maîtrise (`Tampon.tsx`), son motif calculé à partir du mot (`decor.ts`) et les illustrations des timbres Hors-série (`vignettes.tsx`) |
 | `src/navigation/` | Les adresses des écrans (`#/collection`, `#/carte/callipyge-adj`…) |

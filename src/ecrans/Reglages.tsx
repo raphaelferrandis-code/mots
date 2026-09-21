@@ -4,8 +4,10 @@ import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
+import { lien } from '../navigation/routes.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
-import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffacer } from '../services/partie.ts';
+import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
+import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
 
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
@@ -57,9 +59,16 @@ export function Reglages() {
     }
   };
 
-  const effacer = (): void => {
-    if (!window.confirm('Effacer toute ta partie (collection, Encre, paquets) sur cet appareil ? Cette action est définitive.')) return;
-    void toutEffacer().then(() => setMessage('Partie effacée : tu repars de zéro, avec trois paquets.'));
+  // Le profil de joute gardé par le serveur part avec la partie. Si le serveur ne répond pas, rien n'est effacé :
+  // le joueur garderait sinon un profil au classement sans plus pouvoir le retirer.
+  const effacer = async (): Promise<void> => {
+    if (!window.confirm('Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ? Cette action est définitive.')) return;
+    try {
+      await effacerLaPartieEtLeProfil();
+      setMessage('Partie effacée : tu repars de zéro, avec trois paquets.');
+    } catch (erreur) {
+      setMessage(`${erreur instanceof Error ? erreur.message : String(erreur)} Rien n'a été effacé : réessaie dans un moment.`);
+    }
   };
 
   const dernierExport = sauvegarde.dernierExport ? new Date(sauvegarde.dernierExport.le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
@@ -114,7 +123,13 @@ export function Reglages() {
             <input ref={fichier} type="file" accept="application/json,.json" hidden onChange={(e) => void importer(e.target.files?.[0])} />
           </div>
           {message && <p role="status" className="petit">{message}</p>}
-          <button type="button" className="bouton bouton--danger" onClick={effacer}>Effacer ma partie</button>
+          <button type="button" className="bouton bouton--danger" onClick={() => void effacer()}>Effacer ma partie</button>
+        </section>
+
+        <section className="rubrique">
+          <h2>Confidentialité</h2>
+          <p className="petit">Ta partie reste sur cet appareil. Seules les joutes classées envoient des données à un serveur.</p>
+          <a className="bouton bouton--discret" href={lien({ ecran: 'confidentialite' })}>Ce que le jeu garde, et comment l'effacer</a>
         </section>
 
         <details className="rubrique repliable">
@@ -165,7 +180,8 @@ export function Reglages() {
           </p>
           <p className="texte-doux petit">
             Les fichiers de cartes du jeu, tirés de ces deux sources, sont eux aussi sous licence CC BY-SA 4.0.
-            Ce jeu ne collecte aucune donnée personnelle et n'utilise aucun outil de mesure d'audience.
+            Ce jeu n'utilise ni publicité ni outil de mesure d'audience ; ce qu'il garde est décrit à la page{' '}
+            <a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a>.
           </p>
         </details>
       </div>

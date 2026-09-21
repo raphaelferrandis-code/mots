@@ -46,7 +46,7 @@ Le passage au serveur ne touche ni aux règles ni aux écrans : il suffit de rem
 
 - **Pseudonymes choisis librement** (décision de Raphaël), de 3 à 16 caractères, en lettres latines, chiffres, espaces, tirets et apostrophes. Un **filtre** refuse les mots grossiers, haineux ou sexuels, et ceux qui feraient passer le joueur pour un responsable du jeu ; il déjoue les ruses courantes (accents, majuscules, lettres répétées ou séparées, chiffres mis pour des lettres). Le jeu propose aussi un pseudonyme tiré de ses mots (« Frangipane 43 »). **Limites à connaître :** aucun filtre n'est parfait (un mot court collé à un autre en minuscules, « groscon », passe) ; un joueur peut écrire son vrai nom ; et un pseudonyme choquant qui passerait au travers se corrige à la main dans la base (voir le guide). La liste des mots est dans `src/config/pseudos-interdits.ts`.
 - Ce que le serveur garde : un identifiant technique, le pseudonyme, la cote, le deck, des compteurs de bonnes réponses. **Ni nom, ni e-mail, ni localisation.**
-- Il faudra tout de même une **page « Confidentialité »** dans le jeu (ce qui est gardé, pourquoi, comment tout effacer) et un bouton « Supprimer mon profil de joute ». À rédiger avec le serveur.
+- **Fait le 21/09/2026 :** le joueur **rejoint** les joutes par un clic (« Rejoindre les joutes »), après avoir lu ce qui sera envoyé : avant cela, rien ne quitte son appareil et aucun compte n'est créé. La **page « Confidentialité »** du jeu (`#/confidentialite`) dit ce qui est gardé, pourquoi et par qui, et porte le bouton **« Supprimer mon profil de joute »** (profil, joutes et compte anonyme effacés ; vérifié contre le vrai serveur). « Effacer ma partie » supprime aussi ce profil ; si le serveur ne répond pas, rien n'est effacé et le joueur peut réessayer. Cette page doit rester fidèle à `serveur/1-structure.sql` : la mettre à jour avec lui.
 - La question des **mineurs** reste celle du §10.3 de `BRIEF-v2.md` (public visé). Le jeu ne demande pas d'e-mail, mais le pseudonyme est désormais un texte libre : un enfant peut y écrire son vrai nom. À trancher avec le public visé.
 
 ## 5. La triche : ce qu'on peut promettre, et ce qu'on ne peut pas
@@ -81,7 +81,7 @@ Vérifié sur leurs sites le 21 septembre 2026 (ces offres changent : à revéri
 2. coller dans son tableau de bord le script que je fournirai (il crée les tables, les règles d'accès et le calcul de la cote) ;
 3. recopier dans un fichier du jeu les deux valeurs **publiques** du projet (son adresse et sa clé publique — elles sont faites pour être visibles, contrairement à la clé secrète, qui ne doit jamais quitter le tableau de bord).
 
-**Claude** : les scripts de la base (`serveur/`), le branchement du jeu (`src/services/joutes.ts`, `src/services/supabase.ts`), les tests, le guide pas à pas (`GUIDE-supabase.md`) — faits. Restent, après la mise en route : la page Confidentialité et le bouton « Supprimer mon profil » (la fonction existe déjà côté serveur). Quand le serveur ne répond pas, les joutes affichent un message et l'entraînement reste disponible.
+**Claude** : les scripts de la base (`serveur/`), le branchement du jeu (`src/services/joutes.ts`, `src/services/supabase.ts`), les tests, le guide pas à pas (`GUIDE-supabase.md`) — faits. La page Confidentialité et le bouton « Supprimer mon profil de joute » sont faits (§4). Quand le serveur ne répond pas, les joutes affichent un message et l'entraînement reste disponible.
 
 ## 8. Décisions à prendre
 

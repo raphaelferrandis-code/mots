@@ -87,4 +87,22 @@ describe('le client Supabase', () => {
     const ferme = fauxMonde(() => ({ statut: 422, corps: { msg: 'Anonymous sign-ins are disabled' } }));
     await assert.rejects(ferme.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.message.includes("n'accepte pas"));
   });
+
+  it("sait si l'appareil a un compte, et l'oublie après la suppression du profil (réponse vide du serveur)", async () => {
+    const monde = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 204 }));
+    assert.equal(monde.client.aUneSession(), false, "avant toute joute, rien n'a été envoyé : pas de compte");
+    assert.equal(monde.appels.length, 0, 'poser la question ne crée pas de compte');
+
+    await monde.client.appeler('publier_mon_profil');
+    assert.equal(monde.client.aUneSession(), true);
+
+    assert.equal(await monde.client.appeler<null>('supprimer_mon_profil'), null);
+    monde.client.oublierLaSession();
+    assert.equal(monde.client.aUneSession(), false);
+    assert.equal(monde.session(), null);
+
+    // Revenir aux joutes plus tard ouvre un compte neuf, sans lien avec l'ancien.
+    await monde.client.appeler('publier_mon_profil');
+    assert.equal(monde.appels.filter((a) => a.adresse.includes('/signup')).length, 2);
+  });
 });

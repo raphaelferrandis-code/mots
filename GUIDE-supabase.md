@@ -135,7 +135,7 @@ drop table if exists public.joutes, public.profils, public.mots_interdits cascad
 
 ## Ce que le serveur garde sur un joueur
 
-Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, et des compteurs de bonnes réponses. **Ni nom, ni adresse e-mail, ni localisation.** Avant d'ouvrir le jeu au public, il faudra une page « Confidentialité » dans le jeu et un bouton « Supprimer mon profil » (la fonction existe déjà côté serveur : `supprimer_mon_profil`). C'est la prochaine étape après la mise en route.
+Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, et des compteurs de bonnes réponses. **Ni nom, ni adresse e-mail, ni localisation.** Le jeu a une page « Confidentialité » (dans les Réglages) qui l'explique au joueur, avec un bouton « Supprimer mon profil de joute » : il efface le profil, les joutes et le compte anonyme (fonction `supprimer_mon_profil`).
 
 ## Ce que ce classement vaut
 

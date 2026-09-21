@@ -3,6 +3,7 @@ import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
 import { Accueil } from './ecrans/Accueil.tsx';
 import { Collection } from './ecrans/Collection.tsx';
+import { Confidentialite } from './ecrans/Confidentialite.tsx';
 import { Deck } from './ecrans/Deck.tsx';
 import { Duel } from './ecrans/Duel.tsx';
 import { FicheCarte } from './ecrans/FicheCarte.tsx';
@@ -21,6 +22,7 @@ function Ecran({ route }: { route: Route }) {
     case 'deck': return <Deck />;
     case 'duel': return <Duel />;
     case 'reglages': return <Reglages />;
+    case 'confidentialite': return <Confidentialite />;
     case 'galerie': return import.meta.env.DEV ? <Galerie /> : <Accueil />;
   }
 }

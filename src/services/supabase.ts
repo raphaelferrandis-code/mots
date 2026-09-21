@@ -74,10 +74,17 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       if (erreur?.code === 'P0001' && erreur.message) throw new ErreurDuServeur(erreur.message, true);
       throw new ErreurDuServeur(PANNE, false);
     }
-    return (reponse.status === 204 ? null : await reponse.json()) as T;
+    // Une fonction qui ne rend rien (supprimer_mon_profil) répond sans contenu.
+    const texte = reponse.status === 204 ? '' : await reponse.text();
+    return (texte === '' ? null : JSON.parse(texte)) as T;
   }
 
-  return { appeler };
+  // Cet appareil a-t-il un compte ? Tant qu'il n'en a pas, rien n'a jamais été envoyé au serveur.
+  const aUneSession = (): boolean => exterieur.lireLaSession() !== null;
+  // Après la suppression du compte : l'appareil oublie sa session (la prochaine visite en ouvrirait un neuf).
+  const oublierLaSession = (): void => exterieur.ecrireLaSession(null);
+
+  return { appeler, aUneSession, oublierLaSession };
 }
 
 export type ClientSupabase = ReturnType<typeof creerLeClient>;
