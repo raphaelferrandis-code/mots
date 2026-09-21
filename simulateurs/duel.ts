@@ -29,6 +29,8 @@ const JOUEURS: { nom: string; connaissance: Connaissance }[] = [
   { nom: 'Joueur hésitant', connaissance: { 'Commune': 0.8, 'Peu commune': 0.7, 'Rare': 0.55, 'Épique': 0.45, 'Légendaire': 0.35, 'Hors-série': 0.5 } },
   { nom: 'Bon lecteur', connaissance: { 'Commune': 0.95, 'Peu commune': 0.9, 'Rare': 0.8, 'Épique': 0.65, 'Légendaire': 0.5, 'Hors-série': 0.7 } },
   { nom: 'Expert des mots', connaissance: { 'Commune': 0.99, 'Peu commune': 0.97, 'Rare': 0.92, 'Épique': 0.85, 'Légendaire': 0.75, 'Hors-série': 0.9 } },
+  // Le joueur qui rejoue toujours les mêmes dix cartes finit par connaître toutes leurs définitions : l'épreuve ne l'arrête plus.
+  { nom: 'Connaît son deck par cœur', connaissance: { 'Commune': 1, 'Peu commune': 1, 'Rare': 1, 'Épique': 1, 'Légendaire': 1, 'Hors-série': 1 } },
 ];
 const BON_LECTEUR = JOUEURS[1];
 

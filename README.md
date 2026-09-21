@@ -47,7 +47,7 @@ Toutes les commandes se lancent depuis le dossier du projet.
 | `npm run verifier` | Vérifie la cohérence de tout le code (site et pipeline) sans rien fabriquer. | quelques secondes |
 | `npm run sources` | Télécharge les deux bases de données (735 Mo au total) dans `data/brut/`. Ne retélécharge pas un fichier déjà présent. | quelques minutes, selon la connexion |
 | `npm run pipeline` | **Fabrique les cartes** : la base complète, l'Édition 1, et le rapport à relire. | environ 30 secondes |
-| `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 1 minute |
+| `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 2 à 3 minutes |
 | `npm run simulation:collection` | Simule des mois d'ouverture de paquets pour trois profils de joueurs, et quelques variantes de réglages. Résultat dans `data/simulation-collection.md`. | 2 secondes |
 | `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |

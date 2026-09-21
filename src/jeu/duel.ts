@@ -142,9 +142,22 @@ export function deckDeLOrdinateur(deckDuJoueur: readonly CarteIndex[], edition: 
     // Une carte au hasard parmi les quelques cartes de cette rareté dont la force est la plus proche de la cible.
     // (Prendre « toutes les cartes à un point près » affaiblirait l'ordinateur face aux meilleurs decks : près du
     // sommet, il existe bien plus de cartes un peu moins fortes que de cartes un peu plus fortes.)
-    const candidates = melanger(edition.filter((c) => c.rarete === modele.rarete && !prises.has(c.id)), hasard)
-      .sort((a, b) => Math.abs(forceDeLaCarte(a) - cible) - Math.abs(forceDeLaCarte(b) - cible))
-      .slice(0, regles.cartesProchesPourLOrdinateur);
+    // On range les cartes par écart à la cible, puis on prend les écarts du plus petit au plus grand ; seul le dernier
+    // groupe, s'il déborde, est départagé au hasard. (Bien plus rapide que de trier toute l'édition à chaque carte.)
+    const parEcart = new Map<number, CarteIndex[]>();
+    for (const c of edition) {
+      if (c.rarete !== modele.rarete || prises.has(c.id)) continue;
+      const ecart = Math.abs(forceDeLaCarte(c) - cible);
+      const groupe = parEcart.get(ecart);
+      if (groupe) groupe.push(c); else parEcart.set(ecart, [c]);
+    }
+    const candidates: CarteIndex[] = [];
+    for (const ecart of [...parEcart.keys()].sort((a, b) => a - b)) {
+      const manquantes = regles.cartesProchesPourLOrdinateur - candidates.length;
+      if (manquantes <= 0) break;
+      const groupe = parEcart.get(ecart)!;
+      candidates.push(...(groupe.length <= manquantes ? groupe : melanger(groupe, hasard).slice(0, manquantes)));
+    }
     const carte = candidates.length > 0 ? choisir(candidates, hasard) : modele;
     prises.add(carte.id);
     return carte;
