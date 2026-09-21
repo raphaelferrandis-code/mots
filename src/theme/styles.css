@@ -220,6 +220,24 @@ button {
 
 /* ── Duel ───────────────────────────────────────────────────────────────── */
 
+/* Les deux modes de duel : entraînement, joutes classées. */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 1px solid var(--filet); border-radius: var(--rayon); background: var(--papier-fonce); }
+.modes button { display: grid; gap: 1px; padding: 8px 6px; border: 0; border-radius: 9px; background: transparent; font: inherit; color: var(--encre-douce); cursor: pointer; }
+.modes button small { font-family: var(--police-mention); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.modes button[aria-selected='true'] { background: var(--carte-fond); color: var(--encre); font-weight: 700; box-shadow: var(--ombre); }
+
+/* Joutes : la cote, le classement. */
+.joute__cote { font-family: var(--police-mention); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); white-space: nowrap; }
+.joute__pseudo { align-self: flex-start; font-size: 0.88rem; }
+.niveau:disabled { opacity: 0.6; cursor: default; }
+.classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.classement li { display: grid; grid-template-columns: 2.4em 1fr auto 3.2em; gap: 8px; align-items: baseline; padding: 5px 6px; border-radius: 6px; }
+.classement li[data-moi='true'] { background: var(--papier-fonce); font-weight: 700; }
+.classement li[data-apres-un-saut='true'] { margin-top: 10px; border-top: 1px dashed var(--filet); padding-top: 12px; }
+.classement__rang, .classement__cote { font-family: var(--police-chiffres); text-align: right; }
+.classement__ligue { font-size: 0.8rem; }
+.classement__pseudo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .niveaux { display: grid; gap: 8px; }
 .niveau {
   display: grid; gap: 2px; text-align: left; font: inherit; color: inherit; cursor: pointer;

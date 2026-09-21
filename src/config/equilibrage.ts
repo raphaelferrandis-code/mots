@@ -161,6 +161,40 @@ export const EQUILIBRAGE = {
     reussitesPourLaMaitrise: 5,
   },
 
+  // ── Joutes : les duels classés contre d'autres joueurs ─────────────────────
+  // On affronte le « double » d'un joueur absent : son deck, joué par l'ordinateur avec ses vrais résultats.
+  // Les règles de la manche sont celles du duel ci-dessus ; seuls changent l'adversaire et le classement.
+  joute: {
+    // Classement de type Elo (celui des échecs). Chacun a une cote ; battre plus fort que soi rapporte beaucoup,
+    // battre plus faible rapporte peu. « facteurK » = le plus gros gain ou la plus grosse perte possible en une joute ;
+    // « echelle » = l'écart de cote à partir duquel le favori est donné gagnant à 10 contre 1.
+    coteDeDepart: 1000,
+    coteMinimale: 100,
+    facteurK: 32,
+    echelle: 400,
+    // Les ligues, de la plus modeste à la plus haute, et la cote à partir de laquelle on y entre.
+    ligues: [
+      { nom: 'Apprenti', aPartirDe: 0 },
+      { nom: 'Lecteur', aPartirDe: 1100 },
+      { nom: 'Lettré', aPartirDe: 1250 },
+      { nom: 'Érudit', aPartirDe: 1400 },
+      { nom: 'Académicien', aPartirDe: 1550 },
+      { nom: 'Immortel', aPartirDe: 1700 },
+    ],
+    // Les adversaires proposés : un par écart de cote visé (un plus faible, un égal, un plus fort), tiré au hasard
+    // parmi les quelques joueurs les plus proches de cette cote, en évitant ceux que l'on vient d'affronter.
+    ecartsDeCoteProposes: [-120, 0, 120],
+    joueursProchesParProposition: 8,
+    adversairesRecentsEvites: 6,
+    // Le double connaît ses mots comme son joueur : on part des vrais résultats du joueur (définitions retrouvées /
+    // posées), mêlés à cette estimation par défaut tant qu'ils sont peu nombreux (elle pèse comme N réponses).
+    savoirParDefaut: { 'Commune': 0.9, 'Peu commune': 0.85, 'Rare': 0.75, 'Épique': 0.6, 'Légendaire': 0.5, 'Hors-série': 0.6 } satisfies Record<Rarete, number>,
+    paradeParDefaut: { 'Commune': 0.85, 'Peu commune': 0.75, 'Rare': 0.6, 'Épique': 0.45, 'Légendaire': 0.3, 'Hors-série': 0.4 } satisfies Record<Rarete, number>,
+    poidsDeLEstimation: 4,
+    // Récompenses (même plafond quotidien que les duels d'entraînement).
+    encreParVictoire: 35,
+  },
+
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.
   paquetsEntreDeuxRappelsDExport: 100,

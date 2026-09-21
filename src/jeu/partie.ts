@@ -57,7 +57,7 @@ function ouvrir(sauvegarde: Sauvegarde, contexte: Contexte): Ouverture {
   const obtenues: CarteObtenue[] = tirees.map(({ carte, finition }) => {
     const possedee = cartes[carte.id];
     if (!possedee) {
-      cartes[carte.id] = { obtenueLe: maintenant, doublons: 0, finitions: { [finition]: 1 }, reussites: 0, maitriseeLe: null };
+      cartes[carte.id] = { obtenueLe: maintenant, doublons: 0, finitions: { [finition]: 1 }, posees: 0, reussites: 0, maitriseeLe: null };
       return { carte, finition, nouvelle: true, nouvelleFinition: true, encre: 0 };
     }
     const dejaDansCetteFinition = (possedee.finitions[finition] ?? 0) > 0;

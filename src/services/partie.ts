@@ -9,8 +9,10 @@ import type { Reserve } from '../jeu/paquets.ts';
 import type { Niveau } from '../jeu/duel.ts';
 import { acheterUnPaquet, mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
-import { enregistrerLeDeck, noterUneReponse, terminerUnDuel } from '../jeu/progression.ts';
+import type { ProfilDeJoute } from '../jeu/joute.ts';
+import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
 import type { Resultat } from '../jeu/progression.ts';
+import type { Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { chargerEdition } from './cartes.ts';
@@ -107,12 +109,31 @@ export function noterLaReponse(idCarte: string, reussi: boolean): boolean {
   return reponse.vientDEtreMaitrisee;
 }
 
-// Fin d'un duel : l'Encre gagnée est versée. Rend le montant, et s'il a été réduit par le plafond du jour.
-export function finirLeDuel(niveau: Niveau, resultat: Resultat): { encre: number; reduite: boolean } {
-  if (partie.etat !== 'prete') return { encre: 0, reduite: false };
-  const fin = terminerUnDuel(partie.sauvegarde, niveau, resultat, maintenant(), EQUILIBRAGE.duel);
+// Note une tentative de parade (le joueur a-t-il reconnu le mot adverse ?), par rareté.
+export function noterLaParade(rarete: Rarete, reussie: boolean): void {
+  if (partie.etat !== 'prete') return;
+  enregistrer(noterUneParade(partie.sauvegarde, rarete, reussie));
+}
+
+export type FinDeDuel = { encre: number; reduite: boolean; cote: { avant: number; apres: number } | null };
+
+// Fin d'un duel : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge.
+export function finirLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, resultat: Resultat): FinDeDuel {
+  if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
+  if (adversaire.type === 'entrainement') {
+    const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);
+    enregistrer(fin.sauvegarde);
+    return { encre: fin.encre, reduite: fin.reduite, cote: null };
+  }
+  const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute);
   enregistrer(fin.sauvegarde);
-  return { encre: fin.encre, reduite: fin.reduite };
+  return { encre: fin.encre, reduite: fin.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
+}
+
+// Le pseudonyme du joueur dans les joutes (tiré au sort parmi les mots du jeu).
+export function changerDePseudonyme(pseudo: string): void {
+  if (partie.etat !== 'prete') return;
+  enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, pseudo } });
 }
 
 // Le fichier de sauvegarde à télécharger. L'export est noté, pour espacer les rappels.

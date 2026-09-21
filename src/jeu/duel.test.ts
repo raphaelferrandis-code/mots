@@ -13,7 +13,7 @@ import type { Duel } from './duel.ts';
 import { composerLEpreuve } from './epreuve.ts';
 import { hasardReproductible } from './hasard.ts';
 import { cartesDuDeck, enregistrerLeDeck, jourDe, noterUneReponse, terminerUnDuel } from './progression.ts';
-import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
+import { VERSION_DE_SAUVEGARDE, nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import type { Sauvegarde } from './sauvegarde.ts';
 
 const REGLES = EQUILIBRAGE.duel;
@@ -306,6 +306,18 @@ describe('épreuve de maîtrise', () => {
     }
   });
 
+  it('évite les définitions qui ne sont qu\'un renvoi (« Synonyme de… »), tant que le mot en a une autre', () => {
+    const definitions = new Map(DEFINITIONS);
+    definitions.set(EDITION[0].id, [{ texte: 'Synonyme de sériole couronnée, un poisson.', quiz: true }, { texte: 'Poisson des mers chaudes, au corps fuselé.', quiz: true }]);
+    for (let graine = 0; graine < 12; graine++) {
+      const epreuve = composerLEpreuve(EDITION[0], definitions, EDITION, [], hasardReproductible(graine));
+      assert.equal(epreuve.propositions[epreuve.bonne], 'Poisson des mers chaudes, au corps fuselé.');
+    }
+    definitions.set(EDITION[0].id, [{ texte: 'Synonyme de sériole couronnée, un poisson.', quiz: true }]);
+    const seule = composerLEpreuve(EDITION[0], definitions, EDITION, [], hasardReproductible(1));
+    assert.equal(seule.propositions[seule.bonne], 'Synonyme de sériole couronnée, un poisson.');
+  });
+
   it('retire le renvoi « → voir … » qui termine certaines définitions', () => {
     const definitions = new Map(DEFINITIONS);
     definitions.set(EDITION[0].id, [{ texte: 'Mot ou forme incorrecte, ou dont le sens est altéré. → voir impropriété et solécisme', quiz: true }]);
@@ -354,7 +366,7 @@ describe('épreuve de maîtrise', () => {
 });
 
 describe('deck, maîtrise et récompenses', () => {
-  const avecDesCartes = (ids: string[]): Sauvegarde => ({ ...nouvelleSauvegarde(T0, 3), cartes: Object.fromEntries(ids.map((id) => [id, { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 }, reussites: 0, maitriseeLe: null }])) });
+  const avecDesCartes = (ids: string[]): Sauvegarde => ({ ...nouvelleSauvegarde(T0, 3), cartes: Object.fromEntries(ids.map((id) => [id, { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 }, posees: 0, reussites: 0, maitriseeLe: null }])) });
 
   it('enregistre un deck de cartes possédées, sans doublon, jamais plus grand que prévu', () => {
     const sauvegarde = avecDesCartes(EDITION.slice(0, 15).map((c) => c.id));
@@ -408,8 +420,8 @@ describe('deck, maîtrise et récompenses', () => {
   it('convertit une sauvegarde de la version 2 : pas encore de deck, de maîtrise ni de duels', () => {
     const v2 = { version: 2, creeLe: T0, encre: 40, paquets: { stock: 2, reference: T0, ouverts: 9, sansLegendaire: 9 }, cartes: { mot1: { obtenueLe: T0, doublons: 1, finitions: { Normale: 2, Brillante: 1 } } }, reglages: { masquerFamiliers: true }, dernierExport: null };
     const convertie = relireSauvegarde(v2, T0);
-    assert.equal(convertie.version, 3);
-    assert.deepEqual(convertie.cartes.mot1, { obtenueLe: T0, doublons: 1, finitions: { Normale: 2, Brillante: 1 }, reussites: 0, maitriseeLe: null });
+    assert.equal(convertie.version, VERSION_DE_SAUVEGARDE);
+    assert.deepEqual(convertie.cartes.mot1, { obtenueLe: T0, doublons: 1, finitions: { Normale: 2, Brillante: 1 }, posees: 0, reussites: 0, maitriseeLe: null });
     assert.deepEqual(convertie.deck, []);
     assert.deepEqual(convertie.duels, { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 });
     assert.equal(convertie.reglages.tempsDeReponse, 'normal');

@@ -1,7 +1,7 @@
 # Brief projet v2 — Jeu de cartes à collectionner des mots de la langue française
 
 *Nom de code : **MOTS** (piste sérieuse pour le nom définitif : « Mots de Maîtres », à vérifier à l'INPI).*
-*Version 2.5 du 21 septembre 2026 (phase 3 : le duel « mot contre mot » avec parade, réglé au simulateur — voir §5.4, §5.5 et `data/simulation-duel.md`) — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
+*Version 2.6 du 21 septembre 2026 (phase 3 : le duel « mot contre mot » avec parade, réglé au simulateur — voir §5.4, §5.5 et `data/simulation-duel.md` ; et les joutes classées en version d'essai — voir §5.7 et `BRIEF-joutes.md`) — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
 
 > **Légende :** 🟡 = proposition par défaut **encore à confirmer par Raphaël** (liste au §10.2). Tout le reste est validé.
 
@@ -44,7 +44,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 
 ### Hors périmètre V1 (prévu plus tard, l'architecture doit le permettre)
 - Comptes utilisateurs et backend
-- Duels entre joueurs, échanges, enchères, guildes, classements
+- Duels entre joueurs **en direct**, échanges, enchères, guildes. *(Les duels différés contre le deck d'un autre joueur, avec classement, ont été avancés : voir §5.7.)*
 - **Version installable (PWA)** : icône sur l'écran d'accueil du téléphone et jeu hors-ligne. Elle s'ajoute au site existant sans rien reconstruire, le moment venu
 - **Monétisation : accélération payante** (payer pour recevoir ses paquets plus vite — direction décidée, voir §5.6). Elle exige un serveur, donc elle arrive avec le backend
 - Notifications (« ton stock de paquets est plein »)
@@ -332,6 +332,17 @@ Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : de
 
 **Simulation de collection** (`npm run simulation:collection`) : simule des mois d'ouverture de paquets pour trois profils de joueur (occasionnel : 10 paquets par jour ; régulier : 30 ; acharné : 100) et affiche le temps nécessaire pour réunir 50 %, 90 % et 100 % de l'édition, le nombre de Légendaires par semaine et l'Encre gagnée. **Cible de départ : un joueur régulier termine l'édition en 6 mois à 1 an.** Cet outil sert à fixer la taille de l'édition, les taux de rareté et le prix des paquets, et à vérifier la règle de sécurité de l'économie (§5.2).
 
+### 5.7 Joutes classées (duel différé contre d'autres joueurs)
+
+Décidé par Raphaël le 21/09/2026 : il attendait du duel qu'il oppose des joueurs entre eux, avec un classement pour affronter des adversaires de son niveau. Voie retenue : le **duel différé**. On affronte le **double** d'un autre joueur — son deck, joué par l'ordinateur, qui connaît ses mots ni mieux ni moins bien que lui — sans que cet autre joueur ait besoin d'être connecté. Le duel contre l'ordinateur (§5.4) reste l'entraînement ; le duel en direct viendra quand il y aura assez de joueurs.
+
+- **Les règles de la manche sont celles du §5.4.** Seules changent les chances de l'adversaire : le double retrouve son mot, et pare celui du joueur, d'après les **vrais résultats** de son joueur (mêlés à une estimation par défaut tant qu'ils sont peu nombreux). Le jeu retient pour cela, pour chaque joueur, les questions posées et réussies sur chacun de ses mots, et ses parades par rareté.
+- **Classement** de type Elo (celui des échecs) : cote de départ 1 000, gain ou perte d'au plus 32 points par joute ; battre plus fort que soi rapporte davantage. 🟡 Six **ligues** : Apprenti, Lecteur (1 100), Lettré (1 250), Érudit (1 400), Académicien (1 550), Immortel (1 700).
+- **Adversaires proposés** : trois à chaque fois — un plus faible, un de sa cote, un plus fort — en évitant ceux qu'on vient d'affronter. On voit leur pseudonyme, leur cote, les raretés de leur deck (pas leurs mots), et l'enjeu de la joute.
+- 🟡 **Pseudonymes tirés au sort parmi les mots du jeu** (« Frangipane 43 ») : pas de texte libre, donc rien à modérer.
+- **Récompense** : 35 Encre par victoire, avec le même plafond quotidien que les duels d'entraînement.
+- **État au 21/09/2026 : version d'essai.** Tout le mode est jouable, mais le jeu n'a pas de serveur : les adversaires sont **240 joueurs fictifs**, annoncés comme tels à l'écran, et la cote est rangée sur l'appareil. Le passage aux vrais joueurs (hébergeur, comptes anonymes, confidentialité, triche) est décrit dans **`BRIEF-joutes.md`**, à valider par Raphaël. Seul `src/services/joutes.ts` changera ce jour-là.
+
 ### 5.6 Accélération : à l'Encre en V1, payante ensuite
 
 **Direction décidée :** le modèle économique du jeu sera l'**accélération payante**. Le jeu est gratuit et généreux (un paquet toutes les 10 minutes), et le joueur pressé peut payer pour aller plus vite.
@@ -392,7 +403,8 @@ Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : de
 | **2. Paquets + Collection** *(fait et publié le 21/09/2026, avec les timbres, les finitions et le rang Hors-série ; en attente du test de Raphaël sur son téléphone)* | Tirage, recharge toutes les 10 minutes, animation, sauvegarde locale, export/import, Encre, collection filtrable, option « masquer les mots familiers », fiche carte, simulateur de collection | Les paquets se rechargent avec le temps, même application fermée, sans jamais dépasser 10 ; on retrouve sa collection après fermeture et on peut la restaurer depuis un fichier ; le simulateur de collection donne des durées qui conviennent à Raphaël |
 | **3. Duel** *(fait et publié le 21/09/2026 ; en attente du test de Raphaël)* | Construction de deck, duel complet contre l'IA à 3 niveaux, simulateur de duel, maîtrise des mots et cachet « Maîtrisé » | Une partie se joue de bout en bout sans bug, gagnable et perdable ; le simulateur donne 6 à 10 tours en moyenne |
 | **4. Finitions** | Sons, effets de rareté, accessibilité, écran crédits, équilibrage, partage d'une carte en image, variantes de question | Raphaël valide le ressenti ; 5 testeurs extérieurs ont joué plusieurs jours et leurs retours sont notés |
-| **5. (futur)** | Backend, comptes, accélération payante, multijoueur, échanges, éditions suivantes | Nouveau brief dédié |
+| **3 bis. Joutes classées** *(version d'essai faite et publiée le 21/09/2026, avec des adversaires fictifs)* | Duel différé contre le double d'un autre joueur, classement, ligues | Raphaël a validé `BRIEF-joutes.md` et créé le compte de l'hébergeur ; de vrais joueurs s'affrontent |
+| **5. (futur)** | Backend complet, comptes par e-mail, accélération payante, duel en direct, échanges, éditions suivantes | Nouveau brief dédié |
 
 ---
 
@@ -446,6 +458,7 @@ Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : de
 | 27 | Prix du paquet | **150 Encre** |
 | 28 | Idées retenues pour la suite | Cachet « Maîtrisé » daté sur le timbre quand le mot est maîtrisé en duel (**fait en phase 3** : griffe violette datée, après 5 bonnes réponses) ; séries par famille de mots ; album présenté en planches par langue avec emplacements vides secrets |
 | 30 | Duel « mot contre mot », avec parade | **Décidé le 21/09/2026** : à chaque manche, le joueur retrouve la définition de son mot (il attaque) **et celle du mot adverse** (il pare), puis les dégâts sont réglés. Raison : avec dix cartes, on connaît vite ses définitions ; les mots de l'adversaire, eux, changent à chaque duel. Et « plus un mot est rare, plus il fait de dégâts » |
+| 31 | Duels contre d'autres joueurs | **Décidé le 21/09/2026** : garder le duel contre l'ordinateur comme entraînement ; ajouter les **joutes classées** en duel différé (on affronte le double d'un joueur absent), avec classement et adversaires de son niveau (§5.7) ; garder le duel en direct pour plus tard. Version d'essai avec adversaires fictifs en ligne ; serveur à construire d'après `BRIEF-joutes.md` |
 | 29 | Polices | **Playfair Display**, police libre livrée avec le jeu (choisie le 21/09/2026 parmi trois familles à l'essai) ; Barlow Condensed pour les petites mentions en capitales |
 
 ### 10.2 Propositions encore à confirmer (🟡)

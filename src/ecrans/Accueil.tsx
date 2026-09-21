@@ -2,6 +2,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { ligueDe } from '../jeu/joute.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { lien } from '../navigation/routes.ts';
 import { chargerEdition } from '../services/cartes.ts';
@@ -69,6 +70,9 @@ export function Accueil() {
         {sauvegarde.deck.length === EQUILIBRAGE.duel.tailleDuDeck ? (
           <>
             <p>{sauvegarde.duels.joues === 0 ? 'Ton deck est prêt : prouve que tu connais tes mots.' : <><strong>{sauvegarde.duels.gagnes}</strong> victoire{sauvegarde.duels.gagnes > 1 ? 's' : ''} en {sauvegarde.duels.joues} duel{sauvegarde.duels.joues > 1 ? 's' : ''} · {motsMaitrises} mot{motsMaitrises > 1 ? 's' : ''} maîtrisé{motsMaitrises > 1 ? 's' : ''}</>}</p>
+            {sauvegarde.joutes.cote !== null && (
+              <p className="texte-doux petit">Joutes classées : cote {sauvegarde.joutes.cote}, ligue {ligueDe(sauvegarde.joutes.cote, EQUILIBRAGE.joute).nom} · {sauvegarde.joutes.gagnees} victoire{sauvegarde.joutes.gagnees > 1 ? 's' : ''} en {sauvegarde.joutes.jouees} joute{sauvegarde.joutes.jouees > 1 ? 's' : ''}</p>
+            )}
             <a className="bouton bouton--discret" href={lien({ ecran: 'duel' })}>Lancer un duel</a>
           </>
         ) : (

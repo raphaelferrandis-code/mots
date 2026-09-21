@@ -1,18 +1,23 @@
 // La sauvegarde du joueur : ce qu'elle contient, comment on en crée une, et comment on relit
 // une sauvegarde venue d'ailleurs (fichier importé, ancienne version du jeu) sans jamais planter.
 
-import { FINITIONS } from '../partage/types.ts';
-import type { Finition } from '../partage/types.ts';
+import { FINITIONS, RARETES } from '../partage/types.ts';
+import type { Finition, Rarete } from '../partage/types.ts';
 import type { EtatDesPaquets } from './recharge.ts';
 
 // Version 1 : première sauvegarde. Version 2 : chaque carte compte ses finitions (normale, brillante, holographique).
 // Version 3 : le duel — deck, bonnes réponses et maîtrise de chaque carte, bilan des duels, temps de réponse.
-export const VERSION_DE_SAUVEGARDE = 3;
+// Version 4 : les joutes — questions posées sur chaque carte, parades par rareté, pseudonyme et cote du joueur.
+export const VERSION_DE_SAUVEGARDE = 4;
+
+// Des réponses données à une épreuve : combien de fois la question a été posée, combien de fois la définition a été retrouvée.
+export type Savoir = { posees: number; reussies: number };
 
 export type CartePossedee = {
   obtenueLe: number; // date de la première obtention (millisecondes)
   doublons: number; // nombre de fois où la carte a été changée en Encre
   finitions: Partial<Record<Finition, number>>; // nombre de fois où la carte a été obtenue dans chaque finition
+  posees: number; // nombre de fois où la définition de ce mot a été demandée en duel
   reussites: number; // bonnes réponses données en duel pour ce mot
   maitriseeLe: number | null; // date à laquelle le mot a été maîtrisé (assez de bonnes réponses), sinon null
 };
@@ -36,6 +41,14 @@ export type BilanDesDuels = {
   victoiresDuJour: number;
 };
 
+export type Joutes = {
+  pseudo: string; // tiré au sort parmi les mots du jeu ; vide tant que le joueur n'a pas ouvert les joutes
+  cote: number | null; // null = pas encore classé (la cote de départ est dans equilibrage.ts)
+  jouees: number;
+  gagnees: number;
+  recents: string[]; // derniers adversaires affrontés, pour ne pas les reproposer aussitôt
+};
+
 export type Sauvegarde = {
   version: number;
   creeLe: number;
@@ -48,6 +61,8 @@ export type Sauvegarde = {
   cartes: Record<string, CartePossedee>;
   deck: string[]; // identifiants des cartes du deck ; il peut être incomplet pendant qu'on le compose
   duels: BilanDesDuels;
+  parades: Partial<Record<Rarete, Savoir>>; // les mots adverses reconnus en duel, par rareté
+  joutes: Joutes;
   reglages: ReglagesDuJoueur;
   dernierExport: { le: number; paquetsOuverts: number } | null;
 };
@@ -61,6 +76,8 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     cartes: {},
     deck: [],
     duels: { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 },
+    parades: {},
+    joutes: { pseudo: '', cote: null, jouees: 0, gagnees: 0, recents: [] },
     reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, tempsDeReponse: 'normal' },
     dernierExport: null,
   };
@@ -103,6 +120,8 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       obtenueLe: entierPositif(valeur.obtenueLe, maintenant),
       doublons,
       finitions: relireFinitions(valeur.finitions, doublons),
+      // Avant la version 4, seules les bonnes réponses étaient comptées.
+      posees: Math.max(entierPositif(valeur.posees, 0), entierPositif(valeur.reussites, 0)),
       reussites: entierPositif(valeur.reussites, 0),
       maitriseeLe: typeof valeur.maitriseeLe === 'number' && Number.isFinite(valeur.maitriseeLe) ? valeur.maitriseeLe : null,
     };
@@ -110,6 +129,16 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
   // Le deck ne garde que des cartes possédées, chacune une seule fois.
   const deck = Array.isArray(brut.deck) ? [...new Set(brut.deck.filter((id): id is string => typeof id === 'string' && id in cartes))] : [];
   const duels = estUnObjet(brut.duels) ? brut.duels : {};
+  const joutes = estUnObjet(brut.joutes) ? brut.joutes : {};
+  const parades: Sauvegarde['parades'] = {};
+  if (estUnObjet(brut.parades)) {
+    for (const rarete of RARETES) {
+      const lue = brut.parades[rarete];
+      if (!estUnObjet(lue)) continue;
+      const posees = entierPositif(lue.posees, 0);
+      if (posees > 0) parades[rarete] = { posees, reussies: Math.min(posees, entierPositif(lue.reussies, 0)) };
+    }
+  }
   const exporte = estUnObjet(brut.dernierExport) ? brut.dernierExport : null;
 
   return {
@@ -130,6 +159,14 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       gagnes: entierPositif(duels.gagnes, 0),
       jour: typeof duels.jour === 'string' ? duels.jour : '',
       victoiresDuJour: entierPositif(duels.victoiresDuJour, 0),
+    },
+    parades,
+    joutes: {
+      pseudo: typeof joutes.pseudo === 'string' ? joutes.pseudo.slice(0, 40) : '',
+      cote: typeof joutes.cote === 'number' && Number.isFinite(joutes.cote) ? Math.round(joutes.cote) : null,
+      jouees: entierPositif(joutes.jouees, 0),
+      gagnees: entierPositif(joutes.gagnees, 0),
+      recents: Array.isArray(joutes.recents) ? joutes.recents.filter((id): id is string => typeof id === 'string').slice(-20) : [],
     },
     reglages: {
       masquerFamiliers: reglages.masquerFamiliers === true,

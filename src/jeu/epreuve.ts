@@ -31,8 +31,10 @@ function definitionsDeDuel(mot: string, definitions: readonly Definition[] | und
   // Certaines définitions du Wiktionnaire se terminent par un renvoi (« → voir solécisme ») : il n'apprend rien,
   // et ferait reconnaître la définition à sa seule forme.
   const textes = (visibles.length > 0 ? visibles : utilisables).map((d) => d.texte.replace(/\s*→\s*voir\b.*$/i, '').trim());
-  const discretes = textes.filter((texte) => !trahitLeMot(texte, mot));
-  return discretes.length > 0 ? discretes : textes;
+  // Un simple renvoi (« Synonyme de sériole couronnée. ») ne définit rien : on l'évite tant que le mot a autre chose.
+  const vraies = textes.filter((texte) => !/^(?:synonyme|antonyme) d/i.test(texte));
+  const discretes = (vraies.length > 0 ? vraies : textes).filter((texte) => !trahitLeMot(texte, mot));
+  return discretes.length > 0 ? discretes : vraies.length > 0 ? vraies : textes;
 }
 
 // Les mots qui portent le sens d'une définition (les petits mots de grammaire ne comptent pas).
