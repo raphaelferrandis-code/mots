@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { lien } from '../navigation/routes.ts';
 import type { Route } from '../navigation/routes.ts';
+import { Icone } from './Icone.tsx';
+import './navigation.css';
 
 type Onglet = { route: Route; nom: string; icone: ReactNode; actifPour: Route['ecran'][] };
 
@@ -14,19 +16,26 @@ const ONGLETS: Onglet[] = [
   { route: { ecran: 'reglages' }, nom: 'Réglages', actifPour: ['reglages'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M4 7h10" /><path d="M18 7h2" /><circle cx="16" cy="7" r="2" /><path d="M4 17h2" /><path d="M10 17h10" /><circle cx="8" cy="17" r="2" /></svg> },
 ];
 
-export function Navigation({ ecran }: { ecran: Route['ecran'] }) {
+export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: number | null }) {
   return (
-    <nav className="navigation" aria-label="Navigation principale">
-      <ul className="navigation__liste">
-        {ONGLETS.map((onglet) => (
-          <li key={onglet.nom}>
-            <a className="navigation__lien" href={lien(onglet.route)} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
-              {onglet.icone}
-              <span>{onglet.nom}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <header className="entete-application">
+      <a className="marque" href={lien({ ecran: 'accueil' })} aria-label="MOTS — accueil">MOTS</a>
+      <nav className="navigation" aria-label="Navigation principale">
+        <ul className="navigation__liste">
+          {ONGLETS.map((onglet) => (
+            <li key={onglet.nom}>
+              <a className="navigation__lien" href={lien(onglet.route)} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
+                <span className="navigation__icone" aria-hidden="true">{onglet.icone}</span>
+                <span>{onglet.nom}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <a className="reserve-encre" href={lien({ ecran: 'paquet' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encre.toLocaleString('fr-FR')} Encre — voir les paquets`}>
+        <Icone nom="encre" />
+        <span><strong>{encre === null ? '…' : encre.toLocaleString('fr-FR')}</strong> Encre</span>
+      </a>
+    </header>
   );
 }

@@ -2,23 +2,29 @@
    THÈME DU JEU
    Toutes les couleurs, polices et mesures de l'interface sont ici. Changer la
    direction artistique, c'est d'abord changer ce fichier.
-   Style actuel : sobre, esprit « page de dictionnaire » (papier, encre, belle typographie).
+   Bleu nuit, encre claire et orange postal. Les timbres gardent leur propre papier.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
   /* Couleurs générales */
-  --papier: #f6f1e6;
-  --papier-fonce: #ebe3d1;
-  --carte-fond: #fffdf8;
-  --encre: #233044;
-  --encre-douce: #5b6577;
-  --filet: #d8cdb6;
-  --accent: #9b2c2c;
-  --accent-texte: #ffffff;
+  color-scheme: dark;
+  --papier: #0b1729;
+  --papier-fonce: #182e48;
+  --carte-fond: #102139;
+  --encre: #e0edfa;
+  --encre-douce: #adc3da;
+  --filet: #314a66;
+  --accent: #f18a4b;
+  --accent-survol: #ffa366;
+  --accent-texte: #172235;
+  --focus: #a4d8ff;
+  --enveloppe-fond: #1a3d64;
+  --enveloppe-clair: #315d89;
+  --enveloppe-ombre: #112840;
 
   /* Couleurs des raretés (la rareté est toujours écrite aussi en toutes lettres, jamais la couleur seule) */
   --rarete-commune: #8a8f98;
-  --rarete-peu-commune: #3f8f5b;
+  --rarete-peu-commune: #78c99c;
   --rarete-rare: #2f6fb5;
   --rarete-epique: #7a4bb0;
   --rarete-legendaire: #b8860b;
@@ -26,8 +32,8 @@
   /* Polices : livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils. */
   --police-serif: 'Playfair Display', 'Palatino Linotype', Palatino, Georgia, serif;
   --police-titre: var(--police-serif);
-  --police-texte: var(--police-serif);
-  --police-chiffres: var(--police-serif);
+  --police-texte: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --police-chiffres: var(--police-texte);
   --police-mention: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
 
   /* Mesures */
@@ -36,7 +42,7 @@
   --marge: 16px;
   --largeur-jeu: 480px; /* écrans de jeu : une colonne, comme sur téléphone */
   --largeur-collection: 1080px; /* la collection profite des grands écrans */
+  --largeur-accueil: 1320px;
   --hauteur-navigation: 64px;
-  --ombre: 0 1px 2px rgba(35, 48, 68, 0.08), 0 6px 18px rgba(35, 48, 68, 0.1);
+  --ombre: 0 12px 30px rgb(0 0 0 / 22%);
 }
-

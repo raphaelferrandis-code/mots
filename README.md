@@ -83,6 +83,22 @@ Deux générations faites à partir des mêmes données et des mêmes réglages 
 
 ## Organisation des dossiers
 
+### Modifier l’interface
+
+L’accueil bleu nuit est composé de trois blocs indépendants dans `src/composants/accueil/` :
+`PaquetsAccueil.tsx`, `DuelsAccueil.tsx` et `ResumeCollection.tsx`. `src/ecrans/Accueil.tsx`
+les assemble et conserve les messages de sauvegarde. Ajouter ou déplacer un bloc se fait ici.
+
+- `src/theme/theme.css` : palette commune, typographies et largeurs. Les timbres conservent leur propre papier.
+- `src/composants/accueil/accueil.css` : composition de l’accueil, aperçu du deck et adaptation mobile.
+- `src/composants/accueil/Enveloppe.tsx` : illustration SVG de l’enveloppe, recolorable avec les variables `--enveloppe-*`.
+- `src/composants/accueil/modeleAccueil.ts` : données d’affichage issues de la sauvegarde, sans mutation. Le deck et les compteurs respectent les registres masqués.
+- `src/composants/Navigation.tsx` et `navigation.css` : onglets, marque et solde d’Encre ; la liste `ONGLETS` définit les destinations.
+
+Le compte à rebours est isolé dans le bloc des paquets pour éviter de recalculer les dessins du deck chaque seconde.
+Les règles, prix et quantités continuent à venir de `src/config/equilibrage.ts` ; aucune valeur de la maquette n’est utilisée comme donnée de jeu.
+Après une modification, lancer `npm run build` et `npm test`, puis vérifier l’accueil sur ordinateur et téléphone.
+
 | Dossier | Contenu |
 |---|---|
 | `pipeline/` | Les programmes qui transforment les données en cartes |

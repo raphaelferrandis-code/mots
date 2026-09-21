@@ -39,7 +39,7 @@ export function App() {
 
   return (
     <div className="application">
-      <Navigation ecran={route.ecran} />
+      <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} />
       <Ecran key={cle} route={route} />
     </div>
   );

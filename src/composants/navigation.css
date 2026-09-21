@@ -1,0 +1,44 @@
+/* Le bandeau reste commun à tous les écrans. Sur mobile, les onglets passent en bas. */
+.entete-application {
+  display: flex; align-items: center; gap: clamp(20px, 4vw, 56px);
+  min-height: 88px; padding: 0 max(24px, calc((100vw - var(--largeur-accueil)) / 2));
+  border-bottom: 1px solid var(--filet); background: var(--papier);
+}
+.marque { color: var(--encre); font: 700 42px/1 var(--police-serif); letter-spacing: -2px; text-decoration: none; }
+.navigation { flex: 1; align-self: stretch; }
+.navigation__liste { list-style: none; margin: 0; padding: 0; height: 100%; display: flex; gap: clamp(20px, 3vw, 40px); }
+.navigation__liste li:last-child { margin-left: auto; }
+.navigation__lien {
+  position: relative; display: flex; height: 100%; min-height: 44px; align-items: center;
+  color: var(--encre-douce); text-decoration: none; font-size: 0.95rem;
+}
+.navigation__lien[aria-current='page'] { color: var(--encre); }
+.navigation__lien[aria-current='page']::after { content: ''; position: absolute; bottom: 18px; left: 0; right: 0; height: 2px; background: var(--accent); }
+.navigation__icone { display: none; }
+.reserve-encre { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--encre-douce); text-decoration: none; white-space: nowrap; }
+.reserve-encre svg { width: 30px; height: 30px; }
+.reserve-encre strong { color: var(--encre); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) {
+  .entete-application { position: sticky; top: 0; z-index: 10; }
+}
+@media (hover: hover) {
+  .navigation__lien:hover, .reserve-encre:hover { color: var(--accent); }
+}
+@media (max-width: 900px) and (min-width: 768px) {
+  .entete-application { gap: 24px; padding-inline: 20px; }
+  .navigation__liste { gap: 20px; }
+  .marque { font-size: 34px; }
+  .reserve-encre { gap: 5px; font-size: 0.85rem; }
+}
+@media (max-width: 767px) {
+  .entete-application { min-height: 72px; padding-inline: 20px; justify-content: space-between; }
+  .marque { font-size: 34px; }
+  .navigation { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--papier); border-top: 1px solid var(--filet); padding-bottom: env(safe-area-inset-bottom); }
+  .navigation__liste { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--hauteur-navigation); gap: 0; }
+  .navigation__liste li:last-child { margin-left: 0; }
+  .navigation__lien { flex-direction: column; justify-content: center; gap: 2px; font-size: 0.7rem; }
+  .navigation__icone { display: flex; }
+  .navigation__icone svg { width: 23px; height: 23px; }
+  .navigation__lien[aria-current='page'] { color: var(--accent); }
+  .navigation__lien[aria-current='page']::after { bottom: auto; top: 0; left: 24%; right: 24%; }
+}
