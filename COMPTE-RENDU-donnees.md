@@ -70,7 +70,25 @@ C'est nettement plus proche de l'esprit « j'ai eu *callipyge* en légendaire ! 
 ### Ce que ça apporte en plus
 
 - La prévalence mesure directement **la difficulté d'un mot en duel**. Le principe « un mot rare est puissant mais difficile à maîtriser » repose alors sur une vraie mesure scientifique, pas sur une supposition.
-- Elle n'est mesurée que pour 63 % de la base (32 894 mots). Ce n'est pas un problème : c'est encore onze fois la taille de l'Édition 1. **Je propose que l'Édition 1 ne contienne que des mots dont la prévalence est connue.**
+- Elle n'est mesurée que pour 63 % de la base (32 894 mots). C'est encore onze fois la taille de l'Édition 1, donc **je propose que l'Édition 1 ne contienne que des mots dont la prévalence est connue.**
+- **Le revers, vérifié après coup :** quelques beaux mots n'ont pas été mesurés par les chercheurs et seraient donc écartés — *procrastiner*, *procrastination*, *sérendipité*, *zeugma*, *rodomontade*. La liste « coups de cœur » (`data/coups-de-coeur.txt`) sert justement à les rattraper un par un.
+
+### Où tomberaient des mots que tu connais
+
+| Mot | Connu de | Option A (fréquence seule) | Option B (fréquence + prévalence) |
+|---|---|---|---|
+| callipyge | 33 % | Épique (par le hasard du départage) | **Légendaire** |
+| cacochyme | 35 % | Rare | **Légendaire** |
+| thuriféraire | 29 % | Rare | Épique |
+| sycophante | 25 % | Peu commune | Épique |
+| amphigourique | 20 % | Peu commune | Épique |
+| parangon | 42 % | Commune | Rare |
+| flagorneur | 48 % | Commune | Rare |
+| mansuétude | 69 % | Commune | Rare |
+| pusillanime | 37 % | Peu commune | Rare |
+| oxymore | 63 % | Commune | Peu commune |
+| quidam | 95 % | Commune | Commune |
+| énergumène | 96 % | Commune | Commune |
 
 ### Une nuance à garder en tête
 
@@ -105,7 +123,8 @@ Premier essai de détection, avec héritage simple (un dérivé prend la faction
 
 **Ce qu'il faut en retenir :**
 - Comme prévu, **le latin écrase tout**, et sa part montera encore (vers 55 à 60 %) quand les « formations françaises » seront mieux rattachées. Beaucoup d'étymologies non reconnues sont du type « De *flemme* » ou « De *re-* et *nommer* » : faciles à traiter.
-- Les petites factions existent bel et bien (376 mots arabes, 214 gaulois, 234 japonais ou chinois) : **largement de quoi les rendre collectionnables** dans une édition de 3 000 cartes, à condition de les sur-représenter volontairement et de plafonner le latin (par exemple à 35 % de l'édition).
+- Les petites factions existent bel et bien (376 mots arabes, 214 gaulois, 234 japonais ou chinois) : **de quoi les rendre collectionnables** dans une édition de 3 000 cartes, à condition de les sur-représenter volontairement et de plafonner le latin (par exemple à 35 % de l'édition).
+- Si l'on se limite aux mots dont la prévalence est mesurée et que l'on respecte les proportions réelles de la langue, l'édition compterait **1 724 cartes latines sur 3 000 (57 %)**, contre 21 arabes, 15 gauloises, 7 japonaises ou chinoises et 2 hébraïques. Les réserves disponibles sont bien plus grandes (228 mots arabes, 165 gaulois…), sauf pour les toutes petites langues, à regrouper dans « Langues d'ailleurs » (471 mots disponibles au total).
 - La détection par mots-clés fait des erreurs (*antibois* classé « grec » à cause du préfixe *anti-*). En phase 0b, je mesurerai son taux d'erreur sur un échantillon vérifié à la main.
 - La liste définitive des factions (combien, lesquelles regrouper) est une décision de game design : je te proposerai 2 ou 3 découpages en phase 0b, chiffres à l'appui.
 
