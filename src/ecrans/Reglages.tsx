@@ -5,8 +5,6 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
-import { POLICES, appliquerLaPolice, policeChoisie } from '../theme/polices.ts';
-import type { Police } from '../theme/polices.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffacer } from '../services/partie.ts';
 
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
@@ -31,7 +29,6 @@ export function Reglages() {
   const partie = usePartie();
   const fichier = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [police, setPolice] = useState<Police>(policeChoisie);
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
   const { sauvegarde } = partie;
@@ -86,18 +83,6 @@ export function Reglages() {
         </label>
       </section>
 
-      <section className="bloc bloc--a-venir">
-        <span className="entete__surtitre">À l'essai</span>
-        <h2>Police des timbres</h2>
-        <p className="texte-doux petit">Trois polices à comparer sur de vraies cartes. Celle qui sera retenue restera seule dans le jeu.</p>
-        {(Object.keys(POLICES) as Police[]).map((cle) => (
-          <label key={cle} className="option">
-            <input type="radio" name="police" checked={police === cle} onChange={() => { appliquerLaPolice(cle); setPolice(cle); }} />
-            <span><strong>{POLICES[cle]}</strong></span>
-          </label>
-        ))}
-      </section>
-
       <section className="bloc">
         <h2>Ta sauvegarde</h2>
         <p className="petit">
@@ -142,7 +127,7 @@ export function Reglages() {
         </p>
       </section>
 
-      <AVenir phase="phase 3">Allonger ou couper le chronomètre du duel · Couper le son.</AVenir>
+      <AVenir phase="phase 4">Sons du jeu, et de quoi les couper.</AVenir>
 
       <section className="bloc">
         <h2>Crédits et sources</h2>

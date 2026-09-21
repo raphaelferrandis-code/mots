@@ -23,8 +23,7 @@
   --rarete-epique: #7a4bb0;
   --rarete-legendaire: #b8860b;
 
-  /* Polices : livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils.
-     Trois familles sont à l'essai ; les lignes [data-police] ci-dessous font le changement. */
+  /* Polices : livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils. */
   --police-serif: 'Playfair Display', 'Palatino Linotype', Palatino, Georgia, serif;
   --police-titre: var(--police-serif);
   --police-texte: var(--police-serif);
@@ -41,5 +40,3 @@
   --ombre: 0 1px 2px rgba(35, 48, 68, 0.08), 0 6px 18px rgba(35, 48, 68, 0.1);
 }
 
-:root[data-police='cormorant'] { --police-serif: 'Cormorant Garamond', 'Palatino Linotype', Palatino, Georgia, serif; }
-:root[data-police='caslon'] { --police-serif: 'Libre Caslon Text', 'Palatino Linotype', Palatino, Georgia, serif; }

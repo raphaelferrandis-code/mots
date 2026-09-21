@@ -441,7 +441,7 @@ Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : de
 | 26 | Règles des finitions | **Validé** : finition tirée à part pour chaque carte ordinaire (brillante 1 sur 12, holographique 1 sur 80) ; chaque finition possédée compte à part ; seul un vrai doublon (carte et finition déjà possédées) devient de l'Encre, multipliée par 3 (brillante) ou 10 (holographique) |
 | 27 | Prix du paquet | **150 Encre** |
 | 28 | Idées retenues pour la suite | Cachet « Maîtrisé » daté sur le timbre quand le mot est maîtrisé en duel (**fait en phase 3** : griffe violette datée, après 5 bonnes réponses) ; séries par famille de mots ; album présenté en planches par langue avec emplacements vides secrets |
-| 29 | Polices | **Polices libres livrées avec le jeu** (accord du 21/09/2026). Trois familles à l'essai dans les Réglages ; Raphaël doit en retenir une |
+| 29 | Polices | **Playfair Display**, police libre livrée avec le jeu (choisie le 21/09/2026 parmi trois familles à l'essai) ; Barlow Condensed pour les petites mentions en capitales |
 
 ### 10.2 Propositions encore à confirmer (🟡)
 
@@ -455,7 +455,6 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
 | Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
-| Police des timbres | Trois polices à l'essai (Playfair Display, Cormorant Garamond, Libre Caslon) : en retenir une, les deux autres seront retirées | Réglages |
 | Duel : poids de la défense | **75 %** de la défense adverse est retirée des dégâts, au lieu de 100 % dans la première version du brief (qui donnait des parties de 15 manches). Autres choix possibles : 50 % avec 30 points de vie (attaques plus franches, mais celui qui commence gagne 60 % des parties), ou 100 % avec 12 points de vie (la défense compte à plein, mais 7 attaques sur 10 ne font que 1 dégât) | §5.4, `data/simulation-duel.md` |
 | Duel : mot en jeu au départ | Chaque camp commence avec un mot en jeu tiré de son deck | §5.4 |
 | Duel : force de l'ordinateur | Mêmes raretés que le joueur, cartes de force égale (Facile) ou un peu supérieure (+1, Normal et Difficile). Un « bon lecteur » gagne presque toujours en Facile, 2 parties sur 3 en Normal, 1 sur 3 en Difficile | §5.4 |
