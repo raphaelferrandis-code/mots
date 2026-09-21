@@ -62,7 +62,7 @@ export function Reglages() {
   const dernierExport = sauvegarde.dernierExport ? new Date(sauvegarde.dernierExport.le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
 
   return (
-    <main className="ecran">
+    <main className="ecran panneaux">
       <Entete titre="Réglages" />
 
       <section className="bloc">

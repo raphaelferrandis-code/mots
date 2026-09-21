@@ -40,8 +40,8 @@
   --rayon: 12px;
   --rayon-carte: 14px;
   --marge: 16px;
-  --largeur-jeu: 480px; /* écrans de jeu : une colonne, comme sur téléphone */
-  --largeur-collection: 1080px; /* la collection profite des grands écrans */
+  --largeur-jeu: 1200px;
+  --largeur-collection: 1440px;
   --largeur-accueil: 1320px;
   --hauteur-navigation: 64px;
   --ombre: 0 12px 30px rgb(0 0 0 / 22%);

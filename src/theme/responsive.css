@@ -1,0 +1,66 @@
+/* Structure adaptable commune. Les encarts suivent leur conteneur ; seules les
+   illustrations et les lignes de lecture gardent une taille maximale. */
+.ecran > *, .panneaux > *, .fiche > *, .bloc > * { min-width: 0; }
+.entete h1, .niveau strong { overflow-wrap: anywhere; }
+.panneaux { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--marge); align-items: start; align-content: start; }
+.panneaux > .entete, .panneaux__large { grid-column: 1 / -1; }
+.ecran.panneaux { display: grid; }
+.bloc { min-width: 0; }
+.filtres input, .filtres select { min-width: 0; width: 100%; }
+.rangee-de-cartes { grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr)); }
+.progressions { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.fiche__visuel, .fiche__contenu { display: grid; gap: var(--marge); align-content: start; }
+.fiche__contenu { overflow-wrap: anywhere; }
+.donnees { grid-template-columns: auto minmax(0, 1fr); }
+.classement li { grid-template-columns: 2.4em minmax(0, 1fr) auto 3.2em; }
+.jauge { min-width: 0; grid-template-columns: minmax(0, 1fr) auto; }
+.jauge__nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duel__camps { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.duel__table { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.duel__mot-pose { min-width: 0; }
+.duel__mot-pose > .tim, .duel__mot-pose > .deck__vide { max-width: 260px; }
+.duel__main { width: 100%; max-width: 660px; margin-inline: auto; }
+.duel__action { grid-template-columns: minmax(0, 1fr) auto; }
+.duel__prevision { overflow-wrap: anywhere; }
+.epreuve__propositions { min-width: 0; }
+.proposition { overflow-wrap: anywhere; }
+
+@media (min-width: 520px) {
+  .rangee-de-cartes { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+@media (min-width: 768px) {
+  .ecran { --marge: clamp(20px, 2.5vw, 32px); }
+  .panneaux { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .niveaux--entrainement { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .niveau { align-content: start; gap: 10px; padding: 18px; }
+  .duel-salon .modes { width: min(100%, 600px); }
+  .reserve-paquets { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-content: start; align-items: start; }
+  .reserve-paquets > .bouton { justify-self: start; }
+  .fiche { grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr); align-items: start; }
+  .fiche > .entete { grid-column: 1 / -1; }
+  .fiche__carte { width: min(100%, 340px); }
+  .fiche__visuel { position: sticky; top: 112px; }
+  .epreuve__propositions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .epreuve__propositions .proposition { height: 100%; min-height: 80px; }
+  /* Une correction dans le bilan reste en liste, dans sa colonne. */
+  .duel__lecon .epreuve__propositions { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 1000px) {
+  .joutes { grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr); }
+  .duel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; align-content: start; gap: 24px; }
+  .duel__camps, .duel > .epreuve, .duel__fin, .duel__abandon { grid-column: 1 / -1; }
+  .duel > .epreuve, .duel__fin { width: min(100%, 960px); justify-self: center; }
+  .duel__abandon { justify-self: center; }
+  .duel__tour { min-height: 100%; }
+  .duel__action, .duel__suite { margin-top: auto; }
+}
+
+@media (max-width: 379px) {
+  .duel__action { grid-template-columns: minmax(0, 1fr); }
+  .duel__action .bouton { justify-self: stretch; }
+  .classement li { grid-template-columns: 2em minmax(0, 1fr) 3em; }
+  .classement__ligue { grid-column: 2; grid-row: 2; }
+  .classement__cote { grid-column: 3; grid-row: 1; }
+}

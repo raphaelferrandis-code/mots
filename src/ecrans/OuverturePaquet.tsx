@@ -40,7 +40,7 @@ export function OuverturePaquet() {
   // ── Aucun paquet en cours d'ouverture ─────────────────────────────────────
   if (!ouverture) {
     return (
-      <main className="ecran">
+      <main className="ecran reserve-paquets">
         <Entete titre="Les paquets">{EQUILIBRAGE.paquets.emplacements.length} timbres par paquet</Entete>
         <section className="bloc">
           <p className="paquets__stock"><strong>{paquets.stock}</strong> / {paquets.maximum} en réserve</p>

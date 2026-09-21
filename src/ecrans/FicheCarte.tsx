@@ -37,55 +37,59 @@ export function FicheCarte({ id }: { id: string }) {
     <main className="ecran">
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
-        <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
-        {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
+        <div className="fiche__visuel">
+          <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
+          {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
+        </div>
 
-        <section className="bloc">
-          <h2>Dans ton album</h2>
-          {possedee ? (
-            <p>
-              Obtenu le {enToutesLettres(possedee.obtenueLe)}.{' '}
-              {carte.rarete === 'Hors-série'
-                ? 'Hors-série : finition unique.'
-                : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
-            </p>
-          ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
-          {possedee && (
-            <p>
-              {possedee.maitriseeLe !== null
-                ? <><strong>Mot maîtrisé</strong> le {enToutesLettres(possedee.maitriseeLe)} : {possedee.reussites} bonnes réponses en duel.</>
-                : <>Maîtrise : {possedee.reussites} / {EQUILIBRAGE.duel.reussitesPourLaMaitrise} bonnes réponses en duel.</>}
-            </p>
-          )}
-        </section>
+        <div className="fiche__contenu">
+          <section className="bloc">
+            <h2>Dans ton album</h2>
+            {possedee ? (
+              <p>
+                Obtenu le {enToutesLettres(possedee.obtenueLe)}.{' '}
+                {carte.rarete === 'Hors-série'
+                  ? 'Hors-série : finition unique.'
+                  : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
+              </p>
+            ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
+            {possedee && (
+              <p>
+                {possedee.maitriseeLe !== null
+                  ? <><strong>Mot maîtrisé</strong> le {enToutesLettres(possedee.maitriseeLe)} : {possedee.reussites} bonnes réponses en duel.</>
+                  : <>Maîtrise : {possedee.reussites} / {EQUILIBRAGE.duel.reussitesPourLaMaitrise} bonnes réponses en duel.</>}
+              </p>
+            )}
+          </section>
 
-        <section className="bloc">
-          <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>
-          <ol className="definitions">
-            {details.definitions.map((definition) => (
-              <li key={definition.texte}>
-                {definition.registre?.map((r) => <em key={r} className="texte-doux">({r.toLowerCase()}) </em>)}
-                {definition.texte}
-              </li>
-            ))}
-          </ol>
-        </section>
+          <section className="bloc">
+            <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>
+            <ol className="definitions">
+              {details.definitions.map((definition) => (
+                <li key={definition.texte}>
+                  {definition.registre?.map((r) => <em key={r} className="texte-doux">({r.toLowerCase()}) </em>)}
+                  {definition.texte}
+                </li>
+              ))}
+            </ol>
+          </section>
 
-        <section className="bloc">
-          <h2>Origine</h2>
-          <p>{details.etymologie || 'Le Wiktionnaire ne donne pas l\'étymologie de ce mot.'}</p>
-          <dl className="donnees">
-            {details.attestation && (<><dt>Attesté depuis</dt><dd>{details.attestation}</dd></>)}
-            {details.prevalence !== null && (<><dt>Connu de</dt><dd>{details.prevalence} % des gens interrogés</dd></>)}
-            <dt>Fréquence</dt>
-            <dd>{details.frequence.toLocaleString('fr-FR')} fois par million de mots</dd>
-          </dl>
-        </section>
+          <section className="bloc">
+            <h2>Origine</h2>
+            <p>{details.etymologie || 'Le Wiktionnaire ne donne pas l\'étymologie de ce mot.'}</p>
+            <dl className="donnees">
+              {details.attestation && (<><dt>Attesté depuis</dt><dd>{details.attestation}</dd></>)}
+              {details.prevalence !== null && (<><dt>Connu de</dt><dd>{details.prevalence} % des gens interrogés</dd></>)}
+              <dt>Fréquence</dt>
+              <dd>{details.frequence.toLocaleString('fr-FR')} fois par million de mots</dd>
+            </dl>
+          </section>
 
-        <p className="texte-doux petit">
-          Définitions et étymologie adaptées du <a href={pageDuWiktionnaire(carte.mot)} target="_blank" rel="noreferrer">Wiktionnaire, page « {carte.mot} »</a> (licence CC BY-SA 4.0).
-          Fréquence et prévalence : Lexique 4.
-        </p>
+          <p className="texte-doux petit">
+            Définitions et étymologie adaptées du <a href={pageDuWiktionnaire(carte.mot)} target="_blank" rel="noreferrer">Wiktionnaire, page « {carte.mot} »</a> (licence CC BY-SA 4.0).
+            Fréquence et prévalence : Lexique 4.
+          </p>
+        </div>
       </article>
     </main>
   );

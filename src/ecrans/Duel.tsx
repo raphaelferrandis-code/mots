@@ -178,7 +178,7 @@ export function Duel() {
     const victoiresDuJour = sauvegarde.duels.jour === jourDe(Date.now()) ? sauvegarde.duels.victoiresDuJour : 0;
     const pleinesRestantes = Math.max(0, REGLES.victoiresPleinesParJour - victoiresDuJour);
     return (
-      <main className="ecran">
+      <main className="ecran duel-salon">
         <Entete titre="Les duels" />
 
         <div className="modes" role="tablist" aria-label="Mode de duel">
@@ -197,10 +197,10 @@ export function Duel() {
             <PanneauDesJoutes sauvegarde={sauvegarde} enPreparation={etape.nom === 'preparation'} onDefier={(profil) => void lancer({ type: 'joute', profil })} />
           </>
         ) : (
-          <>
-            <section className="bloc">
+          <div className="panneaux">
+            <section className="bloc panneaux__large">
               <h2>Difficulté</h2>
-              <div className="niveaux" role="radiogroup" aria-label="Niveau de l'ordinateur">
+              <div className="niveaux niveaux--entrainement" role="radiogroup" aria-label="Niveau de l'ordinateur">
                 {NIVEAUX.map((n) => (
                   <button key={n} type="button" role="radio" aria-checked={niveau === n} className="niveau" onClick={() => setNiveau(n)}>
                     <strong>{n}</strong>
@@ -241,7 +241,7 @@ export function Duel() {
                 <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes réponses sur un mot de ta collection lui donnent son cachet « Maîtrisé ».</li>
               </ul>
             </details>
-          </>
+          </div>
         )}
       </main>
     );

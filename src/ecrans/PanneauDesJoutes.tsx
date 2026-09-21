@@ -90,7 +90,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const rang = classement.etat === 'pret' ? classement.donnees : null;
 
   return (
-    <>
+    <div className="panneaux joutes">
       <section className="bloc">
         <p className="entete__surtitre">Ligue {ligue.nom}</p>
         {saisie === null ? (
@@ -143,7 +143,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
       </section>
 
       {rang && (
-        <details className="bloc repliable">
+        <details className="bloc repliable panneaux__large">
           <summary><h2>Le classement</h2></summary>
           <ol className="classement">
             {[...rang.tete, ...rang.voisins.filter((v) => v.rang > rang.tete.length)].map((ligne, i, toutes) => (
@@ -157,6 +157,6 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
           </ol>
         </details>
       )}
-    </>
+    </div>
   );
 }
