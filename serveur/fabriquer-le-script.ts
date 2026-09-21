@@ -35,6 +35,7 @@ export function structure(): string {
 -- MOTS — le serveur des joutes classées (1/2 : la structure)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase : SQL Editor → New query → coller → Run. Peut être relancé sans danger.
+-- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
 -- ═════════════════════════════════════════════════════════════════════════════
 
 create extension if not exists unaccent with schema extensions;
@@ -294,6 +295,7 @@ export function joueursMaison(edition: IndexEdition): string {
 -- MOTS — le serveur des joutes classées (2/2 : les ${joueurs.length} joueurs maison)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql. Peut être relancé sans danger : il ne touche qu'aux joueurs maison.
+-- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
 -- Pour les retirer un jour, quand il y aura assez de vrais joueurs :   delete from public.profils where maison;
 -- ═════════════════════════════════════════════════════════════════════════════
 

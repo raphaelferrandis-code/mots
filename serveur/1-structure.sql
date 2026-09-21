@@ -2,6 +2,7 @@
 -- MOTS — le serveur des joutes classées (1/2 : la structure)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase : SQL Editor → New query → coller → Run. Peut être relancé sans danger.
+-- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
 -- ═════════════════════════════════════════════════════════════════════════════
 
 create extension if not exists unaccent with schema extensions;

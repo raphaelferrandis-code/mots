@@ -44,6 +44,8 @@ Le jeu ne demande ni adresse e-mail ni mot de passe aux joueurs : chacun reçoit
 
 Menu de gauche : **SQL Editor** → **New query** (ou le bouton **+**).
 
+> ⚠️ **Le piège « Logs ».** En haut à droite de l'éditeur, juste à gauche du bouton **Save**, un petit menu indique où la requête est envoyée. Il doit afficher **Database** (la base de données). S'il affiche **Logs**, la requête part vers le *journal* du projet, qui ne comprend pas nos scripts : un bandeau parle de « ClickHouse », et **Run** répond `Failed to get project's logs`. Rien n'est cassé et rien n'a été installé : ouvrir ce menu, choisir **Database**, puis relancer **Run**. Ne pas cliquer sur **Rewrite with Assistant** (il réécrirait le script dans un autre langage) ; **Dismiss** ferme le bandeau.
+
 ## Étape 4 — Coller les deux scripts
 
 Les scripts sont dans le dossier `serveur/` du projet. Sur GitHub : ouvrir le fichier, cliquer sur **Raw**, tout sélectionner (`Ctrl + A`), copier (`Ctrl + C`).

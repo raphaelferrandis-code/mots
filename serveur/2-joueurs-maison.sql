@@ -2,6 +2,7 @@
 -- MOTS — le serveur des joutes classées (2/2 : les 240 joueurs maison)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql. Peut être relancé sans danger : il ne touche qu'aux joueurs maison.
+-- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
 -- Pour les retirer un jour, quand il y aura assez de vrais joueurs :   delete from public.profils where maison;
 -- ═════════════════════════════════════════════════════════════════════════════
 
