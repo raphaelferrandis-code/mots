@@ -14,6 +14,7 @@ const OPTIONS: { cle: ReglageACocher; nom: string; aide: string }[] = [
   { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Inclut les mots populaires, argotiques et vulgaires.' },
   { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Selon les indications du dictionnaire.' },
   { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
+  { cle: 'sonsPaquets', nom: 'Sons des paquets', aide: 'Ouverture et manipulation des timbres.' },
 ];
 
 function telecharger(nom: string, contenu: string): void {

@@ -30,6 +30,7 @@ export type ReglagesDuJoueur = {
   masquerFamiliers: boolean;
   masquerInjurieux: boolean;
   reduireAnimations: boolean;
+  sonsPaquets: boolean;
   tempsDeReponse: TempsDeReponse;
 };
 
@@ -78,7 +79,7 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     duels: { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 },
     parades: {},
     joutes: { pseudo: '', cote: null, jouees: 0, gagnees: 0, recents: [] },
-    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, tempsDeReponse: 'normal' },
+    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, tempsDeReponse: 'normal' },
     dernierExport: null,
   };
 }
@@ -172,6 +173,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       masquerFamiliers: reglages.masquerFamiliers === true,
       masquerInjurieux: reglages.masquerInjurieux === true,
       reduireAnimations: reglages.reduireAnimations === true,
+      sonsPaquets: typeof reglages.sonsPaquets === 'boolean' ? reglages.sonsPaquets : true,
       tempsDeReponse: TEMPS_DE_REPONSE.find((t) => t === reglages.tempsDeReponse) ?? 'normal',
     },
     dernierExport: exporte ? { le: entierPositif(exporte.le, maintenant), paquetsOuverts: entierPositif(exporte.paquetsOuverts, 0) } : null,
