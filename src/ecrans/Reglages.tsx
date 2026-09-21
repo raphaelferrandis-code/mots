@@ -17,7 +17,7 @@ const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string; aide: string }[] = [
   { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Selon les indications du dictionnaire.' },
 ];
 const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
-  { cle: 'sonsPaquets', nom: 'Sons des paquets', aide: 'Ouverture et manipulation des timbres.' },
+  { cle: 'sonsPaquets', nom: 'Sons du jeu', aide: 'Paquets, timbres et duels.' }, // la clé garde son premier nom : les sauvegardes existantes restent valables
   { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
 ];
 

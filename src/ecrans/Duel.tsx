@@ -11,6 +11,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { choisirAuxFleches } from '../composants/fleches.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
+import { useSonsDuDuel } from '../composants/useSonsDuDuel.ts';
 import { EQUILIBRAGE, attaqueEnJeu } from '../config/equilibrage.ts';
 import { NIVEAUX } from '../jeu/duel.ts';
 import type { Attaque, Camp, Duel as EtatDuDuel, Niveau, Prevision } from '../jeu/duel.ts';
@@ -86,6 +87,7 @@ export function Duel() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [ticket, setTicket] = useState<number | null>(null); // le numéro de la joute en cours, quand un serveur tient le classement
   const [enregistrement, setEnregistrement] = useState(false);
+  const sons = useSonsDuDuel(sauvegarde?.reglages.sonsPaquets ?? true);
 
   // La dernière étape connue, pour qu'une réponse et la fin du temps ne comptent jamais toutes les deux.
   const etapeActuelle = useRef(etape);
@@ -98,6 +100,7 @@ export function Duel() {
   };
 
   const lancer = async (adversaire: Adversaire): Promise<void> => {
+    sons.preparer(); // dans le geste du joueur : les navigateurs n'ouvrent la sortie audio qu'à ce moment-là
     changerDEtape({ nom: 'preparation' });
     setErreur(null);
     try {
@@ -121,6 +124,7 @@ export function Duel() {
     if (choisie !== null && (enCours.nom === 'attaque' || enCours.nom === 'parade') && Date.now() - enCours.debut < 500) return;
     if (enCours.nom === 'attaque') {
       const juste = choisie === enCours.epreuve.bonne;
+      if (juste) sons.juste(); else sons.faux();
       const attaque: Reponse = { epreuve: enCours.epreuve, choisie, juste, maitrise: noterLaReponse(enCours.carte.id, juste) };
       setBilan((b) => ({ ...b, attaques: b.attaques + 1, attaquesReussies: b.attaquesReussies + (juste ? 1 : 0), maitrises: attaque.maitrise ? [...b.maitrises, enCours.carte.mot] : b.maitrises }));
       // Bonne réponse : on enchaîne aussitôt sur la parade. Sinon, on laisse le temps de lire la bonne définition.
@@ -133,7 +137,14 @@ export function Duel() {
       noterLaParade(enCours.adverse.rarete, juste);
       const parade: Reponse = { epreuve: enCours.epreuve, choisie, juste, maitrise: noterLaReponse(enCours.adverse.id, juste) };
       setBilan((b) => ({ ...b, parades: b.parades + 1, paradesReussies: b.paradesReussies + (juste ? 1 : 0), maitrises: parade.maitrise ? [...b.maitrises, enCours.adverse.mot] : b.maitrises }));
-      changerDEtape({ nom: 'bilan', adverse: enCours.adverse, carte: enCours.carte, attaque: enCours.attaque, parade, apres: reglerLaManche(terrain, duel, enCours.carte, enCours.adverse, enCours.attaque.juste, juste) });
+      const apres = reglerLaManche(terrain, duel, enCours.carte, enCours.adverse, enCours.attaque.juste, juste);
+      // La réponse d'abord, puis les deux attaques l'une après l'autre, puis le cachet s'il vient d'être gagné.
+      const manche = apres.manches.at(-1);
+      if (juste) sons.juste(); else sons.faux();
+      sons.coup(manche?.joueur.infliges ?? 0, 0.45);
+      sons.coup(manche?.adversaire.infliges ?? 0, 0.75);
+      if (enCours.attaque.maitrise || parade.maitrise) sons.cachet(1.1);
+      changerDEtape({ nom: 'bilan', adverse: enCours.adverse, carte: enCours.carte, attaque: enCours.attaque, parade, apres });
     }
   };
 
@@ -165,6 +176,7 @@ export function Duel() {
         nonEnregistree = true;
       } finally { setEnregistrement(false); }
     }
+    if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
     changerDEtape({ nom: 'fin', resultat, nonEnregistree, ...finirLeDuel(terrain.adversaire, resultat, coteDuServeur) });
   };
 
@@ -300,7 +312,7 @@ export function Duel() {
                     <strong>Tu infliges {prevision.mienne.degats}</strong>, tu reçois <strong>{prevision.sienne.degats}</strong> <span className="duel__si-parade">({prevision.sienne.degatsSiParee} si tu pares)</span>
                     <span className="texte-doux petit">{detailDuCalcul(choisie, prevision.mienne)}.</span>
                   </p>
-                  <button type="button" className="bouton" onClick={() => changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() })}>Jouer</button>
+                  <button type="button" className="bouton" onClick={() => { sons.preparer(); sons.poser(); changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() }); }}>Jouer</button>
                 </div>
               ) : <p className="texte-doux petit">Choisis un timbre pour voir les dégâts prévus.</p>}
             </section>
@@ -316,7 +328,7 @@ export function Duel() {
           <p className="entete__surtitre">{etape.nom === 'attaque' ? 'Attaque · ton mot' : 'Parade · son mot'}</p>
           <h2 className="epreuve__mot" lang="fr" tabIndex={-1} ref={viserLeMot}>{etape.epreuve.mot}</h2>
           <p className="texte-doux petit">{(etape.nom === 'attaque' ? etape.carte : etape.adverse).type} · Quelle est sa définition ?</p>
-          {duree !== null && <Sablier debut={etape.debut} secondes={duree} />}
+          {duree !== null && <Sablier debut={etape.debut} secondes={duree} onTic={() => sons.tic()} />}
           <Propositions epreuve={etape.epreuve} onRepondre={repondre} />
         </section>
       )}
@@ -469,9 +481,14 @@ function Propositions({ epreuve, reponse, onRepondre, seulementLUtile = false }:
 }
 
 // Le temps qui reste pour répondre : une barre qui se vide, et les secondes en toutes lettres.
-function Sablier({ debut, secondes }: { debut: number; secondes: number }) {
+function Sablier({ debut, secondes, onTic }: { debut: number; secondes: number; onTic: () => void }) {
   const maintenant = useMaintenant(200);
   const reste = Math.max(0, debut + secondes * 1000 - maintenant);
+  // Les cinq dernières secondes s'entendent : un tic par seconde.
+  const secondesRestantes = Math.ceil(reste / 1000);
+  const tic = useRef(onTic);
+  tic.current = onTic;
+  useEffect(() => { if (secondesRestantes > 0 && secondesRestantes <= 5) tic.current(); }, [secondesRestantes]);
   return (
     <div className="sablier" role="timer" aria-label={`${Math.ceil(reste / 1000)} secondes restantes`} data-presse={reste < 5000}>
       <span className="sablier__barre" aria-hidden="true"><span style={{ width: `${(reste / (secondes * 1000)) * 100}%` }} /></span>
