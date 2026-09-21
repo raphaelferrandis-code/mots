@@ -1,7 +1,7 @@
 // Nettoyage des textes du Wiktionnaire et préparation des définitions d'une carte.
 
 import type { Definition, Registre } from '../../src/partage/types.ts';
-import { sansAccents } from '../../src/partage/lettres.ts';
+import { contientLeMot } from '../../src/partage/famille.ts';
 
 // Retire les résidus de mise en forme laissés par l'extraction.
 export function nettoyerTexte(texte: string): string {
@@ -34,21 +34,9 @@ export function couper(texte: string, longueurMaximale: number): string {
   return `${coupe.slice(0, dernierEspace > longueurMaximale * 0.6 ? dernierEspace : coupe.length).replace(/[,;:\s]+$/, '')}…`;
 }
 
-// La définition contient-elle le mot lui-même, ou un mot de la même famille ?
-// (« datable : que l'on peut dater » donnerait la réponse en duel.)
-const SUFFIXES = ['issement', 'ellement', 'ement', 'ation', 'ition', 'able', 'ible', 'ment', 'tion', 'ique', 'isme', 'iste', 'euse', 'eur', 'ite', 'age', 'ance', 'ence', 'ant', 'er', 'ir', 'ee', 'e'];
-
-export function contientLeMot(definition: string, mot: string): boolean {
-  const texte = sansAccents(definition);
-  const cible = sansAccents(mot).replace(/-/g, ' ');
-  if (cible.length <= 4) return new RegExp(`(^|[^a-z])${cible}([^a-z]|$)`).test(texte);
-
-  // Deux racines possibles : le mot sans ses dernières lettres, et le mot sans son suffixe (« datable » → « dat »).
-  const racines = [cible.slice(0, Math.max(4, cible.length - 3))];
-  const suffixe = SUFFIXES.find((s) => cible.endsWith(s) && cible.length - s.length >= 3);
-  if (suffixe) racines.push(cible.slice(0, cible.length - suffixe.length));
-  return racines.some((racine) => new RegExp(`(^|[^a-z])${racine}`).test(texte));
-}
+// La définition contient-elle le mot lui-même, ou un mot de la même famille ? (« datable : que l'on peut dater »
+// donnerait la réponse en duel.) La règle est partagée avec le jeu : elle vit dans src/partage/famille.ts.
+export { contientLeMot };
 
 export type SensPropre = { definition: string; registre: Registre[] };
 

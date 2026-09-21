@@ -58,6 +58,7 @@ export function Collection() {
       horsSeriePossedees: possedees.filter((c) => c.rarete === 'Hors-série').length,
       brillantes: miennes.filter((m) => (m.finitions.Brillante ?? 0) > 0).length,
       holographiques: miennes.filter((m) => (m.finitions.Holographique ?? 0) > 0).length,
+      maitrises: miennes.filter((m) => m.maitriseeLe !== null).length,
     };
   }, [visibles, possedees, sauvegarde]);
 
@@ -94,7 +95,7 @@ export function Collection() {
   return (
     <main className="ecran ecran--large">
       <Entete surtitre="Collection" titre="Ton album">
-        {bilan.possedees.toLocaleString('fr-FR')} timbres sur {bilan.total.toLocaleString('fr-FR')} · Hors-série : {bilan.horsSeriePossedees} / {bilan.horsSerie} · finitions brillantes : {bilan.brillantes}, holographiques : {bilan.holographiques}. Les timbres que tu n'as pas encore restent secrets.
+        {bilan.possedees.toLocaleString('fr-FR')} timbres sur {bilan.total.toLocaleString('fr-FR')} · Hors-série : {bilan.horsSeriePossedees} / {bilan.horsSerie} · finitions brillantes : {bilan.brillantes}, holographiques : {bilan.holographiques} · mots maîtrisés en duel : {bilan.maitrises}. Les timbres que tu n'as pas encore restent secrets.
       </Entete>
 
       {possedees.length === 0 ? (
@@ -140,7 +141,7 @@ export function Collection() {
 
           <p className="texte-doux petit" aria-live="polite">{affichees.length.toLocaleString('fr-FR')} timbre{affichees.length > 1 ? 's' : ''}</p>
           <div className="rangee-de-cartes">
-            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} />)}
+            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} />)}
           </div>
           {affichees.length > pages * PAR_PAGE && (
             <button type="button" className="bouton bouton--discret" onClick={() => setPages((p) => p + 1)}>Afficher plus de timbres</button>

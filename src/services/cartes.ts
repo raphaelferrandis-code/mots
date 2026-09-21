@@ -3,7 +3,7 @@
 // les données : aujourd'hui des fichiers fabriqués par le pipeline, demain peut-être un serveur.
 
 import { lotDeLaCarte, nomDuLot } from '../partage/lots.ts';
-import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
+import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../partage/types.ts';
 
 const EDITION = 1;
 const DOSSIER = `${import.meta.env.BASE_URL}data/`;
@@ -31,14 +31,27 @@ export async function chargerCarte(id: string): Promise<CarteIndex | undefined> 
   return edition.cartes.find((carte) => carte.id === id);
 }
 
-export async function chargerDetails(id: string): Promise<CarteDetails | undefined> {
-  const edition = await chargerEdition();
-  const lot = lotDeLaCarte(id, edition.meta.lots);
+function chargerLot(lot: number): Promise<Record<string, CarteDetails>> {
   if (!lots.has(lot)) {
     lots.set(lot, lireJson<Record<string, CarteDetails>>(`details/${nomDuLot(lot)}`).catch((erreur) => {
       lots.delete(lot);
       throw erreur;
     }));
   }
-  return (await lots.get(lot)!)[id];
+  return lots.get(lot)!;
+}
+
+export async function chargerDetails(id: string): Promise<CarteDetails | undefined> {
+  const edition = await chargerEdition();
+  return (await chargerLot(lotDeLaCarte(id, edition.meta.lots)))[id];
+}
+
+// Les définitions de toutes les cartes, pour l'épreuve de maîtrise du duel : la bonne définition vient du mot
+// joué, les leurres de n'importe quel autre. (Environ 450 Ko à télécharger, une seule fois.)
+export async function chargerLesDefinitions(): Promise<Map<string, Definition[]>> {
+  const edition = await chargerEdition();
+  const tous = await Promise.all(Array.from({ length: edition.meta.lots }, (_, lot) => chargerLot(lot)));
+  const definitions = new Map<string, Definition[]>();
+  for (const lot of tous) for (const [id, details] of Object.entries(lot)) definitions.set(id, details.definitions);
+  return definitions;
 }

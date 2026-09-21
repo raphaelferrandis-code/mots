@@ -9,7 +9,7 @@ import { hasardReproductible } from './hasard.ts';
 import { encreMaximaleMoyenneParPaquet, ouvrirPaquet, preparerReserve, tirerFinition, tirerRarete } from './paquets.ts';
 import { acheterUnPaquet, mettreAJour, ouvrirUnPaquetGratuit } from './partie.ts';
 import { attenteAvantLeProchain, rechargerLesPaquets, retirerUnPaquet } from './recharge.ts';
-import { meilleureFinition, nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
+import { VERSION_DE_SAUVEGARDE, meilleureFinition, nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 
 const MINUTE = 60_000;
 const T0 = Date.UTC(2026, 8, 21, 12, 0, 0);
@@ -161,7 +161,7 @@ describe('une partie', () => {
   it('change en Encre une carte déjà possédée dans cette finition, selon sa rareté et sa finition', () => {
     let sauvegarde = nouvelleSauvegarde(T0, 0);
     const toutesLesFinitions = { Normale: 1, Brillante: 1, Holographique: 1 };
-    sauvegarde = { ...sauvegarde, paquets: { ...sauvegarde.paquets, stock: 10, ouverts: 50 }, cartes: Object.fromEntries(EDITION.map((c) => [c.id, { obtenueLe: T0, doublons: 0, finitions: toutesLesFinitions }])) };
+    sauvegarde = { ...sauvegarde, paquets: { ...sauvegarde.paquets, stock: 10, ouverts: 50 }, cartes: Object.fromEntries(EDITION.map((c) => [c.id, { obtenueLe: T0, doublons: 0, finitions: toutesLesFinitions, reussites: 0, maitriseeLe: null }])) };
     let encreAttendue = 0;
     for (let i = 0; i < 10; i++) {
       const { cartes, sauvegarde: apres } = ouvrirUnPaquetGratuit(sauvegarde, contexte(T0, 600 + i));
@@ -175,7 +175,7 @@ describe('une partie', () => {
     assert.equal(sauvegarde.encre, encreAttendue);
   });
   it("garde une finition que le joueur n'avait pas encore, au lieu de la changer en Encre", () => {
-    const possedeTout = { ...nouvelleSauvegarde(T0, 10), paquets: { stock: 10, reference: T0, ouverts: 50, sansLegendaire: 0 }, cartes: Object.fromEntries(EDITION.map((c) => [c.id, { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 } }])) };
+    const possedeTout = { ...nouvelleSauvegarde(T0, 10), paquets: { stock: 10, reference: T0, ouverts: 50, sansLegendaire: 0 }, cartes: Object.fromEntries(EDITION.map((c) => [c.id, { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 }, reussites: 0, maitriseeLe: null }])) };
     const toutBrillant = { ...EQUILIBRAGE, finitions: { ...FINITIONS, chances: { Brillante: 1, Holographique: 0 } } };
     const { cartes, sauvegarde } = ouvrirUnPaquetGratuit(possedeTout, { ...contexte(T0, 7), equilibrage: toutBrillant });
     assert.ok(cartes.every((c) => c.finition === 'Brillante' && !c.nouvelle && c.nouvelleFinition && c.encre === 0));
@@ -214,7 +214,7 @@ describe('une partie', () => {
 
 describe('sauvegarde', () => {
   it('se relit à l\'identique après un export', () => {
-    const sauvegarde = { ...nouvelleSauvegarde(T0, 3), encre: 42, cartes: { 'callipyge-adj': { obtenueLe: T0, doublons: 2, finitions: { Normale: 3, Holographique: 1 } } } };
+    const sauvegarde = { ...nouvelleSauvegarde(T0, 3), encre: 42, cartes: { 'callipyge-adj': { obtenueLe: T0, doublons: 2, finitions: { Normale: 3, Holographique: 1 }, reussites: 4, maitriseeLe: null } }, deck: ['callipyge-adj'] };
     assert.deepEqual(relireSauvegarde(JSON.parse(JSON.stringify(sauvegarde)), T0 + MINUTE), sauvegarde);
   });
   it('refuse ce qui n\'est pas une sauvegarde, ou qui vient d\'une version plus récente du jeu', () => {
@@ -224,21 +224,21 @@ describe('sauvegarde', () => {
   it('répare ce qui est absent ou abîmé au lieu de planter', () => {
     const reparee = relireSauvegarde({ version: 2, cartes: { bon: { obtenueLe: 5, doublons: 1, finitions: { Brillante: 2, Inventee: 9, Normale: -1 } }, abime: 'x', bizarre: { doublons: -4, finitions: 'rien' } }, encre: -10, paquets: { stock: 'beaucoup', reference: T0 + 999 * MINUTE } }, T0);
     assert.equal(reparee.encre, 0);
-    assert.deepEqual(reparee.cartes, { bon: { obtenueLe: 5, doublons: 1, finitions: { Brillante: 2 } }, bizarre: { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 } } });
+    assert.deepEqual(reparee.cartes, { bon: { obtenueLe: 5, doublons: 1, finitions: { Brillante: 2 }, reussites: 0, maitriseeLe: null }, bizarre: { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 }, reussites: 0, maitriseeLe: null } });
     assert.equal(reparee.paquets.stock, 0);
     assert.equal(reparee.paquets.reference, T0, 'une date future donnerait des paquets gratuits');
-    assert.deepEqual(reparee.reglages, { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false });
+    assert.deepEqual(reparee.reglages, { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, tempsDeReponse: 'normal' });
   });
   it('convertit une sauvegarde de la version 1 : toutes les cartes étaient alors en finition normale', () => {
     const ancienne = { version: 1, creeLe: T0, encre: 12, paquets: { stock: 2, reference: T0, ouverts: 9, sansLegendaire: 4 }, cartes: { 'callipyge-adj': { obtenueLe: T0, doublons: 2 }, 'amour-nom': { obtenueLe: T0, doublons: 0 } }, reglages: { masquerFamiliers: true }, dernierExport: null };
     const convertie = relireSauvegarde(ancienne, T0);
-    assert.equal(convertie.version, 2);
-    assert.deepEqual(convertie.cartes['callipyge-adj'], { obtenueLe: T0, doublons: 2, finitions: { Normale: 3 } });
+    assert.equal(convertie.version, VERSION_DE_SAUVEGARDE);
+    assert.deepEqual(convertie.cartes['callipyge-adj'], { obtenueLe: T0, doublons: 2, finitions: { Normale: 3 }, reussites: 0, maitriseeLe: null });
     assert.deepEqual(convertie.cartes['amour-nom'].finitions, { Normale: 1 });
     assert.equal(convertie.encre, 12);
     assert.equal(convertie.reglages.masquerFamiliers, true);
     assert.equal(meilleureFinition(convertie.cartes['callipyge-adj']), 'Normale');
-    assert.equal(meilleureFinition({ obtenueLe: T0, doublons: 0, finitions: { Normale: 4, Holographique: 1, Brillante: 2 } }), 'Holographique');
+    assert.equal(meilleureFinition({ obtenueLe: T0, doublons: 0, finitions: { Normale: 4, Holographique: 1, Brillante: 2 }, reussites: 0, maitriseeLe: null }), 'Holographique');
   });
   it('plafonne un stock de paquets trafiqué', () => {
     const trafiquee = relireSauvegarde({ version: 2, cartes: {}, paquets: { stock: 9999, reference: T0 } }, T0);

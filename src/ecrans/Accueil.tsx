@@ -26,6 +26,8 @@ export function Accueil() {
   const possedees = ordinaires.filter((c) => c.id in sauvegarde.cartes).length;
   const horsSeriePossedees = horsSerie.filter((c) => c.id in sauvegarde.cartes).length;
 
+  const motsMaitrises = Object.values(sauvegarde.cartes).filter((c) => c.maitriseeLe !== null).length;
+
   const depuisLExport = sauvegarde.paquets.ouverts - (sauvegarde.dernierExport?.paquetsOuverts ?? 0);
   const rappelerLExport = depuisLExport >= EQUILIBRAGE.paquetsEntreDeuxRappelsDExport || (sauvegarde.dernierExport === null && sauvegarde.paquets.ouverts >= 20);
 
@@ -60,6 +62,21 @@ export function Accueil() {
           ? <p><strong>{possedees.toLocaleString('fr-FR')}</strong> / {ordinaires.length.toLocaleString('fr-FR')} timbres · Hors-série : {horsSeriePossedees} / {horsSerie.length} · {sauvegarde.paquets.ouverts.toLocaleString('fr-FR')} {sauvegarde.paquets.ouverts > 1 ? 'paquets ouverts' : 'paquet ouvert'}</p>
           : <p className="texte-doux">Chargement des cartes…</p>}
         <a className="bouton bouton--discret" href={lien({ ecran: 'collection' })}>Voir ma collection</a>
+      </section>
+
+      <section className="bloc">
+        <h2>Duel</h2>
+        {sauvegarde.deck.length === EQUILIBRAGE.duel.tailleDuDeck ? (
+          <>
+            <p>{sauvegarde.duels.joues === 0 ? 'Ton deck est prêt : prouve que tu connais tes mots.' : <><strong>{sauvegarde.duels.gagnes}</strong> victoire{sauvegarde.duels.gagnes > 1 ? 's' : ''} en {sauvegarde.duels.joues} duel{sauvegarde.duels.joues > 1 ? 's' : ''} · {motsMaitrises} mot{motsMaitrises > 1 ? 's' : ''} maîtrisé{motsMaitrises > 1 ? 's' : ''}</>}</p>
+            <a className="bouton bouton--discret" href={lien({ ecran: 'duel' })}>Lancer un duel</a>
+          </>
+        ) : (
+          <>
+            <p className="texte-doux petit">Choisis {EQUILIBRAGE.duel.tailleDuDeck} cartes et affronte l'ordinateur. Pour attaquer, il faut retrouver la définition de son mot : chaque victoire rapporte de l'Encre.</p>
+            <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Composer mon deck</a>
+          </>
+        )}
       </section>
 
       {rappelerLExport && (

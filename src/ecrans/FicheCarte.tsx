@@ -1,5 +1,6 @@
 import { Carte } from '../composants/carte/Carte.tsx';
 import { usePartie } from '../composants/usePartie.ts';
+import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { FINITIONS } from '../partage/types.ts';
 import { Entete } from '../composants/Entete.tsx';
@@ -12,6 +13,7 @@ async function chargerFiche(id: string) {
   return carte && details ? { carte, details } : null;
 }
 
+const enToutesLettres = (date: number): string => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 const pageDuWiktionnaire = (mot: string): string => `https://fr.wiktionary.org/wiki/${encodeURIComponent(mot)}`;
 
 export function FicheCarte({ id }: { id: string }) {
@@ -35,19 +37,26 @@ export function FicheCarte({ id }: { id: string }) {
     <main className="ecran">
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
-        <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} cliquable={false} /></div>
+        <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
         {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
 
         <section className="bloc">
           <h2>Dans ton album</h2>
           {possedee ? (
             <p>
-              Obtenu le {new Date(possedee.obtenueLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.{' '}
+              Obtenu le {enToutesLettres(possedee.obtenueLe)}.{' '}
               {carte.rarete === 'Hors-série'
                 ? 'Les timbres Hors-série ont leur propre impression, sans autre finition.'
                 : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
             </p>
           ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
+          {possedee && (
+            <p>
+              {possedee.maitriseeLe !== null
+                ? <><strong>Mot maîtrisé</strong> le {enToutesLettres(possedee.maitriseeLe)} : {possedee.reussites} bonnes réponses en duel.</>
+                : <>Maîtrise : {possedee.reussites} / {EQUILIBRAGE.duel.reussitesPourLaMaitrise} bonnes réponses en duel. <span className="texte-doux">À {EQUILIBRAGE.duel.reussitesPourLaMaitrise}, le timbre reçoit son cachet « Maîtrisé ».</span></>}
+            </p>
+          )}
         </section>
 
         <section className="bloc">

@@ -127,6 +127,12 @@ a.tim:focus-visible, button.tim:focus-visible { outline: 3px solid var(--accent)
 /* Le cachet d'origine : encre noire, comme une vraie oblitération, par-dessus l'impression en couleur. */
 .tim__tampon { position: absolute; right: 2.5cqi; top: 22cqi; width: 38cqi; color: #1b2230; opacity: 0.74; mix-blend-mode: multiply; pointer-events: none; z-index: 4; }
 
+/* Le cachet « Maîtrisé » : une griffe à l'encre violette (celle qui tranche sur le plus de timbres : le rouge se
+   perdrait sur les timbres latins, les plus nombreux), posée de l'autre côté de la vignette. */
+.tim__maitrise { position: absolute; left: 2.5cqi; top: 30cqi; width: 47cqi; color: #4a2a8a; opacity: 0.85; mix-blend-mode: multiply; pointer-events: none; z-index: 4; }
+.tampon__maitrise { fill: currentColor; font-family: var(--police-mention); font-weight: 700; font-size: 15px; letter-spacing: 0.08em; }
+.tim[data-niveau='6'] .tim__maitrise { color: #c9b3ff; mix-blend-mode: screen; opacity: 0.85; }
+
 /* ── La rareté se lit à la qualité de l'impression ─────────────────────────── */
 
 /* Peu commune : une seconde encre. Rare : fond de vignette teinté et double cadre. */
@@ -231,6 +237,7 @@ a.tim:focus-visible, button.tim:focus-visible { outline: 3px solid var(--accent)
 
 .tampon__trait { fill: none; stroke: currentColor; stroke-width: 2.2; }
 .tampon__trait--fin { stroke-width: 0.9; }
+.tampon__trait--fort { stroke-width: 3; }
 .tampon__tour, .tampon__centre, .tampon__date { fill: currentColor; font-family: var(--police-mention); font-weight: 700; }
 .tampon__tour { font-size: 7.4px; }
 .tampon__centre { font-size: 8.4px; letter-spacing: 0.04em; }

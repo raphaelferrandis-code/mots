@@ -1,7 +1,7 @@
 # Brief projet v2 — Jeu de cartes à collectionner des mots de la langue française
 
 *Nom de code : **MOTS** (piste sérieuse pour le nom définitif : « Mots de Maîtres », à vérifier à l'INPI).*
-*Version 2.3 du 21 septembre 2026 — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
+*Version 2.4 du 21 septembre 2026 (phase 3 : le duel, réglé au simulateur — voir §5.4, §5.5 et `data/simulation-duel.md`) — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
 
 > **Légende :** 🟡 = proposition par défaut **encore à confirmer par Raphaël** (liste au §10.2). Tout le reste est validé.
 
@@ -295,14 +295,16 @@ Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et d
 **Mise en place**
 - **Deck de 10 cartes** composé par le joueur. **20 points de vie** chacun. **3 cartes en main.**
 - Chaque camp possède un seul emplacement : son **mot en jeu** (la dernière carte qu'il a posée). Il sert de défenseur.
+- 🟡 **Au début du duel, chaque camp retourne la première carte de son deck : c'est son premier mot en jeu.** (Ajout de la phase 3, mesuré au simulateur : sans cela, la toute première attaque ne rencontre aucune défense et emporte la moitié des points de vie ; celui qui commence gagnait 85 % des parties. Avec un mot de départ : 51 à 58 %.)
 - Le premier joueur est tiré au sort.
-- **Deck de l'IA** : tiré dans l'Édition 1 avec un profil de raretés proche de celui du deck du joueur, pour que le duel reste équitable quel que soit l'avancement de la collection.
+- **Deck de l'IA** : tiré dans l'Édition 1 avec les mêmes raretés que le deck du joueur, 🟡 **et des cartes de force comparable** (force = attaque + défense) : égales en Facile, un peu plus fortes (+1) en Normal et en Difficile. Sans cela, un joueur qui aligne ses dix meilleures cartes écrasait un ordinateur aux cartes tirées au hasard. Le duel reste ainsi équitable quel que soit l'avancement de la collection.
+- **Construction du deck** (écran Deck) : on touche un timbre de sa collection pour l'ajouter, un timbre du deck pour le retirer ; le deck est enregistré dans la sauvegarde. Un bouton « Composer pour moi » aligne les dix cartes les plus fortes.
 
 **Déroulement d'un tour**
 1. **Choix** : le joueur **choisit** une carte de sa main. Il voit le mot en jeu adverse, et peut donc viser le triangle des types ou le bonus de faction. **En duel, les cartes en main n'affichent pas leur définition** (elle est imprimée sur la carte partout ailleurs) : sinon l'épreuve de maîtrise n'aurait plus de sens. On révise ses cartes dans la collection, on est interrogé en duel.
 2. **Épreuve de maîtrise** : le jeu affiche **4 définitions** — la bonne et 3 leurres tirés de mots de **même nature grammaticale et de rareté voisine**. Le joueur a **15 secondes** pour désigner celle de son mot. Seules les définitions marquées utilisables en quiz sont employées ; la définition demandée varie d'une fois sur l'autre quand le mot en a plusieurs.
 3. **Résolution**
-   - **Réussite** : la carte attaque. Dégâts = attaque + bonus − défense du mot en jeu adverse, **minimum 1**. Si l'adversaire n'a pas encore de mot en jeu, la défense compte pour 0.
+   - **Réussite** : la carte attaque. Dégâts = attaque + bonus − 🟡 **les trois quarts de la défense** du mot en jeu adverse, **minimum 1**. (La première version du brief retirait la défense entière. Mesuré au simulateur : dès que le joueur aligne ses meilleures cartes, attaque et défense — notées sur la même échelle — s'annulent ; 7 attaques réussies sur 10 ne faisaient que le minimum et une partie durait 15 manches. À 75 % : 6 à 9 manches. L'écran affiche directement ce que bloque chaque mot en jeu, le joueur n'a aucun calcul à faire.)
    - **Échec ou temps écoulé** : « le mot vous échappe », pas d'attaque. **La bonne définition est affichée** : c'est le moment où l'on apprend.
    - Dans les deux cas, la carte devient le nouveau mot en jeu du joueur (l'ancien part à la défausse), et le joueur pioche une carte.
 4. **Tour de l'IA** : même déroulement. Son épreuve de maîtrise est remplacée par un taux de réussite : Facile 50 % · Normal 70 % · Difficile 90 %. En Facile elle choisit sa carte au hasard ; en Normal et Difficile elle choisit la carte qui inflige le plus de dégâts.
@@ -315,12 +317,14 @@ Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et d
 - Un camp tombe à 0 point de vie : il perd.
 - Deck épuisé : la défausse est mélangée et reforme le deck.
 - Limite de **20 tours** : le camp qui a le plus de points de vie gagne (égalité = match nul).
-- **Récompense** : de l'Encre en cas de victoire (montant et plafond dans le fichier d'équilibrage), une petite consolation en cas de défaite.
+- **Récompense** : de l'Encre en cas de victoire — 🟡 20 (Facile), 30 (Normal) ou 45 (Difficile) pour les 3 premières victoires de la journée, un quart ensuite — et 5 Encre de consolation en cas de défaite. Trente victoires en un jour rapportent moins de 4 paquets : le duel récompense, il ne remplace pas les paquets (un test le vérifie).
+- **Abandon** : quitter un duel en cours ne rapporte rien. Un duel interrompu n'est pas repris.
+- **Accessibilité** : le temps de réponse se règle (normal, doublé, sans limite) dans les Réglages.
 
 **Variantes de question (phase 4, si le temps le permet)** : « De quelle langue vient ce mot ? » en alternance avec la définition, pour que le joueur qui connaît son deck par cœur reste mis au défi.
 
 ### 5.5 Simulateur d'équilibrage
-Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec des decks aléatoires et affiche la **durée moyenne d'une partie**, le taux de victoire du premier joueur, et le taux de victoire par profil de deck (communes contre rares, mono-faction contre mixte). **Cible de départ : 6 à 10 tours par partie.** C'est l'outil qui permet à Raphaël de régler les chiffres sans jouer des centaines de parties.
+Commande `npm run simulation:duel` (rapport dans `data/simulation-duel.md`) : des joueurs fictifs — hésitant, bon lecteur, expert, dont les chances de connaître un mot baissent avec sa rareté — ouvrent de vrais paquets, alignent leurs dix meilleures cartes et affrontent l'ordinateur aux trois niveaux, 3 000 duels par ligne. Le rapport donne la **durée d'une partie**, le taux de victoire du joueur, celui de celui qui commence, la part d'attaques réduites au minimum, des variantes « et si… » et une grille de réglage (points de vie × poids de la défense). **Cible : 6 à 10 manches par partie** — atteinte avec les réglages actuels (5,6 à 9,4 selon les profils). C'est l'outil qui permet à Raphaël de régler les chiffres sans jouer des centaines de parties.
 
 **Simulation de collection** (`npm run simulation:collection`) : simule des mois d'ouverture de paquets pour trois profils de joueur (occasionnel : 10 paquets par jour ; régulier : 30 ; acharné : 100) et affiche le temps nécessaire pour réunir 50 %, 90 % et 100 % de l'édition, le nombre de Légendaires par semaine et l'Encre gagnée. **Cible de départ : un joueur régulier termine l'édition en 6 mois à 1 an.** Cet outil sert à fixer la taille de l'édition, les taux de rareté et le prix des paquets, et à vérifier la règle de sécurité de l'économie (§5.2).
 
@@ -382,7 +386,7 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | **0b. Données** *(travail fait le 21/09/2026, en attente de lecture)* | Pipeline complet, base + Édition 1, rapport de génération, tests | Raphaël a relu `data/rapport.md` : la répartition et les exemples lui conviennent |
 | **1. Squelette** *(fait, en ligne, et validé par Raphaël sur son téléphone le 21/09/2026)* | Projet Vite/React/TS, thème, navigation entre écrans vides, mise en ligne | Le site s'ouvre à une adresse web, sur le téléphone et sur l'ordinateur de Raphaël |
 | **2. Paquets + Collection** *(fait et publié le 21/09/2026, avec les timbres, les finitions et le rang Hors-série ; en attente du test de Raphaël sur son téléphone)* | Tirage, recharge toutes les 10 minutes, animation, sauvegarde locale, export/import, Encre, collection filtrable, option « masquer les mots familiers », fiche carte, simulateur de collection | Les paquets se rechargent avec le temps, même application fermée, sans jamais dépasser 10 ; on retrouve sa collection après fermeture et on peut la restaurer depuis un fichier ; le simulateur de collection donne des durées qui conviennent à Raphaël |
-| **3. Duel** | Construction de deck, duel complet contre l'IA à 3 niveaux, simulateur de duel | Une partie se joue de bout en bout sans bug, gagnable et perdable ; le simulateur donne 6 à 10 tours en moyenne |
+| **3. Duel** *(fait et publié le 21/09/2026 ; en attente du test de Raphaël)* | Construction de deck, duel complet contre l'IA à 3 niveaux, simulateur de duel, maîtrise des mots et cachet « Maîtrisé » | Une partie se joue de bout en bout sans bug, gagnable et perdable ; le simulateur donne 6 à 10 tours en moyenne |
 | **4. Finitions** | Sons, effets de rareté, accessibilité, écran crédits, équilibrage, partage d'une carte en image, variantes de question | Raphaël valide le ressenti ; 5 testeurs extérieurs ont joué plusieurs jours et leurs retours sont notés |
 | **5. (futur)** | Backend, comptes, accélération payante, multijoueur, échanges, éditions suivantes | Nouveau brief dédié |
 
@@ -436,7 +440,8 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | 25 | Rang ultime « Hors-série » | **Validé** : des mots qui détiennent un record, trouvés dans les données (`pipeline/etapes/records.ts`), plus ceux de `data/hors-serie.txt`. 16 cartes dans l'Édition 1, comptées à part de la collection. Chance : **1 paquet sur 1 000** (et non 1 sur 300 : le simulateur a montré qu'à 1 sur 300 un joueur régulier en tirait une par semaine) |
 | 26 | Règles des finitions | **Validé** : finition tirée à part pour chaque carte ordinaire (brillante 1 sur 12, holographique 1 sur 80) ; chaque finition possédée compte à part ; seul un vrai doublon (carte et finition déjà possédées) devient de l'Encre, multipliée par 3 (brillante) ou 10 (holographique) |
 | 27 | Prix du paquet | **150 Encre** |
-| 28 | Idées retenues pour la suite | Cachet « Maîtrisé » daté sur le timbre quand le mot est maîtrisé en duel (phase 3) ; séries par famille de mots ; album présenté en planches par langue avec emplacements vides secrets |
+| 28 | Idées retenues pour la suite | Cachet « Maîtrisé » daté sur le timbre quand le mot est maîtrisé en duel (**fait en phase 3** : griffe violette datée, après 5 bonnes réponses) ; séries par famille de mots ; album présenté en planches par langue avec emplacements vides secrets |
+| 29 | Polices | **Polices libres livrées avec le jeu** (accord du 21/09/2026). Trois familles à l'essai dans les Réglages ; Raphaël doit en retenir une |
 
 ### 10.2 Propositions encore à confirmer (🟡)
 
@@ -450,7 +455,12 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
 | Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
-| Polices du jeu | Pour l'instant celles de l'appareil (le rendu diffère donc un peu d'un téléphone à l'autre). Proposition : deux polices libres de droits livrées avec le jeu, à télécharger avec l'accord de Raphaël | §6 |
+| Police des timbres | Trois polices à l'essai (Playfair Display, Cormorant Garamond, Libre Caslon) : en retenir une, les deux autres seront retirées | Réglages |
+| Duel : poids de la défense | **75 %** de la défense adverse est retirée des dégâts, au lieu de 100 % dans la première version du brief (qui donnait des parties de 15 manches). Autres choix possibles : 50 % avec 30 points de vie (attaques plus franches, mais celui qui commence gagne 60 % des parties), ou 100 % avec 12 points de vie (la défense compte à plein, mais 7 attaques sur 10 ne font que 1 dégât) | §5.4, `data/simulation-duel.md` |
+| Duel : mot en jeu au départ | Chaque camp commence avec un mot en jeu tiré de son deck | §5.4 |
+| Duel : force de l'ordinateur | Mêmes raretés que le joueur, cartes de force égale (Facile) ou un peu supérieure (+1, Normal et Difficile). Un « bon lecteur » gagne presque toujours en Facile, 2 parties sur 3 en Normal, 1 sur 3 en Difficile | §5.4 |
+| Duel : récompenses | 20 / 30 / 45 Encre par victoire, pleines pour les 3 premières victoires du jour puis un quart ; 5 Encre par défaite | §5.4 |
+| Définitions trop parlantes en duel | Le jeu préfère déjà, quand un mot a plusieurs définitions, celle qui ne nomme pas un proche parent du mot (« cabale » pour « cabalistique »). Pour 63 cartes, toutes les définitions le font : question trop facile. À traiter au prochain passage du pipeline, ou par une autre question (« De quelle langue vient ce mot ? ») | §5.4 |
 
 ### 10.3 Questions de fond
 - **Nom définitif du jeu** (« Mots de Maîtres » ?)

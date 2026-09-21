@@ -16,7 +16,8 @@
     "sources": "node pipeline/telecharger-sources.ts",
     "pipeline": "node pipeline/build.ts",
     "exploration": "node pipeline/exploration/explorer.ts",
-    "simulation:collection": "node simulateurs/collection.ts"
+    "simulation:collection": "node simulateurs/collection.ts",
+    "simulation:duel": "node simulateurs/duel.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",

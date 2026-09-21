@@ -7,6 +7,9 @@ import { useChargement } from '../composants/useChargement.ts';
 import { FINITIONS, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 
+// Quelques timbres portent le cachet « Maîtrisé », pour le juger sur tous les papiers.
+const MAITRISE = new Date(2026, 8, 21).getTime();
+
 export function Galerie() {
   const edition = useChargement(chargerEdition, 'edition');
   if (edition.etat !== 'pret') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
@@ -19,8 +22,8 @@ export function Galerie() {
   return (
     <main className="ecran ecran--large">
       <Entete surtitre="Développement" titre="Galerie de contrôle">Les {horsSerie.length} timbres Hors-série, puis un échantillon de timbres ordinaires.</Entete>
-      <div className="galerie">{horsSerie.map((carte) => <Carte key={carte.id} carte={carte} />)}</div>
-      <div className="galerie">{ordinaires.map((carte, i) => <Carte key={carte.id} carte={carte} finition={FINITIONS[i % 7 === 3 ? 2 : i % 5 === 2 ? 1 : 0]} />)}</div>
+      <div className="galerie">{horsSerie.map((carte, i) => <Carte key={carte.id} carte={carte} maitriseeLe={i % 5 === 1 ? MAITRISE : null} />)}</div>
+      <div className="galerie">{ordinaires.map((carte, i) => <Carte key={carte.id} carte={carte} finition={FINITIONS[i % 7 === 3 ? 2 : i % 5 === 2 ? 1 : 0]} maitriseeLe={i % 3 === 0 ? MAITRISE : null} />)}</div>
     </main>
   );
 }

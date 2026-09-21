@@ -9,7 +9,7 @@ import './timbre.css';
 import { defenseEnJeu } from '../../config/equilibrage.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
-import { Tampon } from './Tampon.tsx';
+import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
 import { NIVEAU, anneeDuCachet, encresDe, motifDuTimbre } from './decor.ts';
 import { VIGNETTES } from './vignettes.tsx';
 
@@ -18,9 +18,12 @@ type Props = {
   finition?: Finition;
   cliquable?: boolean; // ouvre la fiche de la carte
   sansDefinition?: boolean; // en duel, la carte en main ne montre pas sa définition
+  maitriseeLe?: number | null; // date à laquelle le joueur a maîtrisé le mot : le timbre reçoit un second cachet
+  onChoisir?: () => void; // la carte devient un bouton (choisir une carte du deck, jouer une carte de sa main)
+  action?: string; // ce que fait ce bouton, pour les lecteurs d'écran : « ajouter au deck », « jouer »…
 };
 
-export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefinition = false }: Props) {
+export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
   const timbre = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -71,10 +74,11 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
         {aUnReflet && <div className="tim__reflet" aria-hidden="true" />}
       </div>
       <Tampon idCarte={carte.id} faction={carte.faction} date={date} />
+      {maitriseeLe !== null && <CachetDeMaitrise idCarte={carte.id} le={maitriseeLe} />}
     </div>
   );
 
-  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}`;
+  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${carte.attaque}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
   const commun = {
     className: 'tim',
     'data-niveau': niveau,
@@ -84,6 +88,7 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
     onPointerLeave: aUnReflet ? relacher : undefined,
   };
 
+  if (onChoisir) return <button type="button" {...commun} ref={timbre as Ref<HTMLButtonElement>} onClick={onChoisir} aria-label={`${description} — ${action ?? 'choisir'}`}>{contenu}</button>;
   return cliquable
     ? <a {...commun} ref={timbre as Ref<HTMLAnchorElement>} href={lien({ ecran: 'carte', id: carte.id })} aria-label={`${description} — voir la fiche`}>{contenu}</a>
     : <article {...commun} ref={timbre} aria-label={description}>{contenu}</article>;

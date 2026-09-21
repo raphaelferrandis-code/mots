@@ -6,18 +6,34 @@ import type { Finition } from '../partage/types.ts';
 import type { EtatDesPaquets } from './recharge.ts';
 
 // Version 1 : première sauvegarde. Version 2 : chaque carte compte ses finitions (normale, brillante, holographique).
-export const VERSION_DE_SAUVEGARDE = 2;
+// Version 3 : le duel — deck, bonnes réponses et maîtrise de chaque carte, bilan des duels, temps de réponse.
+export const VERSION_DE_SAUVEGARDE = 3;
 
 export type CartePossedee = {
   obtenueLe: number; // date de la première obtention (millisecondes)
   doublons: number; // nombre de fois où la carte a été changée en Encre
   finitions: Partial<Record<Finition, number>>; // nombre de fois où la carte a été obtenue dans chaque finition
+  reussites: number; // bonnes réponses données en duel pour ce mot
+  maitriseeLe: number | null; // date à laquelle le mot a été maîtrisé (assez de bonnes réponses), sinon null
 };
+
+// Temps accordé pour l'épreuve de maîtrise : celui du jeu, le double, ou sans limite (accessibilité).
+export const TEMPS_DE_REPONSE = ['normal', 'double', 'illimite'] as const;
+export type TempsDeReponse = (typeof TEMPS_DE_REPONSE)[number];
 
 export type ReglagesDuJoueur = {
   masquerFamiliers: boolean;
   masquerInjurieux: boolean;
   reduireAnimations: boolean;
+  tempsDeReponse: TempsDeReponse;
+};
+
+export type BilanDesDuels = {
+  joues: number;
+  gagnes: number;
+  // Le jour (AAAA-MM-JJ) des dernières victoires comptées, pour le plafond quotidien des récompenses.
+  jour: string;
+  victoiresDuJour: number;
 };
 
 export type Sauvegarde = {
@@ -30,6 +46,8 @@ export type Sauvegarde = {
   };
   // Clé : identifiant de carte. Une carte qui n'existe plus dans l'édition est conservée mais ignorée par le jeu.
   cartes: Record<string, CartePossedee>;
+  deck: string[]; // identifiants des cartes du deck ; il peut être incomplet pendant qu'on le compose
+  duels: BilanDesDuels;
   reglages: ReglagesDuJoueur;
   dernierExport: { le: number; paquetsOuverts: number } | null;
 };
@@ -41,7 +59,9 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     encre: 0,
     paquets: { stock: paquetsDeDepart, reference: maintenant, ouverts: 0, sansLegendaire: 0 },
     cartes: {},
-    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false },
+    deck: [],
+    duels: { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 },
+    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, tempsDeReponse: 'normal' },
     dernierExport: null,
   };
 }
@@ -79,8 +99,17 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
   for (const [id, valeur] of Object.entries(brut.cartes)) {
     if (!estUnObjet(valeur)) continue;
     const doublons = entierPositif(valeur.doublons, 0);
-    cartes[id] = { obtenueLe: entierPositif(valeur.obtenueLe, maintenant), doublons, finitions: relireFinitions(valeur.finitions, doublons) };
+    cartes[id] = {
+      obtenueLe: entierPositif(valeur.obtenueLe, maintenant),
+      doublons,
+      finitions: relireFinitions(valeur.finitions, doublons),
+      reussites: entierPositif(valeur.reussites, 0),
+      maitriseeLe: typeof valeur.maitriseeLe === 'number' && Number.isFinite(valeur.maitriseeLe) ? valeur.maitriseeLe : null,
+    };
   }
+  // Le deck ne garde que des cartes possédées, chacune une seule fois.
+  const deck = Array.isArray(brut.deck) ? [...new Set(brut.deck.filter((id): id is string => typeof id === 'string' && id in cartes))] : [];
+  const duels = estUnObjet(brut.duels) ? brut.duels : {};
   const exporte = estUnObjet(brut.dernierExport) ? brut.dernierExport : null;
 
   return {
@@ -95,10 +124,18 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       sansLegendaire: entierPositif(paquets.sansLegendaire, 0),
     },
     cartes,
+    deck,
+    duels: {
+      joues: entierPositif(duels.joues, 0),
+      gagnes: entierPositif(duels.gagnes, 0),
+      jour: typeof duels.jour === 'string' ? duels.jour : '',
+      victoiresDuJour: entierPositif(duels.victoiresDuJour, 0),
+    },
     reglages: {
       masquerFamiliers: reglages.masquerFamiliers === true,
       masquerInjurieux: reglages.masquerInjurieux === true,
       reduireAnimations: reglages.reduireAnimations === true,
+      tempsDeReponse: TEMPS_DE_REPONSE.find((t) => t === reglages.tempsDeReponse) ?? 'normal',
     },
     dernierExport: exporte ? { le: entierPositif(exporte.le, maintenant), paquetsOuverts: entierPositif(exporte.paquetsOuverts, 0) } : null,
   };

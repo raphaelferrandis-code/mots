@@ -2,13 +2,17 @@ import { useRef, useState } from 'react';
 import { AVenir, Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { POLICES, appliquerLaPolice, policeChoisie } from '../theme/polices.ts';
 import type { Police } from '../theme/polices.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffacer } from '../services/partie.ts';
 
-const OPTIONS: { cle: keyof ReglagesDuJoueur; nom: string; aide: string }[] = [
+// Les réglages à cocher (ceux qui valent « oui » ou « non »).
+type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
+
+const OPTIONS: { cle: ReglageACocher; nom: string; aide: string }[] = [
   { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Mots familiers, populaires, argotiques ou vulgaires. Ils ne tombent plus dans les paquets et disparaissent de la collection ; tu ne les perds pas.' },
   { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Même principe, pour les mots que le dictionnaire signale comme injurieux.' },
   { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
@@ -72,6 +76,14 @@ export function Reglages() {
             <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
           </label>
         ))}
+        <label className="option option--liste">
+          <span><strong>Temps pour répondre en duel</strong><span className="texte-doux petit">Le temps accordé pour retrouver la définition de son mot ({EQUILIBRAGE.duel.secondesPourRepondre} secondes dans le jeu normal).</span></span>
+          <select value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
+            <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
+            <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
+            <option value="illimite">Sans limite</option>
+          </select>
+        </label>
       </section>
 
       <section className="bloc bloc--a-venir">

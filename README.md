@@ -9,7 +9,7 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 
 **Le site en ligne : https://raphaelferrandis-code.github.io/mots/**
 
-**État d'avancement : phase 2 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les vrais doublons se changent en Encre, l'album se filtre et se trie, la partie est sauvegardée sur l'appareil et s'exporte dans un fichier. Un rang ultime, les « Hors-série », réunit 16 mots qui détiennent un record. Le duel arrive en phase 3.
+**État d'avancement : phase 3 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les doublons deviennent de l'Encre, et la collection se filtre et se sauvegarde sur l'appareil. **Le duel est jouable** : on compose un deck de dix cartes, on affronte l'ordinateur à trois niveaux, et pour attaquer il faut retrouver la définition de son mot parmi quatre. Cinq bonnes réponses sur un mot : il est « maîtrisé », et son timbre reçoit un cachet daté. Prochaine étape : la phase 4 (sons, finitions, accessibilité, testeurs).
 
 ## Mise en ligne
 
@@ -47,6 +47,7 @@ Toutes les commandes se lancent depuis le dossier du projet.
 | `npm run verifier` | Vérifie la cohérence de tout le code (site et pipeline) sans rien fabriquer. | quelques secondes |
 | `npm run sources` | Télécharge les deux bases de données (735 Mo au total) dans `data/brut/`. Ne retélécharge pas un fichier déjà présent. | quelques minutes, selon la connexion |
 | `npm run pipeline` | **Fabrique les cartes** : la base complète, l'Édition 1, et le rapport à relire. | environ 30 secondes |
+| `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 1 minute |
 | `npm run simulation:collection` | Simule des mois d'ouverture de paquets pour trois profils de joueurs, et quelques variantes de réglages. Résultat dans `data/simulation-collection.md`. | 2 secondes |
 | `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |
@@ -62,7 +63,7 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | `data/exclusions.txt` | Mots qui n'y entrent jamais. |
 | `data/hors-serie.txt` | Cartes Hors-série ajoutées à la main (`mot = Titre de la carte`), en plus des records trouvés automatiquement. |
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |
-| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus de défense. Après une modification : `npm test` puis `npm run simulation:collection`. |
+| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus de défense, **et tout le duel** (points de vie, poids de la défense, bonus, force et réussite de l'ordinateur, récompenses, seuil de maîtrise). Après une modification : `npm test` puis `npm run simulation:collection`. |
 
 ## Ce que le pipeline produit
 
@@ -83,15 +84,15 @@ Deux générations faites à partir des mêmes données et des mêmes réglages 
 | `pipeline/` | Les programmes qui transforment les données en cartes |
 | `pipeline/etapes/` | Une étape par fichier : Lexique, Wiktionnaire, nettoyage, registres, origines, rareté, assemblage, édition, écriture, rapport |
 | `pipeline/tests/` | Les tests automatiques |
-| `src/partage/` | Ce que le pipeline et le jeu ont en commun (format des cartes, valeur des lettres) |
+| `src/partage/` | Ce que le pipeline et le jeu ont en commun (format des cartes, valeur des lettres, reconnaissance d'un mot et de sa famille dans une définition) |
 | `src/config/` | Les chiffres d'équilibrage du jeu |
 | `src/theme/` | **Le thème** du site : `theme.css` contient les couleurs, polices et mesures ; `styles.css` la mise en page |
-| `src/ecrans/` | Un fichier par écran (Accueil, Fiche carte, Réglages… et les écrans à venir) |
+| `src/ecrans/` | Un fichier par écran (Accueil, Ouverture de paquet, Collection, Fiche carte, Deck, Duel, Réglages ; et `Galerie`, une page de contrôle des timbres visible seulement avec `npm run dev`, à l'adresse `#/galerie`) |
 | `src/composants/` | Les éléments réutilisés : la barre de navigation, les en-têtes |
-| `src/composants/carte/` | **Le timbre** : son dessin (`Carte.tsx`, `timbre.css`), son cachet (`Tampon.tsx`) et son décor calculé à partir du mot (`decor.ts`) |
+| `src/composants/carte/` | **Le timbre** : son dessin (`Carte.tsx`, `timbre.css`), ses cachets d'origine et de maîtrise (`Tampon.tsx`), son motif calculé à partir du mot (`decor.ts`) et les illustrations des timbres Hors-série (`vignettes.tsx`) |
 | `src/navigation/` | Les adresses des écrans (`#/collection`, `#/carte/callipyge-adj`…) |
-| `src/jeu/` | **Les règles du jeu**, sans écran ni stockage : tirage des paquets, recharge, Encre, sauvegarde. Entièrement couvertes par des tests |
-| `simulateurs/` | Les outils d'équilibrage (simulateur de collection) |
+| `src/jeu/` | **Les règles du jeu**, sans écran ni stockage : tirage des paquets, recharge, Encre, sauvegarde, duel (`duel.ts`), épreuve de maîtrise (`epreuve.ts`), deck, maîtrise et récompenses (`progression.ts`). Entièrement couvertes par des tests |
+| `simulateurs/` | Les outils d'équilibrage : simulateur de collection et simulateur de duel |
 | `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données (aujourd'hui des fichiers, demain un serveur) |
 | `public/data/` | Les fichiers de cartes que le jeu chargera |
 | `data/` | Listes tenues par Raphaël, rapports, et données brutes (hors Git) |

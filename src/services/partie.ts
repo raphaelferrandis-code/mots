@@ -6,8 +6,11 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { hasardDuSysteme } from '../jeu/hasard.ts';
 import { preparerReserve } from '../jeu/paquets.ts';
 import type { Reserve } from '../jeu/paquets.ts';
+import type { Niveau } from '../jeu/duel.ts';
 import { acheterUnPaquet, mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
+import { enregistrerLeDeck, noterUneReponse, terminerUnDuel } from '../jeu/progression.ts';
+import type { Resultat } from '../jeu/progression.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { chargerEdition } from './cartes.ts';
@@ -88,6 +91,28 @@ export const acheterEtOuvrirUnPaquet = (): Promise<CarteObtenue[]> => ouvrir(ach
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
   if (partie.etat !== 'prete') return;
   enregistrer({ ...partie.sauvegarde, reglages: { ...partie.sauvegarde.reglages, [cle]: valeur } });
+}
+
+// ── Le duel ─────────────────────────────────────────────────────────────────
+export function changerLeDeck(ids: readonly string[]): void {
+  if (partie.etat !== 'prete') return;
+  enregistrer(enregistrerLeDeck(partie.sauvegarde, ids, EQUILIBRAGE.duel));
+}
+
+// Note la réponse du joueur à une épreuve de maîtrise. Rend vrai si le mot vient d'être maîtrisé.
+export function noterLaReponse(idCarte: string, reussi: boolean): boolean {
+  if (partie.etat !== 'prete') return false;
+  const reponse = noterUneReponse(partie.sauvegarde, idCarte, reussi, maintenant(), EQUILIBRAGE.duel);
+  if (reponse.sauvegarde !== partie.sauvegarde) enregistrer(reponse.sauvegarde);
+  return reponse.vientDEtreMaitrisee;
+}
+
+// Fin d'un duel : l'Encre gagnée est versée. Rend le montant, et s'il a été réduit par le plafond du jour.
+export function finirLeDuel(niveau: Niveau, resultat: Resultat): { encre: number; reduite: boolean } {
+  if (partie.etat !== 'prete') return { encre: 0, reduite: false };
+  const fin = terminerUnDuel(partie.sauvegarde, niveau, resultat, maintenant(), EQUILIBRAGE.duel);
+  enregistrer(fin.sauvegarde);
+  return { encre: fin.encre, reduite: fin.reduite };
 }
 
 // Le fichier de sauvegarde à télécharger. L'export est noté, pour espacer les rappels.
