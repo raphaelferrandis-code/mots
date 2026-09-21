@@ -1,0 +1,48 @@
+# Mise en ligne automatique sur GitHub Pages.
+# À chaque envoi de code sur la branche « main », GitHub vérifie le projet (tests), fabrique le site
+# et le publie. Rien à faire à la main.
+#
+# À régler une seule fois sur github.com : Settings → Pages → Source : « GitHub Actions ».
+
+name: Mise en ligne
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permet aussi de relancer à la main depuis l'onglet « Actions »
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  fabriquer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publier:
+    needs: fabriquer
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publication.outputs.page_url }}
+    steps:
+      - id: publication
+        uses: actions/deploy-pages@v4

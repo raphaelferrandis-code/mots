@@ -1,12 +1,12 @@
 # Rapport de génération des cartes
 
-*Généré par `npm run pipeline` en 25 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
+*Généré par `npm run pipeline` en 26 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
 
 ## 1. En bref
 
 - Base complète : **52 053 cartes possibles**.
 - Édition 1 : **3 000 cartes**, choisies parmi 22 775 cartes éligibles.
-- Poids pour le jeu : 396 Ko chargés au démarrage, plus 1 404 Ko de détails répartis en 16 fichiers chargés à la demande.
+- Poids pour le jeu : 663 Ko chargés au démarrage, plus 1 404 Ko de détails répartis en 16 fichiers chargés à la demande.
 
 ## 2. Du fichier brut aux cartes
 

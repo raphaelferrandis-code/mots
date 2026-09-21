@@ -17,7 +17,7 @@ function carte(champs: { mot: string; faction?: string; rarete?: Rarete; type?: 
   const type = champs.type ?? 'Nom';
   const prevalence = champs.prevalence === undefined ? 50 : champs.prevalence;
   return {
-    index: { id: `${champs.mot}-${type}`, mot: champs.mot, type, rarete: champs.rarete ?? 'Commune', attaque: 5, defense: 5, faction: champs.faction ?? 'Latin', registre: [] },
+    index: { id: `${champs.mot}-${type}`, mot: champs.mot, type, rarete: champs.rarete ?? 'Commune', attaque: 5, defense: 5, faction: champs.faction ?? 'Latin', registre: [], definition: '' },
     details: { definitions: [{ texte: champs.definition ?? 'Une définition de longueur tout à fait convenable pour le duel.', quiz: (champs.duel ?? 1) > 0 }], etymologie: '', langueOrigine: champs.faction ?? 'Latin', frequence: 1, prevalence },
     factionReconnue: champs.reconnue ?? true,
     herite: null, homographes: 1, nombreDeSens: 1, synonymes: 0, derives: 0,
@@ -163,6 +163,7 @@ describe('assemblage des cartes', () => {
   it('montre d\'abord le sens actuel, et n\'étiquette pas « Vieilli » un mot courant', () => {
     const detester = parId.get('détester-verbe')!;
     assert.equal(detester.details.definitions[0].texte, 'Avoir en aversion, ne pas pouvoir souffrir.');
+    assert.equal(detester.index.definition, 'Avoir en aversion, ne pas pouvoir souffrir.', 'la carte porte le sens principal actuel');
     assert.deepEqual(detester.index.registre, []);
     assert.deepEqual(detester.details.definitions[2].registre, ['Vieilli']);
   });

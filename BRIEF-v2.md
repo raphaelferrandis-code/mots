@@ -64,7 +64,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 | Tests | L'outil de test intégré à Node, pour le pipeline comme pour la logique du jeu | Rien à installer, une seule commande (`npm test`). Vitest ne sera ajouté que si l'on teste un jour l'interface elle-même |
 | Stockage V1 | IndexedDB (via une petite lib type `idb`) | Collection sauvegardée sur l'appareil |
 | Distribution | **Site web** accessible par une simple adresse | Rien à installer, partageable par un lien, plus simple à construire et à mettre à jour qu'une application. La version installable (PWA) pourra être ajoutée plus tard sans toucher au reste |
-| Hébergement V1 | 🟡 Cloudflare Pages, Netlify ou GitHub Pages (gratuits, HTTPS) | Un site doit être en ligne pour être ouvert sur un téléphone ou partagé à des testeurs. Pendant le développement, il tourne aussi sur l'ordinateur de Raphaël sans hébergement |
+| Hébergement V1 | **GitHub Pages** (gratuit, HTTPS), mise en ligne automatique à chaque envoi de code | Un site doit être en ligne pour être ouvert sur un téléphone ou partagé à des testeurs. Pendant le développement, il tourne aussi sur l'ordinateur de Raphaël sans hébergement |
 | Backend futur | Supabase (à valider le moment venu) | Auth + base de données + temps réel pour le multi |
 
 ### Contraintes d'architecture
@@ -299,7 +299,7 @@ Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et d
 - **Deck de l'IA** : tiré dans l'Édition 1 avec un profil de raretés proche de celui du deck du joueur, pour que le duel reste équitable quel que soit l'avancement de la collection.
 
 **Déroulement d'un tour**
-1. **Choix** : le joueur **choisit** une carte de sa main. Il voit le mot en jeu adverse, et peut donc viser le triangle des types ou le bonus de faction.
+1. **Choix** : le joueur **choisit** une carte de sa main. Il voit le mot en jeu adverse, et peut donc viser le triangle des types ou le bonus de faction. **En duel, les cartes en main n'affichent pas leur définition** (elle est imprimée sur la carte partout ailleurs) : sinon l'épreuve de maîtrise n'aurait plus de sens. On révise ses cartes dans la collection, on est interrogé en duel.
 2. **Épreuve de maîtrise** : le jeu affiche **4 définitions** — la bonne et 3 leurres tirés de mots de **même nature grammaticale et de rareté voisine**. Le joueur a **15 secondes** pour désigner celle de son mot. Seules les définitions marquées utilisables en quiz sont employées ; la définition demandée varie d'une fois sur l'autre quand le mot en a plusieurs.
 3. **Résolution**
    - **Réussite** : la carte attaque. Dégâts = attaque + bonus − défense du mot en jeu adverse, **minimum 1**. Si l'adversaire n'a pas encore de mot en jeu, la défense compte pour 0.
@@ -346,8 +346,12 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 
 - **Pensé d'abord pour le téléphone** (écran de 380 px de large, portrait, jouable à une main), **mais confortable sur ordinateur** : contenu centré, grille de collection plus large, duel jouable à la souris et au clavier.
 - **Écrans V1** : Accueil (stock de paquets, compte à rebours, Encre) · Ouverture de paquet · Collection · Fiche carte · Construction de deck · Duel · Réglages / Crédits.
-- **Design de carte** : le mot en grand, type et faction en icônes, attaque et défense bien lisibles, bordure colorée selon la rareté, effet brillant pour Épique et Légendaire, badges de registre et de maîtrise.
-- 🟡 **Direction artistique recommandée : typographique, esprit « page de dictionnaire »** (papier, belle typographie à empattements, un motif ou un ornement par faction). Raison décisive : il est impossible d'illustrer des milliers de cartes ; le héros de la carte doit être **le mot lui-même**. La décision finale appartient à Raphaël.
+- **Design de carte** : le mot en grand, **sa définition imprimée sur la carte** (le sens principal, 150 caractères au plus ; les définitions complètes sont sur la fiche), type et faction, attaque et défense bien lisibles, rareté lisible sans la couleur, effet brillant pour Épique et Légendaire, badges de registre et de maîtrise. En tout petit (grille de la collection), la définition s'efface et le mot grossit.
+- **Direction artistique : les joueurs ne voient presque que les cartes, elle doit donc sortir de l'ordinaire** (demande de Raphaël). Contrainte décisive : il est impossible d'illustrer des milliers de cartes à la main ; tout le décor d'une carte est donc **calculé à partir du mot lui-même** (chaque carte est unique, et toujours identique à elle-même). 🟡 Trois pistes sont maquettées sur de vraies cartes dans l'écran provisoire « Atelier » du site (`#/atelier`, code dans `src/da/`) :
+  1. **Enluminure** — la carte est une entrée de manuscrit ; l'illustration est la lettrine du mot sur un fond ornemental ; rareté = richesse du cadre, jusqu'à la feuille d'or.
+  2. **Affiche** — la carte est une affiche typographique : le mot en capitales énormes joue avec des formes géométriques ; un duo de couleurs par faction ; rareté = richesse de l'impression, jusqu'à l'encre irisée.
+  3. **Passeport** — les mots sont des voyageurs : tampon de la langue d'origine, date d'entrée en français (la première attestation), rosace de sécurité unique, ligne « lisible par une machine » ; rareté = niveau de sécurité du document.
+  La piste retenue sera affinée, dotée de ses propres polices (libres de droits, livrées avec le jeu, rien n'est chargé chez un tiers), puis appliquée à tout le site.
 - En attendant, style sobre et neutre, facile à remplacer : **couleurs, polices et ornements centralisés dans un fichier de thème**.
 - **Contenu (écran Réglages)** : options « Masquer les mots familiers » et « Masquer les mots injurieux » (§5.3).
 - **Accessibilité (écran Réglages)** : allonger ou désactiver le chronomètre du duel, réduire les animations, couper le son. La rareté ne doit jamais être indiquée par la couleur seule (ajouter un symbole ou un libellé). Contrastes lisibles.
@@ -422,6 +426,9 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | 16 | Équilibre des types de mots | Viser **50 % de noms, 22 % d'adjectifs, 22 % de verbes, 6 % d'adverbes** |
 | 17 | Notes d'attaque et de défense | **Calculées entre les cartes de l'édition** |
 | 18 | Outils de test | **Celui intégré à Node**, pour le pipeline comme pour la logique du jeu (rien à installer) ; Vitest seulement si l'on teste un jour l'interface elle-même |
+| 19 | Définition sur la carte | **La définition du mot est imprimée sur la carte** (sauf dans la main du joueur pendant un duel) |
+| 20 | Hébergement | **GitHub Pages**, avec mise en ligne automatique à chaque envoi de code (`.github/workflows/mise-en-ligne.yml`). Le dépôt sera public |
+| 21 | Direction artistique | Elle doit **sortir de l'ordinaire** ; à choisir parmi les trois pistes de l'Atelier (§6) |
 
 ### 10.2 Propositions encore à confirmer (🟡)
 
@@ -435,8 +442,7 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
 | Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
-| Hébergement | Cloudflare Pages, Netlify ou GitHub Pages | §3 |
-| Direction artistique | Typographique, esprit « page de dictionnaire » | §6 |
+| Direction artistique | Choisir entre Enluminure, Affiche et Passeport (ou en mélanger deux), sur pièces, dans l'Atelier du site | §6 |
 
 ### 10.3 Questions de fond
 - **Nom définitif du jeu** (« Mots de Maîtres » ?)

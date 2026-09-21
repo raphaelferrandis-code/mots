@@ -1,0 +1,240 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   ATELIER DE DIRECTION ARTISTIQUE — trois pistes pour les cartes.
+   Toutes les mesures sont en « cqi » (centièmes de la largeur de la carte) : une carte
+   garde exactement les mêmes proportions à toutes les tailles, comme une image.
+   Polices : celles de l'ordinateur pour cette maquette ; la piste retenue aura ses propres
+   polices, libres de droits et livrées avec le jeu.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.enl, .aff, .pas {
+  --or: linear-gradient(120deg, #8a6a12 0%, #f6e59a 22%, #c9a227 40%, #fff6c4 55%, #b08a1e 72%, #f1d979 100%);
+  --irise: linear-gradient(120deg, #ff8ad4, #ffd36e, #7dffb3, #6ecbff, #c58aff, #ff8ad4);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.32 0 0 0 0 0.22 0 0 0 0 0.1 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  container-type: inline-size;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 4.6% / 3.3%;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.12), 0 8px 22px rgba(20, 20, 30, 0.16);
+  text-align: left;
+}
+.enl p, .aff p, .pas p, .pas dl, .pas dd { margin: 0; }
+
+@keyframes da-reflet { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+/* ═══ PISTE 1 — ENLUMINURE ═════════════════════════════════════════════════ */
+
+.enl {
+  --parchemin: #f1e6cb;
+  --encre: #2b2016;
+  --encre-pale: #6d5a44;
+  background: var(--grain), radial-gradient(120% 90% at 30% 20%, #f8efd9 0%, var(--parchemin) 55%, #e2d2ad 100%);
+  color: var(--encre);
+  font-family: 'Sitka Text', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+}
+.enl__cadre {
+  position: absolute; inset: 3.4cqi;
+  padding: 3.6cqi 4.4cqi 3.2cqi;
+  display: grid; grid-template-rows: auto auto 1fr auto; gap: 2.6cqi;
+  border: 0.45cqi solid var(--encre-pale);
+}
+.enl__rubrique { text-align: center; font-size: 3.3cqi; letter-spacing: 0.32em; text-transform: uppercase; color: #a3231f; }
+.enl__rubrique::before { content: '✦  '; }
+.enl__rubrique::after { content: '  ✦'; }
+
+.enl__entree { display: grid; grid-template-columns: 35cqi 1fr; gap: 2.4cqi; align-items: end; }
+.enl__lettrine { position: relative; aspect-ratio: 1; background: var(--pigment); box-shadow: inset 0 0 0 0.5cqi rgba(0, 0, 0, 0.25); }
+.enl__lettrine svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.enl__fond { fill: none; }
+.enl__ornement { stroke-width: 0; }
+.enl__lettrine pattern * { fill: none; stroke: #fbf3dc; stroke-width: 0.55; opacity: 0.42; }
+.enl__filet { fill: none; stroke: #fbf3dc; stroke-width: 0.7; opacity: 0.75; }
+.enl__lettrine span {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: 'Old English Text MT', 'Sitka Display', 'Palatino Linotype', Georgia, serif;
+  font-size: 29cqi; line-height: 1; color: #fdf6e1;
+  text-shadow: 0 0.35cqi 0 rgba(0, 0, 0, 0.35);
+}
+.enl__mot { display: flex; flex-direction: column; gap: 1.2cqi; min-width: 0; padding-bottom: 0.6cqi; }
+.enl__suite { font-family: 'Sitka Display', 'Palatino Linotype', Georgia, serif; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+.enl__nature { font-style: italic; font-size: 3.5cqi; line-height: 1.25; color: var(--encre-pale); }
+
+.enl__definition {
+  font-size: 5.3cqi; line-height: 1.36; hyphens: auto; align-self: center;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden;
+}
+.enl__definition::first-letter { color: #a3231f; font-weight: 700; }
+
+.enl__pied { display: flex; justify-content: space-between; align-items: end; border-top: 0.3cqi solid var(--encre-pale); padding-top: 2cqi; }
+.enl__pied span { display: flex; flex-direction: column; align-items: center; font-family: 'Sitka Display', Georgia, serif; font-size: 7cqi; font-weight: 700; line-height: 1; }
+.enl__pied small { font-size: 2.7cqi; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; color: var(--encre-pale); margin-bottom: 0.8cqi; }
+.enl__pied .enl__fleuron { font-size: 5.5cqi; color: var(--pigment); font-weight: 400; }
+
+/* La rareté se lit à la richesse du cadre : filet simple, double filet, écoinçons, cordelière, feuille d'or. */
+.enl[data-niveau='2'] .enl__cadre { border: 1.5cqi double var(--encre); }
+.enl[data-niveau='3'] .enl__cadre,
+.enl[data-niveau='4'] .enl__cadre,
+.enl[data-niveau='5'] .enl__cadre {
+  border: 1.5cqi double var(--encre);
+  background:
+    linear-gradient(var(--pigment), var(--pigment)) 0 0 / 3.4cqi 3.4cqi no-repeat,
+    linear-gradient(var(--pigment), var(--pigment)) 100% 0 / 3.4cqi 3.4cqi no-repeat,
+    linear-gradient(var(--pigment), var(--pigment)) 0 100% / 3.4cqi 3.4cqi no-repeat,
+    linear-gradient(var(--pigment), var(--pigment)) 100% 100% / 3.4cqi 3.4cqi no-repeat;
+}
+.enl[data-niveau='4'] .enl__cadre { border: 2.3cqi solid; border-image: repeating-linear-gradient(45deg, var(--pigment) 0 1.1cqi, #f6ecd2 1.1cqi 2.2cqi) 14; }
+.enl[data-niveau='4'] .enl__rubrique { color: var(--pigment); font-weight: 700; }
+.enl[data-niveau='5'] .enl__cadre {
+  border: 2.3cqi solid transparent;
+  background:
+    linear-gradient(var(--pigment), var(--pigment)) 0 0 / 3.4cqi 3.4cqi no-repeat padding-box,
+    linear-gradient(var(--pigment), var(--pigment)) 100% 0 / 3.4cqi 3.4cqi no-repeat padding-box,
+    linear-gradient(var(--pigment), var(--pigment)) 0 100% / 3.4cqi 3.4cqi no-repeat padding-box,
+    linear-gradient(var(--pigment), var(--pigment)) 100% 100% / 3.4cqi 3.4cqi no-repeat padding-box,
+    var(--grain) padding-box,
+    linear-gradient(#f4e9cf, #f4e9cf) padding-box,
+    var(--or) 0% 50% / 200% 100% border-box;
+  animation: da-reflet 5s linear infinite;
+}
+.enl[data-niveau='5'] .enl__lettrine { background: var(--or) 0% 50% / 200% 100%; animation: da-reflet 5s linear infinite; }
+.enl[data-niveau='5'] .enl__lettrine pattern * { stroke: #5b3d05; opacity: 0.35; }
+.enl[data-niveau='5'] .enl__lettrine span { color: var(--pigment); text-shadow: 0 0.3cqi 0 rgba(255, 255, 255, 0.55); }
+.enl[data-niveau='5'] .enl__rubrique { font-weight: 700; color: #8a6a12; }
+
+@container (max-width: 170px) {
+  .enl__definition, .enl__nature { display: none; }
+  .enl__cadre { grid-template-rows: auto 1fr auto; }
+  .enl__entree { grid-template-columns: 1fr; justify-items: center; align-items: center; }
+  .enl__lettrine { width: 46cqi; }
+  .enl__suite { font-size: 11cqi !important; text-align: center; overflow-wrap: anywhere; }
+}
+
+/* ═══ PISTE 2 — AFFICHE ════════════════════════════════════════════════════ */
+
+.aff {
+  --creme: #f3ead6;
+  --noir: #141414;
+  --fond: var(--creme);
+  --titre: var(--noir);
+  background: var(--fond);
+  color: var(--titre);
+  font-family: Bahnschrift, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+.aff__formes { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aff__forme-a { fill: var(--noir); opacity: 0.09; }
+.aff__forme-b { fill: var(--noir); }
+.aff__rayures { fill: var(--noir); }
+.aff__disque-irise { position: absolute; aspect-ratio: 1; border-radius: 50%; background: var(--irise) 0% 50% / 200% 100%; animation: da-reflet 6s linear infinite; }
+
+.aff__bandeau {
+  position: absolute; top: 4.5cqi; left: 5cqi; right: 5cqi;
+  display: flex; justify-content: space-between;
+  font-size: 3.3cqi; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  border-bottom: 0.5cqi solid currentColor; padding-bottom: 1.4cqi;
+}
+.aff__mot {
+  position: absolute; top: 13cqi; left: 5cqi; right: 5cqi;
+  display: flex; flex-direction: column;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', 'Franklin Gothic Heavy', sans-serif;
+  line-height: 0.9; letter-spacing: 0.005em;
+  mix-blend-mode: multiply;
+}
+.aff__bas { position: absolute; left: 0; right: 0; bottom: 0; background: var(--creme); color: var(--noir); border-top: 1cqi solid var(--noir); padding: 3.4cqi 5cqi 3.6cqi; display: grid; gap: 2.6cqi; }
+.aff__definition { font-size: 4.05cqi; line-height: 1.32; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; }
+.aff__pied { display: flex; justify-content: space-between; align-items: center; }
+.aff__stat { font-family: Impact, Haettenschweiler, 'Franklin Gothic Heavy', sans-serif; font-size: 10cqi; line-height: 0.9; display: flex; align-items: baseline; gap: 1cqi; }
+.aff__stat small { font-family: Bahnschrift, 'Segoe UI', Arial, sans-serif; font-size: 2.9cqi; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.aff__rarete { display: flex; flex-direction: column; align-items: center; gap: 0.6cqi; font-size: 3cqi; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+.aff__rarete span { font-size: 2.6cqi; letter-spacing: 0.3em; }
+
+/* La rareté se lit à la richesse de l'impression. */
+.aff[data-niveau='2'] .aff__forme-a { fill: var(--a); opacity: 1; }
+.aff[data-niveau='3'], .aff[data-niveau='4'] { --fond: var(--a); --titre: var(--creme); }
+.aff[data-niveau='3'] .aff__forme-a, .aff[data-niveau='4'] .aff__forme-a { fill: var(--b); opacity: 1; }
+.aff[data-niveau='3'] .aff__forme-b, .aff[data-niveau='4'] .aff__forme-b { fill: var(--noir); }
+.aff[data-niveau='3'] .aff__mot, .aff[data-niveau='4'] .aff__mot { mix-blend-mode: normal; }
+.aff[data-niveau='4'] .aff__rayures { fill: var(--creme); }
+.aff[data-niveau='4'] .aff__rarete { background: var(--or) 0% 50% / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: da-reflet 5s linear infinite; }
+.aff[data-niveau='5'] { --fond: var(--noir); --titre: var(--creme); }
+.aff[data-niveau='5'] .aff__forme-b { fill: var(--a); }
+.aff[data-niveau='5'] .aff__rayures { fill: var(--b); }
+.aff[data-niveau='5'] .aff__mot { mix-blend-mode: normal; background: var(--irise) 0% 50% / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: da-reflet 6s linear infinite; }
+.aff[data-niveau='5'] .aff__mot span { mix-blend-mode: normal; }
+.aff[data-niveau='5'] .aff__rarete { background: var(--or) 0% 50% / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: da-reflet 5s linear infinite; }
+
+@container (max-width: 170px) {
+  .aff__definition { display: none; }
+  .aff__bas { padding: 2.4cqi 4cqi; }
+  .aff__rarete { font-size: 0; }
+  .aff__rarete span { font-size: 3.4cqi; }
+}
+
+/* ═══ PISTE 3 — PASSEPORT ══════════════════════════════════════════════════ */
+
+.pas {
+  --marine: #1c2a4a;
+  --marine-pale: #5d6b88;
+  background: var(--grain), linear-gradient(140deg, #e3f0e6 0%, #f5eedd 48%, #f0e0ea 100%);
+  color: var(--marine);
+  font-family: Bahnschrift, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+.pas__fond { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pas__fond path { fill: none; stroke: #2f8f6f; stroke-width: 0.3; opacity: 0.2; }
+.pas__fond path:nth-child(3n) { stroke: #b0508a; }
+.pas__microtexte { position: absolute; top: 1.1cqi; left: 0; right: 0; font-size: 1.5cqi; letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; color: var(--marine-pale); text-transform: uppercase; }
+
+.pas__entete { position: relative; margin: 4.4cqi 5cqi 0; padding-bottom: 1.4cqi; border-bottom: 0.35cqi solid var(--marine); display: flex; justify-content: space-between; font-size: 3cqi; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+.pas__corps { position: relative; margin: 3cqi 5cqi 0; display: grid; grid-template-columns: 31cqi 1fr; gap: 3.4cqi; align-items: start; }
+.pas__rosace { width: 100%; aspect-ratio: 1; background: rgba(255, 255, 255, 0.5); border: 0.3cqi solid var(--marine-pale); }
+.pas__rosace path { fill: none; stroke: var(--encre-tampon); stroke-width: 0.32; opacity: 0.85; }
+.pas__rosace path:nth-child(even) { stroke: var(--marine); opacity: 0.6; }
+.pas__champs { display: grid; gap: 1.5cqi; min-width: 0; }
+.pas__champ dt, .pas__signalement span, .pas__valeurs small { font-size: 2.35cqi; letter-spacing: 0.16em; text-transform: uppercase; color: var(--marine-pale); }
+.pas__champ dd { font-size: 3.9cqi; font-weight: 600; line-height: 1.15; }
+.pas__champ--nom dd { font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.05; white-space: nowrap; }
+
+.pas__signalement { position: relative; margin: 2.8cqi 5cqi 0; display: grid; gap: 0.8cqi; }
+.pas__signalement p { font-family: 'Sitka Text', Georgia, 'Times New Roman', serif; font-size: 4.05cqi; line-height: 1.34; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; }
+
+.pas__valeurs { position: absolute; left: 5cqi; bottom: 15.5cqi; display: flex; gap: 2.4cqi; }
+.pas__valeurs span { display: flex; flex-direction: column; border: 0.35cqi solid var(--marine); padding: 1cqi 2.2cqi 0.8cqi; background: rgba(255, 255, 255, 0.55); font-family: 'OCR A Extended', Consolas, 'Courier New', monospace; font-size: 7cqi; font-weight: 700; line-height: 1; }
+.pas__valeurs small { font-family: Bahnschrift, 'Segoe UI', Arial, sans-serif; font-weight: 600; margin-bottom: 0.7cqi; }
+
+.pas__tampon { position: absolute; right: 2cqi; bottom: 12.5cqi; width: 41cqi; color: var(--encre-tampon); opacity: 0.92; mix-blend-mode: multiply; }
+.pas__tampon circle { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.pas__tampon .pas__tampon-fin { stroke-width: 0.9; }
+.pas__tampon text { fill: currentColor; font-family: Bahnschrift, 'Arial Narrow', Arial, sans-serif; font-weight: 700; }
+.pas__tampon-tour { font-size: 7.4px; }
+.pas__tampon-centre { font-size: 8.4px; letter-spacing: 0.04em; }
+.pas__tampon-date { font-size: 9.5px; font-family: 'OCR A Extended', Consolas, monospace; }
+
+.pas__hologramme { position: absolute; top: 0; bottom: 0; left: 36.2cqi; width: 2.4cqi; background: var(--irise) 0% 50% / 200% 100%; opacity: 0.75; animation: da-reflet 6s linear infinite; }
+
+.pas__machine { position: absolute; left: 0; right: 0; bottom: 0; padding: 2cqi 5cqi 2.4cqi; background: rgba(255, 255, 255, 0.62); border-top: 0.35cqi solid var(--marine); display: grid; gap: 0.6cqi; font-family: 'OCR A Extended', Consolas, 'Courier New', monospace; font-size: 3.35cqi; letter-spacing: 0.1em; white-space: nowrap; overflow: hidden; }
+
+/* La rareté se lit au niveau de sécurité du document. */
+.pas[data-niveau='1'] .pas__fond path { opacity: 0.1; }
+.pas[data-niveau='3'] .pas__fond path, .pas[data-niveau='4'] .pas__fond path { opacity: 0.32; }
+.pas[data-niveau='5'] { background: var(--grain), linear-gradient(140deg, #f6efd6 0%, #f3e6c0 50%, #efe0c9 100%); }
+.pas[data-niveau='5'] .pas__fond path { stroke: #a67c1a; opacity: 0.42; }
+.pas[data-niveau='5'] .pas__rosace path { stroke: #a67c1a; opacity: 0.95; }
+.pas[data-niveau='5'] .pas__entete span:first-child { background: var(--or) 0% 50% / 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: da-reflet 5s linear infinite; font-weight: 700; }
+
+@container (max-width: 170px) {
+  .pas__signalement, .pas__machine, .pas__microtexte, .pas__valeurs, .pas__champ:not(.pas__champ--nom) { display: none; }
+  .pas__corps { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .pas__rosace { width: 56cqi; }
+  .pas__champ--nom dt { display: none; }
+  .pas__champ--nom dd { font-size: 10cqi !important; white-space: normal; overflow-wrap: anywhere; }
+  .pas__tampon { width: 46cqi; bottom: 3cqi; }
+}
+
+/* ═══ Page de l'atelier ════════════════════════════════════════════════════ */
+
+.atelier__piste { display: grid; gap: 14px; padding-top: 10px; border-top: 1px solid var(--filet); }
+.atelier__cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 18px; }
+.atelier__vignettes { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+.atelier__vignettes > * { width: 112px; flex: none; }
+.atelier__points { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }

@@ -28,6 +28,12 @@ export function Accueil() {
         Chaque carte est un vrai mot de la langue française. Plus le mot est rare, plus la carte l'est aussi.
       </Entete>
 
+      <section className="bloc">
+        <h2>Atelier de direction artistique</h2>
+        <p className="texte-doux petit">Trois pistes pour le dessin des cartes, essayées sur les mêmes mots. Écran provisoire, le temps de choisir.</p>
+        <a className="bouton" href={lien({ ecran: 'atelier' })}>Comparer les trois pistes</a>
+      </section>
+
       <AVenir phase="phase 2">
         Ici : ton stock de paquets (un nouveau toutes les 10 minutes, 10 au maximum), le compte à rebours
         avant le prochain, et ton Encre. <a href={lien({ ecran: 'paquet' })}>Voir l'écran d'ouverture</a>.

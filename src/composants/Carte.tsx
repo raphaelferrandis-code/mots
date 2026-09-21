@@ -31,6 +31,7 @@ export function Carte({ carte, cliquable = true }: Props) {
             {carte.registre.map((r) => <span key={r} className="badge">{r}</span>)}
           </span>
         )}
+        <span className="carte__definition" lang="fr">{carte.definition}</span>
       </div>
 
       <div className="carte__bas">

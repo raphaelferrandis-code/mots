@@ -28,6 +28,7 @@ export const CONFIG = {
   definitions: {
     maximumParCarte: 3,
     longueurMaximale: 200, // au-delà, la définition est coupée proprement
+    longueurSurLaCarte: 150, // la définition imprimée sur la carte est plus courte que celle de la fiche
     longueurMinimalePourLeDuel: 25, // en dessous, c'est souvent un simple synonyme
   },
 

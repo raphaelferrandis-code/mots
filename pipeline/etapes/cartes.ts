@@ -77,6 +77,7 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
         defense: defenses[i],
         faction: origine.faction,
         registre: registresDeLaCarte(registres),
+        definition: couper(sens[0].definition, config.definitions.longueurSurLaCarte),
       },
       details,
       factionReconnue: origine.reconnue,

@@ -145,6 +145,11 @@ button {
 }
 .carte__faction { font-style: italic; font-size: 0.8rem; color: var(--encre-douce); }
 .carte__badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.carte__definition {
+  font-size: clamp(0.62rem, 5.4cqi, 0.95rem); line-height: 1.3; color: var(--encre);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden;
+  border-top: 1px solid var(--filet); padding-top: 6px; margin-top: 2px;
+}
 .badge { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--filet); border-radius: 999px; padding: 1px 7px; color: var(--encre-douce); }
 
 .carte__bas { display: flex; justify-content: space-between; align-items: flex-end; }

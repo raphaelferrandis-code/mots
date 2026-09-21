@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Navigation } from './composants/Navigation.tsx';
 import { Accueil } from './ecrans/Accueil.tsx';
+import { Atelier } from './ecrans/Atelier.tsx';
 import { Collection, Deck, Duel, OuverturePaquet } from './ecrans/EcransAVenir.tsx';
 import { FicheCarte } from './ecrans/FicheCarte.tsx';
 import { Reglages } from './ecrans/Reglages.tsx';
@@ -16,6 +17,7 @@ function Ecran({ route }: { route: Route }) {
     case 'deck': return <Deck />;
     case 'duel': return <Duel />;
     case 'reglages': return <Reglages />;
+    case 'atelier': return <Atelier />;
   }
 }
 

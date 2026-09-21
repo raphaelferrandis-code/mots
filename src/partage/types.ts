@@ -17,6 +17,7 @@ export type CarteIndex = {
   defense: number; // 1 à 10, richesse du mot (hors bonus de rareté, appliqué par le jeu)
   faction: string;
   registre: Registre[];
+  definition: string; // le sens principal, raccourci pour tenir sur la carte (la fiche donne les définitions complètes)
 };
 
 export type Definition = {
