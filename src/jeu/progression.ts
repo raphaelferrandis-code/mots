@@ -81,9 +81,10 @@ export type FinDeJoute = Recompense & { coteAvant: number; coteApres: number };
 
 // Fin d'une joute : la cote du joueur bouge selon la force de l'adversaire, et l'Encre est versée
 // (même plafond quotidien que pour les duels d'entraînement).
-export function terminerUneJoute(sauvegarde: Sauvegarde, adversaire: Pick<ProfilDeJoute, 'id' | 'cote'>, resultat: Resultat, maintenant: number, regles: ReglesDuDuel, joutes: ReglesDesJoutes): FinDeJoute {
-  const coteAvant = sauvegarde.joutes.cote ?? joutes.coteDeDepart;
-  const nouvelleCote = coteApres(coteAvant, adversaire.cote, resultat, joutes);
+// Quand un serveur tient le classement, c'est lui qui donne la cote (« coteDuServeur ») ; sinon le jeu la calcule.
+export function terminerUneJoute(sauvegarde: Sauvegarde, adversaire: Pick<ProfilDeJoute, 'id' | 'cote'>, resultat: Resultat, maintenant: number, regles: ReglesDuDuel, joutes: ReglesDesJoutes, coteDuServeur?: { avant: number; apres: number }): FinDeJoute {
+  const coteAvant = coteDuServeur?.avant ?? sauvegarde.joutes.cote ?? joutes.coteDeDepart;
+  const nouvelleCote = coteDuServeur?.apres ?? coteApres(coteAvant, adversaire.cote, resultat, joutes);
   const recompense = recompenser(sauvegarde, joutes.encreParVictoire, resultat, maintenant, regles);
   return {
     ...recompense,

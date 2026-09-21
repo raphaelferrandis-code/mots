@@ -1,6 +1,6 @@
 # Les joutes classées — plan du serveur
 
-*Version 1 du 21 septembre 2026. Ce document complète `BRIEF-v2.md`. Il décrit le passage du mode d'essai (adversaires fictifs) au vrai mode : des duels classés contre les decks d'autres joueurs. **Rien de ce qui suit n'est construit tant que Raphaël ne l'a pas validé** — sauf la partie « Ce qui existe déjà ».*
+*Version 2 du 21 septembre 2026. Ce document complète `BRIEF-v2.md`. Il décrit le passage des joutes sans serveur aux joutes entre vrais joueurs. **Décisions de Raphaël (21/09/2026) : hébergeur Supabase ; pseudonymes choisis librement par les joueurs, avec un filtre des mots offensants ; le jeu ne signale pas que certains adversaires sont des « joueurs maison ».** Les scripts du serveur et le guide de mise en route sont prêts : `serveur/` et `GUIDE-supabase.md`.*
 
 > **Légende :** 🟡 = proposition à confirmer par Raphaël.
 
@@ -23,9 +23,14 @@ Tout le mode de jeu fonctionne, avec un « faux serveur » logé dans le navigat
 | Choix de trois adversaires : un plus faible, un égal, un plus fort ; on évite ceux qu'on vient d'affronter | `src/jeu/joute.ts` | fait, testé |
 | Ce que le jeu retient pour fabriquer le double du joueur : questions posées et réussies pour chaque mot, parades par rareté | sauvegarde version 4 | fait, testé |
 | Écran : onglet « Joutes classées » dans l'écran Duel, classement, cote qui bouge en fin de joute | `src/ecrans/PanneauDesJoutes.tsx`, `src/ecrans/Duel.tsx` | fait |
-| **Adversaires fictifs** (240 joueurs fabriqués à partir des cartes, annoncés comme tels à l'écran) | `src/services/joutes.ts` | provisoire |
+| **Joueurs maison** : 240 adversaires fabriqués à partir des cartes (`src/jeu/joueursMaison.ts`), pour que les joutes aient du monde dès le premier jour. Sans serveur, ce sont les seuls adversaires ; avec le serveur, ils sont installés dans la base aux côtés des vrais joueurs, marqués en interne pour pouvoir être retirés en une ligne | `src/services/joutes.ts`, `serveur/2-joueurs-maison.sql` | fait |
+| Pseudonyme choisi par le joueur, avec filtre des mots offensants (dans le jeu **et** sur le serveur) | `src/jeu/pseudo.ts`, `src/config/pseudos-interdits.ts` | fait, testé |
+| Le branchement à Supabase (compte anonyme, profil, adversaires, joute, classement), actif dès que `src/config/serveur.ts` est rempli | `src/services/supabase.ts`, `src/services/joutes.ts` | écrit et testé avec un faux serveur ; **jamais encore essayé contre un vrai projet** |
+| Les scripts de la base et le guide pas à pas | `serveur/`, `GUIDE-supabase.md` | prêts |
 
-Le jour où le serveur existe, **seul `src/services/joutes.ts` change** : on y remplace les joueurs fictifs par des appels au serveur. Les règles et les écrans ne bougent pas.
+Le passage au serveur ne touche ni aux règles ni aux écrans : il suffit de remplir `src/config/serveur.ts`.
+
+> **À savoir — décision de Raphaël : le jeu ne dit pas que certains adversaires sont des joueurs maison.** C'est une pratique courante dans les jeux. Deux garde-fous : l'interface n'affirme nulle part que tous les adversaires sont de vraies personnes ; et ces joueurs sont marqués dans la base (`maison`), pour être retirés dès qu'il y a assez de vrais joueurs. **Le jour où le jeu encaisse de l'argent, ce point est à revoir** : présenter des joueurs inventés comme de vrais joueurs peut alors relever de la pratique commerciale trompeuse.
 
 ## 3. Ce que le serveur doit faire
 
@@ -39,17 +44,17 @@ Le jour où le serveur existe, **seul `src/services/joutes.ts` change** : on y r
 
 ## 4. Les données personnelles
 
-- 🟡 **Pseudonymes tirés au sort parmi les mots du jeu** (« Frangipane 43 »), jamais de texte libre : rien à modérer, aucun risque d'injure ou de vrai nom. C'est déjà le cas dans la version d'essai.
+- **Pseudonymes choisis librement** (décision de Raphaël), de 3 à 16 caractères, en lettres latines, chiffres, espaces, tirets et apostrophes. Un **filtre** refuse les mots grossiers, haineux ou sexuels, et ceux qui feraient passer le joueur pour un responsable du jeu ; il déjoue les ruses courantes (accents, majuscules, lettres répétées ou séparées, chiffres mis pour des lettres). Le jeu propose aussi un pseudonyme tiré de ses mots (« Frangipane 43 »). **Limites à connaître :** aucun filtre n'est parfait (un mot court collé à un autre en minuscules, « groscon », passe) ; un joueur peut écrire son vrai nom ; et un pseudonyme choquant qui passerait au travers se corrige à la main dans la base (voir le guide). La liste des mots est dans `src/config/pseudos-interdits.ts`.
 - Ce que le serveur garde : un identifiant technique, le pseudonyme, la cote, le deck, des compteurs de bonnes réponses. **Ni nom, ni e-mail, ni localisation.**
 - Il faudra tout de même une **page « Confidentialité »** dans le jeu (ce qui est gardé, pourquoi, comment tout effacer) et un bouton « Supprimer mon profil de joute ». À rédiger avec le serveur.
-- La question des **mineurs** reste celle du §10.3 de `BRIEF-v2.md` (public visé) : sans e-mail ni texte libre, le risque est faible, mais la décision vous appartient.
+- La question des **mineurs** reste celle du §10.3 de `BRIEF-v2.md` (public visé). Le jeu ne demande pas d'e-mail, mais le pseudonyme est désormais un texte libre : un enfant peut y écrire son vrai nom. À trancher avec le public visé.
 
 ## 5. La triche : ce qu'on peut promettre, et ce qu'on ne peut pas
 
 Il faut être clair là-dessus avant d'ouvrir un classement.
 
 - **Toutes les définitions sont dans les fichiers publics du jeu.** Un tricheur décidé peut programmer un robot qui répond juste à tout. On ne peut pas l'empêcher ; on peut le repérer (réponses trop rapides, trop régulières) et l'écarter du classement.
-- **Étape 1 — classement « de confiance »** 🟡 : le téléphone annonce le résultat, le serveur calcule la cote et applique des garde-fous (nombre de joutes par heure, pas deux fois de suite le même adversaire, écart de cote plafonné). Suffisant entre amis et pour les premiers testeurs. Un tricheur peut gonfler sa cote.
+- **Étape 1 — classement « de confiance »** 🟡 : le téléphone annonce le résultat, le serveur calcule la cote et applique des garde-fous (pas plus de 40 joutes par heure, pas de joute de moins de 45 secondes, un seul résultat par joute commencée). Suffisant entre amis et pour les premiers testeurs. Un tricheur peut gonfler sa cote.
 - **Étape 2 — le serveur arbitre** : il tire lui-même les questions et vérifie les réponses. Les règles du jeu sont écrites à part des écrans et sans rien du navigateur : le serveur peut faire tourner exactement les mêmes. Plus de travail ; à faire avant tout classement « sérieux » ou toute récompense de valeur.
 - **Les collections actuelles** vivent sur le téléphone et sont modifiables. Tant que les paquets ne sont pas tirés par le serveur, un deck peut être fabriqué de toutes pièces. 🟡 Proposition : l'accepter à l'étape 1 (le jeu est équilibré pour que la connaissance compte plus que les cartes), et le régler à l'étape 2 avec le tirage des paquets côté serveur, comme `BRIEF-v2.md` l'annonçait.
 
@@ -76,15 +81,15 @@ Vérifié sur leurs sites le 21 septembre 2026 (ces offres changent : à revéri
 2. coller dans son tableau de bord le script que je fournirai (il crée les tables, les règles d'accès et le calcul de la cote) ;
 3. recopier dans un fichier du jeu les deux valeurs **publiques** du projet (son adresse et sa clé publique — elles sont faites pour être visibles, contrairement à la clé secrète, qui ne doit jamais quitter le tableau de bord).
 
-**Claude** : le script de la base, le nouveau `src/services/joutes.ts`, la page Confidentialité, le bouton de suppression, les tests, un guide pas à pas avec captures pour les trois étapes ci-dessus, et un mode de secours (adversaires fictifs) quand le serveur ne répond pas.
+**Claude** : les scripts de la base (`serveur/`), le branchement du jeu (`src/services/joutes.ts`, `src/services/supabase.ts`), les tests, le guide pas à pas (`GUIDE-supabase.md`) — faits. Restent, après la mise en route : la page Confidentialité et le bouton « Supprimer mon profil » (la fonction existe déjà côté serveur). Quand le serveur ne répond pas, les joutes affichent un message et l'entraînement reste disponible.
 
 ## 8. Décisions à prendre
 
 | # | Question | Proposition |
 |---|---|---|
-| 1 | Hébergeur | Supabase |
+| 1 | Hébergeur | **Supabase — validé le 21/09/2026** |
 | 2 | Comptes | Anonymes, attachés à l'appareil ; e-mail plus tard |
-| 3 | Pseudonymes | Tirés au sort parmi les mots du jeu, jamais de texte libre |
+| 3 | Pseudonymes | **Choisis librement, avec filtre des mots offensants — décidé le 21/09/2026** |
 | 4 | Qui voit sa cote bouger | L'attaquant seulement |
 | 5 | Niveau d'anti-triche au lancement | Étape 1 (« de confiance »), étape 2 avant tout classement sérieux |
 | 6 | Collections actuelles | Acceptées à l'étape 1 |

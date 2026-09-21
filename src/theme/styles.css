@@ -229,6 +229,11 @@ button {
 /* Joutes : la cote, le classement. */
 .joute__cote { font-family: var(--police-mention); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); white-space: nowrap; }
 .joute__pseudo { align-self: flex-start; font-size: 0.88rem; }
+.joute__refus { margin: 0; color: var(--accent); font-size: 0.92rem; }
+.joute__saisie { display: grid; gap: 8px; }
+.joute__saisie label { display: grid; gap: 2px; }
+.joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 8px; background: var(--carte-fond); width: 100%; }
+.joute__saisie input[aria-invalid='true'] { border-color: var(--accent); }
 .niveau:disabled { opacity: 0.6; cursor: default; }
 .classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .classement li { display: grid; grid-template-columns: 2.4em 1fr auto 3.2em; gap: 8px; align-items: baseline; padding: 5px 6px; border-radius: 6px; }

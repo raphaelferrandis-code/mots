@@ -118,22 +118,28 @@ export function noterLaParade(rarete: Rarete, reussie: boolean): void {
 export type FinDeDuel = { encre: number; reduite: boolean; cote: { avant: number; apres: number } | null };
 
 // Fin d'un duel : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge.
-export function finirLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, resultat: Resultat): FinDeDuel {
+// (« coteDuServeur » : la cote avant et après la joute, quand c'est un serveur qui tient le classement.)
+export function finirLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, resultat: Resultat, coteDuServeur?: { avant: number; apres: number }): FinDeDuel {
   if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
   if (adversaire.type === 'entrainement') {
     const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);
     enregistrer(fin.sauvegarde);
     return { encre: fin.encre, reduite: fin.reduite, cote: null };
   }
-  const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute);
+  const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, coteDuServeur);
   enregistrer(fin.sauvegarde);
   return { encre: fin.encre, reduite: fin.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
 }
 
-// Le pseudonyme du joueur dans les joutes (tiré au sort parmi les mots du jeu).
+// Le pseudonyme du joueur dans les joutes, et sa cote quand c'est le serveur qui la tient.
 export function changerDePseudonyme(pseudo: string): void {
   if (partie.etat !== 'prete') return;
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, pseudo } });
+}
+
+export function recevoirLaCoteDuServeur(cote: number): void {
+  if (partie.etat !== 'prete' || partie.sauvegarde.joutes.cote === cote) return;
+  enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });
 }
 
 // Le fichier de sauvegarde à télécharger. L'export est noté, pour espacer les rappels.

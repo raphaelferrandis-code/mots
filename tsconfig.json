@@ -27,6 +27,7 @@
     "src",
     "pipeline",
     "simulateurs",
+    "serveur",
     "vite.config.ts"
   ]
 }

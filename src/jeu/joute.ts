@@ -20,7 +20,7 @@ export type ProfilDeJoute = {
   deck: string[]; // identifiants de ses dix cartes
   savoirs: Record<string, Savoir>; // ses résultats sur chacun de ses mots
   parades: Partial<Record<Rarete, Savoir>>; // ses résultats sur les mots des autres, par rareté
-  fictif?: boolean; // adversaire d'essai, fabriqué par le jeu en attendant le serveur
+  maison?: boolean; // joueur fabriqué par le jeu (src/jeu/joueursMaison.ts), pour que les joutes aient du monde dès le premier jour
 };
 
 // Une fréquence observée, mêlée à une estimation tant que les observations sont peu nombreuses.

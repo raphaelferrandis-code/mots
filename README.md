@@ -3,14 +3,14 @@
 Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue française.
 
 - Le projet est décrit dans [BRIEF-v2.md](BRIEF-v2.md) — c'est le document de référence.
-- Le plan du serveur des joutes classées (duels contre d'autres joueurs) : [BRIEF-joutes.md](BRIEF-joutes.md).
+- Le plan du serveur des joutes classées (duels contre d'autres joueurs) : [BRIEF-joutes.md](BRIEF-joutes.md) ; sa mise en route pas à pas : [GUIDE-supabase.md](GUIDE-supabase.md).
 - L'origine et la licence des données sont dans [SOURCES.md](SOURCES.md).
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).
 - **Le résultat de la fabrication des cartes : [data/rapport.md](data/rapport.md).**
 
 **Le site en ligne : https://raphaelferrandis-code.github.io/mots/**
 
-**État d'avancement : phase 3 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les doublons deviennent de l'Encre, et la collection se filtre et se sauvegarde sur l'appareil. **Le duel est jouable**, mot contre mot : on compose un deck de dix cartes et l'on affronte l'ordinateur à trois niveaux. À chaque manche il pose un mot, on lui répond par une carte ; pour attaquer il faut retrouver la définition de son mot parmi quatre, et pour parer, celle du mot adverse — qui change à chaque duel. Un mot rare frappe plus fort. Cinq bonnes réponses sur un mot : il est « maîtrisé », et son timbre reçoit un cachet daté. **Les joutes classées** (onglet de l'écran Duel) opposent le joueur au « double » d'autres joueurs, avec cote, ligues et classement — en version d'essai : les adversaires sont fictifs tant que le jeu n'a pas de serveur. Prochaine étape : la phase 4 (sons, finitions, accessibilité, testeurs).
+**État d'avancement : phase 3 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les doublons deviennent de l'Encre, et la collection se filtre et se sauvegarde sur l'appareil. **Le duel est jouable**, mot contre mot : on compose un deck de dix cartes et l'on affronte l'ordinateur à trois niveaux. À chaque manche il pose un mot, on lui répond par une carte ; pour attaquer il faut retrouver la définition de son mot parmi quatre, et pour parer, celle du mot adverse — qui change à chaque duel. Un mot rare frappe plus fort. Cinq bonnes réponses sur un mot : il est « maîtrisé », et son timbre reçoit un cachet daté. **Les joutes classées** (onglet de l'écran Duel) opposent le joueur au « double » d'autres joueurs, avec cote, ligues, classement et pseudonyme au choix. Le serveur (Supabase) est prêt à être branché : voir GUIDE-supabase.md. Prochaine étape : la phase 4 (sons, finitions, accessibilité, testeurs).
 
 ## Mise en ligne
 
@@ -49,6 +49,7 @@ Toutes les commandes se lancent depuis le dossier du projet.
 | `npm run sources` | Télécharge les deux bases de données (735 Mo au total) dans `data/brut/`. Ne retélécharge pas un fichier déjà présent. | quelques minutes, selon la connexion |
 | `npm run pipeline` | **Fabrique les cartes** : la base complète, l'Édition 1, et le rapport à relire. | environ 30 secondes |
 | `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 2 à 3 minutes |
+| `npm run serveur:script` | Refabrique les deux scripts à coller dans Supabase (`serveur/1-structure.sql`, `serveur/2-joueurs-maison.sql`) à partir des chiffres et des listes du jeu. À relancer après avoir changé les chiffres des joutes ou la liste des pseudonymes interdits ; un test signale l'oubli. | immédiat |
 | `npm run simulation:collection` | Simule des mois d'ouverture de paquets pour trois profils de joueurs, et quelques variantes de réglages. Résultat dans `data/simulation-collection.md`. | 2 secondes |
 | `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |
@@ -64,6 +65,8 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | `data/exclusions.txt` | Mots qui n'y entrent jamais. |
 | `data/hors-serie.txt` | Cartes Hors-série ajoutées à la main (`mot = Titre de la carte`), en plus des records trouvés automatiquement. |
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |
+| `src/config/pseudos-interdits.ts` | Les mots refusés dans les pseudonymes des joutes. Après une modification : `npm run serveur:script`, puis recoller le premier script dans Supabase. |
+| `src/config/serveur.ts` | L'adresse et la clé **publique** du projet Supabase. Vides = le jeu se passe de serveur. **Jamais de clé secrète ici.** |
 | `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus d'attaque et de défense des cartes rares, **tout le duel** (points de vie, poids de la défense, parade, bonus, rareté et réussite des mots de l'ordinateur, récompenses, seuil de maîtrise) **et les joutes classées** (cote de départ, ampleur des gains, ligues, adversaires proposés). Après une modification : `npm test` puis `npm run simulation:collection`. |
 
 ## Ce que le pipeline produit
@@ -93,7 +96,8 @@ Deux générations faites à partir des mêmes données et des mêmes réglages 
 | `src/composants/carte/` | **Le timbre** : son dessin (`Carte.tsx`, `timbre.css`), ses cachets d'origine et de maîtrise (`Tampon.tsx`), son motif calculé à partir du mot (`decor.ts`) et les illustrations des timbres Hors-série (`vignettes.tsx`) |
 | `src/navigation/` | Les adresses des écrans (`#/collection`, `#/carte/callipyge-adj`…) |
 | `src/jeu/` | **Les règles du jeu**, sans écran ni stockage : tirage des paquets, recharge, Encre, sauvegarde, duel (`duel.ts`), épreuve de maîtrise (`epreuve.ts`), joutes classées (`joute.ts`), deck, maîtrise et récompenses (`progression.ts`). Entièrement couvertes par des tests |
+| `serveur/` | Les scripts de la base Supabase (fabriqués, ne pas les modifier à la main) et le programme qui les fabrique |
 | `simulateurs/` | Les outils d'équilibrage : simulateur de collection et simulateur de duel |
-| `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données (aujourd'hui des fichiers, demain un serveur). `joutes.ts` fabrique pour l'instant des adversaires fictifs : c'est lui qui sera remplacé par le vrai serveur |
+| `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données (aujourd'hui des fichiers, demain un serveur). `joutes.ts` choisit entre le jeu sans serveur et Supabase (`supabase.ts`), selon `src/config/serveur.ts` |
 | `public/data/` | Les fichiers de cartes que le jeu chargera |
 | `data/` | Listes tenues par Raphaël, rapports, et données brutes (hors Git) |

@@ -1,28 +1,43 @@
-// Les joutes classées, avant le duel : le rang du joueur, les adversaires qu'on lui propose, le classement.
-// Tout passe par src/services/joutes.ts — aujourd'hui des adversaires fictifs, demain un serveur.
+// Les joutes classées, avant le duel : le pseudonyme et le rang du joueur, les adversaires qu'on lui propose,
+// le classement. Tout passe par src/services/joutes.ts (avec ou sans serveur : l'écran ne fait pas la différence).
 
 import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { useChargement } from '../composants/useChargement.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
 import { coteApres, ligueDe } from '../jeu/joute.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
+import { LONGUEUR_DU_PSEUDO, examinerLePseudo } from '../jeu/pseudo.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { RARETES } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { serveurDeJoutes, tirerUnPseudonyme } from '../services/joutes.ts';
-import { changerDePseudonyme } from '../services/partie.ts';
+import type { MonProfil } from '../services/joutes.ts';
+import { changerDePseudonyme, recevoirLaCoteDuServeur } from '../services/partie.ts';
 
 const REGLES = EQUILIBRAGE.joute;
 const signe = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
+const messageDe = (erreur: unknown): string => (erreur instanceof Error ? erreur.message : String(erreur));
 
 // « 4 communes, 3 peu communes, 2 rares, 1 épique » : on montre la force d'un deck, pas ses mots.
 function raretesDuDeck(deck: readonly string[], cartes: ReadonlyMap<string, CarteIndex>): string {
   return [...RARETES].reverse()
     .map((rarete) => ({ rarete, nombre: deck.filter((id) => cartes.get(id)?.rarete === rarete).length }))
     .filter((r) => r.nombre > 0)
-    .map((r) => `${r.nombre} ${r.rarete.toLowerCase()}${r.nombre > 1 && !r.rarete.endsWith('s') && r.rarete !== 'Hors-série' ? 's' : ''}`)
+    .map((r) => `${r.nombre} ${r.rarete.toLowerCase()}${r.nombre > 1 && r.rarete !== 'Hors-série' ? 's' : ''}`)
     .join(', ');
+}
+
+// Ce que le joueur fait connaître aux autres : son pseudonyme, son deck, et ses résultats sur les mots de ce deck.
+function profilDe(sauvegarde: Sauvegarde, pseudo: string): MonProfil {
+  const savoirs: MonProfil['savoirs'] = {};
+  for (const id of sauvegarde.deck) {
+    const carte = sauvegarde.cartes[id];
+    if (carte) savoirs[id] = { posees: carte.posees, reussies: carte.reussites };
+  }
+  return { pseudo, deck: sauvegarde.deck, savoirs, parades: sauvegarde.parades };
 }
 
 export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauvegarde: Sauvegarde; enPreparation: boolean; onDefier: (profil: ProfilDeJoute) => void }) {
@@ -34,43 +49,86 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const bas = ligue.rang === 0 ? Math.min(cote, REGLES.coteDeDepart) - 100 : ligue.aPartirDe;
   const [tirage, setTirage] = useState(0);
 
-  // Première visite : le joueur reçoit un pseudonyme, tiré au sort parmi les mots du jeu.
-  useEffect(() => { if (pseudo === '') void tirerUnPseudonyme().then(changerDePseudonyme); }, [pseudo]);
+  // Le pseudonyme : le joueur l'écrit librement ; il est vérifié dans le jeu, puis par le service (mot refusé, déjà pris…).
+  const [saisie, setSaisie] = useState<string | null>(null); // null = le joueur n'est pas en train de le modifier
+  const [refus, setRefus] = useState<string | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+
+  // Première visite (ou pseudonyme devenu inacceptable) : on en propose un, tiré des mots du jeu ; libre à lui d'en changer.
+  const pseudoValable = pseudo !== '' && examinerLePseudo(pseudo, PSEUDOS_INTERDITS).accepte;
+  useEffect(() => { if (!pseudoValable) void tirerUnPseudonyme().then(changerDePseudonyme); }, [pseudoValable]);
+
+  // Le profil est publié à chaque visite et à chaque changement de pseudonyme ou de deck ; le service rend la cote s'il la tient.
+  const cleDuProfil = `${pseudo}|${sauvegarde.deck.join(',')}`;
+  const publication = useChargement(async () => {
+    if (!pseudoValable) return null;
+    const reponse = await serveurDeJoutes.publier(profilDe(sauvegarde, pseudo));
+    if (reponse.accepte && reponse.cote !== null) recevoirLaCoteDuServeur(reponse.cote);
+    return reponse;
+  }, `publication:${cleDuProfil}:${pseudoValable}`);
+  const publie = publication.etat === 'pret' && publication.donnees?.accepte === true;
+  const refusDuService = publication.etat === 'pret' && publication.donnees?.accepte === false ? publication.donnees.raison : null;
+
+  const validerLePseudo = async (evenement: FormEvent): Promise<void> => {
+    evenement.preventDefault();
+    const verdict = examinerLePseudo(saisie ?? '', PSEUDOS_INTERDITS);
+    if (!verdict.accepte) { setRefus(verdict.raison); return; }
+    setEnvoi(true);
+    try {
+      const reponse = await serveurDeJoutes.publier(profilDe(sauvegarde, verdict.pseudo));
+      if (!reponse.accepte) { setRefus(reponse.raison); return; }
+      changerDePseudonyme(verdict.pseudo);
+      setSaisie(null);
+      setRefus(null);
+    } catch (erreur) { setRefus(messageDe(erreur)); } finally { setEnvoi(false); }
+  };
 
   const edition = useChargement(chargerEdition, 'edition');
-  const adversaires = useChargement(() => serveurDeJoutes.adversaires(cote, recents), `adversaires:${cote}:${tirage}`);
-  const classement = useChargement(() => serveurDeJoutes.classement(pseudo, cote), `classement:${pseudo}:${cote}`);
+  const adversaires = useChargement(async () => (publie ? serveurDeJoutes.adversaires(cote, recents) : []), `adversaires:${cote}:${tirage}:${publie}`);
+  const classement = useChargement(async () => (publie ? serveurDeJoutes.classement(pseudo, cote) : null), `classement:${pseudo}:${cote}:${publie}`);
   const cartes = edition.etat === 'pret' ? new Map(edition.donnees.cartes.map((c) => [c.id, c])) : null;
+  const rang = classement.etat === 'pret' ? classement.donnees : null;
 
   return (
     <>
-      {serveurDeJoutes.fictif && (
-        <section className="bloc bloc--a-venir">
-          <span className="entete__surtitre">Version d'essai</span>
-          <p className="petit">Les joutes opposeront de vrais joueurs dès que le jeu aura son serveur. En attendant, <strong>ces adversaires sont fictifs</strong> : ils servent à essayer le classement. Ta cote est enregistrée sur cet appareil.</p>
-        </section>
-      )}
-
       <section className="bloc">
         <p className="entete__surtitre">Ligue {ligue.nom}</p>
-        <h2>{pseudo || '…'} <small className="joute__cote">cote {cote}</small></h2>
-        <p className="texte-doux petit">
-          {classement.etat === 'pret' && <>{classement.donnees.rang === 1 ? '1ᵉʳ' : `${classement.donnees.rang}ᵉ`} sur {classement.donnees.joueurs} joueurs · </>}
-          {jouees === 0 ? 'aucune joute pour l\'instant' : `${gagnees} victoire${gagnees > 1 ? 's' : ''} en ${jouees} joute${jouees > 1 ? 's' : ''}`}
-          {ligue.suivante && <> · ligue {ligue.suivante.nom} à {ligue.suivante.aPartirDe}</>}
-        </p>
-        {ligue.suivante && (
-          <span className="progression__barre" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, ((cote - bas) / (ligue.suivante.aPartirDe - bas)) * 100))}%` }} /></span>
+        {saisie === null ? (
+          <>
+            <h2>{pseudo || '…'} <small className="joute__cote">cote {cote}</small></h2>
+            <p className="texte-doux petit">
+              {rang && <>{rang.rang === 1 ? '1ᵉʳ' : `${rang.rang}ᵉ`} sur {rang.joueurs} · </>}
+              {jouees === 0 ? 'aucune joute pour l\'instant' : `${gagnees} victoire${gagnees > 1 ? 's' : ''} en ${jouees} joute${jouees > 1 ? 's' : ''}`}
+              {ligue.suivante && <> · ligue {ligue.suivante.nom} à {ligue.suivante.aPartirDe}</>}
+            </p>
+            {ligue.suivante && (
+              <span className="progression__barre" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, ((cote - bas) / (ligue.suivante.aPartirDe - bas)) * 100))}%` }} /></span>
+            )}
+            {refusDuService && <p className="joute__refus" role="alert">{refusDuService} Choisis un autre pseudonyme.</p>}
+            {publication.etat === 'erreur' && <p className="joute__refus" role="alert">{publication.message}</p>}
+            <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Changer de pseudonyme</button>
+          </>
+        ) : (
+          <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
+            <label htmlFor="pseudo"><strong>Ton pseudonyme</strong><span className="texte-doux petit">De {LONGUEUR_DU_PSEUDO.minimum} à {LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces, tirets. Les autres joueurs le verront.</span></label>
+            <input id="pseudo" type="text" value={saisie} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
+            {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
+            <div className="rangee-de-boutons">
+              <button type="submit" className="bouton" disabled={envoi}>{envoi ? 'Vérification…' : 'Valider'}</button>
+              <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => void tirerUnPseudonyme().then((tire) => { setSaisie(tire); setRefus(null); })}>M'en proposer un</button>
+              {pseudoValable && <button type="button" className="bouton bouton--discret" disabled={envoi} onClick={() => { setSaisie(null); setRefus(null); }}>Annuler</button>}
+            </div>
+          </form>
         )}
-        <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => void tirerUnPseudonyme().then(changerDePseudonyme)}>Tirer un autre pseudonyme</button>
       </section>
 
       <section className="bloc">
         <h2>Choisis ton adversaire</h2>
         <p className="texte-doux petit">Tu affrontes son <strong>double</strong> : son deck, joué par l'ordinateur, qui connaît ses mots ni mieux ni moins bien que lui. Battre plus fort que soi rapporte davantage.</p>
-        {adversaires.etat === 'erreur' && <p role="alert">Impossible de trouver des adversaires. {adversaires.message}</p>}
-        {adversaires.etat === 'en cours' && <p className="texte-doux">Recherche d'adversaires…</p>}
-        {adversaires.etat === 'pret' && (
+        {adversaires.etat === 'erreur' && <p className="joute__refus" role="alert">{adversaires.message}</p>}
+        {(adversaires.etat === 'en cours' || publication.etat === 'en cours') && <p className="texte-doux">Recherche d'adversaires…</p>}
+        {adversaires.etat === 'pret' && publie && adversaires.donnees.length === 0 && <p className="texte-doux">Aucun adversaire disponible pour l'instant.</p>}
+        {adversaires.etat === 'pret' && publie && (
           <div className="niveaux">
             {adversaires.donnees.map((profil) => (
               <button key={profil.id} type="button" className="niveau" disabled={enPreparation} onClick={() => onDefier(profil)}>
@@ -81,14 +139,14 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             ))}
           </div>
         )}
-        <button type="button" className="bouton bouton--discret" disabled={enPreparation} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation de la joute…' : "Proposer d'autres adversaires"}</button>
+        <button type="button" className="bouton bouton--discret" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation de la joute…' : "Proposer d'autres adversaires"}</button>
       </section>
 
-      {classement.etat === 'pret' && (
+      {rang && (
         <details className="bloc repliable">
           <summary><h2>Le classement</h2></summary>
           <ol className="classement">
-            {[...classement.donnees.tete, ...classement.donnees.voisins.filter((v) => v.rang > classement.donnees.tete.length)].map((ligne, i, toutes) => (
+            {[...rang.tete, ...rang.voisins.filter((v) => v.rang > rang.tete.length)].map((ligne, i, toutes) => (
               <li key={ligne.rang} data-moi={ligne.moi} data-apres-un-saut={i > 0 && ligne.rang > toutes[i - 1].rang + 1}>
                 <span className="classement__rang">{ligne.rang}</span>
                 <span className="classement__pseudo">{ligne.moi ? `${ligne.pseudo} (toi)` : ligne.pseudo}</span>

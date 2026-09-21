@@ -23,6 +23,7 @@ import { lien } from '../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../partage/types.ts';
 import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, prevoirLaManche, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
+import { serveurDeJoutes } from '../services/joutes.ts';
 import { finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
 import type { FinDeDuel } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
@@ -41,7 +42,8 @@ type Etape =
   | { nom: 'echappe'; adverse: CarteIndex; carte: CarteIndex; attaque: Reponse }
   | { nom: 'parade'; adverse: CarteIndex; carte: CarteIndex; attaque: Reponse; epreuve: Epreuve; debut: number }
   | { nom: 'bilan'; adverse: CarteIndex; carte: CarteIndex; attaque: Reponse; parade: Reponse; apres: EtatDuDuel }
-  | ({ nom: 'fin'; resultat: Resultat } & FinDeDuel);
+  // « nonEnregistree » : la joute est finie, mais le serveur qui tient le classement n'a pas répondu.
+  | ({ nom: 'fin'; resultat: Resultat; nonEnregistree: boolean } & FinDeDuel);
 
 type Bilan = { attaques: number; attaquesReussies: number; parades: number; paradesReussies: number; maitrises: string[] };
 const BILAN_VIDE: Bilan = { attaques: 0, attaquesReussies: 0, parades: 0, paradesReussies: 0, maitrises: [] };
@@ -80,6 +82,8 @@ export function Duel() {
   const [etape, setEtape] = useState<Etape>({ nom: 'accueil' });
   const [bilan, setBilan] = useState<Bilan>(BILAN_VIDE);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [ticket, setTicket] = useState<number | null>(null); // le numéro de la joute en cours, quand un serveur tient le classement
+  const [enregistrement, setEnregistrement] = useState(false);
 
   // La dernière étape connue, pour qu'une réponse et la fin du temps ne comptent jamais toutes les deux.
   const etapeActuelle = useRef(etape);
@@ -96,6 +100,7 @@ export function Duel() {
     setErreur(null);
     try {
       const pret = await preparerUnDuel(adversaire);
+      setTicket(adversaire.type === 'joute' ? await serveurDeJoutes.commencer(adversaire.profil) : null);
       setTerrain(pret.terrain);
       setDuel(pret.duel);
       setBilan(BILAN_VIDE);
@@ -141,13 +146,24 @@ export function Duel() {
   }, [etape, duree]);
 
   // Après le bilan d'une manche : le duel est fini, ou l'ordinateur pose son mot suivant.
-  const continuer = (apres: EtatDuDuel): void => {
-    if (!terrain) return;
+  const continuer = async (apres: EtatDuDuel): Promise<void> => {
+    if (!terrain || !sauvegarde) return;
     setDuel(apres);
-    if (apres.vainqueur !== null) {
-      const resultat: Resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite';
-      changerDEtape({ nom: 'fin', resultat, ...finirLeDuel(terrain.adversaire, resultat) });
-    } else changerDEtape({ nom: 'choix', adverse: motDeLOrdinateur(terrain, apres), choisie: null });
+    if (apres.vainqueur === null) { changerDEtape({ nom: 'choix', adverse: motDeLOrdinateur(terrain, apres), choisie: null }); return; }
+
+    const resultat: Resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite';
+    // En joute, si un serveur tient le classement, c'est lui qui donne la nouvelle cote. S'il ne répond pas, la cote ne bouge pas.
+    let coteDuServeur: { avant: number; apres: number } | undefined;
+    let nonEnregistree = false;
+    if (terrain.adversaire.type === 'joute' && serveurDeJoutes.enLigne) {
+      setEnregistrement(true);
+      try { coteDuServeur = (await serveurDeJoutes.terminer(ticket, resultat)) ?? undefined; } catch {
+        const actuelle = sauvegarde.joutes.cote ?? EQUILIBRAGE.joute.coteDeDepart;
+        coteDuServeur = { avant: actuelle, apres: actuelle };
+        nonEnregistree = true;
+      } finally { setEnregistrement(false); }
+    }
+    changerDEtape({ nom: 'fin', resultat, nonEnregistree, ...finirLeDuel(terrain.adversaire, resultat, coteDuServeur) });
   };
 
   const abandonner = (): void => {
@@ -169,7 +185,7 @@ export function Duel() {
 
         <div className="modes" role="tablist" aria-label="Mode de duel">
           <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement<small>contre l'ordinateur</small></button>
-          <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées<small>contre d'autres joueurs</small></button>
+          <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées<small>cote, ligues, classement</small></button>
         </div>
 
         {!pret ? (
@@ -357,7 +373,7 @@ export function Duel() {
                   ? `Mot maîtrisé ! Le timbre « ${viennentDEtreMaitrises.join(' », « ')} » reçoit son cachet.`
                   : dejaMaitrise ? `« ${etape.carte.mot} » : mot déjà maîtrisé.` : `Maîtrise de « ${etape.carte.mot} » : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise} bonnes réponses.`}
               </p>
-              <div className="duel__suite"><button type="button" className="bouton" ref={viser} onClick={() => continuer(etape.apres)}>{fini ? 'Voir le résultat' : 'Manche suivante'}</button></div>
+              <div className="duel__suite"><button type="button" className="bouton" ref={viser} disabled={enregistrement} onClick={() => void continuer(etape.apres)}>{enregistrement ? 'Enregistrement du résultat…' : fini ? 'Voir le résultat' : 'Manche suivante'}</button></div>
             </section>
           </>
         );
@@ -368,7 +384,8 @@ export function Duel() {
           <p className="entete__surtitre">Fin du duel · {pluriel(duel.manches.length, 'manche')}</p>
           <h2>{etape.resultat === 'victoire' ? 'Victoire !' : etape.resultat === 'nul' ? 'Match nul' : 'Défaite'}</h2>
           <p>
-            {etape.cote && (
+            {etape.nonEnregistree && <><span className="joute__refus">Le serveur des joutes n'a pas répondu : ce résultat n'a pas été enregistré, et ta cote ne bouge pas.</span><br /></>}
+            {etape.cote && !etape.nonEnregistree && (
               <>
                 <strong>Cote : {etape.cote.avant} → {etape.cote.apres}</strong> ({etape.cote.apres >= etape.cote.avant ? '+' : ''}{etape.cote.apres - etape.cote.avant})
                 {ligueDe(etape.cote.apres, EQUILIBRAGE.joute).rang > ligueDe(etape.cote.avant, EQUILIBRAGE.joute).rang && <> — <strong>tu montes en ligue {ligueDe(etape.cote.apres, EQUILIBRAGE.joute).nom} !</strong></>}
