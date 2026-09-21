@@ -25,7 +25,7 @@ Tout le mode de jeu fonctionne, avec un « faux serveur » logé dans le navigat
 | Écran : onglet « Joutes classées » dans l'écran Duel, classement, cote qui bouge en fin de joute | `src/ecrans/PanneauDesJoutes.tsx`, `src/ecrans/Duel.tsx` | fait |
 | **Joueurs maison** : 240 adversaires fabriqués à partir des cartes (`src/jeu/joueursMaison.ts`), pour que les joutes aient du monde dès le premier jour. Sans serveur, ce sont les seuls adversaires ; avec le serveur, ils sont installés dans la base aux côtés des vrais joueurs, marqués en interne pour pouvoir être retirés en une ligne | `src/services/joutes.ts`, `serveur/2-joueurs-maison.sql` | fait |
 | Pseudonyme choisi par le joueur, avec filtre des mots offensants (dans le jeu **et** sur le serveur) | `src/jeu/pseudo.ts`, `src/config/pseudos-interdits.ts` | fait, testé |
-| Le branchement à Supabase (compte anonyme, profil, adversaires, joute, classement), actif dès que `src/config/serveur.ts` est rempli | `src/services/supabase.ts`, `src/services/joutes.ts` | écrit et testé avec un faux serveur ; **jamais encore essayé contre un vrai projet** |
+| Le branchement à Supabase (compte anonyme, profil, adversaires, joute, classement), actif dès que `src/config/serveur.ts` est rempli | `src/services/supabase.ts`, `src/services/joutes.ts` | fait ; **vérifié de bout en bout contre le vrai projet le 21/09/2026** (compte anonyme, profil, adversaires, classement, pseudonymes, joute complète, garde-fous, effacement) |
 | Les scripts de la base et le guide pas à pas | `serveur/`, `GUIDE-supabase.md` | prêts |
 
 Le passage au serveur ne touche ni aux règles ni aux écrans : il suffit de remplir `src/config/serveur.ts`.

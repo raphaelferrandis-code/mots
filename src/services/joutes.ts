@@ -85,6 +85,15 @@ function serveurSupabase(): ServeurDeJoutes {
     ecrireLaSession: (session) => { try { if (session) localStorage.setItem(CLE_DE_SESSION, JSON.stringify(session)); else localStorage.removeItem(CLE_DE_SESSION); } catch { /* stockage indisponible : la session vaut pour cette visite */ } },
   });
 
+  // Une publication à la fois. Constaté à la première mise en route (21/09/2026) : deux envois simultanés du tout
+  // premier profil d'un joueur se gênent sur le serveur, et le second revient en erreur (« 409 »).
+  let file: Promise<unknown> = Promise.resolve();
+  const chacunSonTour = <T>(tache: () => Promise<T>): Promise<T> => {
+    const resultat = file.then(tache, tache);
+    file = resultat.catch(() => undefined);
+    return resultat;
+  };
+
   return {
     enLigne: true,
 
@@ -92,7 +101,7 @@ function serveurSupabase(): ServeurDeJoutes {
       // Premier contrôle dans le jeu, pour répondre tout de suite ; le serveur refait le sien, et vérifie que le pseudonyme est libre.
       const verdict = examinerLePseudo(profil.pseudo, PSEUDOS_INTERDITS);
       if (!verdict.accepte) return verdict;
-      const reponse = await client.appeler<{ accepte: boolean; raison?: string; cote?: number }>('publier_mon_profil', { p_pseudo: verdict.pseudo, p_deck: profil.deck, p_savoirs: profil.savoirs, p_parades: profil.parades });
+      const reponse = await chacunSonTour(() => client.appeler<{ accepte: boolean; raison?: string; cote?: number }>('publier_mon_profil', { p_pseudo: verdict.pseudo, p_deck: profil.deck, p_savoirs: profil.savoirs, p_parades: profil.parades }));
       return reponse.accepte ? { accepte: true, cote: reponse.cote ?? null } : { accepte: false, raison: reponse.raison ?? "Ce pseudonyme n'est pas accepté." };
     },
 
@@ -103,4 +112,13 @@ function serveurSupabase(): ServeurDeJoutes {
   };
 }
 
-export const serveurDeJoutes: ServeurDeJoutes = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '' ? serveurSupabase() : serveurLocal;
+// Pendant le développement (« npm run dev »), le jeu ne touche pas au vrai serveur : chaque essai y créerait un vrai
+// joueur, visible dans le classement de tout le monde. Pour l'essayer quand même, dans la console du navigateur :
+//   localStorage.setItem('mots.vrai-serveur', 'oui')   puis recharger la page (removeItem pour revenir en arrière).
+function vraiServeurPermis(): boolean {
+  if (!import.meta.env.DEV) return true;
+  try { return localStorage.getItem('mots.vrai-serveur') === 'oui'; } catch { return false; }
+}
+
+const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '';
+export const serveurDeJoutes: ServeurDeJoutes = serveurRegle && vraiServeurPermis() ? serveurSupabase() : serveurLocal;

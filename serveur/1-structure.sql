@@ -117,6 +117,9 @@ declare
   ma_cote integer;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
+  -- (constaté à la première mise en route : le second revenait en erreur).
+  perform pg_advisory_xact_lock(hashtextextended(moi::text, 0));
   refus := public.pseudo_refuse(propre);
   if refus is not null then return jsonb_build_object('accepte', false, 'raison', refus); end if;
   if exists (select 1 from public.profils where pseudo_cle = public.cle_du_pseudo(propre) and utilisateur is distinct from moi) then
@@ -127,10 +130,15 @@ begin
     raise exception 'Ce profil ne peut pas être enregistré.';
   end if;
 
-  insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
-  values (moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades)
-  on conflict (utilisateur) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.pseudo_cle, deck = excluded.deck, savoirs = excluded.savoirs, parades = excluded.parades, maj_le = now()
-  returning cote into ma_cote;
+  begin
+    insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
+    values (moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades)
+    on conflict (utilisateur) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.pseudo_cle, deck = excluded.deck, savoirs = excluded.savoirs, parades = excluded.parades, maj_le = now()
+    returning cote into ma_cote;
+  exception when unique_violation then
+    -- Deux joueurs ont demandé le même pseudonyme au même instant : le premier arrivé le garde.
+    return jsonb_build_object('accepte', false, 'raison', 'Ce pseudonyme est déjà pris.');
+  end;
   return jsonb_build_object('accepte', true, 'cote', ma_cote);
 end $$;
 
@@ -252,4 +260,5 @@ end $$;
 
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler ces fonctions.
 revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text) from public, anon;
+revoke execute on function public.pseudo_refuse(text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
 grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil() to authenticated;

@@ -4,7 +4,7 @@
 
 Tant que ce guide n'est pas suivi, le jeu fonctionne comme aujourd'hui (les joutes se jouent sans serveur). Une fois le serveur branché, les joutes opposent de vrais joueurs, la cote est tenue par le serveur, et deux joueurs ne peuvent plus porter le même pseudonyme.
 
-> **Avertissement honnête.** Le code qui parle à Supabase est écrit et testé avec un *faux* serveur, mais il n'a encore jamais parlé à un *vrai* projet Supabase — il n'en existe pas. Il est possible qu'un détail soit à ajuster à la première mise en route : prévenez-moi quand vous arrivez à l'étape 6, on la fait ensemble.
+> **Fait le 21 septembre 2026.** Le serveur est branché, et la première mise en route a été vérifiée de bout en bout contre le vrai projet : compte anonyme, profil, adversaires, classement, pseudonymes (déjà pris, mots refusés), une joute complète avec la cote qui bouge, les garde-fous, et l'effacement d'un profil. Ce guide reste utile pour refaire l'installation, ou recoller un script après une modification.
 
 > **Les menus de Supabase changent de temps en temps.** Si un nom de menu ne correspond plus, cherchez le mot le plus proche, ou envoyez-moi une capture d'écran.
 
