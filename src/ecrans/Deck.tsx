@@ -82,13 +82,13 @@ export function Deck() {
 
   return (
     <main className="ecran ecran--large">
-      <Entete surtitre="Deck" titre="Ton deck de duel">
-        {deck.length} carte{deck.length > 1 ? 's' : ''} sur {REGLES.tailleDuDeck}. Touche un timbre de ta collection pour l'ajouter, un timbre du deck pour le retirer.
+      <Entete titre="Ton deck">
+        {deck.length} / {REGLES.tailleDuDeck} timbres{possedees.length >= REGLES.tailleDuDeck && ". Touche un timbre pour l'ajouter ou le retirer."}
       </Entete>
 
       {possedees.length < REGLES.tailleDuDeck ? (
         <section className="bloc">
-          <p>Il te faut au moins {REGLES.tailleDuDeck} cartes pour composer un deck : tu en as {possedees.length}.</p>
+          <p>Encore {REGLES.tailleDuDeck - possedees.length} timbre{REGLES.tailleDuDeck - possedees.length > 1 ? 's' : ''} à collectionner pour composer ton deck.</p>
           <a className="bouton" href={lien({ ecran: 'paquet' })}>Ouvrir des paquets</a>
         </section>
       ) : (
@@ -118,13 +118,13 @@ export function Deck() {
           </section>
 
           <details className="bloc repliable">
-            <summary><h2>Comment bien composer</h2></summary>
+            <summary><h2>Conseils de composition</h2></summary>
             <ul className="regles">
-              <li><strong>Attaque et défense.</strong> À chaque manche, ta carte affronte celle de l'ordinateur : elle attaque avec son chiffre de gauche, et te protège avec son chiffre de droite.</li>
-              <li><strong>Un mot rare est puissant</strong> : son attaque est relevée (elle peut dépasser 10), et l'ordinateur le pare moins souvent. Mais plus tes mots sont rares, plus ceux de l'ordinateur le sont aussi — et il faudra les reconnaître pour parer.</li>
-              <li><strong>Triangle des types</strong> (+{REGLES.bonusDeType} dégâts) : un nom bat un adjectif, un adjectif bat un verbe, un verbe bat un nom. Les adverbes sont neutres. Un deck varié a toujours la bonne réponse.</li>
-              <li><strong>Enchaîner une langue</strong> : jouer deux mots de même origine à la suite donne +{REGLES.bonusDeFaction} dégât, et +{REGLES.bonusDePetiteFaction} pour les petites langues (arabe, gaulois, occitan…).</li>
-              <li><strong>Connaître ses mots.</strong> Pour attaquer, il faudra retrouver la définition de ton mot parmi quatre ; pour parer, celle du mot adverse. Un mot rare ne sert à rien si tu ne le connais pas : révise tes cartes dans ton album.</li>
+              <li><strong>Valeurs du timbre :</strong> attaque à gauche, défense à droite.</li>
+              <li><strong>Rareté :</strong> les mots rares frappent plus fort et sont moins souvent parés. À l'entraînement, ils rendent aussi le deck adverse plus rare.</li>
+              <li><strong>Types :</strong> +{REGLES.bonusDeType} dégâts selon le cycle nom &gt; adjectif &gt; verbe &gt; nom. Les adverbes sont neutres.</li>
+              <li><strong>Origine :</strong> deux mots de même origine joués à la suite donnent +{REGLES.bonusDeFaction} dégât, ou +{REGLES.bonusDePetiteFaction} pour une petite langue.</li>
+              <li><strong>Définitions :</strong> retrouve celle de ton mot pour attaquer, celle du mot adverse pour parer.</li>
             </ul>
           </details>
 

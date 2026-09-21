@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { AVenir, Entete } from '../composants/Entete.tsx';
+import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
@@ -11,8 +11,8 @@ import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffa
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
 
 const OPTIONS: { cle: ReglageACocher; nom: string; aide: string }[] = [
-  { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Mots familiers, populaires, argotiques ou vulgaires. Ils ne tombent plus dans les paquets et disparaissent de la collection ; tu ne les perds pas.' },
-  { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Même principe, pour les mots que le dictionnaire signale comme injurieux.' },
+  { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Inclut les mots populaires, argotiques et vulgaires.' },
+  { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Selon les indications du dictionnaire.' },
   { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
 ];
 
@@ -37,7 +37,7 @@ export function Reglages() {
     const sortie = exporterLaSauvegarde();
     if (!sortie) return;
     telecharger(sortie.nom, sortie.contenu);
-    setMessage(`Sauvegarde exportée : ${sortie.nom}. Garde ce fichier à l'abri (e-mail à toi-même, nuage…).`);
+    setMessage(`Sauvegarde exportée : ${sortie.nom}.`);
   };
 
   const importer = async (choisi: File | undefined): Promise<void> => {
@@ -63,10 +63,11 @@ export function Reglages() {
 
   return (
     <main className="ecran">
-      <Entete surtitre="Réglages" titre="Réglages et crédits" />
+      <Entete titre="Réglages" />
 
       <section className="bloc">
         <h2>Contenu et confort</h2>
+        <p className="texte-doux petit">Les mots masqués sont exclus des paquets et cachés dans l'album, sans être perdus.</p>
         {OPTIONS.map((option) => (
           <label key={option.cle} className="option">
             <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
@@ -74,7 +75,7 @@ export function Reglages() {
           </label>
         ))}
         <label className="option option--liste">
-          <span><strong>Temps pour répondre en duel</strong><span className="texte-doux petit">Le temps accordé pour retrouver la définition de son mot ({EQUILIBRAGE.duel.secondesPourRepondre} secondes dans le jeu normal).</span></span>
+          <span><strong>Temps par définition en duel</strong></span>
           <select value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
             <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
             <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
@@ -86,10 +87,11 @@ export function Reglages() {
       <section className="bloc">
         <h2>Ta sauvegarde</h2>
         <p className="petit">
-          Ta partie est enregistrée sur cet appareil ({partie.emplacement}{partie.stockageDurable ? ', protégée contre le nettoyage automatique du navigateur' : ''}).
-          Sur iPhone, Safari peut effacer les données d'un site resté plusieurs jours sans visite : exporte ta sauvegarde de temps en temps.
+          {partie.emplacement === 'mémoire seulement'
+            ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
+            : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
         </p>
-        <p className="texte-doux petit">{dernierExport ? `Dernier export : le ${dernierExport}.` : 'Tu n\'as encore jamais exporté ta sauvegarde.'}</p>
+        <p className="texte-doux petit">{dernierExport ? `Dernier export : ${dernierExport}.` : 'Aucun export pour le moment.'}</p>
         <div className="rangee-de-boutons">
           <button type="button" className="bouton" onClick={exporter}>Exporter ma sauvegarde</button>
           <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>
@@ -99,14 +101,15 @@ export function Reglages() {
         <button type="button" className="bouton bouton--danger" onClick={effacer}>Effacer ma partie</button>
       </section>
 
-      <section className="bloc">
-        <h2>Ce que contient un paquet</h2>
+      <details className="bloc repliable">
+        <summary><h2>Paquets et probabilités</h2></summary>
         <p className="texte-doux petit">
-          Chances d'obtenir chaque rareté, carte par carte. Un paquet gratuit arrive toutes les {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets} minutes
-          (jusqu'à {EQUILIBRAGE.paquets.stockMaximum} en stock). Une Légendaire est garantie au plus tard au {EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie}ᵉ paquet sans Légendaire.
+          Un paquet gratuit toutes les {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets} minutes, jusqu'à {EQUILIBRAGE.paquets.stockMaximum} en réserve.
+          Une Légendaire garantie au plus tard au {EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie}ᵉ paquet sans Légendaire.
         </p>
         <div className="tableau-defilant">
           <table className="tableau">
+            <caption>Chances par rareté et position dans le paquet</caption>
             <thead>
               <tr><th scope="col">Carte</th>{RARETES_ORDINAIRES.map((r) => <th key={r} scope="col">{r}</th>)}</tr>
             </thead>
@@ -118,19 +121,19 @@ export function Reglages() {
           </table>
         </div>
         <p className="texte-doux petit">
-          <strong>Hors-série</strong> (le rang ultime, des mots qui détiennent un record) : la dernière carte d'un paquet en est une environ 1 fois sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}.{' '}
-          <strong>Finitions</strong>, tirées à part pour chaque carte, quelle que soit sa rareté : brillante 1 fois sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 fois sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}.
-          Une finition que tu n'avais pas encore se garde ; seul un vrai doublon se change en Encre (×{EQUILIBRAGE.finitions.encre.Brillante} pour une brillante, ×{EQUILIBRAGE.finitions.encre.Holographique} pour une holographique).
+          <strong>Hors-série :</strong> environ 1 paquet sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}, en dernière position.
         </p>
         <p className="texte-doux petit">
-          Doublon changé en Encre : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet immédiat coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
+          <strong>Finitions :</strong> brillante 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}, tirées indépendamment de la rareté.
+          Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
         </p>
-      </section>
+        <p className="texte-doux petit">
+          Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
+        </p>
+      </details>
 
-      <AVenir phase="phase 4">Sons du jeu, et de quoi les couper.</AVenir>
-
-      <section className="bloc">
-        <h2>Crédits et sources</h2>
+      <details className="bloc repliable">
+        <summary><h2>Crédits et sources</h2></summary>
         <p>
           Les définitions et les étymologies sont adaptées (raccourcies, nettoyées) du{' '}
           <a href="https://fr.wiktionary.org" target="_blank" rel="noreferrer">Wiktionnaire</a>, le dictionnaire libre,
@@ -148,7 +151,7 @@ export function Reglages() {
           Les fichiers de cartes du jeu, tirés de ces deux sources, sont eux aussi sous licence CC BY-SA 4.0.
           Ce jeu ne collecte aucune donnée personnelle et n'utilise aucun outil de mesure d'audience.
         </p>
-      </section>
+      </details>
     </main>
   );
 }

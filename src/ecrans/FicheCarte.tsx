@@ -46,7 +46,7 @@ export function FicheCarte({ id }: { id: string }) {
             <p>
               Obtenu le {enToutesLettres(possedee.obtenueLe)}.{' '}
               {carte.rarete === 'Hors-série'
-                ? 'Les timbres Hors-série ont leur propre impression, sans autre finition.'
+                ? 'Hors-série : finition unique.'
                 : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
             </p>
           ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
@@ -54,7 +54,7 @@ export function FicheCarte({ id }: { id: string }) {
             <p>
               {possedee.maitriseeLe !== null
                 ? <><strong>Mot maîtrisé</strong> le {enToutesLettres(possedee.maitriseeLe)} : {possedee.reussites} bonnes réponses en duel.</>
-                : <>Maîtrise : {possedee.reussites} / {EQUILIBRAGE.duel.reussitesPourLaMaitrise} bonnes réponses en duel. <span className="texte-doux">À {EQUILIBRAGE.duel.reussitesPourLaMaitrise}, le timbre reçoit son cachet « Maîtrisé ».</span></>}
+                : <>Maîtrise : {possedee.reussites} / {EQUILIBRAGE.duel.reussitesPourLaMaitrise} bonnes réponses en duel.</>}
             </p>
           )}
         </section>

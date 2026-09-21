@@ -94,8 +94,8 @@ export function Collection() {
 
   return (
     <main className="ecran ecran--large">
-      <Entete surtitre="Collection" titre="Ton album">
-        {bilan.possedees.toLocaleString('fr-FR')} timbres sur {bilan.total.toLocaleString('fr-FR')} · Hors-série : {bilan.horsSeriePossedees} / {bilan.horsSerie} · finitions brillantes : {bilan.brillantes}, holographiques : {bilan.holographiques} · mots maîtrisés en duel : {bilan.maitrises}. Les timbres que tu n'as pas encore restent secrets.
+      <Entete titre="Ton album">
+        {bilan.possedees.toLocaleString('fr-FR')} / {bilan.total.toLocaleString('fr-FR')} timbres · {bilan.horsSeriePossedees} / {bilan.horsSerie} hors-série
       </Entete>
 
       {possedees.length === 0 ? (
@@ -106,7 +106,9 @@ export function Collection() {
       ) : (
         <>
           <details className="bloc repliable">
-            <summary><h2>Progression par faction</h2></summary>
+            <summary><h2>Progression et statistiques</h2></summary>
+            <p className="texte-doux petit">Finitions : {bilan.brillantes} brillantes · {bilan.holographiques} holographiques</p>
+            <p className="texte-doux petit">{bilan.maitrises} mot{bilan.maitrises > 1 ? 's' : ''} maîtrisé{bilan.maitrises > 1 ? 's' : ''} · {sauvegarde!.paquets.ouverts} paquet{sauvegarde!.paquets.ouverts > 1 ? 's' : ''} ouvert{sauvegarde!.paquets.ouverts > 1 ? 's' : ''}</p>
             <ul className="progressions">
               {factions.map(([nom, p]) => (
                 <li key={nom}>
@@ -139,7 +141,9 @@ export function Collection() {
             </select>
           </section>
 
-          <p className="texte-doux petit" aria-live="polite">{affichees.length.toLocaleString('fr-FR')} timbre{affichees.length > 1 ? 's' : ''}</p>
+          {(recherche.trim() !== '' || rarete !== '' || type !== '' || faction !== '') && (
+            <p className="texte-doux petit" role="status">{affichees.length.toLocaleString('fr-FR')} résultat{affichees.length > 1 ? 's' : ''}</p>
+          )}
           <div className="rangee-de-cartes">
             {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} />)}
           </div>

@@ -98,7 +98,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             <h2>{pseudo || '…'} <small className="joute__cote">cote {cote}</small></h2>
             <p className="texte-doux petit">
               {rang && <>{rang.rang === 1 ? '1ᵉʳ' : `${rang.rang}ᵉ`} sur {rang.joueurs} · </>}
-              {jouees === 0 ? 'aucune joute pour l\'instant' : `${gagnees} victoire${gagnees > 1 ? 's' : ''} en ${jouees} joute${jouees > 1 ? 's' : ''}`}
+              {jouees === 0 ? 'Première joute' : `${gagnees} victoire${gagnees > 1 ? 's' : ''} · ${jouees} joute${jouees > 1 ? 's' : ''}`}
               {ligue.suivante && <> · ligue {ligue.suivante.nom} à {ligue.suivante.aPartirDe}</>}
             </p>
             {ligue.suivante && (
@@ -106,11 +106,11 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             )}
             {refusDuService && <p className="joute__refus" role="alert">{refusDuService} Choisis un autre pseudonyme.</p>}
             {publication.etat === 'erreur' && <p className="joute__refus" role="alert">{publication.message}</p>}
-            <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Changer de pseudonyme</button>
+            <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Modifier le pseudo</button>
           </>
         ) : (
           <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
-            <label htmlFor="pseudo"><strong>Ton pseudonyme</strong><span className="texte-doux petit">De {LONGUEUR_DU_PSEUDO.minimum} à {LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces, tirets. Les autres joueurs le verront.</span></label>
+            <label htmlFor="pseudo"><strong>Pseudo public</strong><span className="texte-doux petit">{LONGUEUR_DU_PSEUDO.minimum}–{LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces ou tirets.</span></label>
             <input id="pseudo" type="text" value={saisie} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
             {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
             <div className="rangee-de-boutons">
@@ -124,7 +124,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
 
       <section className="bloc">
         <h2>Choisis ton adversaire</h2>
-        <p className="texte-doux petit">Tu affrontes son <strong>double</strong> : son deck, joué par l'ordinateur, qui connaît ses mots ni mieux ni moins bien que lui. Battre plus fort que soi rapporte davantage.</p>
+        <p className="texte-doux petit">L'ordinateur joue son deck selon ses résultats aux définitions.</p>
         {adversaires.etat === 'erreur' && <p className="joute__refus" role="alert">{adversaires.message}</p>}
         {(adversaires.etat === 'en cours' || publication.etat === 'en cours') && <p className="texte-doux">Recherche d'adversaires…</p>}
         {adversaires.etat === 'pret' && publie && adversaires.donnees.length === 0 && <p className="texte-doux">Aucun adversaire disponible pour l'instant.</p>}
@@ -133,13 +133,13 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             {adversaires.donnees.map((profil) => (
               <button key={profil.id} type="button" className="niveau" disabled={enPreparation} onClick={() => onDefier(profil)}>
                 <strong>{profil.pseudo} <small className="joute__cote">cote {profil.cote} · {ligueDe(profil.cote, REGLES).nom}</small></strong>
-                {cartes && <span className="texte-doux petit">Son deck : {raretesDuDeck(profil.deck, cartes)}.</span>}
+                {cartes && <span className="texte-doux petit">{raretesDuDeck(profil.deck, cartes)}</span>}
                 <span className="niveau__gain">Victoire {signe(coteApres(cote, profil.cote, 'victoire', REGLES) - cote)} · Défaite {signe(coteApres(cote, profil.cote, 'defaite', REGLES) - cote)} · +{REGLES.encreParVictoire} Encre</span>
               </button>
             ))}
           </div>
         )}
-        <button type="button" className="bouton bouton--discret" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation de la joute…' : "Proposer d'autres adversaires"}</button>
+        <button type="button" className="bouton bouton--discret" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation…' : 'Autres adversaires'}</button>
       </section>
 
       {rang && (

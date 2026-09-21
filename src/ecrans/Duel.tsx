@@ -62,10 +62,8 @@ const pluriel = (n: number, mot: string): string => `${n} ${mot}${n > 1 ? 's' : 
 
 function descriptionDuNiveau(niveau: Niveau): string {
   const crans = REGLES.cransDeRareteDeLOrdinateur[niveau];
-  const mots = crans <= 0 ? 'Ses mots sont aussi courants que les tiens' : `Ses mots sont ${crans >= 2 ? 'bien ' : ''}plus rares que les tiens : ils frappent plus fort, et sont plus durs à parer`;
-  const oublis = Math.round((1 - REGLES.reussiteDeLOrdinateur[niveau]) * 100) / 10; // arrondi : 1 − 0,9 ne fait pas tout à fait 0,1 pour un ordinateur
-  const frequence = Number.isInteger(oublis) ? `${oublis}` : `${Math.floor(oublis)} à ${Math.ceil(oublis)}`;
-  return `${mots}. ${niveau === 'Facile' ? 'Il les pose au hasard' : 'Il pose toujours sa carte la plus solide'}, et son mot lui échappe ${frequence} fois sur 10.`;
+  const mots = crans <= 0 ? 'Mots de rareté comparable aux tiens' : `Mots ${crans >= 2 ? 'nettement ' : ''}plus rares que les tiens`;
+  return `${mots} · ${Math.round(REGLES.reussiteDeLOrdinateur[niveau] * 100)} % de réussite en attaque.`;
 }
 
 export function Duel() {
@@ -181,16 +179,16 @@ export function Duel() {
     const pleinesRestantes = Math.max(0, REGLES.victoiresPleinesParJour - victoiresDuJour);
     return (
       <main className="ecran">
-        <Entete surtitre="Duel" titre={mode === 'joute' ? 'Joutes classées' : "Duel d'entraînement"}>Mot contre mot : prouve que tu connais le tien… et le sien.</Entete>
+        <Entete titre="Les duels" />
 
         <div className="modes" role="tablist" aria-label="Mode de duel">
-          <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement<small>contre l'ordinateur</small></button>
-          <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées<small>cote, ligues, classement</small></button>
+          <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement<small>Ordinateur</small></button>
+          <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées<small>Classement</small></button>
         </div>
 
         {!pret ? (
           <section className="bloc">
-            <p>{deck.donnees.length === 0 ? "Tu n'as pas encore de deck." : `Ton deck compte ${pluriel(deck.donnees.length, 'carte')} jouable${deck.donnees.length > 1 ? 's' : ''} sur ${REGLES.tailleDuDeck}.`} Compose-le d'abord : dix cartes choisies dans ta collection.</p>
+            <p>Deck incomplet : {deck.donnees.length} / {REGLES.tailleDuDeck} timbres jouables.</p>
             <a className="bouton" href={lien({ ecran: 'deck' })}>Composer mon deck</a>
           </section>
         ) : mode === 'joute' ? (
@@ -201,7 +199,7 @@ export function Duel() {
         ) : (
           <>
             <section className="bloc">
-              <h2>Ton adversaire</h2>
+              <h2>Difficulté</h2>
               <div className="niveaux" role="radiogroup" aria-label="Niveau de l'ordinateur">
                 {NIVEAUX.map((n) => (
                   <button key={n} type="button" role="radio" aria-checked={niveau === n} className="niveau" onClick={() => setNiveau(n)}>
@@ -213,34 +211,34 @@ export function Duel() {
               </div>
               <p className="texte-doux petit">
                 {pleinesRestantes > 0
-                  ? `Encore ${pluriel(pleinesRestantes, 'victoire')} à pleine récompense aujourd'hui ; les suivantes rapportent moins.`
-                  : "Tu as eu tes victoires à pleine récompense aujourd'hui : les suivantes rapportent moins, jusqu'à demain."}
-                {' '}Une défaite rapporte {REGLES.encreParDefaite} Encre.
+                  ? `${pluriel(pleinesRestantes, 'victoire')} à pleine récompense restante${pleinesRestantes > 1 ? 's' : ''} aujourd'hui, puis gains réduits.`
+                  : "Gains réduits jusqu'à demain."}
+                {' '}Défaite : +{REGLES.encreParDefaite} Encre.
               </p>
               {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
               <div className="rangee-de-boutons">
                 <button type="button" className="bouton" disabled={etape.nom === 'preparation'} onClick={() => void lancer({ type: 'entrainement', niveau })}>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</button>
-                <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Changer mon deck</a>
-              </div>
-            </section>
-
-            <section className="bloc">
-              <h2>Ton deck</h2>
-              <div className="deck">
-                {deck.donnees.map((carte) => <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />)}
+                <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>
               </div>
             </section>
 
             <details className="bloc repliable">
-              <summary><h2>Les règles en bref</h2></summary>
+              <summary><h2>Voir mon deck</h2></summary>
+              <div className="deck">
+                {deck.donnees.map((carte) => <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />)}
+              </div>
+            </details>
+
+            <details className="bloc repliable">
+              <summary><h2>Règles du duel</h2></summary>
               <ul className="regles">
-                <li>Chacun a {REGLES.pointsDeVie} points de vie et {REGLES.cartesEnMain} cartes en main. À chaque manche, l'ordinateur pose un mot ; tu lui réponds par une de tes cartes.</li>
-                <li><strong>Ton mot.</strong> Tu as {duree === null ? 'tout ton temps' : `${duree} secondes`} pour retrouver sa définition parmi quatre. Trouvée : ta carte attaque. Sinon, le mot t'échappe : pas d'attaque.</li>
-                <li><strong>Son mot.</strong> Même épreuve sur le mot de l'ordinateur. Trouvée : tu <strong>pares</strong>, et tu ne reçois que la moitié des dégâts. Ses mots changent à chaque duel : on apprend toujours quelque chose.</li>
-                <li><strong>Les dégâts</strong> = l'attaque de la carte (chiffre de gauche), plus les bonus, moins la moitié de la défense de la carte d'en face (chiffre de droite), au moins {REGLES.degatsMinimum}. Ton attaque part la première.</li>
-                <li><strong>Un mot rare frappe plus fort</strong> (son bonus est déjà compté dans son attaque), et l'ordinateur le pare moins souvent. Mais il est plus difficile à retrouver… pour toi comme pour lui.</li>
-                <li>Bonus : le triangle des types (+{REGLES.bonusDeType} : nom &gt; adjectif &gt; verbe &gt; nom) et deux mots de même origine à la suite (+{REGLES.bonusDeFaction}, ou +{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
-                <li>Après {REGLES.manchesMaximum} manches, celui qui a le plus de points de vie l'emporte. {REGLES.reussitesPourLaMaitrise} bonnes réponses sur un de tes mots : il est <strong>maîtrisé</strong>, et son timbre reçoit un cachet daté.</li>
+                <li><strong>Départ :</strong> {REGLES.pointsDeVie} points de vie et {REGLES.cartesEnMain} cartes en main. Choisis une carte face au mot adverse.</li>
+                <li><strong>Attaque :</strong> retrouve la définition de ton mot parmi quatre{duree === null ? ', sans limite de temps' : ` en ${duree} secondes`}. Une erreur annule ton attaque.</li>
+                <li><strong>Parade :</strong> retrouve ensuite la définition du mot adverse pour diviser ses dégâts par deux.</li>
+                <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse, minimum {REGLES.degatsMinimum}. Tu frappes en premier. Les mots rares ont un bonus d'attaque et sont moins souvent parés.</li>
+                <li><strong>Bonus :</strong> +{REGLES.bonusDeType} selon le cycle nom &gt; adjectif &gt; verbe &gt; nom ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
+                <li><strong>Victoire :</strong> réduis l'adversaire à zéro point de vie, ou garde le plus de points après {REGLES.manchesMaximum} manches.</li>
+                <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes réponses sur un mot de ta collection lui donnent son cachet « Maîtrisé ».</li>
               </ul>
             </details>
           </>
@@ -275,8 +273,8 @@ export function Duel() {
         return (
           <>
             <section className="duel__table" aria-label="Les mots de la manche">
-              <MotPose titre="Il pose son mot" carte={etape.adverse} secret />
-              {choisie ? <MotPose titre="Tu réponds par" habillage={timbreDuJoueur(choisie)} carte={choisie} secret /> : <figure className="duel__mot-pose"><figcaption className="entete__surtitre">Tu réponds par…</figcaption><div className="deck__vide" /></figure>}
+              <MotPose titre="Son mot" carte={etape.adverse} secret />
+              {choisie ? <MotPose titre="Ton mot" habillage={timbreDuJoueur(choisie)} carte={choisie} secret /> : <figure className="duel__mot-pose"><figcaption className="entete__surtitre">Ton mot</figcaption><div className="deck__vide" /></figure>}
             </section>
 
             <section className="bloc duel__tour" aria-live="polite">
@@ -297,7 +295,7 @@ export function Duel() {
                   </p>
                   <button type="button" className="bouton" onClick={() => changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() })}>Jouer</button>
                 </div>
-              ) : <p className="texte-doux petit">Touche une carte de ta main pour voir ce que donnerait la manche.</p>}
+              ) : <p className="texte-doux petit">Choisis un timbre pour voir les dégâts prévus.</p>}
             </section>
           </>
         );
@@ -305,9 +303,9 @@ export function Duel() {
 
       {(etape.nom === 'attaque' || etape.nom === 'parade') && (
         <section className="bloc epreuve">
-          {etape.nom === 'parade' && etape.attaque.juste && <p className="epreuve__rappel" data-reussi="true">✔ Tu connais « {etape.carte.mot} » : ton attaque portera.</p>}
-          {etape.nom === 'parade' && !etape.attaque.juste && <p className="epreuve__rappel" data-reussi="false">« {etape.carte.mot} » t'a échappé. Il te reste à parer.</p>}
-          <p className="entete__surtitre">{etape.nom === 'attaque' ? 'Ton mot — pour attaquer' : 'Son mot — pour parer'}</p>
+          {etape.nom === 'parade' && etape.attaque.juste && <p className="epreuve__rappel" data-reussi="true">✔ Attaque réussie</p>}
+          {etape.nom === 'parade' && !etape.attaque.juste && <p className="epreuve__rappel" data-reussi="false">Attaque manquée</p>}
+          <p className="entete__surtitre">{etape.nom === 'attaque' ? 'Attaque · ton mot' : 'Parade · son mot'}</p>
           <h2 className="epreuve__mot" lang="fr">{etape.epreuve.mot}</h2>
           <p className="texte-doux petit">{(etape.nom === 'attaque' ? etape.carte : etape.adverse).type} · Quelle est sa définition ?</p>
           {duree !== null && <Sablier debut={etape.debut} secondes={duree} />}
@@ -319,11 +317,11 @@ export function Duel() {
         <section className="bloc epreuve" aria-live="polite">
           <p className="entete__surtitre">{etape.attaque.choisie === null ? 'Temps écoulé' : 'Mauvaise réponse'}</p>
           <h2 className="epreuve__mot" lang="fr">{etape.carte.mot}</h2>
-          <p className="duel__verdict" data-reussi="false">Le mot t'échappe : pas d'attaque cette manche. Voici sa définition.</p>
+          <p className="duel__verdict" data-reussi="false">Pas d'attaque cette manche.</p>
           <Propositions epreuve={etape.attaque.epreuve} reponse={etape.attaque} />
           <div className="duel__suite">
             <button type="button" className="bouton" ref={viser} onClick={() => changerDEtape({ nom: 'parade', adverse: etape.adverse, carte: etape.carte, attaque: etape.attaque, epreuve: poserLEpreuve(terrain, etape.adverse, etape.carte), debut: Date.now() })}>
-              À toi de parer « {etape.adverse.mot} »
+              Passer à la parade
             </button>
           </div>
         </section>
@@ -347,18 +345,18 @@ export function Duel() {
               <p className="duel__verdict" data-reussi={manche.joueur.reussie}>
                 <span className="entete__surtitre">Ton attaque</span>
                 {manche.joueur.reussie
-                  ? <>« {etape.carte.mot} » frappe : <strong>{pluriel(manche.joueur.infliges, 'dégât')}</strong>{manche.joueur.paree && <> — {enJoute ? 'ton adversaire' : "l'ordinateur"} connaissait le mot, il a paré (au lieu de {manche.joueur.degats})</>}.</>
-                  : <>« {etape.carte.mot} » t'a échappé : pas d'attaque.</>}
+                  ? <><strong>{pluriel(manche.joueur.infliges, 'dégât')}</strong>{manche.joueur.paree && <> · parée (au lieu de {manche.joueur.degats})</>}</>
+                  : <>Manquée · aucun dégât</>}
               </p>
               <p className="duel__verdict" data-reussi={!manche.adversaire.reussie || manche.adversaire.paree}>
                 <span className="entete__surtitre">Son attaque</span>
                 {adversaire.pv === 0
-                  ? <>Ton attaque l'a terrassé avant qu'il ne frappe.</>
+                  ? <>Adversaire vaincu avant de frapper</>
                   : !manche.adversaire.reussie
-                    ? <>« {etape.adverse.mot} » lui a échappé : pas d'attaque.</>
+                    ? <>Manquée · aucun dégât</>
                     : etape.parade.juste
-                      ? <>Tu connaissais « {etape.adverse.mot} » : <strong>paré</strong>, {pluriel(manche.adversaire.infliges, 'dégât')} au lieu de {manche.adversaire.degats}.</>
-                      : <>« {etape.adverse.mot} » frappe : <strong>{pluriel(manche.adversaire.infliges, 'dégât')}</strong>. {etape.parade.choisie === null ? 'Le temps a manqué pour parer.' : "Tu n'as pas su parer."}</>}
+                      ? <><strong>{pluriel(manche.adversaire.infliges, 'dégât')}</strong> · parée (au lieu de {manche.adversaire.degats})</>
+                      : <><strong>{pluriel(manche.adversaire.infliges, 'dégât')}</strong> · {etape.parade.choisie === null ? 'temps écoulé pour parer' : 'parade manquée'}</>}
               </p>
 
               {!etape.parade.juste && (
@@ -370,8 +368,8 @@ export function Duel() {
 
               <p className="texte-doux petit">
                 {viennentDEtreMaitrises.length > 0
-                  ? `Mot maîtrisé ! Le timbre « ${viennentDEtreMaitrises.join(' », « ')} » reçoit son cachet.`
-                  : dejaMaitrise ? `« ${etape.carte.mot} » : mot déjà maîtrisé.` : `Maîtrise de « ${etape.carte.mot} » : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise} bonnes réponses.`}
+                  ? `Cachet « Maîtrisé » obtenu : ${viennentDEtreMaitrises.join(', ')}.`
+                  : dejaMaitrise ? `« ${etape.carte.mot} » : maîtrisé.` : `Maîtrise · ${etape.carte.mot} : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise}`}
               </p>
               <div className="duel__suite"><button type="button" className="bouton" ref={viser} disabled={enregistrement} onClick={() => void continuer(etape.apres)}>{enregistrement ? 'Enregistrement du résultat…' : fini ? 'Voir le résultat' : 'Manche suivante'}</button></div>
             </section>
@@ -381,10 +379,10 @@ export function Duel() {
 
       {etape.nom === 'fin' && (
         <section className="bloc duel__fin" aria-live="polite">
-          <p className="entete__surtitre">Fin du duel · {pluriel(duel.manches.length, 'manche')}</p>
+          <p className="entete__surtitre">{pluriel(duel.manches.length, 'manche')}</p>
           <h2>{etape.resultat === 'victoire' ? 'Victoire !' : etape.resultat === 'nul' ? 'Match nul' : 'Défaite'}</h2>
           <p>
-            {etape.nonEnregistree && <><span className="joute__refus">Le serveur des joutes n'a pas répondu : ce résultat n'a pas été enregistré, et ta cote ne bouge pas.</span><br /></>}
+            {etape.nonEnregistree && <><span className="joute__refus">Serveur indisponible : résultat non enregistré, cote inchangée.</span><br /></>}
             {etape.cote && !etape.nonEnregistree && (
               <>
                 <strong>Cote : {etape.cote.avant} → {etape.cote.apres}</strong> ({etape.cote.apres >= etape.cote.avant ? '+' : ''}{etape.cote.apres - etape.cote.avant})
@@ -394,10 +392,10 @@ export function Duel() {
               </>
             )}
             <strong>+{etape.encre} Encre</strong>
-            {etape.reduite && <span className="texte-doux petit"> — récompense réduite : tu as déjà eu tes {REGLES.victoiresPleinesParJour} victoires à pleine récompense aujourd'hui.</span>}
+            {etape.reduite && <span className="texte-doux petit"> — gains réduits après {REGLES.victoiresPleinesParJour} victoires aujourd'hui.</span>}
           </p>
           <p className="texte-doux">
-            Tes mots : {bilan.attaquesReussies} définition{bilan.attaquesReussies > 1 ? 's' : ''} retrouvée{bilan.attaquesReussies > 1 ? 's' : ''} sur {bilan.attaques}. Ses mots : {pluriel(bilan.paradesReussies, 'parade')} sur {bilan.parades}.
+            Attaques réussies : {bilan.attaquesReussies} / {bilan.attaques} · Parades : {bilan.paradesReussies} / {bilan.parades}
             {bilan.maitrises.length > 0 && ` Mot${bilan.maitrises.length > 1 ? 's' : ''} maîtrisé${bilan.maitrises.length > 1 ? 's' : ''} : ${bilan.maitrises.join(', ')}.`}
           </p>
           <div className="rangee-de-boutons">
@@ -405,7 +403,7 @@ export function Duel() {
               ? <button type="button" className="bouton" onClick={() => void lancer(terrain.adversaire)}>Rejouer</button>
               : <button type="button" className="bouton" onClick={() => { setDuel(null); changerDEtape({ nom: 'accueil' }); }}>Nouvelle joute</button>}
             {terrain.adversaire.type === 'entrainement' && <button type="button" className="bouton bouton--discret" onClick={() => { setDuel(null); changerDEtape({ nom: 'accueil' }); }}>Changer de niveau</button>}
-            <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Changer mon deck</a>
+            <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>
           </div>
         </section>
       )}

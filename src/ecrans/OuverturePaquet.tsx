@@ -32,8 +32,8 @@ export function OuverturePaquet() {
 
   const boutons = (
     <div className="rangee-de-boutons">
-      {paquets.stock > 0 && <button type="button" className="bouton" onClick={lancer(ouvrirUnPaquet)}>Ouvrir un paquet ({paquets.stock} en stock)</button>}
-      {peutAcheter && <button type="button" className="bouton bouton--discret" onClick={lancer(acheterEtOuvrirUnPaquet)}>Un paquet tout de suite — {prix} Encre</button>}
+      {paquets.stock > 0 && <button type="button" className="bouton" onClick={lancer(ouvrirUnPaquet)}>{ouverture ? `Ouvrir un autre paquet (${paquets.stock})` : 'Ouvrir un paquet'}</button>}
+      {peutAcheter && <button type="button" className="bouton bouton--discret" onClick={lancer(acheterEtOuvrirUnPaquet)}>Acheter et ouvrir — {prix} Encre</button>}
     </div>
   );
 
@@ -41,12 +41,12 @@ export function OuverturePaquet() {
   if (!ouverture) {
     return (
       <main className="ecran">
-        <Entete surtitre="Paquets" titre="Ouvrir un paquet">Cinq timbres par paquet. Touche un timbre pour le retourner.</Entete>
+        <Entete titre="Les paquets">{EQUILIBRAGE.paquets.emplacements.length} timbres par paquet</Entete>
         <section className="bloc">
-          <p className="paquets__stock"><strong>{paquets.stock}</strong> / {paquets.maximum}</p>
-          <p className="texte-doux">{paquets.attente === null ? 'Stock plein.' : <>Prochain paquet dans <strong>{enMinutesEtSecondes(paquets.attente)}</strong></>} · Encre : {partie.sauvegarde.encre.toLocaleString('fr-FR')}</p>
+          <p className="paquets__stock"><strong>{paquets.stock}</strong> / {paquets.maximum} en réserve</p>
+          {paquets.attente !== null && <p className="texte-doux">Prochain paquet dans <strong>{enMinutesEtSecondes(paquets.attente)}</strong></p>}
           {boutons}
-          {paquets.stock === 0 && !peutAcheter && <p className="texte-doux petit">Rien à ouvrir pour l'instant : reviens dans quelques minutes.</p>}
+          {paquets.stock === 0 && !peutAcheter && <p className="texte-doux petit">Ou {prix} Encre par paquet.</p>}
           {erreur && <p role="alert">{erreur}</p>}
         </section>
         <a className="bouton bouton--discret" href={lien({ ecran: 'accueil' })}>Retour à l'accueil</a>
@@ -61,8 +61,8 @@ export function OuverturePaquet() {
 
   return (
     <main className="ecran ecran--large">
-      <Entete surtitre="Paquets" titre="Ton paquet">
-        {toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre pour les doublons` : ''}` : 'Touche un timbre pour le retourner, fais glisser pour voir les suivants.'}
+      <Entete titre="Ton paquet">
+        {toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : 'Touche pour retourner. Fais glisser pour défiler.'}
       </Entete>
 
       <ul className="paquet" aria-label="Timbres du paquet" aria-live="polite" tabIndex={0}>

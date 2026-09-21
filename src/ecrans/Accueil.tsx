@@ -31,10 +31,10 @@ export function Accueil() {
         <PaquetsAccueil partie={partie} />
         <DuelsAccueil deck={vue?.deck ?? null} sauvegarde={partie.sauvegarde} erreur={edition.etat === 'erreur'} />
       </div>
-      <ResumeCollection collection={vue?.collection ?? null} paquetsOuverts={partie.sauvegarde.paquets.ouverts} erreur={edition.etat === 'erreur' ? edition.message : undefined} />
+      <ResumeCollection collection={vue?.collection ?? null} erreur={edition.etat === 'erreur' ? edition.message : undefined} />
       {rappelerLExport && (
         <aside className="accueil__rappel">
-          <div><h2>Mets ta collection à l’abri</h2><p>Ta partie est enregistrée sur cet appareil. Garde une copie pour la retrouver ailleurs.</p></div>
+          <div><h2>Garde une copie de ta partie</h2><p>Elle est enregistrée uniquement sur cet appareil.</p></div>
           <a className="accueil-lien" href={lien({ ecran: 'reglages' })}>Exporter ma sauvegarde</a>
         </aside>
       )}
