@@ -9,9 +9,10 @@ export type Route =
   | { ecran: 'carte'; id: string }
   | { ecran: 'deck' }
   | { ecran: 'duel' }
-  | { ecran: 'reglages' };
+  | { ecran: 'reglages' }
+  | { ecran: 'galerie' }; // contrôle visuel des timbres, pendant le développement seulement
 
-const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages'] as const;
+const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages', 'galerie'] as const;
 
 export function lireRoute(hash: string): Route {
   const [premier = '', second = ''] = hash.replace(/^#\/?/, '').split('/');

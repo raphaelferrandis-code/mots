@@ -23,10 +23,13 @@
   --rarete-epique: #7a4bb0;
   --rarete-legendaire: #b8860b;
 
-  /* Polices : celles déjà présentes sur l'appareil, pour ne rien télécharger chez un tiers */
-  --police-titre: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-  --police-texte: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-  --police-chiffres: Georgia, 'Times New Roman', serif;
+  /* Polices : livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils.
+     Trois familles sont à l'essai ; les lignes [data-police] ci-dessous font le changement. */
+  --police-serif: 'Playfair Display', 'Palatino Linotype', Palatino, Georgia, serif;
+  --police-titre: var(--police-serif);
+  --police-texte: var(--police-serif);
+  --police-chiffres: var(--police-serif);
+  --police-mention: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
 
   /* Mesures */
   --rayon: 12px;
@@ -37,3 +40,6 @@
   --hauteur-navigation: 64px;
   --ombre: 0 1px 2px rgba(35, 48, 68, 0.08), 0 6px 18px rgba(35, 48, 68, 0.1);
 }
+
+:root[data-police='cormorant'] { --police-serif: 'Cormorant Garamond', 'Palatino Linotype', Palatino, Georgia, serif; }
+:root[data-police='caslon'] { --police-serif: 'Libre Caslon Text', 'Palatino Linotype', Palatino, Georgia, serif; }
