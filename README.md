@@ -7,7 +7,17 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).
 - **Le résultat de la fabrication des cartes : [data/rapport.md](data/rapport.md).**
 
-**État d'avancement : phase 1 (squelette du site) faite.** Le site s'ouvre, on navigue entre les écrans et on peut consulter de vraies cartes ; les paquets, la collection et le duel arrivent aux phases 2 et 3. Le site n'est pas encore en ligne.
+**Le site en ligne : https://raphaelferrandis-code.github.io/mots/**
+
+**État d'avancement : phase 1 (squelette du site) faite.** Le site s'ouvre, on navigue entre les écrans et on peut consulter de vraies cartes ; les paquets, la collection et le duel arrivent aux phases 2 et 3.
+
+## Mise en ligne
+
+Le code est sur GitHub : https://github.com/raphaelferrandis-code/mots (dépôt public).
+À chaque envoi de code sur la branche `main`, GitHub lance les tests, fabrique le site et le publie tout seul
+(fichier `.github/workflows/mise-en-ligne.yml`). Compter deux minutes entre l'envoi et la mise à jour du site.
+Le suivi se fait dans l'onglet « Actions » du dépôt : une coche verte = site à jour, une croix rouge = rien n'a été publié
+(l'ancienne version du site reste en place).
 
 ## Ce qu'il faut avoir installé
 
