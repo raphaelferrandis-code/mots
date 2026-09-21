@@ -36,7 +36,9 @@ Le jeu ne demande ni adresse e-mail ni mot de passe aux joueurs : chacun reçoit
 
 1. Menu de gauche : **Authentication**.
 2. Chercher **Sign In / Providers** (ou **Providers**).
-3. Activer **Allow anonymous sign-ins**, puis **Save**.
+3. Activer **Allow anonymous sign-ins**, puis **Save changes** — sans ce dernier clic, le réglage n'est pas gardé. (Laisser **Allow new users to sign up** activé.)
+
+*Si cette étape est oubliée, le jeu affiche, dans les joutes : « Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant. »*
 
 *À savoir : Supabase conseille d'ajouter plus tard un contrôle anti-robot invisible (« CAPTCHA »), pour qu'on ne puisse pas créer des milliers de faux comptes. Par défaut, il limite déjà les créations à 30 par heure et par adresse. On verra cela quand le jeu aura du public.*
 
@@ -75,7 +77,7 @@ Le fichier à modifier est **`src/config/serveur.ts`**. Le plus simple est de le
 
 1. Ouvrir https://github.com/raphaelferrandis-code/mots/blob/main/src/config/serveur.ts
 2. Cliquer sur le **crayon** (Edit this file).
-3. Remplacer les deux guillemets vides par vos valeurs, **entre les guillemets** :
+3. **Tout en bas du fichier**, remplacer les deux guillemets vides par vos valeurs, **entre les guillemets**. (Les lignes du haut, qui commencent par `//`, sont des explications : le jeu ne les lit pas, il ne faut rien y écrire.)
 
    ```ts
    export const SERVEUR = {
