@@ -65,7 +65,7 @@ export function OuverturePaquet() {
         {toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre pour les doublons` : ''}` : 'Touche un timbre pour le retourner, fais glisser pour voir les suivants.'}
       </Entete>
 
-      <ul className="paquet" aria-live="polite">
+      <ul className="paquet" aria-label="Timbres du paquet" aria-live="polite" tabIndex={0}>
         {ouverture.cartes.map((obtenue, position) => (
           <li key={obtenue.carte.id} className="paquet__place" data-retournee={ouverture.retournees[position]} data-rarete={obtenue.carte.rarete}>
             {ouverture.retournees[position] ? (

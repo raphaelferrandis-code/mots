@@ -122,7 +122,10 @@ button {
   .paquet { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); overflow: visible; }
   .paquet__place { max-width: none; }
 }
-.paquet__place > .tim { width: 100%; }
+/* Les timbres limitent ailleurs les gestes à pan-y. Dans un paquet, un glissement
+   commencé sur une carte doit aussi faire défiler la rangée, même face cachée.
+   « manipulation » garde les deux axes et le zoom par pincement natifs. */
+.paquet__place > .tim { width: 100%; touch-action: manipulation; }
 /* Le timbre se retourne ; plus il est rare, plus son apparition se remarque : halo argenté, doré, puis violet. */
 .paquet__place { --halo: transparent; }
 .paquet__place[data-rarete='Épique'] { --halo: #b9c2cc; }
