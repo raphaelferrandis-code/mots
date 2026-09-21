@@ -9,6 +9,8 @@
   },
   "scripts": {
     "sources": "node pipeline/telecharger-sources.ts",
-    "exploration": "node pipeline/exploration/explorer.ts"
+    "exploration": "node pipeline/exploration/explorer.ts",
+    "pipeline": "node pipeline/build.ts",
+    "test": "node --test \"pipeline/tests/*.test.ts\""
   }
 }

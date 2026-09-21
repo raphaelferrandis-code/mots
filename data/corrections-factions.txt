@@ -1,0 +1,18 @@
+# CORRECTIONS D'ORIGINE
+# L'ordinateur devine l'origine de chaque mot en lisant son étymologie, et il se trompe parfois
+# (homonymes, étymologies discutées). Ce fichier sert à le corriger, un mot par ligne :
+#
+#     mot = Faction
+#
+# Factions possibles : Latin, Grec, Anglais, Italien, Espagnol et portugais, Allemand et néerlandais,
+# Francique, Gaulois, Occitan, Arabe, Onomatopée, Vieux français, Langues d'ailleurs.
+# Les mots dérivés du mot corrigé héritent de la correction. Les lignes commençant par # sont ignorées.
+# Après une modification : npm run pipeline.
+
+# « goulu » vient de « goule », ancienne forme de « gueule » (latin gula), et non de la goule des contes arabes.
+goulu = Latin
+# « reggae » est emprunté à l'anglais de Jamaïque.
+reggae = Anglais
+# « rodomont » vient de Rodomonte, personnage de l'Arioste.
+rodomont = Italien
+rodomontade = Italien

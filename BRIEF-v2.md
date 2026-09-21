@@ -1,7 +1,7 @@
 # Brief projet v2 — Jeu de cartes à collectionner des mots de la langue française
 
 *Nom de code : **MOTS** (piste sérieuse pour le nom définitif : « Mots de Maîtres », à vérifier à l'INPI).*
-*Version 2.2 du 21 septembre 2026 — intègre les décisions de Raphaël (voir §10.1) et les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
+*Version 2.3 du 21 septembre 2026 — intègre les décisions de Raphaël (voir §10.1), les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`) et ceux de la première fabrication des cartes (voir `data/rapport.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
 
 > **Légende :** 🟡 = proposition par défaut **encore à confirmer par Raphaël** (liste au §10.2). Tout le reste est validé.
 
@@ -61,7 +61,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 |---|---|---|
 | Pipeline de données | **TypeScript (Node.js)** | Un seul outil à installer pour tout le projet ; le format des cartes et le calcul des stats sont partagés entre le pipeline et l'application ; un seul système de tests |
 | Application | Vite + React + TypeScript | Rapide, typé, très bien maîtrisé par Claude Code |
-| Tests | Vitest | S'intègre nativement à Vite |
+| Tests | 🟡 Pipeline : l'outil de test intégré à Node (aucune installation). Jeu : Vitest, qui s'intègre nativement à Vite | Le pipeline fonctionne sans aucune dépendance à installer ; Vitest arrivera avec le jeu en phase 1 |
 | Stockage V1 | IndexedDB (via une petite lib type `idb`) | Collection sauvegardée sur l'appareil |
 | Distribution | **Site web** accessible par une simple adresse | Rien à installer, partageable par un lien, plus simple à construire et à mettre à jour qu'une application. La version installable (PWA) pourra être ajoutée plus tard sans toucher au reste |
 | Hébergement V1 | 🟡 Cloudflare Pages, Netlify ou GitHub Pages (gratuits, HTTPS) | Un site doit être en ligne pour être ouvert sur un téléphone ou partagé à des testeurs. Pendant le développement, il tourne aussi sur l'ordinateur de Raphaël sans hébergement |
@@ -92,7 +92,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 2. **Lexique** (lexique.org), licence CC BY-SA 4.0. Deux versions existent :
    - **Lexique 4.00** (`Lexique400.zip`, 49 Mo, publié en 2026) : 190 000 formes, fréquences tirées d'un corpus de sous-titres de 316 millions de mots, lemmes, et surtout la **prévalence** (la part des gens qui connaissent réellement le mot) ;
    - **Lexique 3.83** (`Lexique383.zip`, 27 Mo) : environ 140 000 formes, colonnes `ortho`, `lemme`, `cgram`, **`freqlemfilms2`**, **`freqlemlivres`**.
-   - 🟡 **On part sur Lexique 4 seul.** L'exploration (voir `COMPTE-RENDU-donnees.md`) a confirmé qu'il fournit la fréquence par lemme. Colonnes utiles : `1_Mot`, `5_Cgram`, `12_FreqLemme`, `14_IsLem` (1 = forme de base), `30_MorphoBase` (mot dont celui-ci dérive : *danseur* → *danser*), `33_Preval` (prévalence en %), `34_PrevalNb` (nombre de personnes interrogées). Il n'a plus de fréquence « livres » : on utilise celle des sous-titres seule.
+   - **On part sur Lexique 4 seul.** L'exploration (voir `COMPTE-RENDU-donnees.md`) a confirmé qu'il fournit la fréquence par lemme. Colonnes utiles : `1_Mot`, `5_Cgram`, `12_FreqLemme`, `14_IsLem` (1 = forme de base), `30_MorphoBase` (mot dont celui-ci dérive : *danseur* → *danser*), `33_Preval` (prévalence en %), `34_PrevalNb` (nombre de personnes interrogées). Il n'a plus de fréquence « livres » : on utilise celle des sous-titres seule.
    - Citation demandée : New, B., Pallier, C., Schalchli, G., Bourgin, J., & Gimenes, M. (2026). *Lexique 4: A major upgrade of the "Lexique" French lexical database.* Behavior Research Methods, 58(5), 140.
 
 **Règles pour les sources :**
@@ -112,24 +112,28 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 
 **Filtrage des sens (définition par définition) :**
 - Retirer les sens qui ne sont que des renvois : « Pluriel de… », « Féminin de… », « Variante (orthographique) de… », « Participe passé de… ».
-- Retirer les sens étiquetés injurieux, racistes, ou péjoratifs visant des groupes. **Si un mot n'a plus aucun sens après ce tri, il est exclu.**
+- Un mot qui n'a plus aucun sens utilisable après ce tri est exclu.
 - Nettoyer le texte : pas de balisage wiki, pas d'exemples ; conserver au plus **3 définitions** de **200 caractères** maximum chacune (coupe propre).
 - Marquer, pour chaque définition, si elle **contient le mot lui-même ou un mot de la même famille** (« *danse* : action de danser ») : ces définitions sont affichables sur la fiche, mais ne doivent pas servir de question en duel (ou alors avec le mot masqué).
 
-**Contenus offensants :**
-- Règle simple et documentée basée sur les étiquettes du Wiktionnaire, complétée par `data/exclusions.txt` (un mot par ligne) que Raphaël peut modifier.
-- En pratique (vérifié sur les données) : les sens étiquetés `offensive` sont retirés automatiquement (182 mots concernés). Les mots dont le sens principal est `pejorative` ou `vulgar` (environ 530 dans toute la base, le plus souvent inoffensifs : *hobereau*, *plouc*…) ne peuvent pas être triés automatiquement : 🟡 le pipeline écrit dans `data/a-relire.md` la liste de ceux qui entrent dans l'Édition 1, pour que Raphaël décide.
-- Les mots **familiers, populaires, argotiques ou vulgaires non offensants sont conservés**, avec un badge « Familier » sur la carte. Une carte porte ce badge quand son sens principal est étiqueté ainsi dans le Wiktionnaire. Quand seul un sens secondaire est familier, la carte n'a pas le badge, et ce sens est simplement signalé « (familier) ».
-- Le joueur peut **masquer les mots familiers** depuis les Réglages (voir §5.3). Le champ `registre` doit donc figurer dans l'index des cartes.
+**Mots familiers, vulgaires, péjoratifs ou injurieux :**
+- **Décision de Raphaël : tous les mots sont dans le jeu, y compris les mots injurieux.** Le pipeline ne retire aucun mot ni aucun sens pour cette raison. C'est un dictionnaire : ces mots existent, et leur définition dit ce qu'ils sont.
+- Ces mots ne sont pas retirés, mais ils sont **étiquetés**, d'après les étiquettes du Wiktionnaire :
+  - badge **« Familier »** : sens familier, populaire, argotique, enfantin ou vulgaire (environ 2 700 mots dans la base) ;
+  - badge **« Injurieux »** : sens étiqueté `offensive` dans le Wiktionnaire (182 mots concernés dans la base, dont 59 n'ont que des sens injurieux).
+  - Une carte porte le badge quand son sens principal est étiqueté ainsi. Quand seul un sens secondaire l'est, la carte n'a pas le badge, et ce sens est simplement signalé « (familier) » ou « (injurieux) ».
+- Ces étiquettes doivent figurer dans l'index des cartes (champ `registre`) : ce sont elles qui permettent au joueur de masquer ces mots depuis les Réglages (§5.3), et à Raphaël de changer d'avis plus tard sans tout regénérer.
+- `data/exclusions.txt` (un mot par ligne) reste disponible si Raphaël veut un jour retirer un mot précis.
+- Le pipeline écrit `data/mots-sensibles.md` : la liste, pour information, des mots injurieux, vulgaires ou péjoratifs présents dans l'Édition 1.
 
 ### 4.3 Calcul des attributs
 
 **Fréquence :** `12_FreqLemme` de Lexique 4 (occurrences par million de mots).
 *(C'est bien la fréquence du lemme, qui additionne toutes les formes du mot. Avec la fréquence de la forme seule, tous les verbes paraîtraient faussement rares.)*
 
-**Rareté par percentile**, du plus rare au plus fréquent. 🟡 **Le classement combine la fréquence et la prévalence** (la part des gens qui connaissent le mot) : on calcule le rang du mot selon chacune des deux mesures, et on fait la moyenne des deux rangs. Raison : 10 % des mots de la base ont exactement la même fréquence, la plus basse possible ; avec la fréquence seule, les Légendaires seraient choisies au hasard parmi des milliers d'ex æquo, et beaucoup seraient des dérivés sans saveur. La prévalence les départage et donne des cartes rares désirables (*valétudinaire*, *tabellion*, *cuistrerie*…). Elle sert aussi de mesure de difficulté en duel.
+**Rareté par percentile**, du plus rare au plus fréquent. **Le classement combine la fréquence et la prévalence** (la part des gens qui connaissent le mot) : on calcule le rang du mot selon chacune des deux mesures, et on fait la moyenne des deux rangs. Raison : 10 % des mots de la base ont exactement la même fréquence, la plus basse possible ; avec la fréquence seule, les Légendaires seraient choisies au hasard parmi des milliers d'ex æquo, et beaucoup seraient des dérivés sans saveur. La prévalence les départage et donne des cartes rares désirables (*valétudinaire*, *tabellion*, *cuistrerie*…). Elle sert aussi de mesure de difficulté en duel.
 - La prévalence n'est prise en compte que si au moins 10 personnes ont été interrogées (`34_PrevalNb`).
-- Pour les mots sans prévalence mesurée (37 % de la base), la rareté repose sur la fréquence seule. 🟡 **L'Édition 1 ne contient que des mots dont la prévalence est mesurée** (il y en a près de 33 000, onze fois plus que nécessaire).
+- Pour les mots sans prévalence mesurée (37 % de la base), la rareté repose sur la fréquence seule. **Les deux groupes sont classés séparément**, chacun entre eux : sinon les milliers de mots non mesurés, ex æquo à la fréquence la plus basse, rempliraient à eux seuls les raretés les plus hautes (et *callipyge* ne serait plus Légendaire). **L'Édition 1 ne contient que des mots dont la prévalence est mesurée** (il y en a près de 33 000, onze fois plus que nécessaire), plus les « coups de cœur » de Raphaël : quelques beaux mots n'ont pas été mesurés (*procrastiner*, *sérendipité*, *zeugma*…) et se rattrapent par cette liste.
 - Le poids de chaque mesure est réglable dans la configuration du pipeline.
 - En cas d'égalité, départage **déterministe** qui ne dépende pas de l'ordre alphabétique (sinon toutes les cartes rares commenceraient par A ou B) : par exemple une empreinte calculée à partir du mot. La rareté d'un mot ne doit jamais changer d'une génération à l'autre.
 
@@ -141,7 +145,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 | Peu commune | 25 % suivants | Vert |
 | Commune | 50 % restants | Gris |
 
-**Attaque (1 à 10) — « valeur des lettres » :** somme des valeurs des lettres du mot. Barème : A E I L N O R S T U = 1 · D G M = 2 · B C P = 3 · F H V = 4 · J Q = 8 · K W X Y Z = 10. Lettres accentuées ramenées à leur lettre de base, `œ` → `oe`, `æ` → `ae`, traits d'union ignorés. Le score brut est ramené sur 1–10 **par percentile** sur toute la base.
+**Attaque (1 à 10) — « valeur des lettres » :** somme des valeurs des lettres du mot. Barème : A E I L N O R S T U = 1 · D G M = 2 · B C P = 3 · F H V = 4 · J Q = 8 · K W X Y Z = 10. Lettres accentuées ramenées à leur lettre de base, `œ` → `oe`, `æ` → `ae`, traits d'union ignorés. Le score brut est ramené sur 1–10 **par percentile**. 🟡 Ce classement se fait **entre les cartes de l'édition** (les 10 % de cartes les plus fortes du jeu ont 10), et non sur toute la base : les cartes choisies pour une édition étant plus riches que la moyenne, un classement sur toute la base donnerait des défenses presque toutes élevées. Réglage `notesCalculeesSur` dans `pipeline/config.ts`.
 *(Ne jamais afficher le nom « Scrabble » dans le jeu : c'est une marque déposée. Voir §7.)*
 
 **Défense (1 à 10) — « richesse du mot » :** score combinant le nombre de sens, le nombre de synonymes et le nombre de mots dérivés recensés par le Wiktionnaire, ramené sur 1–10 par percentile.
@@ -151,7 +155,9 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 
 **Type :** Nom, Verbe, Adjectif, Adverbe.
 
-**Registre (badges facultatifs) :** Familier, Littéraire, Vieilli — d'après les étiquettes du Wiktionnaire.
+**Registre (badges facultatifs) :** Familier, Injurieux, Littéraire, Vieilli — d'après les étiquettes du Wiktionnaire.
+
+**Date de première apparition :** quand le Wiktionnaire la donne (champ `attestations`, 31 % des mots), elle est conservée et affichée sur la fiche de la carte (« Attesté depuis 1532 »). Aucun effet sur le jeu.
 
 **Faction (étymologie) :**
 1. Prendre le texte d'étymologie (champ `etymology_texts`, présent pour 91 % des mots), **ignorer les parenthèses initiales** (« *(Adjectif)* De l'anglais… » ; seules 2,5 % des étymologies sont concernées, les dates étant rangées à part dans le champ `attestations`) et réparer les mots collés par l'extraction (« Motdérivé de »).
@@ -167,8 +173,10 @@ La base complète compte environ 52 000 cartes possibles (chiffre mesuré) : c'e
 
 - Le pipeline génère la **base complète** (elle sert aussi de réservoir pour les leurres du duel et pour les futures éditions).
 - Il en extrait l'**Édition 1 : environ 3 000 cartes**, en conservant la répartition des raretés (3 / 7 / 15 / 25 / 50 %).
-- Sélection par **score de qualité** : faction reconnue, au moins une définition utilisable en duel, définition ni trop courte ni trop technique. Parmi les mots rares, favoriser les mots « savoureux » (étiquetés littéraire ou vieilli, valeur des lettres élevée).
-- Veiller à ce que **chaque faction soit représentée** de façon à être collectionnable (ni 3 cartes, ni 2 000).
+- Sélection par **score de qualité** : faction reconnue, au moins une définition utilisable en duel, définition ni trop courte ni trop technique. Parmi les mots rares, favoriser les mots « déjà entendus mais mal connus » (connus de 10 à 60 % des gens) plutôt que les mots totalement inconnus ; léger bonus pour les mots littéraires ou vieillis.
+- 🟡 **Équilibre des types de mots :** dans la langue, deux mots sur trois sont des noms, alors que le duel repose sur le triangle Nom > Adjectif > Verbe > Nom. L'édition vise donc 50 % de noms, 22 % d'adjectifs, 22 % de verbes et 6 % d'adverbes (les adverbes intéressants sont rares : on en obtient environ 1 %). Réglage `partsDesTypes`.
+- **Corrections d'origine :** la détection automatique de l'origine se trompe dans environ 5 % des cas (homonymes, étymologies discutées). `data/corrections-factions.txt` permet à Raphaël de corriger un mot (`goulu = Latin`) ; ses dérivés héritent de la correction.
+- **Équilibre des factions :** l'édition ne respecte pas les proportions réelles de la langue (le latin pèserait 57 %, l'arabe 0,7 %). Le latin est **plafonné vers 35 %**, les petites factions sont volontairement gonflées, et les toutes petites langues (turc, persan, russe, japonais, chinois, sanskrit, langues d'Amérique, hébreu…) sont regroupées dans **« Langues d'ailleurs »**. Le jeu peut rappeler la vérité ailleurs (« dans la vraie langue, près de 6 mots sur 10 viennent du latin »). Réglage dans la configuration du pipeline.
 - `data/coups-de-coeur.txt` : mots que Raphaël **impose** dans l'édition. `data/exclusions.txt` : mots qu'il interdit.
 - Taille de l'édition et critères réglables dans la configuration du pipeline. 🟡 Avec un paquet toutes les 10 minutes, 3 000 cartes pourraient se compléter plus vite que prévu : la taille définitive sera fixée à l'aide du simulateur de collection (§5.5).
 
@@ -191,8 +199,11 @@ Deux niveaux de fichiers, pour que l'application reste légère sur mobile :
 {
   "meta": {
     "edition": 1,
-    "version": "2026-09-21",
-    "sources": "Wiktionnaire et Lexique (CC BY-SA)"
+    "version": "2026-09-18",
+    "cartes": 3000,
+    "lots": 16,
+    "sources": "Wiktionnaire (fr.wiktionary.org) et Lexique 4 (lexique.org)",
+    "licence": "CC BY-SA 4.0 — définitions et étymologies adaptées du Wiktionnaire"
   },
   "cartes": [
     {
@@ -200,33 +211,42 @@ Deux niveaux de fichiers, pour que l'application reste légère sur mobile :
       "mot": "callipyge",
       "type": "Adjectif",
       "rarete": "Légendaire",
-      "attaque": 8,
-      "defense": 3,
-      "faction": "Grec ancien",
-      "registre": ["Littéraire"]
+      "attaque": 10,
+      "defense": 5,
+      "faction": "Grec",
+      "registre": []
     }
   ]
 }
 ```
 
-**`public/data/details/<lot>.json`** — chargés à la demande (fiche carte, duel), découpés en lots :
+**`public/data/details/lot-XX.json`** — chargés à la demande (fiche carte, duel), découpés en 16 lots :
 
 ```json
 {
   "callipyge-adj": {
     "definitions": [
-      { "texte": "Qui a de belles fesses.", "quiz": true }
+      { "texte": "Qui a de belles fesses, aux formes harmonieuses.", "quiz": true },
+      { "texte": "Qui a des formes arrondies. Gros et gras.", "quiz": true }
     ],
-    "etymologie": "Du grec ancien kallipugos…",
-    "langueOrigine": "Grec ancien",
-    "frequence": 0.02
+    "etymologie": "Emprunté au grec ancien καλλίπυγος, kallípugos (« qui a de belles fesses »), épithète d’Aphrodite.",
+    "langueOrigine": "Grec",
+    "frequence": 0.003,
+    "prevalence": 33,
+    "attestation": "1786"
   }
 }
 ```
 
-- `frequence` est exprimée en occurrences par million de mots.
+*(Exemples réels, tirés de la première génération. Le format exact est décrit dans `src/partage/types.ts`, partagé entre le pipeline et le jeu.)*
+
+- `version` est la date d'extraction du Wiktionnaire : deux générations faites à partir des mêmes données donnent exactement le même résultat.
+- `defense` est la note brute ; le bonus de rareté est appliqué par le jeu, d'après `equilibrage.ts`.
+- `quiz` indique si la définition peut servir de question en duel ; une définition peut aussi porter un `registre` (« Familier », « Injurieux »…) pour pouvoir être masquée.
+- `frequence` est exprimée en occurrences par million de mots ; `prevalence` est la part des gens qui connaissent le mot, en % ; `attestation` n'est présent que si la date est connue.
+- Le lot d'une carte se calcule à partir de son identifiant (`src/partage/lots.ts`).
 - Le lien vers la page Wiktionnaire se déduit du mot, inutile de le stocker.
-- Objectif de poids : index de l'édition **inférieur à 1 Mo** une fois compressé.
+- Poids mesuré : **400 Ko** pour l'index (avant compression), 1,4 Mo pour l'ensemble des détails.
 
 Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et documenté dans le README.
 
@@ -267,7 +287,7 @@ Le pipeline doit être **relançable en une commande** (`npm run pipeline`) et d
 - Progression affichée **par faction** au sein de l'édition (« Mots venus de l'arabe : 12 / 84 »).
 - Fiche détaillée d'une carte : définitions, étymologie, stats, niveau de maîtrise, lien vers la page Wiktionnaire et crédit visible.
 - Les cartes non possédées ne sont pas listées une à une, pour préserver la surprise. Seuls les compteurs sont visibles.
-- **Option « Masquer les mots familiers »** (Réglages, désactivée par défaut). Quand elle est active, 🟡 les cartes à badge « Familier » ne tombent plus dans les paquets et n'apparaissent plus dans la collection, la construction de deck, le deck de l'IA ni les leurres du duel ; les sens signalés « (familier) » sont masqués sur les fiches. Les compteurs de progression ne comptent alors que les cartes visibles. Les cartes déjà possédées ne sont pas supprimées : elles réapparaissent si l'option est désactivée.
+- **Options « Masquer les mots familiers » et « Masquer les mots injurieux »** (Réglages, deux options séparées, 🟡 toutes deux désactivées par défaut : tous les mots sont visibles, conformément à la décision de Raphaël ; la valeur par défaut est un simple réglage, à revoir selon le public visé avant d'ouvrir le jeu à tous). Quand une option est active, 🟡 les cartes portant le badge correspondant ne tombent plus dans les paquets et n'apparaissent plus dans la collection, la construction de deck, le deck de l'IA ni les leurres du duel ; les sens signalés « (familier) » sont masqués sur les fiches. Les compteurs de progression ne comptent alors que les cartes visibles. Les cartes déjà possédées ne sont pas supprimées : elles réapparaissent si l'option est désactivée.
 - **Maîtrise** : chaque carte compte ses bonnes réponses en duel. À 5 réussites, elle gagne le badge « Maîtrisée » (compteur global visible dans la collection). Aucun effet sur les stats en V1.
 
 ### 5.4 Duel contre l'IA
@@ -329,7 +349,7 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 - **Design de carte** : le mot en grand, type et faction en icônes, attaque et défense bien lisibles, bordure colorée selon la rareté, effet brillant pour Épique et Légendaire, badges de registre et de maîtrise.
 - 🟡 **Direction artistique recommandée : typographique, esprit « page de dictionnaire »** (papier, belle typographie à empattements, un motif ou un ornement par faction). Raison décisive : il est impossible d'illustrer des milliers de cartes ; le héros de la carte doit être **le mot lui-même**. La décision finale appartient à Raphaël.
 - En attendant, style sobre et neutre, facile à remplacer : **couleurs, polices et ornements centralisés dans un fichier de thème**.
-- **Contenu (écran Réglages)** : option « Masquer les mots familiers » (§5.3).
+- **Contenu (écran Réglages)** : options « Masquer les mots familiers » et « Masquer les mots injurieux » (§5.3).
 - **Accessibilité (écran Réglages)** : allonger ou désactiver le chronomètre du duel, réduire les animations, couper le son. La rareté ne doit jamais être indiquée par la couleur seule (ajouter un symbole ou un libellé). Contrastes lisibles.
 
 ---
@@ -354,7 +374,7 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | Phase | Contenu | Validé quand… |
 |---|---|---|
 | **0a. Exploration** *(travail fait le 21/09/2026, en attente de lecture)* | Dépôt Git, téléchargement des sources, compte rendu sur les données réelles, `SOURCES.md` | Raphaël a lu le compte rendu et confirmé ou corrigé les propositions 🟡 du §10.2 |
-| **0b. Données** | Pipeline complet, base + Édition 1, rapport de génération, tests | Raphaël a relu le rapport : la répartition et les exemples lui conviennent |
+| **0b. Données** *(travail fait le 21/09/2026, en attente de lecture)* | Pipeline complet, base + Édition 1, rapport de génération, tests | Raphaël a relu `data/rapport.md` : la répartition et les exemples lui conviennent |
 | **1. Squelette** | Projet Vite/React/TS, thème, navigation entre écrans vides, mise en ligne | Le site s'ouvre à une adresse web, sur le téléphone et sur l'ordinateur de Raphaël |
 | **2. Paquets + Collection** | Tirage, recharge toutes les 10 minutes, animation, sauvegarde locale, export/import, Encre, collection filtrable, option « masquer les mots familiers », fiche carte, simulateur de collection | Les paquets se rechargent avec le temps, même application fermée, sans jamais dépasser 10 ; on retrouve sa collection après fermeture et on peut la restaurer depuis un fichier ; le simulateur de collection donne des durées qui conviennent à Raphaël |
 | **3. Duel** | Construction de deck, duel complet contre l'IA à 3 niveaux, simulateur de duel | Une partie se joue de bout en bout sans bug, gagnable et perdable ; le simulateur donne 6 à 10 tours en moyenne |
@@ -392,6 +412,11 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | 6 | Rythme des paquets | **Un paquet toutes les 10 minutes, 10 en stock au maximum** |
 | 7 | Modèle économique | **Accélération payante** : à l'Encre en V1, en argent réel avec le backend |
 | 8 | Forme du jeu | **Site web classique pour le moment** ; la version installable (PWA) est repoussée à plus tard |
+| 9 | Rareté | **Fréquence + prévalence** ; l'Édition 1 ne pioche que parmi les mots dont la prévalence est mesurée, plus les « coups de cœur » de Raphaël |
+| 10 | Source des fréquences | **Lexique 4 seul** |
+| 11 | Date de première apparition du mot | **Affichée sur la fiche** quand elle est connue, sans effet sur le jeu |
+| 12 | Mots familiers, vulgaires, péjoratifs, injurieux | **Tous les mots sont dans le jeu, même injurieux.** Ils sont étiquetés, pas retirés |
+| 13 | Équilibre des factions | **Latin plafonné vers 35 %**, petites factions gonflées, toutes petites langues regroupées dans « Langues d'ailleurs » |
 
 ### 10.2 Propositions encore à confirmer (🟡)
 
@@ -403,11 +428,11 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Portée de l'option « masquer les mots familiers » | Les cartes ne tombent plus dans les paquets et disparaissent partout ; les compteurs s'adaptent | §5.3 |
 | Argent réel | Pas en V1 (impossible à sécuriser sans serveur) ; la V1 prépare le terrain | §5.6 |
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
-| **Rareté** (la plus importante) | Fréquence + prévalence, et Édition 1 limitée aux mots dont la prévalence est mesurée | §4.3, compte rendu §4 |
-| Version de Lexique | Lexique 4 seul (sans les fréquences « livres » de Lexique 3) | §4.1 |
-| Date de première apparition du mot | L'afficher sur la fiche quand elle est connue (31 % des mots), sans effet sur le jeu | compte rendu §3 |
-| Mots péjoratifs ou vulgaires | Retrait automatique des sens « offensants » + courte liste à relire | §4.2 |
-| Équilibre des factions dans l'Édition 1 | Plafonner le latin (vers 35 %) et sur-représenter les petites factions | §4.4, compte rendu §5 |
+| Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
+| Liste définitive des factions | 13 factions par défaut ; deux autres découpages sont chiffrés dans le rapport de génération | §4.3, `data/rapport.md` §6 |
+| Équilibre des types de mots dans l'édition | Viser 50 % de noms, 22 % d'adjectifs, 22 % de verbes, 6 % d'adverbes | §4.4 |
+| Notes d'attaque et de défense | Calculées entre les cartes de l'édition plutôt que sur toute la base | §4.3 |
+| Outil de test du pipeline | Celui intégré à Node, pour n'avoir rien à installer ; Vitest pour le jeu | §3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
 | Hébergement | Cloudflare Pages, Netlify ou GitHub Pages | §3 |
 | Direction artistique | Typographique, esprit « page de dictionnaire » | §6 |

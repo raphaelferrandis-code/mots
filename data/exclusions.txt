@@ -1,0 +1,6 @@
+# EXCLUSIONS
+# Les mots écrits ici n'entrent jamais dans une édition. Un mot par ligne.
+# Les lignes qui commencent par # sont ignorées.
+# Décision actuelle : tous les mots sont dans le jeu, y compris les mots injurieux. Cette liste est
+# donc vide ; elle reste disponible pour retirer un mot précis (voir data/mots-sensibles.md).
+# Après une modification : npm run pipeline.
