@@ -1,0 +1,183 @@
+/* Mise en page et composants. Les couleurs et les polices viennent de theme.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papier);
+  color: var(--encre);
+  font-family: var(--police-texte);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--police-titre); line-height: 1.2; margin: 0; }
+h1 { font-size: 1.7rem; }
+h2 { font-size: 1.2rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* ── Structure générale ─────────────────────────────────────────────────── */
+
+.application { min-height: 100dvh; display: flex; flex-direction: column; }
+
+.ecran {
+  flex: 1;
+  width: 100%;
+  max-width: var(--largeur-jeu);
+  margin: 0 auto;
+  padding: var(--marge) var(--marge) calc(var(--hauteur-navigation) + var(--marge) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--marge);
+}
+.ecran--large { max-width: var(--largeur-collection); }
+
+.entete { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; }
+.entete__surtitre { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--encre-douce); }
+.texte-doux { color: var(--encre-douce); }
+.petit { font-size: 0.88rem; }
+
+.bloc {
+  background: var(--carte-fond);
+  border: 1px solid var(--filet);
+  border-radius: var(--rayon);
+  padding: var(--marge);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bloc--a-venir { border-style: dashed; background: transparent; }
+
+.bouton {
+  border: 1px solid var(--encre);
+  background: var(--encre);
+  color: var(--papier);
+  border-radius: 999px;
+  padding: 10px 18px;
+  min-height: 44px; /* taille confortable au doigt */
+  align-self: flex-start;
+}
+.bouton--discret { background: transparent; color: var(--encre); }
+
+.liste-nue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Navigation : en bas sur téléphone, en haut sur grand écran ─────────── */
+
+.navigation {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  background: var(--carte-fond);
+  border-top: 1px solid var(--filet);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.navigation__liste {
+  list-style: none; margin: 0 auto; padding: 0;
+  max-width: var(--largeur-jeu);
+  height: var(--hauteur-navigation);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+}
+.navigation__lien {
+  height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  text-decoration: none;
+  color: var(--encre-douce);
+  font-size: 0.72rem; letter-spacing: 0.04em;
+}
+.navigation__lien svg { width: 24px; height: 24px; }
+.navigation__lien[aria-current='page'] { color: var(--accent); font-weight: 700; }
+
+@media (min-width: 768px) {
+  .navigation { position: sticky; top: 0; bottom: auto; border-top: 0; border-bottom: 1px solid var(--filet); }
+  .navigation__liste { max-width: var(--largeur-collection); grid-template-columns: repeat(5, auto); justify-content: center; gap: 28px; }
+  .navigation__lien { flex-direction: row; gap: 8px; font-size: 0.95rem; }
+  .ecran { padding-bottom: calc(var(--marge) * 2); }
+}
+
+/* ── Carte ──────────────────────────────────────────────────────────────── */
+
+.carte {
+  --couleur-rarete: var(--rarete-commune);
+  position: relative;
+  aspect-ratio: 5 / 7;
+  width: 100%;
+  border-radius: var(--rayon-carte);
+  border: 4px solid var(--couleur-rarete);
+  background: var(--carte-fond);
+  box-shadow: var(--ombre);
+  padding: 10px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  text-align: center;
+  text-decoration: none;
+  color: var(--encre);
+  overflow: hidden;
+  container-type: inline-size;
+}
+.carte[data-rarete='Peu commune'] { --couleur-rarete: var(--rarete-peu-commune); }
+.carte[data-rarete='Rare'] { --couleur-rarete: var(--rarete-rare); }
+.carte[data-rarete='Épique'] { --couleur-rarete: var(--rarete-epique); }
+.carte[data-rarete='Légendaire'] { --couleur-rarete: var(--rarete-legendaire); }
+
+.carte__haut { display: flex; justify-content: center; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.carte__rarete { color: var(--couleur-rarete); font-weight: 700; white-space: nowrap; }
+
+.carte__centre { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.carte__mot {
+  font-family: var(--police-titre);
+  font-weight: 700;
+  font-size: clamp(1rem, 15cqi, 2rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.carte__faction { font-style: italic; font-size: 0.8rem; color: var(--encre-douce); }
+.carte__badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.badge { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--filet); border-radius: 999px; padding: 1px 7px; color: var(--encre-douce); }
+
+.carte__bas { display: flex; justify-content: space-between; align-items: flex-end; }
+.carte__stat { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.carte__stat-valeur { font-family: var(--police-chiffres); font-size: 1.5rem; font-weight: 700; }
+.carte__stat-nom { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--encre-douce); }
+
+/* Reflet des cartes Épiques et Légendaires */
+.carte[data-rarete='Épique']::after,
+.carte[data-rarete='Légendaire']::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--couleur-rarete) 28%, transparent) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: reflet 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes reflet { 0%, 100% { background-position: 120% 0; } 50% { background-position: -20% 0; } }
+
+.rangee-de-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 12px; }
+
+/* ── Fiche d'une carte ──────────────────────────────────────────────────── */
+
+.fiche { display: grid; gap: var(--marge); }
+.fiche__carte { width: min(240px, 70%); margin: 0 auto; }
+.definitions { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
+.definitions li::marker { font-family: var(--police-chiffres); color: var(--accent); font-weight: 700; }
+.donnees { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }
+.donnees dt { color: var(--encre-douce); }
+.donnees dd { margin: 0; }
+
+/* ── Confort : moins d'animations si l'appareil le demande ─────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

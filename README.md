@@ -7,14 +7,23 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).
 - **Le résultat de la fabrication des cartes : [data/rapport.md](data/rapport.md).**
 
-**État d'avancement : phase 0b (fabrication des cartes) faite, en attente de validation.** Il n'y a pas encore de jeu.
+**État d'avancement : phase 1 (squelette du site) faite.** Le site s'ouvre, on navigue entre les écrans et on peut consulter de vraies cartes ; les paquets, la collection et le duel arrivent aux phases 2 et 3. Le site n'est pas encore en ligne.
 
 ## Ce qu'il faut avoir installé
 
 - [Node.js](https://nodejs.org) version 22.18 ou plus récente (le projet est développé avec la version 24).
 - Git.
 
-Pour l'instant le projet n'a besoin d'aucune autre installation (pas de `npm install`).
+Puis, une seule fois, dans le dossier du projet : `npm install` (télécharge React, Vite et TypeScript dans `node_modules/`).
+La fabrication des cartes (`npm run pipeline`) et les tests, eux, n'ont besoin d'aucune installation.
+
+## Voir le site sur son ordinateur
+
+```bash
+npm run dev
+```
+
+Puis ouvrir http://localhost:5173 dans le navigateur. Le site se met à jour tout seul à chaque modification du code. Pour l'arrêter : `Ctrl + C` dans le terminal.
 
 ## Commandes
 
@@ -22,9 +31,13 @@ Toutes les commandes se lancent depuis le dossier du projet.
 
 | Commande | Ce qu'elle fait | Durée |
 |---|---|---|
+| `npm run dev` | Lance le site sur l'ordinateur, à l'adresse http://localhost:5173. | immédiat |
+| `npm run build` | Vérifie le code puis fabrique la version à mettre en ligne, dans le dossier `dist/` (2 Mo). | quelques secondes |
+| `npm run apercu` | Ouvre la version fabriquée par `npm run build`, pour la contrôler avant une mise en ligne. | immédiat |
+| `npm run verifier` | Vérifie la cohérence de tout le code (site et pipeline) sans rien fabriquer. | quelques secondes |
 | `npm run sources` | Télécharge les deux bases de données (735 Mo au total) dans `data/brut/`. Ne retélécharge pas un fichier déjà présent. | quelques minutes, selon la connexion |
 | `npm run pipeline` | **Fabrique les cartes** : la base complète, l'Édition 1, et le rapport à relire. | environ 30 secondes |
-| `npm test` | Lance les tests automatiques du pipeline (ils vérifient que les règles sont bien appliquées). | 1 seconde |
+| `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |
 
 ## Ce que Raphaël peut modifier
@@ -58,7 +71,12 @@ Deux générations faites à partir des mêmes données et des mêmes réglages 
 | `pipeline/` | Les programmes qui transforment les données en cartes |
 | `pipeline/etapes/` | Une étape par fichier : Lexique, Wiktionnaire, nettoyage, registres, origines, rareté, assemblage, édition, écriture, rapport |
 | `pipeline/tests/` | Les tests automatiques |
-| `src/partage/` | Ce que le pipeline et le futur jeu ont en commun (format des cartes, valeur des lettres) |
+| `src/partage/` | Ce que le pipeline et le jeu ont en commun (format des cartes, valeur des lettres) |
 | `src/config/` | Les chiffres d'équilibrage du jeu |
+| `src/theme/` | **Le thème** : `theme.css` contient toutes les couleurs, polices et mesures ; `styles.css` la mise en page |
+| `src/ecrans/` | Un fichier par écran (Accueil, Fiche carte, Réglages… et les écrans à venir) |
+| `src/composants/` | Les éléments réutilisés : la carte, la barre de navigation, les en-têtes |
+| `src/navigation/` | Les adresses des écrans (`#/collection`, `#/carte/callipyge-adj`…) |
+| `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données (aujourd'hui des fichiers, demain un serveur) |
 | `public/data/` | Les fichiers de cartes que le jeu chargera |
 | `data/` | Listes tenues par Raphaël, rapports, et données brutes (hors Git) |

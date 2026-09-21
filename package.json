@@ -8,9 +8,25 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "apercu": "vite preview",
+    "verifier": "tsc --noEmit",
+    "test": "node --test \"pipeline/tests/*.test.ts\" \"src/**/*.test.ts\"",
     "sources": "node pipeline/telecharger-sources.ts",
-    "exploration": "node pipeline/exploration/explorer.ts",
     "pipeline": "node pipeline/build.ts",
-    "test": "node --test \"pipeline/tests/*.test.ts\""
+    "exploration": "node pipeline/exploration/explorer.ts"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
   }
 }

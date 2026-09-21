@@ -1,0 +1,39 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   THÈME DU JEU
+   Toutes les couleurs, polices et mesures de l'interface sont ici. Changer la
+   direction artistique, c'est d'abord changer ce fichier.
+   Style actuel : sobre, esprit « page de dictionnaire » (papier, encre, belle typographie).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Couleurs générales */
+  --papier: #f6f1e6;
+  --papier-fonce: #ebe3d1;
+  --carte-fond: #fffdf8;
+  --encre: #233044;
+  --encre-douce: #5b6577;
+  --filet: #d8cdb6;
+  --accent: #9b2c2c;
+  --accent-texte: #ffffff;
+
+  /* Couleurs des raretés (la rareté est toujours écrite aussi en toutes lettres, jamais la couleur seule) */
+  --rarete-commune: #8a8f98;
+  --rarete-peu-commune: #3f8f5b;
+  --rarete-rare: #2f6fb5;
+  --rarete-epique: #7a4bb0;
+  --rarete-legendaire: #b8860b;
+
+  /* Polices : celles déjà présentes sur l'appareil, pour ne rien télécharger chez un tiers */
+  --police-titre: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --police-texte: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --police-chiffres: Georgia, 'Times New Roman', serif;
+
+  /* Mesures */
+  --rayon: 12px;
+  --rayon-carte: 14px;
+  --marge: 16px;
+  --largeur-jeu: 480px; /* écrans de jeu : une colonne, comme sur téléphone */
+  --largeur-collection: 1080px; /* la collection profite des grands écrans */
+  --hauteur-navigation: 64px;
+  --ombre: 0 1px 2px rgba(35, 48, 68, 0.08), 0 6px 18px rgba(35, 48, 68, 0.1);
+}
