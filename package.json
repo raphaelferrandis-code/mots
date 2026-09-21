@@ -1,0 +1,14 @@
+{
+  "name": "mots",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Jeu de cartes à collectionner des mots de la langue française",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "sources": "node pipeline/telecharger-sources.ts",
+    "exploration": "node pipeline/exploration/explorer.ts"
+  }
+}

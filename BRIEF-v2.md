@@ -1,7 +1,7 @@
 # Brief projet v2 — Jeu de cartes à collectionner des mots de la langue française
 
 *Nom de code : **MOTS** (piste sérieuse pour le nom définitif : « Mots de Maîtres », à vérifier à l'INPI).*
-*Version 2.1 du 21 septembre 2026 — intègre les décisions de Raphaël (voir §10.1). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
+*Version 2.2 du 21 septembre 2026 — intègre les décisions de Raphaël (voir §10.1) et les enseignements de l'exploration des données (voir `COMPTE-RENDU-donnees.md`). Les raisons des changements par rapport à la v1 sont dans `RAPPORT-analyse-brief.md`.*
 
 > **Légende :** 🟡 = proposition par défaut **encore à confirmer par Raphaël** (liste au §10.2). Tout le reste est validé.
 
@@ -92,7 +92,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 2. **Lexique** (lexique.org), licence CC BY-SA 4.0. Deux versions existent :
    - **Lexique 4.00** (`Lexique400.zip`, 49 Mo, publié en 2026) : 190 000 formes, fréquences tirées d'un corpus de sous-titres de 316 millions de mots, lemmes, et surtout la **prévalence** (la part des gens qui connaissent réellement le mot) ;
    - **Lexique 3.83** (`Lexique383.zip`, 27 Mo) : environ 140 000 formes, colonnes `ortho`, `lemme`, `cgram`, **`freqlemfilms2`**, **`freqlemlivres`**.
-   - 🟡 **Partir sur Lexique 4** si l'exploration confirme qu'il fournit bien une fréquence par lemme ; sinon Lexique 3.83. Les formules du §4.3 sont écrites avec les colonnes de Lexique 3 et seront adaptées. La **prévalence** est une piste sérieuse pour affiner la rareté ou la difficulté des questions de duel (un mot que peu de gens connaissent est plus « légendaire » qu'un mot simplement peu écrit) : à examiner pendant l'exploration.
+   - 🟡 **On part sur Lexique 4 seul.** L'exploration (voir `COMPTE-RENDU-donnees.md`) a confirmé qu'il fournit la fréquence par lemme. Colonnes utiles : `1_Mot`, `5_Cgram`, `12_FreqLemme`, `14_IsLem` (1 = forme de base), `30_MorphoBase` (mot dont celui-ci dérive : *danseur* → *danser*), `33_Preval` (prévalence en %), `34_PrevalNb` (nombre de personnes interrogées). Il n'a plus de fréquence « livres » : on utilise celle des sous-titres seule.
    - Citation demandée : New, B., Pallier, C., Schalchli, G., Bourgin, J., & Gimenes, M. (2026). *Lexique 4: A major upgrade of the "Lexique" French lexical database.* Behavior Research Methods, 58(5), 140.
 
 **Règles pour les sources :**
@@ -103,7 +103,7 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 
 ### 4.2 Filtrage
 - **Lemmes uniquement** : formes de base, pas de conjugaisons ni de pluriels. Regrouper Lexique par couple (`lemme`, `cgram`).
-- **Jointure sur le couple (mot, nature grammaticale)**, jamais sur le mot seul. Prévoir une table de correspondance entre les natures de Lexique (`NOM`, `VER`, `ADJ`, `ADV`…) et celles du Wiktionnaire.
+- **Jointure sur le couple (mot, nature grammaticale)**, jamais sur le mot seul. Correspondance vérifiée : `NOM`, `VER`, `ADJ`, `ADV` dans Lexique ↔ `noun`, `verb`, `adj`, `adv` dans le champ `pos` du Wiktionnaire (les noms propres y sont à part, sous `name`). Écarter les entrées du Wiktionnaire étiquetées `form-of` (simples formes fléchies).
 - **Natures conservées** : noms communs, verbes, adjectifs, adverbes. Exclure noms propres, sigles, abréviations, symboles, locutions.
 - **Mots composés** : garder ceux à trait d'union (« arc-en-ciel ») ; exclure ceux contenant une espace ou une apostrophe.
 - **Garder uniquement les mots présents dans les deux sources**, pour avoir à la fois une définition et une fréquence.
@@ -118,15 +118,20 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 
 **Contenus offensants :**
 - Règle simple et documentée basée sur les étiquettes du Wiktionnaire, complétée par `data/exclusions.txt` (un mot par ligne) que Raphaël peut modifier.
+- En pratique (vérifié sur les données) : les sens étiquetés `offensive` sont retirés automatiquement (182 mots concernés). Les mots dont le sens principal est `pejorative` ou `vulgar` (environ 530 dans toute la base, le plus souvent inoffensifs : *hobereau*, *plouc*…) ne peuvent pas être triés automatiquement : 🟡 le pipeline écrit dans `data/a-relire.md` la liste de ceux qui entrent dans l'Édition 1, pour que Raphaël décide.
 - Les mots **familiers, populaires, argotiques ou vulgaires non offensants sont conservés**, avec un badge « Familier » sur la carte. Une carte porte ce badge quand son sens principal est étiqueté ainsi dans le Wiktionnaire. Quand seul un sens secondaire est familier, la carte n'a pas le badge, et ce sens est simplement signalé « (familier) ».
 - Le joueur peut **masquer les mots familiers** depuis les Réglages (voir §5.3). Le champ `registre` doit donc figurer dans l'index des cartes.
 
 ### 4.3 Calcul des attributs
 
-**Fréquence combinée :** moyenne de `log(1 + freqlemfilms2)` et `log(1 + freqlemlivres)`.
-*(On utilise bien la fréquence du lemme, qui additionne toutes les formes du mot. Avec la fréquence de la forme seule, tous les verbes paraîtraient faussement rares.)*
+**Fréquence :** `12_FreqLemme` de Lexique 4 (occurrences par million de mots).
+*(C'est bien la fréquence du lemme, qui additionne toutes les formes du mot. Avec la fréquence de la forme seule, tous les verbes paraîtraient faussement rares.)*
 
-**Rareté par percentile**, calculée sur la base complète, du plus rare au plus fréquent. En cas d'égalité de fréquence, départage **déterministe** (par exemple : mot le plus long d'abord, puis ordre alphabétique) pour que la rareté d'un mot ne change jamais d'une génération à l'autre.
+**Rareté par percentile**, du plus rare au plus fréquent. 🟡 **Le classement combine la fréquence et la prévalence** (la part des gens qui connaissent le mot) : on calcule le rang du mot selon chacune des deux mesures, et on fait la moyenne des deux rangs. Raison : 10 % des mots de la base ont exactement la même fréquence, la plus basse possible ; avec la fréquence seule, les Légendaires seraient choisies au hasard parmi des milliers d'ex æquo, et beaucoup seraient des dérivés sans saveur. La prévalence les départage et donne des cartes rares désirables (*valétudinaire*, *tabellion*, *cuistrerie*…). Elle sert aussi de mesure de difficulté en duel.
+- La prévalence n'est prise en compte que si au moins 10 personnes ont été interrogées (`34_PrevalNb`).
+- Pour les mots sans prévalence mesurée (37 % de la base), la rareté repose sur la fréquence seule. 🟡 **L'Édition 1 ne contient que des mots dont la prévalence est mesurée** (il y en a près de 33 000, onze fois plus que nécessaire).
+- Le poids de chaque mesure est réglable dans la configuration du pipeline.
+- En cas d'égalité, départage **déterministe** qui ne dépende pas de l'ordre alphabétique (sinon toutes les cartes rares commenceraient par A ou B) : par exemple une empreinte calculée à partir du mot. La rareté d'un mot ne doit jamais changer d'une génération à l'autre.
 
 | Rareté | Part de la base | Couleur de bordure indicative |
 |---|---|---|
@@ -149,16 +154,16 @@ Tout le contenu est généré à partir de **données ouvertes**. Aucune carte n
 **Registre (badges facultatifs) :** Familier, Littéraire, Vieilli — d'après les étiquettes du Wiktionnaire.
 
 **Faction (étymologie) :**
-1. Prendre le texte d'étymologie, **ignorer les parenthèses initiales** (dates, siècles : « *(XIIe siècle)* Du latin… »).
+1. Prendre le texte d'étymologie (champ `etymology_texts`, présent pour 91 % des mots), **ignorer les parenthèses initiales** (« *(Adjectif)* De l'anglais… » ; seules 2,5 % des étymologies sont concernées, les dates étant rangées à part dans le champ `attestations`) et réparer les mots collés par l'extraction (« Motdérivé de »).
 2. Chercher les mots-clés d'origine : latin, grec ancien, arabe, anglais, italien, espagnol, allemand, néerlandais, germanique / francique, gaulois / celtique, occitan / provençal, onomatopée… La liste des mots-clés est dans un fichier de configuration du pipeline.
-3. **Héritage** : si l'étymologie dit « Dérivé de X » ou « Composé de X et… », le mot hérite de la faction de X (deux niveaux maximum : *danseur* → *danser* → francique).
+3. **Héritage** : si l'étymologie dit « Dérivé de X », « Composé de X et… », « Déverbal de X » ou simplement « De X » (où X est un mot français), le mot hérite de la faction de X (deux niveaux maximum : *danseur* → *danser* → francique). À défaut, utiliser le mot d'origine indiqué par Lexique (`30_MorphoBase`). Un premier essai d'héritage à un seul niveau reclasse déjà 14 700 mots.
 4. Sinon : « **Formation française** » si l'étymologie décrit une construction interne au français, « **Origine inconnue** » s'il n'y a rien d'exploitable.
 5. Les langues qui comptent moins d'une cinquantaine de mots sont regroupées dans une faction « **Langues d'ailleurs** » (la langue exacte reste affichée sur la fiche).
 6. Conserver le texte d'étymologie brut pour l'affichage.
 
 ### 4.4 L'Édition 1
 
-La base complète comptera environ 40 000 cartes : c'est trop pour un jeu (collection infinissable, quasiment aucun doublon donc pas d'Encre, fichier trop lourd, beaucoup de mots rares sans charme). Le jeu fonctionne donc **par éditions**, comme les vrais TCG.
+La base complète compte environ 52 000 cartes possibles (chiffre mesuré) : c'est trop pour un jeu (collection infinissable, quasiment aucun doublon donc pas d'Encre, fichier trop lourd, beaucoup de mots rares sans charme). Le jeu fonctionne donc **par éditions**, comme les vrais TCG.
 
 - Le pipeline génère la **base complète** (elle sert aussi de réservoir pour les leurres du duel et pour les futures éditions).
 - Il en extrait l'**Édition 1 : environ 3 000 cartes**, en conservant la répartition des raretés (3 / 7 / 15 / 25 / 50 %).
@@ -348,7 +353,7 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 
 | Phase | Contenu | Validé quand… |
 |---|---|---|
-| **0a. Exploration** | Dépôt Git, téléchargement des sources, compte rendu sur les données réelles, `SOURCES.md` | Raphaël a lu le compte rendu et confirmé ou corrigé les propositions 🟡 du §10.2 |
+| **0a. Exploration** *(travail fait le 21/09/2026, en attente de lecture)* | Dépôt Git, téléchargement des sources, compte rendu sur les données réelles, `SOURCES.md` | Raphaël a lu le compte rendu et confirmé ou corrigé les propositions 🟡 du §10.2 |
 | **0b. Données** | Pipeline complet, base + Édition 1, rapport de génération, tests | Raphaël a relu le rapport : la répartition et les exemples lui conviennent |
 | **1. Squelette** | Projet Vite/React/TS, thème, navigation entre écrans vides, mise en ligne | Le site s'ouvre à une adresse web, sur le téléphone et sur l'ordinateur de Raphaël |
 | **2. Paquets + Collection** | Tirage, recharge toutes les 10 minutes, animation, sauvegarde locale, export/import, Encre, collection filtrable, option « masquer les mots familiers », fiche carte, simulateur de collection | Les paquets se rechargent avec le temps, même application fermée, sans jamais dépasser 10 ; on retrouve sa collection après fermeture et on peut la restaurer depuis un fichier ; le simulateur de collection donne des durées qui conviennent à Raphaël |
@@ -398,7 +403,11 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Portée de l'option « masquer les mots familiers » | Les cartes ne tombent plus dans les paquets et disparaissent partout ; les compteurs s'adaptent | §5.3 |
 | Argent réel | Pas en V1 (impossible à sécuriser sans serveur) ; la V1 prépare le terrain | §5.6 |
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
-| Version de Lexique | Lexique 4 (2026) si ses colonnes conviennent, sinon Lexique 3.83 ; examiner la « prévalence » | §4.1 |
+| **Rareté** (la plus importante) | Fréquence + prévalence, et Édition 1 limitée aux mots dont la prévalence est mesurée | §4.3, compte rendu §4 |
+| Version de Lexique | Lexique 4 seul (sans les fréquences « livres » de Lexique 3) | §4.1 |
+| Date de première apparition du mot | L'afficher sur la fiche quand elle est connue (31 % des mots), sans effet sur le jeu | compte rendu §3 |
+| Mots péjoratifs ou vulgaires | Retrait automatique des sens « offensants » + courte liste à relire | §4.2 |
+| Équilibre des factions dans l'Édition 1 | Plafonner le latin (vers 35 %) et sur-représenter les petites factions | §4.4, compte rendu §5 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
 | Hébergement | Cloudflare Pages, Netlify ou GitHub Pages | §3 |
 | Direction artistique | Typographique, esprit « page de dictionnaire » | §6 |
