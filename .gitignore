@@ -1,0 +1,13 @@
+# Dépendances et fichiers générés
+node_modules/
+dist/
+*.log
+
+# Fichiers de données bruts : trop gros pour Git, retéléchargeables avec « npm run sources »
+data/brut/
+# Fichiers de travail du pipeline, regénérables
+data/intermediaire/
+
+# Système
+.DS_Store
+Thumbs.db
