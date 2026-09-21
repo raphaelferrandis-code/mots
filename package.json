@@ -15,7 +15,8 @@
     "test": "node --test \"pipeline/tests/*.test.ts\" \"src/**/*.test.ts\"",
     "sources": "node pipeline/telecharger-sources.ts",
     "pipeline": "node pipeline/build.ts",
-    "exploration": "node pipeline/exploration/explorer.ts"
+    "exploration": "node pipeline/exploration/explorer.ts",
+    "simulation:collection": "node simulateurs/collection.ts"
   },
   "dependencies": {
     "react": "^19.3.0",
