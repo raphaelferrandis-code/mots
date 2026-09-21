@@ -1,13 +1,17 @@
 // La sauvegarde du joueur : ce qu'elle contient, comment on en crée une, et comment on relit
 // une sauvegarde venue d'ailleurs (fichier importé, ancienne version du jeu) sans jamais planter.
 
+import { FINITIONS } from '../partage/types.ts';
+import type { Finition } from '../partage/types.ts';
 import type { EtatDesPaquets } from './recharge.ts';
 
-export const VERSION_DE_SAUVEGARDE = 1;
+// Version 1 : première sauvegarde. Version 2 : chaque carte compte ses finitions (normale, brillante, holographique).
+export const VERSION_DE_SAUVEGARDE = 2;
 
 export type CartePossedee = {
   obtenueLe: number; // date de la première obtention (millisecondes)
-  doublons: number; // nombre de fois où la carte a été retirée depuis
+  doublons: number; // nombre de fois où la carte a été changée en Encre
+  finitions: Partial<Record<Finition, number>>; // nombre de fois où la carte a été obtenue dans chaque finition
 };
 
 export type ReglagesDuJoueur = {
@@ -42,8 +46,22 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
   };
 }
 
+// La plus belle finition possédée d'une carte : c'est celle que la collection affiche.
+export function meilleureFinition(carte: CartePossedee): Finition {
+  return [...FINITIONS].reverse().find((f) => (carte.finitions[f] ?? 0) > 0) ?? 'Normale';
+}
+
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const entierPositif = (v: unknown, defaut: number): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : defaut);
+
+function relireFinitions(brut: unknown, doublons: number): CartePossedee['finitions'] {
+  const finitions: CartePossedee['finitions'] = {};
+  if (estUnObjet(brut)) {
+    for (const f of FINITIONS) { const n = entierPositif(brut[f], 0); if (n > 0) finitions[f] = n; }
+  }
+  // Sauvegarde de version 1, ou finitions abîmées : avant les finitions, toutes les cartes étaient « Normales ».
+  return Object.keys(finitions).length > 0 ? finitions : { Normale: 1 + doublons };
+}
 
 // Relit une sauvegarde inconnue. Ce qui est absent ou abîmé est remplacé par une valeur saine ;
 // seul un contenu qui n'est pas une sauvegarde du tout est refusé.
@@ -54,14 +72,14 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
   if (brut.version > VERSION_DE_SAUVEGARDE) {
     throw new Error('Cette sauvegarde vient d\'une version plus récente du jeu. Mets le jeu à jour avant de l\'importer.');
   }
-  // (Quand une version 2 existera, les sauvegardes de version 1 seront converties ici.)
 
   const paquets = estUnObjet(brut.paquets) ? brut.paquets : {};
   const reglages = estUnObjet(brut.reglages) ? brut.reglages : {};
   const cartes: Record<string, CartePossedee> = {};
   for (const [id, valeur] of Object.entries(brut.cartes)) {
     if (!estUnObjet(valeur)) continue;
-    cartes[id] = { obtenueLe: entierPositif(valeur.obtenueLe, maintenant), doublons: entierPositif(valeur.doublons, 0) };
+    const doublons = entierPositif(valeur.doublons, 0);
+    cartes[id] = { obtenueLe: entierPositif(valeur.obtenueLe, maintenant), doublons, finitions: relireFinitions(valeur.finitions, doublons) };
   }
   const exporte = estUnObjet(brut.dernierExport) ? brut.dernierExport : null;
 

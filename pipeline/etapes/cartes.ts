@@ -67,18 +67,22 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
     };
     if (m.attestation && !DATE_INCONNUE.test(m.attestation)) details.attestation = m.attestation;
 
+    const index: CarteIndex = {
+      id,
+      mot: m.mot,
+      type: m.nature,
+      rarete: raretes.get(id)!,
+      attaque: attaques[i],
+      defense: defenses[i],
+      faction: origine.faction,
+      registre: registresDeLaCarte(registres),
+      definition: couper(sens[0].definition, config.definitions.longueurSurLaCarte),
+    };
+    // La date de première apparition sert de date au cachet du timbre : elle est donc aussi sur la carte.
+    if (details.attestation) index.attestation = details.attestation;
+
     return {
-      index: {
-        id,
-        mot: m.mot,
-        type: m.nature,
-        rarete: raretes.get(id)!,
-        attaque: attaques[i],
-        defense: defenses[i],
-        faction: origine.faction,
-        registre: registresDeLaCarte(registres),
-        definition: couper(sens[0].definition, config.definitions.longueurSurLaCarte),
-      },
+      index,
       details,
       factionReconnue: origine.reconnue,
       herite: origine.via,

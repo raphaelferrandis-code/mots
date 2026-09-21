@@ -6,7 +6,7 @@
 // puis « npm run simulation:collection » pour voir l'effet sur la durée de la collection.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Rarete } from '../partage/types.ts';
+import type { Finition, Rarete } from '../partage/types.ts';
 
 // Chances (en %) d'obtenir chaque rareté à un emplacement du paquet. Le total d'une ligne doit faire 100.
 export type ChancesParRarete = Partial<Record<Rarete, number>>;
@@ -25,6 +25,7 @@ export const EQUILIBRAGE = {
     'Rare': 1,
     'Épique': 1,
     'Légendaire': 2,
+    'Hors-série': 3,
   } satisfies Record<Rarete, number>,
 
   // ── Paquets ───────────────────────────────────────────────────────────────
@@ -48,6 +49,12 @@ export const EQUILIBRAGE = {
     // Garantie : au plus tard au 40e paquet sans Légendaire, la dernière carte du paquet en est une.
     paquetsAvantLegendaireGarantie: 40,
 
+    // Rang ultime : chance que la dernière carte d'un paquet soit une carte Hors-série (1 paquet sur 1 000).
+    // Ces cartes ne comptent pas pour la garantie ci-dessus.
+    // (Réglé d'après le simulateur : à 1 sur 300, un joueur régulier en tirait une par semaine, ce qui n'a rien
+    //  de « très très rare » ; à 1 sur 1 000, sa première arrive après deux à trois semaines, et une quinzaine par an.)
+    chanceHorsSerie: 1 / 1000,
+
     // Prix d'un paquet obtenu tout de suite, sans attendre.
     // ⚠️ Un paquet doit toujours rapporter nettement moins d'Encre (par ses doublons) qu'il n'en coûte,
     // sinon les paquets deviennent infinis. Un test le vérifie.
@@ -64,7 +71,19 @@ export const EQUILIBRAGE = {
     'Rare': 10,
     'Épique': 30,
     'Légendaire': 100,
+    'Hors-série': 500,
   } satisfies Record<Rarete, number>,
+
+  // ── Finitions ─────────────────────────────────────────────────────────────
+  // La finition est tirée au sort pour chaque carte ordinaire, quelle que soit sa rareté : la même carte existe
+  // donc avec ou sans effet. Chaque finition possédée compte à part dans la collection ; une carte reçue en
+  // double ne se change en Encre que si l'on possède déjà cette finition-là.
+  finitions: {
+    // Chance d'obtenir chaque finition ; le reste du temps, la carte est « Normale ».
+    chances: { 'Brillante': 1 / 12, 'Holographique': 1 / 80 } satisfies Partial<Record<Finition, number>>,
+    // L'Encre d'un doublon est multipliée selon sa finition.
+    encre: { 'Normale': 1, 'Brillante': 3, 'Holographique': 10 } satisfies Record<Finition, number>,
+  },
 
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.

@@ -1,4 +1,7 @@
-import { Carte } from '../composants/Carte.tsx';
+import { Carte } from '../composants/carte/Carte.tsx';
+import { usePartie } from '../composants/usePartie.ts';
+import { meilleureFinition } from '../jeu/sauvegarde.ts';
+import { FINITIONS } from '../partage/types.ts';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
@@ -13,6 +16,7 @@ const pageDuWiktionnaire = (mot: string): string => `https://fr.wiktionary.org/w
 
 export function FicheCarte({ id }: { id: string }) {
   const fiche = useChargement(() => chargerFiche(id), id);
+  const partie = usePartie();
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><p role="alert">La fiche n'a pas pu être chargée. {fiche.message}</p></main>;
@@ -26,11 +30,25 @@ export function FicheCarte({ id }: { id: string }) {
   }
 
   const { carte, details } = fiche.donnees;
+  const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
   return (
     <main className="ecran">
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
-        <div className="fiche__carte"><Carte carte={carte} cliquable={false} /></div>
+        <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} cliquable={false} /></div>
+        {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
+
+        <section className="bloc">
+          <h2>Dans ton album</h2>
+          {possedee ? (
+            <p>
+              Obtenu le {new Date(possedee.obtenueLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.{' '}
+              {carte.rarete === 'Hors-série'
+                ? 'Les timbres Hors-série ont leur propre impression, sans autre finition.'
+                : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
+            </p>
+          ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
+        </section>
 
         <section className="bloc">
           <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>

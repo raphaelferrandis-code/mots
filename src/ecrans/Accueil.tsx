@@ -20,7 +20,11 @@ export function Accueil() {
   // Progression : seules comptent les cartes visibles (celles que le joueur n'a pas choisi de masquer).
   const masques = registresMasques(sauvegarde);
   const visibles = edition.etat === 'pret' ? edition.donnees.cartes.filter((c) => !c.registre.some((r) => masques.includes(r))) : [];
-  const possedees = visibles.filter((c) => c.id in sauvegarde.cartes).length;
+  // Les cartes Hors-série sont comptées à part : la collection à réunir, ce sont les cartes ordinaires.
+  const ordinaires = visibles.filter((c) => c.rarete !== 'Hors-série');
+  const horsSerie = visibles.filter((c) => c.rarete === 'Hors-série');
+  const possedees = ordinaires.filter((c) => c.id in sauvegarde.cartes).length;
+  const horsSeriePossedees = horsSerie.filter((c) => c.id in sauvegarde.cartes).length;
 
   const depuisLExport = sauvegarde.paquets.ouverts - (sauvegarde.dernierExport?.paquetsOuverts ?? 0);
   const rappelerLExport = depuisLExport >= EQUILIBRAGE.paquetsEntreDeuxRappelsDExport || (sauvegarde.dernierExport === null && sauvegarde.paquets.ouverts >= 20);
@@ -28,7 +32,7 @@ export function Accueil() {
   return (
     <main className="ecran">
       <Entete surtitre="Jeu de cartes à collectionner" titre="MOTS">
-        Chaque carte est un vrai mot de la langue française. Plus le mot est rare, plus la carte l'est aussi.
+        Chaque timbre est un vrai mot de la langue française, émis par sa langue d'origine. Plus le mot est rare, plus le timbre l'est aussi.
       </Entete>
 
       <section className="bloc paquets" aria-live="polite">
@@ -53,7 +57,7 @@ export function Accueil() {
       <section className="bloc">
         <h2>Ta collection</h2>
         {edition.etat === 'pret'
-          ? <p><strong>{possedees.toLocaleString('fr-FR')}</strong> / {visibles.length.toLocaleString('fr-FR')} cartes · {sauvegarde.paquets.ouverts.toLocaleString('fr-FR')} {sauvegarde.paquets.ouverts > 1 ? 'paquets ouverts' : 'paquet ouvert'}</p>
+          ? <p><strong>{possedees.toLocaleString('fr-FR')}</strong> / {ordinaires.length.toLocaleString('fr-FR')} timbres · Hors-série : {horsSeriePossedees} / {horsSerie.length} · {sauvegarde.paquets.ouverts.toLocaleString('fr-FR')} {sauvegarde.paquets.ouverts > 1 ? 'paquets ouverts' : 'paquet ouvert'}</p>
           : <p className="texte-doux">Chargement des cartes…</p>}
         <a className="bouton bouton--discret" href={lien({ ecran: 'collection' })}>Voir ma collection</a>
       </section>
@@ -72,11 +76,6 @@ export function Accueil() {
         </section>
       )}
 
-      <section className="bloc bloc--a-venir">
-        <span className="entete__surtitre">Provisoire</span>
-        <p className="texte-doux petit">Trois pistes pour le dessin des cartes, essayées sur les mêmes mots.</p>
-        <a className="bouton bouton--discret" href={lien({ ecran: 'atelier' })}>Atelier de direction artistique</a>
-      </section>
     </main>
   );
 }

@@ -1,16 +1,16 @@
-// Le cachet rond : langue d'origine sur le tour, nom court et date au centre.
+// Le cachet rond posé sur le timbre : langue d'origine sur le tour, nom court et date au centre.
 // L'encre est volontairement irrégulière, comme un vrai coup de tampon.
 
 import { useId } from 'react';
-import { NOM_COURT, entier, entre, hasardDe } from './outils.ts';
+import { NOM_COURT, entier, entre, hasardDe } from './decor.ts';
 
-export function Tampon({ idCarte, faction, date, className }: { idCarte: string; faction: string; date: string; className: string }) {
+export function Tampon({ idCarte, faction, date }: { idCarte: string; faction: string; date: string }) {
   const id = useId();
   const hasard = hasardDe(`${idCarte}-tampon`);
   const rotation = entre(hasard, -19, 14);
 
   return (
-    <svg className={className} viewBox="0 0 100 100" style={{ transform: `rotate(${rotation}deg)` }} aria-hidden="true">
+    <svg className="tim__tampon" viewBox="0 0 100 100" style={{ transform: `rotate(${rotation}deg)` }} aria-hidden="true">
       <defs>
         <path id={`${id}c`} d="M50 50 m-36 0 a36 36 0 1 1 72 0 a36 36 0 1 1 -72 0" />
         <filter id={`${id}f`}>

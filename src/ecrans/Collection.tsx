@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Carte } from '../composants/Carte.tsx';
+import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { defenseEnJeu } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
+import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import { sansAccents } from '../partage/lettres.ts';
 import { RARETES } from '../partage/types.ts';
@@ -46,9 +47,24 @@ export function Collection() {
 
   const possedees = useMemo(() => (sauvegarde ? visibles.filter((c) => c.id in sauvegarde.cartes) : []), [visibles, sauvegarde]);
 
+  // Les cartes Hors-série sont comptées à part ; les finitions brillantes et holographiques aussi.
+  const bilan = useMemo(() => {
+    const ordinaires = visibles.filter((c) => c.rarete !== 'Hors-série');
+    const miennes = possedees.map((c) => sauvegarde!.cartes[c.id]);
+    return {
+      total: ordinaires.length,
+      possedees: possedees.filter((c) => c.rarete !== 'Hors-série').length,
+      horsSerie: visibles.length - ordinaires.length,
+      horsSeriePossedees: possedees.filter((c) => c.rarete === 'Hors-série').length,
+      brillantes: miennes.filter((m) => (m.finitions.Brillante ?? 0) > 0).length,
+      holographiques: miennes.filter((m) => (m.finitions.Holographique ?? 0) > 0).length,
+    };
+  }, [visibles, possedees, sauvegarde]);
+
   const factions = useMemo(() => {
     const table = new Map<string, { total: number; possedees: number }>();
     for (const c of visibles) {
+      if (c.rarete === 'Hors-série') continue;
       const ligne = table.get(c.faction) ?? { total: 0, possedees: 0 };
       ligne.total++;
       if (sauvegarde && c.id in sauvegarde.cartes) ligne.possedees++;
@@ -77,13 +93,13 @@ export function Collection() {
 
   return (
     <main className="ecran ecran--large">
-      <Entete surtitre="Collection" titre="Tes cartes">
-        {possedees.length.toLocaleString('fr-FR')} cartes sur {visibles.length.toLocaleString('fr-FR')}. Les cartes que tu n'as pas encore restent secrètes.
+      <Entete surtitre="Collection" titre="Ton album">
+        {bilan.possedees.toLocaleString('fr-FR')} timbres sur {bilan.total.toLocaleString('fr-FR')} · Hors-série : {bilan.horsSeriePossedees} / {bilan.horsSerie} · finitions brillantes : {bilan.brillantes}, holographiques : {bilan.holographiques}. Les timbres que tu n'as pas encore restent secrets.
       </Entete>
 
       {possedees.length === 0 ? (
         <section className="bloc">
-          <p>Ta collection est vide pour l'instant.</p>
+          <p>Ton album est vide pour l'instant.</p>
           <a className="bouton" href={lien({ ecran: 'paquet' })}>Ouvrir mon premier paquet</a>
         </section>
       ) : (
@@ -122,12 +138,12 @@ export function Collection() {
             </select>
           </section>
 
-          <p className="texte-doux petit" aria-live="polite">{affichees.length.toLocaleString('fr-FR')} carte{affichees.length > 1 ? 's' : ''}</p>
+          <p className="texte-doux petit" aria-live="polite">{affichees.length.toLocaleString('fr-FR')} timbre{affichees.length > 1 ? 's' : ''}</p>
           <div className="rangee-de-cartes">
-            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} />)}
+            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} />)}
           </div>
           {affichees.length > pages * PAR_PAGE && (
-            <button type="button" className="bouton bouton--discret" onClick={() => setPages((p) => p + 1)}>Afficher plus de cartes</button>
+            <button type="button" className="bouton bouton--discret" onClick={() => setPages((p) => p + 1)}>Afficher plus de timbres</button>
           )}
         </>
       )}

@@ -4,7 +4,7 @@
 // (petites factions gonflées, grosses plafonnées) ; dans chaque case (rareté × faction), on prend
 // les cartes les mieux notées en qualité.
 
-import { RARETES } from '../../src/partage/types.ts';
+import { RARETES_ORDINAIRES as RARETES } from '../../src/partage/types.ts';
 import type { Rarete } from '../../src/partage/types.ts';
 import type { CONFIG } from '../config.ts';
 import type { CarteComplete } from './cartes.ts';
@@ -17,7 +17,8 @@ const RARETES_PRECIEUSES: Rarete[] = ['Rare', 'Épique', 'Légendaire'];
 // Une carte peut entrer dans une édition si on sait d'où vient le mot, si les gens interrogés
 // permettent de mesurer sa rareté, et si au moins une définition peut servir en duel.
 export function estEligible(carte: CarteComplete, exclusions: Set<string>): boolean {
-  return carte.factionReconnue && carte.prevalenceMesuree && carte.definitionsDeDuel > 0 && !exclusions.has(carte.index.mot);
+  // Les cartes Hors-série sont ajoutées à part : elles ne prennent la place d'aucune carte ordinaire.
+  return carte.index.rarete !== 'Hors-série' && carte.factionReconnue && carte.prevalenceMesuree && carte.definitionsDeDuel > 0 && !exclusions.has(carte.index.mot);
 }
 
 export function noteDeQualite(carte: CarteComplete, reglages: ReglagesEdition): number {
@@ -106,6 +107,7 @@ export function composerEdition(
     const trouvees = cartes.filter((c) => c.index.mot === mot);
     if (trouvees.length === 0) { journal.coupsDeCoeurImpossibles.push(`${mot} : absent de la base (inconnu de Lexique ou du Wiktionnaire)`); continue; }
     for (const carte of trouvees) {
+      if (carte.index.rarete === 'Hors-série') continue; // déjà dans le jeu, au rang ultime
       if (!carte.factionReconnue) { journal.coupsDeCoeurImpossibles.push(`${carte.index.id} : origine du mot non reconnue, donc pas de faction`); continue; }
       imposees.add(carte);
       journal.coupsDeCoeurAjoutes.push(carte.index.id);

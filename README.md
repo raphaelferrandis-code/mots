@@ -9,7 +9,7 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 
 **Le site en ligne : https://raphaelferrandis-code.github.io/mots/**
 
-**État d'avancement : phase 2 en cours.** On ouvre des paquets (un toutes les 10 minutes, 10 en stock), les doublons se changent en Encre, la collection se filtre et se trie, la partie est sauvegardée sur l'appareil et s'exporte dans un fichier. Reste à faire dans cette phase : l'habillage définitif (direction artistique à choisir) et l'animation d'ouverture qui va avec. Le duel arrive en phase 3.
+**État d'avancement : phase 2 faite.** Chaque carte est un timbre-poste émis par la langue d'origine du mot. On ouvre des paquets (un toutes les 10 minutes, 10 en stock), chaque timbre peut sortir en finition normale, brillante ou holographique, les vrais doublons se changent en Encre, l'album se filtre et se trie, la partie est sauvegardée sur l'appareil et s'exporte dans un fichier. Un rang ultime, les « Hors-série », réunit 16 mots qui détiennent un record. Le duel arrive en phase 3.
 
 ## Mise en ligne
 
@@ -60,6 +60,7 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | `pipeline/config.ts` | Tous les réglages de fabrication : parts de chaque rareté, poids de la fréquence et de la prévalence, taille de l'édition, équilibre entre factions et entre types de mots, critères de qualité, regroupement des langues en factions. |
 | `data/coups-de-coeur.txt` | Mots qui entrent d'office dans l'édition. |
 | `data/exclusions.txt` | Mots qui n'y entrent jamais. |
+| `data/hors-serie.txt` | Cartes Hors-série ajoutées à la main (`mot = Titre de la carte`), en plus des records trouvés automatiquement. |
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |
 | `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus de défense. Après une modification : `npm test` puis `npm run simulation:collection`. |
 
@@ -84,9 +85,10 @@ Deux générations faites à partir des mêmes données et des mêmes réglages 
 | `pipeline/tests/` | Les tests automatiques |
 | `src/partage/` | Ce que le pipeline et le jeu ont en commun (format des cartes, valeur des lettres) |
 | `src/config/` | Les chiffres d'équilibrage du jeu |
-| `src/theme/` | **Le thème** : `theme.css` contient toutes les couleurs, polices et mesures ; `styles.css` la mise en page |
+| `src/theme/` | **Le thème** du site : `theme.css` contient les couleurs, polices et mesures ; `styles.css` la mise en page |
 | `src/ecrans/` | Un fichier par écran (Accueil, Fiche carte, Réglages… et les écrans à venir) |
-| `src/composants/` | Les éléments réutilisés : la carte, la barre de navigation, les en-têtes |
+| `src/composants/` | Les éléments réutilisés : la barre de navigation, les en-têtes |
+| `src/composants/carte/` | **Le timbre** : son dessin (`Carte.tsx`, `timbre.css`), son cachet (`Tampon.tsx`) et son décor calculé à partir du mot (`decor.ts`) |
 | `src/navigation/` | Les adresses des écrans (`#/collection`, `#/carte/callipyge-adj`…) |
 | `src/jeu/` | **Les règles du jeu**, sans écran ni stockage : tirage des paquets, recharge, Encre, sauvegarde. Entièrement couvertes par des tests |
 | `simulateurs/` | Les outils d'équilibrage (simulateur de collection) |

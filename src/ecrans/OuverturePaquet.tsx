@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Carte } from '../composants/Carte.tsx';
+import { Carte, DosDeCarte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -41,7 +41,7 @@ export function OuverturePaquet() {
   if (!ouverture) {
     return (
       <main className="ecran">
-        <Entete surtitre="Paquets" titre="Ouvrir un paquet">Cinq cartes par paquet. Touche une carte pour la retourner.</Entete>
+        <Entete surtitre="Paquets" titre="Ouvrir un paquet">Cinq timbres par paquet. Touche un timbre pour le retourner.</Entete>
         <section className="bloc">
           <p className="paquets__stock"><strong>{paquets.stock}</strong> / {paquets.maximum}</p>
           <p className="texte-doux">{paquets.attente === null ? 'Stock plein.' : <>Prochain paquet dans <strong>{enMinutesEtSecondes(paquets.attente)}</strong></>} · Encre : {partie.sauvegarde.encre.toLocaleString('fr-FR')}</p>
@@ -62,7 +62,7 @@ export function OuverturePaquet() {
   return (
     <main className="ecran ecran--large">
       <Entete surtitre="Paquets" titre="Ton paquet">
-        {toutEstRetourne ? `${nouvelles} nouvelle${nouvelles > 1 ? 's' : ''} carte${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre pour les doublons` : ''}` : 'Touche une carte pour la retourner.'}
+        {toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre pour les doublons` : ''}` : 'Touche un timbre pour le retourner, fais glisser pour voir les suivants.'}
       </Entete>
 
       <ul className="paquet" aria-live="polite">
@@ -70,15 +70,14 @@ export function OuverturePaquet() {
           <li key={obtenue.carte.id} className="paquet__place" data-retournee={ouverture.retournees[position]} data-rarete={obtenue.carte.rarete}>
             {ouverture.retournees[position] ? (
               <>
-                <Carte carte={obtenue.carte} />
-                <span className={obtenue.nouvelle ? 'paquet__etiquette paquet__etiquette--nouvelle' : 'paquet__etiquette'}>
-                  {obtenue.nouvelle ? 'Nouvelle !' : `Doublon · +${obtenue.encre} Encre`}
+                <Carte carte={obtenue.carte} finition={obtenue.finition} />
+                <span className={obtenue.nouvelleFinition ? 'paquet__etiquette paquet__etiquette--nouvelle' : 'paquet__etiquette'}>
+                  {obtenue.nouvelle ? 'Nouveau !' : obtenue.nouvelleFinition ? `Nouvelle finition : ${obtenue.finition.toLowerCase()}` : `Doublon · +${obtenue.encre} Encre`}
+                  {obtenue.nouvelle && obtenue.finition !== 'Normale' && ` · ${obtenue.finition}`}
                 </span>
               </>
             ) : (
-              <button type="button" className="dos-de-carte" onClick={() => retourner(position)} aria-label={`Retourner la carte ${position + 1}`}>
-                <span aria-hidden="true">M</span>
-              </button>
+              <DosDeCarte onRetourner={() => retourner(position)} etiquette={`Retourner le timbre ${position + 1}`} />
             )}
           </li>
         ))}

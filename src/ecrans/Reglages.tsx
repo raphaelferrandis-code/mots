@@ -3,7 +3,7 @@ import { AVenir, Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
-import { RARETES } from '../partage/types.ts';
+import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffacer } from '../services/partie.ts';
 
 const OPTIONS: { cle: keyof ReglagesDuJoueur; nom: string; aide: string }[] = [
@@ -96,15 +96,20 @@ export function Reglages() {
         <div className="tableau-defilant">
           <table className="tableau">
             <thead>
-              <tr><th scope="col">Carte</th>{RARETES.map((r) => <th key={r} scope="col">{r}</th>)}</tr>
+              <tr><th scope="col">Carte</th>{RARETES_ORDINAIRES.map((r) => <th key={r} scope="col">{r}</th>)}</tr>
             </thead>
             <tbody>
               {EQUILIBRAGE.paquets.emplacements.map((chances, i) => (
-                <tr key={i}><th scope="row">{i + 1}</th>{RARETES.map((r) => <td key={r}>{chances[r] ? `${chances[r]} %` : '—'}</td>)}</tr>
+                <tr key={i}><th scope="row">{i + 1}</th>{RARETES_ORDINAIRES.map((r) => <td key={r}>{chances[r] ? `${chances[r]} %` : '—'}</td>)}</tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="texte-doux petit">
+          <strong>Hors-série</strong> (le rang ultime, des mots qui détiennent un record) : la dernière carte d'un paquet en est une environ 1 fois sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}.{' '}
+          <strong>Finitions</strong>, tirées à part pour chaque carte, quelle que soit sa rareté : brillante 1 fois sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 fois sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}.
+          Une finition que tu n'avais pas encore se garde ; seul un vrai doublon se change en Encre (×{EQUILIBRAGE.finitions.encre.Brillante} pour une brillante, ×{EQUILIBRAGE.finitions.encre.Holographique} pour une holographique).
+        </p>
         <p className="texte-doux petit">
           Doublon changé en Encre : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet immédiat coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
         </p>

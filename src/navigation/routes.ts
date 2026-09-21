@@ -9,10 +9,9 @@ export type Route =
   | { ecran: 'carte'; id: string }
   | { ecran: 'deck' }
   | { ecran: 'duel' }
-  | { ecran: 'reglages' }
-  | { ecran: 'atelier' };
+  | { ecran: 'reglages' };
 
-const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages', 'atelier'] as const;
+const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages'] as const;
 
 export function lireRoute(hash: string): Route {
   const [premier = '', second = ''] = hash.replace(/^#\/?/, '').split('/');

@@ -20,6 +20,7 @@ export type DonneesDuRapport = {
   edition: CarteComplete[];
   journal: JournalEdition;
   exclusions: Set<string>;
+  horsSerieIntrouvables: string[];
   corrections: Map<string, string>;
   correctionsIllisibles: string[];
   poids: PoidsDesFichiers;
@@ -155,6 +156,13 @@ export function redigerRapport(d: DonneesDuRapport): string {
   L.push('', `Corrections d'origine faites à la main (\`data/corrections-factions.txt\`) : ${d.corrections.size ? [...d.corrections].map(([mot, origine]) => `${mot} → ${origine}`).join(', ') : 'aucune'}.`);
   if (d.correctionsIllisibles.length) L.push('', '⚠️ Lignes ignorées dans ce fichier (faction inconnue ?) :', ...d.correctionsIllisibles.map((l) => `- ${l}`));
   L.push('');
+
+  // ── Hors-série
+  const horsSerie = edition.filter((c) => c.index.rarete === 'Hors-série');
+  L.push('### Les cartes Hors-série (rang ultime)', '');
+  L.push("*Des mots qui détiennent un record, trouvés dans les données, plus ceux de `data/hors-serie.txt`. Elles s'ajoutent aux cartes ordinaires et sont comptées à part dans la collection.*", '');
+  L.push(...tableau(['Mot', 'Type', 'Faction', 'Attaque / défense', 'Titre de la carte'], horsSerie.map((c) => [c.index.mot, c.index.type, c.index.faction, `${c.index.attaque} / ${c.index.defense}`, c.index.record ?? ''])));
+  if (d.horsSerieIntrouvables.length) L.push(`⚠️ Mots de data/hors-serie.txt absents de la base : ${d.horsSerieIntrouvables.join(', ')}.`, '');
 
   // ── 5
   L.push("## 5. Exemples tirés au hasard dans l'édition", '');

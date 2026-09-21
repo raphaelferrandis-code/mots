@@ -2,7 +2,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { RARETES } from '../../src/partage/types.ts';
+import { RARETES_ORDINAIRES as RARETES } from '../../src/partage/types.ts';
 import type { Nature, Rarete } from '../../src/partage/types.ts';
 import { CONFIG } from '../config.ts';
 import { assemblerCartes } from '../etapes/cartes.ts';

@@ -16,3 +16,5 @@ reggae = Anglais
 # « rodomont » vient de Rodomonte, personnage de l'Arioste.
 rodomont = Italien
 rodomontade = Italien
+# « pyroclastique » : du grec pyr (feu) et klastos (brisé).
+pyroclastique = Grec

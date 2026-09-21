@@ -1,8 +1,8 @@
-// Le tirage d'un paquet : d'abord la rareté de chaque emplacement, puis un mot au hasard dans cette rareté.
-// Règles pures : pas d'écran, pas de sauvegarde, et le hasard est fourni par l'appelant.
+// Le tirage d'un paquet : d'abord la rareté de chaque emplacement, puis un mot au hasard dans cette rareté,
+// puis la finition de la carte. Règles pures : pas d'écran, pas de sauvegarde, et le hasard est fourni par l'appelant.
 
 import { RARETES } from '../partage/types.ts';
-import type { CarteIndex, Rarete, Registre } from '../partage/types.ts';
+import type { CarteIndex, Finition, Rarete, Registre } from '../partage/types.ts';
 import type { ChancesParRarete } from '../config/equilibrage.ts';
 import { choisir } from './hasard.ts';
 import type { Hasard } from './hasard.ts';
@@ -10,14 +10,23 @@ import type { Hasard } from './hasard.ts';
 export type ReglagesDesPaquets = {
   emplacements: ChancesParRarete[];
   paquetsAvantLegendaireGarantie: number;
+  chanceHorsSerie: number;
 };
+
+export type ReglagesDesFinitions = {
+  chances: Partial<Record<Finition, number>>;
+  encre: Record<Finition, number>;
+};
+
+// Une carte sortie d'un paquet, avec la finition que le sort lui a donnée.
+export type CarteTiree = { carte: CarteIndex; finition: Finition };
 
 // Les cartes rangées par rareté une fois pour toutes (le simulateur ouvre des millions de paquets).
 export type Reserve = Record<Rarete, CarteIndex[]>;
 
 // « masques » : les registres que le joueur a choisi de masquer (familiers, injurieux) ne tombent plus dans les paquets.
 export function preparerReserve(cartes: readonly CarteIndex[], masques: readonly Registre[] = []): Reserve {
-  const reserve: Reserve = { 'Commune': [], 'Peu commune': [], 'Rare': [], 'Épique': [], 'Légendaire': [] };
+  const reserve: Reserve = { 'Commune': [], 'Peu commune': [], 'Rare': [], 'Épique': [], 'Légendaire': [], 'Hors-série': [] };
   for (const carte of cartes) {
     if (!carte.registre.some((r) => masques.includes(r))) reserve[carte.rarete].push(carte);
   }
@@ -34,12 +43,24 @@ export function tirerRarete(chances: ChancesParRarete, hasard: Hasard): Rarete {
   return RARETES.findLast((r) => (chances[r] ?? 0) > 0) ?? 'Commune';
 }
 
+export function tirerFinition(chances: ReglagesDesFinitions['chances'], hasard: Hasard): Finition {
+  let seuil = hasard();
+  // De la plus rare à la plus courante ; ce qui reste est « Normale ».
+  for (const finition of ['Holographique', 'Brillante'] as const) {
+    seuil -= chances[finition] ?? 0;
+    if (seuil < 0) return finition;
+  }
+  return 'Normale';
+}
+
 // Une carte de la rareté voulue, hors cartes interdites. Si la rareté n'a plus rien à offrir
 // (réserve minuscule, beaucoup de cartes masquées), on descend d'une rareté, puis on remonte.
 function tirerCarte(reserve: Reserve, rarete: Rarete, interdites: ReadonlySet<string>, hasard: Hasard): CarteIndex | undefined {
   const rang = RARETES.indexOf(rarete);
   const ordre = [rarete, ...RARETES.slice(0, rang).reverse(), ...RARETES.slice(rang + 1)];
   for (const r of ordre) {
+    // Une carte Hors-série ne remplace jamais une carte ordinaire : elle ne vient que de son propre tirage.
+    if (r === 'Hors-série' && rarete !== 'Hors-série') continue;
     const groupe = reserve[r];
     if (groupe.length === 0) continue;
     // Presque toujours, quelques essais suffisent ; sinon on trie vraiment.
@@ -59,29 +80,40 @@ export type OptionsDOuverture = {
   exclure?: ReadonlySet<string>; // cartes à ne pas tirer (paquets de départ : celles déjà possédées)
 };
 
-export function ouvrirPaquet(reserve: Reserve, options: OptionsDOuverture, reglages: ReglagesDesPaquets): CarteIndex[] {
+export function ouvrirPaquet(reserve: Reserve, options: OptionsDOuverture, reglages: ReglagesDesPaquets, finitions: ReglagesDesFinitions): CarteTiree[] {
+  const { hasard } = options;
   const garantie = options.paquetsSansLegendaire + 1 >= reglages.paquetsAvantLegendaireGarantie;
   const interdites = new Set(options.exclure);
-  const paquet: CarteIndex[] = [];
+  const paquet: CarteTiree[] = [];
 
   reglages.emplacements.forEach((chances, position) => {
     const dernier = position === reglages.emplacements.length - 1;
-    const rarete = garantie && dernier ? 'Légendaire' : tirerRarete(chances, options.hasard);
-    const carte = tirerCarte(reserve, rarete, interdites, options.hasard);
+    let rarete = tirerRarete(chances, hasard);
+    if (dernier) {
+      // La garantie de Légendaire passe avant tout ; sinon, une toute petite chance de carte Hors-série.
+      if (garantie) rarete = 'Légendaire';
+      else if (reserve['Hors-série'].length > 0 && hasard() < reglages.chanceHorsSerie) rarete = 'Hors-série';
+    }
+    const carte = tirerCarte(reserve, rarete, interdites, hasard);
     if (!carte) return;
-    paquet.push(carte);
+    // Les cartes Hors-série ont leur propre impression : elles n'ont pas de finition.
+    paquet.push({ carte, finition: carte.rarete === 'Hors-série' ? 'Normale' : tirerFinition(finitions.chances, hasard) });
     interdites.add(carte.id); // jamais deux fois la même carte dans un paquet
   });
   return paquet;
 }
 
-export const contientUneLegendaire = (paquet: readonly CarteIndex[]): boolean => paquet.some((c) => c.rarete === 'Légendaire');
+export const contientUneLegendaire = (paquet: readonly CarteTiree[]): boolean => paquet.some((t) => t.carte.rarete === 'Légendaire');
 
 // Encre que rapporterait en moyenne un paquet dont toutes les cartes seraient des doublons :
 // le maximum de ce qu'un paquet peut rendre. Sert à vérifier que l'économie ne s'emballe pas.
-export function encreMaximaleMoyenneParPaquet(emplacements: ChancesParRarete[], encreParDoublon: Record<Rarete, number>): number {
-  return emplacements.reduce((somme, chances) => {
+export function encreMaximaleMoyenneParPaquet(reglages: ReglagesDesPaquets, finitions: ReglagesDesFinitions, encreParDoublon: Record<Rarete, number>): number {
+  const parCarte = reglages.emplacements.reduce((somme, chances) => {
     const total = RARETES.reduce((s, r) => s + (chances[r] ?? 0), 0);
     return somme + RARETES.reduce((s, r) => s + ((chances[r] ?? 0) / total) * encreParDoublon[r], 0);
   }, 0);
+  const brillante = finitions.chances.Brillante ?? 0;
+  const holographique = finitions.chances.Holographique ?? 0;
+  const multiplicateurMoyen = (1 - brillante - holographique) * finitions.encre.Normale + brillante * finitions.encre.Brillante + holographique * finitions.encre.Holographique;
+  return parCarte * multiplicateurMoyen + reglages.chanceHorsSerie * encreParDoublon['Hors-série'];
 }

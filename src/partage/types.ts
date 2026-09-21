@@ -1,11 +1,17 @@
 // Format des cartes, partagé entre le pipeline (qui les fabrique) et le jeu (qui les affiche).
 
 export type Nature = 'Nom' | 'Verbe' | 'Adjectif' | 'Adverbe';
-export type Rarete = 'Commune' | 'Peu commune' | 'Rare' | 'Épique' | 'Légendaire';
+export type Rarete = 'Commune' | 'Peu commune' | 'Rare' | 'Épique' | 'Légendaire' | 'Hors-série';
 export type Registre = 'Familier' | 'Injurieux' | 'Littéraire' | 'Vieilli';
 
-// De la moins rare à la plus rare.
-export const RARETES: Rarete[] = ['Commune', 'Peu commune', 'Rare', 'Épique', 'Légendaire'];
+// De la moins rare à la plus rare. « Hors-série » est le rang ultime : des mots qui détiennent un record.
+export const RARETES: Rarete[] = ['Commune', 'Peu commune', 'Rare', 'Épique', 'Légendaire', 'Hors-série'];
+// Les cinq raretés ordinaires, celles qui se partagent l'édition selon la rareté réelle des mots.
+export const RARETES_ORDINAIRES: Rarete[] = ['Commune', 'Peu commune', 'Rare', 'Épique', 'Légendaire'];
+
+// La finition est une variante de tirage, indépendante de la rareté : la même carte existe avec ou sans effet.
+export type Finition = 'Normale' | 'Brillante' | 'Holographique';
+export const FINITIONS: Finition[] = ['Normale', 'Brillante', 'Holographique'];
 
 // Ce que le jeu charge au démarrage : une ligne courte par carte.
 export type CarteIndex = {
@@ -18,6 +24,8 @@ export type CarteIndex = {
   faction: string;
   registre: Registre[];
   definition: string; // le sens principal, raccourci pour tenir sur la carte (la fiche donne les définitions complètes)
+  attestation?: string; // date de première apparition du mot : c'est la date du cachet sur le timbre
+  record?: string; // cartes Hors-série seulement : le record que détient le mot
 };
 
 export type Definition = {

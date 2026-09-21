@@ -1,0 +1,16 @@
+# HORS-SÉRIE : LE RANG ULTIME
+# Les cartes Hors-série sont des mots qui détiennent un record. La plupart sont trouvées toutes seules
+# par l'ordinateur (le plus long mot, le plus long palindrome, le mot aux sens les plus nombreux…).
+# Ce fichier sert à en ajouter d'autres à la main, avec le titre qui sera écrit sur la carte :
+#
+#     mot = Titre de la carte
+#
+# Un mot écrit ici ne peut plus gagner un record automatique (c'est aussi un moyen d'en choisir un
+# quand plusieurs mots sont à égalité). Les lignes commençant par # sont ignorées.
+# Après une modification : npm run pipeline, puis relire la partie « Hors-série » de data/rapport.md.
+
+# Cinq mots sont attestés en 842, dans les Serments de Strasbourg, le plus ancien texte en français. On garde le plus beau.
+amour = Le plus vieux mot daté · attesté en 842, dans les Serments de Strasbourg
+hapax = Le mot qui désigne un mot que l'on ne rencontre qu'une seule fois
+mot = Le mot « mot »
+dictionnaire = La maison de tous les autres

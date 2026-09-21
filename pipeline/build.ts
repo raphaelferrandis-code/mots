@@ -13,6 +13,7 @@ import { CONFIG, estUneOrigineConnue } from './config.ts';
 import { assemblerCartes } from './etapes/cartes.ts';
 import { composerEdition, renoterDansLEdition } from './etapes/edition.ts';
 import { chargerLexique } from './etapes/lexique.ts';
+import { trouverLesRecords } from './etapes/records.ts';
 import { redigerMotsSensibles, redigerRapport } from './etapes/rapport.ts';
 import { ecrireBaseComplete, ecrireEdition } from './etapes/sortie.ts';
 import { lireWiktionnaire } from './etapes/wiktionnaire.ts';
@@ -65,18 +66,35 @@ for (const ligne of correctionsIllisibles) console.warn(`    ⚠️ Ligne ignor�
 const cartes = assemblerCartes(mots, CONFIG, corrections);
 console.log(`    ${cartes.length.toLocaleString('fr-FR')} cartes possibles`);
 
+// Rang ultime : les mots qui détiennent un record, plus ceux de la liste de Raphaël (« mot = titre »).
+const fichierHorsSerie = chemin('data', 'hors-serie.txt');
+const horsSerieManuels = new Map((existsSync(fichierHorsSerie) ? readFileSync(fichierHorsSerie, 'utf8').split(/\r?\n/) : []).flatMap((ligne) => {
+  if (!ligne.trim() || ligne.trim().startsWith('#') || !ligne.includes('=')) return [];
+  const [mot, ...titre] = ligne.split('=');
+  return [[mot.trim().toLowerCase(), titre.join('=').trim()] as [string, string]];
+}));
+const records = trouverLesRecords(cartes, horsSerieManuels);
+for (const carte of cartes) {
+  const titre = records.titres.get(carte.index.id);
+  if (titre) { carte.index.rarete = 'Hors-série'; carte.index.record = titre; }
+}
+const horsSerie = cartes.filter((c) => c.index.rarete === 'Hors-série');
+console.log(`    ${horsSerie.length} cartes Hors-série`);
+
 console.log(`4/5 Composition de l'Édition ${CONFIG.edition.numero}…`);
 const exclusions = lireListe(chemin('data', 'exclusions.txt'));
 const coupsDeCoeur = lireListe(chemin('data', 'coups-de-coeur.txt'));
 const composition = composerEdition(cartes, { exclusions, coupsDeCoeur }, CONFIG.edition, CONFIG.rarete.parts);
 const journal = composition.journal;
-const edition = CONFIG.edition.notesCalculeesSur === 'edition' ? renoterDansLEdition(composition.edition) : composition.edition;
+// Les cartes Hors-série s'ajoutent aux cartes ordinaires, sans prendre la place d'aucune.
+const choisies = [...composition.edition, ...horsSerie];
+const edition = CONFIG.edition.notesCalculeesSur === 'edition' ? renoterDansLEdition(choisies) : choisies;
 console.log(`    ${edition.length.toLocaleString('fr-FR')} cartes retenues`);
 
 console.log('5/5 Écriture des fichiers…');
 const poids = ecrireEdition(chemin('public', 'data'), edition, CONFIG.edition.numero, CONFIG.edition.lots, version);
 ecrireBaseComplete(chemin('data', 'intermediaire', 'base-complete.jsonl'), cartes);
-writeFileSync(chemin('data', 'rapport.md'), redigerRapport({ lexique, compteurs, motsCroises: mots.size, cartes, edition, journal, exclusions, corrections, correctionsIllisibles, poids, dureeSecondes: (Date.now() - depart) / 1000, version }));
+writeFileSync(chemin('data', 'rapport.md'), redigerRapport({ lexique, compteurs, motsCroises: mots.size, cartes, edition, journal, exclusions, horsSerieIntrouvables: records.introuvables, corrections, correctionsIllisibles, poids, dureeSecondes: (Date.now() - depart) / 1000, version }));
 writeFileSync(chemin('data', 'mots-sensibles.md'), redigerMotsSensibles(edition));
 
 console.log(`Terminé en ${Math.round((Date.now() - depart) / 1000)} secondes. À relire : data/rapport.md`);
