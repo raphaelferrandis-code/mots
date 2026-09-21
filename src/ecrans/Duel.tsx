@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { choisirAuxFleches } from '../composants/fleches.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE, attaqueEnJeu } from '../config/equilibrage.ts';
@@ -29,6 +30,7 @@ import type { FinDeDuel } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
 
 const REGLES = EQUILIBRAGE.duel;
+const MODES: Adversaire['type'][] = ['entrainement', 'joute'];
 
 // Une réponse du joueur à une épreuve : la proposition choisie (null = temps écoulé), si c'était la bonne,
 // et si cette bonne réponse vient de faire du mot un mot maîtrisé.
@@ -57,6 +59,8 @@ function secondesPourRepondre(sauvegarde: Sauvegarde): number | null {
 
 // Donne la main au bouton principal (pour jouer au clavier) sans faire défiler la page jusqu'à lui.
 const viser = (bouton: HTMLButtonElement | null): void => bouton?.focus({ preventScroll: true });
+// Donne la main au mot demandé : un lecteur d'écran l'annonce, et la touche Tab mène droit aux quatre définitions.
+const viserLeMot = (titre: HTMLHeadingElement | null): void => titre?.focus({ preventScroll: true });
 
 const pluriel = (n: number, mot: string): string => `${n} ${mot}${n > 1 ? 's' : ''}`;
 
@@ -180,12 +184,13 @@ export function Duel() {
     return (
       <main className="ecran duel-salon">
         <Entete titre="Les duels" actions={
-          <div className="modes" role="tablist" aria-label="Mode de duel">
-            <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement</button>
-            <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées</button>
+          <div className="modes" role="tablist" aria-label="Mode de duel" onKeyDown={choisirAuxFleches(MODES, mode, setMode)}>
+            <button type="button" role="tab" id="onglet-entrainement" aria-controls="panneau-des-duels" aria-selected={mode === 'entrainement'} tabIndex={mode === 'entrainement' ? 0 : -1} onClick={() => setMode('entrainement')}>Entraînement</button>
+            <button type="button" role="tab" id="onglet-joute" aria-controls="panneau-des-duels" aria-selected={mode === 'joute'} tabIndex={mode === 'joute' ? 0 : -1} onClick={() => setMode('joute')}>Joutes classées</button>
           </div>
         } />
 
+        <div className="duel-salon__panneau" role="tabpanel" id="panneau-des-duels" aria-labelledby={`onglet-${mode}`}>
         {!pret ? (
           <section className="rubrique">
             <p>Deck incomplet : {deck.donnees.length} / {REGLES.tailleDuDeck} timbres jouables.</p>
@@ -200,9 +205,9 @@ export function Duel() {
           <div className="panneaux">
             <section className="rubrique panneaux__large">
               <h2>Difficulté</h2>
-              <div className="niveaux niveaux--entrainement" role="radiogroup" aria-label="Niveau de l'ordinateur">
+              <div className="niveaux niveaux--entrainement" role="radiogroup" aria-label="Niveau de l'ordinateur" onKeyDown={choisirAuxFleches(NIVEAUX, niveau, setNiveau)}>
                 {NIVEAUX.map((n) => (
-                  <button key={n} type="button" role="radio" aria-checked={niveau === n} className="niveau" onClick={() => setNiveau(n)}>
+                  <button key={n} type="button" role="radio" aria-checked={niveau === n} tabIndex={niveau === n ? 0 : -1} className="niveau" onClick={() => setNiveau(n)}>
                     <strong>{n}</strong>
                     <span className="texte-doux petit">{descriptionDuNiveau(n)}</span>
                     <span className="niveau__gain">Victoire : +{REGLES.encreParVictoire[n]} Encre</span>
@@ -243,6 +248,7 @@ export function Duel() {
             </details>
           </div>
         )}
+        </div>
       </main>
     );
   }
@@ -261,6 +267,7 @@ export function Duel() {
 
   return (
     <main className="ecran duel">
+      <h1 className="visuellement-cache">Duel contre {nomAdverse}</h1>
       <header className="duel__camps">
         <Jauge nom={nomAdverse} camp={adversaire} />
         <span className="duel__manche"><span>Manche {duel.manche}<small> / {REGLES.manchesMaximum}</small></span><small>{terrain.adversaire.type === 'joute' ? `Joute · cote ${terrain.adversaire.profil.cote}` : `Niveau ${terrain.adversaire.niveau.toLowerCase()}`}</small></span>
@@ -302,11 +309,12 @@ export function Duel() {
       })()}
 
       {(etape.nom === 'attaque' || etape.nom === 'parade') && (
-        <section className="bloc epreuve">
+        // La clé change entre l'attaque et la parade : le mot de la nouvelle question reprend la main.
+        <section key={etape.nom} className="bloc epreuve">
           {etape.nom === 'parade' && etape.attaque.juste && <p className="epreuve__rappel" data-reussi="true">✔ Attaque réussie</p>}
           {etape.nom === 'parade' && !etape.attaque.juste && <p className="epreuve__rappel" data-reussi="false">Attaque manquée</p>}
           <p className="entete__surtitre">{etape.nom === 'attaque' ? 'Attaque · ton mot' : 'Parade · son mot'}</p>
-          <h2 className="epreuve__mot" lang="fr">{etape.epreuve.mot}</h2>
+          <h2 className="epreuve__mot" lang="fr" tabIndex={-1} ref={viserLeMot}>{etape.epreuve.mot}</h2>
           <p className="texte-doux petit">{(etape.nom === 'attaque' ? etape.carte : etape.adverse).type} · Quelle est sa définition ?</p>
           {duree !== null && <Sablier debut={etape.debut} secondes={duree} />}
           <Propositions epreuve={etape.epreuve} onRepondre={repondre} />
@@ -452,7 +460,9 @@ function Propositions({ epreuve, reponse, onRepondre, seulementLUtile = false }:
       {epreuve.propositions.map((texte, i) => {
         if (!reponse) return <li key={i}><button type="button" className="proposition" lang="fr" onClick={() => onRepondre?.(i)}>{texte}</button></li>;
         const etat = i === epreuve.bonne ? 'bonne' : i === reponse.choisie ? 'fausse' : 'autre';
-        return seulementLUtile && etat === 'autre' ? null : <li key={i}><span className="proposition" lang="fr" data-etat={etat}>{texte}</span></li>;
+        // La coche et la croix sont dessinées par la feuille de style : on les dit aussi en toutes lettres.
+        const lue = etat === 'bonne' ? (i === reponse.choisie ? 'Ta réponse, la bonne : ' : 'La bonne réponse : ') : etat === 'fausse' ? 'Ta réponse, fausse : ' : '';
+        return seulementLUtile && etat === 'autre' ? null : <li key={i}><span className="proposition" lang="fr" data-etat={etat}>{lue && <span className="visuellement-cache" lang="fr">{lue}</span>}{texte}</span></li>;
       })}
     </ol>
   );

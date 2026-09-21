@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
 import { Accueil } from './ecrans/Accueil.tsx';
@@ -11,6 +11,7 @@ import { Galerie } from './ecrans/Galerie.tsx';
 import { OuverturePaquet } from './ecrans/OuverturePaquet.tsx';
 import { Reglages } from './ecrans/Reglages.tsx';
 import { useRoute } from './navigation/useRoute.ts';
+import { titreDeLaRoute } from './navigation/routes.ts';
 import type { Route } from './navigation/routes.ts';
 
 function Ecran({ route }: { route: Route }) {
@@ -27,13 +28,35 @@ function Ecran({ route }: { route: Route }) {
   }
 }
 
+// Donne la main au titre de l'écran (ou, à défaut, à son contenu) : la touche Tab repart de là, et un lecteur
+// d'écran lit où l'on est arrivé.
+// Un écran qui charge encore ses cartes n'a pas tout de suite son titre : on l'attend un instant, sans jamais
+// reprendre la main à un joueur qui l'aurait déjà déplacée entre-temps.
+function allerAuContenu(essaisRestants = 20, depuis: Element | null = document.activeElement): void {
+  if (document.activeElement !== depuis) return;
+  const titre = document.querySelector<HTMLElement>('main h1');
+  if (!titre && essaisRestants > 0) { setTimeout(() => allerAuContenu(essaisRestants - 1, depuis), 50); return; }
+  const cible = titre ?? document.querySelector<HTMLElement>('main');
+  if (!cible) return;
+  cible.tabIndex = -1;
+  cible.focus({ preventScroll: true });
+}
+
 export function App() {
   const route = useRoute();
   const partie = usePartie();
   const cle = route.ecran === 'carte' ? `carte/${route.id}` : route.ecran;
 
-  // À chaque changement d'écran, on repart du haut de la page.
-  useEffect(() => { window.scrollTo(0, 0); }, [cle]);
+  // À chaque changement d'écran : on repart du haut de la page, l'onglet du navigateur change de titre, et le
+  // clavier repart du titre du nouvel écran (sauf au tout premier affichage, où l'on ne dérange pas le navigateur).
+  const ecranPrecedent = useRef(cle);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = titreDeLaRoute(route);
+    if (ecranPrecedent.current === cle) return;
+    ecranPrecedent.current = cle;
+    allerAuContenu();
+  }, [cle]); // « cle » résume la route
 
   // Le réglage « réduire les animations » s'applique à tout le site (voir la fin de styles.css).
   const animationsReduites = partie.etat === 'prete' && partie.sauvegarde.reglages.reduireAnimations;
@@ -41,6 +64,7 @@ export function App() {
 
   return (
     <div className="application">
+      <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} />
       <Ecran key={cle} route={route} />
     </div>

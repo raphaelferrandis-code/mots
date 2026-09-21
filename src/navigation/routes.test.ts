@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { lien, lireRoute } from './routes.ts';
+import { lien, lireRoute, titreDeLaRoute } from './routes.ts';
 import type { Route } from './routes.ts';
 
 describe('adresses des écrans', () => {
@@ -21,5 +21,11 @@ describe('adresses des écrans', () => {
       { ecran: 'carte', id: 'callipyge-adj' }, { ecran: 'carte', id: 'sérendipité-nom' }, { ecran: 'carte', id: 'arc-en-ciel-nom' },
     ];
     for (const route of routes) assert.deepEqual(lireRoute(lien(route)), route);
+  });
+  it("donne à chaque écran son titre d'onglet, avec le mot pour une fiche", () => {
+    assert.equal(titreDeLaRoute({ ecran: 'accueil' }), 'MOTS');
+    assert.equal(titreDeLaRoute({ ecran: 'collection' }), 'Album — MOTS');
+    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'arc-en-ciel-nom' }), 'arc-en-ciel — MOTS');
+    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'sérendipité-nom' }), 'sérendipité — MOTS');
   });
 });

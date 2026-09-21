@@ -29,6 +29,15 @@ button {
 
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
 
+/* Le titre d'un écran reçoit la main à chaque changement d'écran (App.tsx) : par programme seulement, donc sans cadre. */
+main:focus, main h1:focus { outline: none; }
+
+/* Premier arrêt de la touche Tab : sauter le menu. Invisible tant qu'il n'a pas la main. */
+.evitement { position: absolute; left: 8px; top: -80px; z-index: 30; min-height: 44px; padding: 10px 18px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); color: var(--accent-texte); }
+.evitement:focus { top: 8px; }
+
+::placeholder { color: var(--encre-douce); opacity: 0.8; }
+
 .visuellement-cache {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
@@ -175,7 +184,7 @@ button {
 .filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
 .filtres input, .filtres select, .outils-album input, .outils-album select {
   font: inherit; color: inherit; min-height: 44px; padding: 8px 12px;
-  border: 1px solid var(--filet); border-radius: 4px; background: var(--carte-fond); min-width: 0; width: 100%;
+  border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); min-width: 0; width: 100%;
 }
 .outils-album { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) auto; gap: 8px; }
 .outils-album input { background: transparent; }
@@ -197,7 +206,7 @@ button {
 /* Le filet de l'en-tête suffit au-dessus de la première rubrique. Celles de la
    seconde colonne le perdent aussi, sur grand écran seulement (responsive.css). */
 .reglages__preferences > .rubrique:first-child,
-.duel-salon > .panneaux > .rubrique:first-child { border-top: 0; padding-top: 0; }
+.duel-salon__panneau > .rubrique:first-child, .duel-salon__panneau > .panneaux > .rubrique:first-child { border-top: 0; padding-top: 0; }
 .tableau-defilant { overflow-x: auto; }
 .tableau { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
 .tableau th, .tableau td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--filet); white-space: nowrap; }
@@ -233,12 +242,14 @@ button {
 .deck__vide { aspect-ratio: 5 / 7; border: 2px dashed var(--filet); border-radius: 6px; }
 .regles { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .option--liste { grid-template-columns: 1fr; cursor: default; }
-.option--liste select { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--filet); border-radius: 4px; min-height: 44px; background: var(--carte-fond); max-width: 260px; }
+.option--liste select { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--filet-fort); border-radius: 4px; min-height: 44px; background: var(--carte-fond); max-width: 260px; }
 
 /* ── Duel ───────────────────────────────────────────────────────────────── */
 
 /* Les deux modes de duel : entraînement, joutes classées. */
 .modes { display: flex; gap: 16px; }
+.duel-salon__panneau { display: flex; flex-direction: column; gap: var(--marge); min-width: 0; }
+.epreuve__mot:focus { outline: none; } /* reçoit la main par programme, pour les lecteurs d'écran */
 .modes button { min-height: 44px; padding: 8px 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 0.9rem; color: var(--encre-douce); cursor: pointer; }
 .modes button[aria-selected='true'] { border-bottom-color: var(--accent); color: var(--encre); }
 
@@ -252,7 +263,7 @@ button {
 /* ── Confidentialité : une page à lire, en lignes courtes ───────────────── */
 .confidentialite .rubrique > * { max-width: 72ch; }
 .joute__saisie label { display: grid; gap: 2px; }
-.joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 4px; background: var(--carte-fond); width: 100%; }
+.joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); width: 100%; }
 .joute__saisie input[aria-invalid='true'] { border-color: var(--accent); }
 .niveau:disabled { opacity: 0.6; cursor: default; }
 .classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
