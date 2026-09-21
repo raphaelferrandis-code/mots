@@ -181,8 +181,82 @@ button {
 .donnees dt { color: var(--encre-douce); }
 .donnees dd { margin: 0; }
 
-/* ── Confort : moins d'animations si l'appareil le demande ─────────────── */
+/* ── Accueil et paquets ─────────────────────────────────────────────────── */
+
+.paquets__stock { font-family: var(--police-chiffres); font-size: 1.5rem; color: var(--encre-douce); }
+.paquets__stock strong { font-size: 3.2rem; line-height: 1; color: var(--encre); }
+.rangee-de-boutons { display: flex; flex-wrap: wrap; gap: 10px; }
+.bouton { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+.bouton--inactif { background: transparent; color: var(--encre-douce); border-color: var(--filet); cursor: default; }
+.bouton--danger { background: transparent; color: var(--accent); border-color: var(--accent); margin-top: 6px; }
+.bloc--alerte { border-color: var(--accent); }
+
+.paquet { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (min-width: 768px) { .paquet { grid-template-columns: repeat(5, 1fr); } }
+.paquet__place { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.paquet__place > .carte, .dos-de-carte { width: 100%; }
+.paquet__place[data-retournee='true'] > .carte { animation: apparition 0.45s ease-out; }
+.paquet__place[data-retournee='true'][data-rarete='Épique'] > .carte,
+.paquet__place[data-retournee='true'][data-rarete='Légendaire'] > .carte { animation: apparition-rare 0.9s ease-out; }
+@keyframes apparition { from { transform: rotateY(90deg) scale(0.96); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes apparition-rare {
+  0% { transform: rotateY(90deg) scale(0.9); opacity: 0.3; box-shadow: 0 0 0 0 transparent; }
+  55% { transform: scale(1.06); opacity: 1; box-shadow: 0 0 38px 6px var(--couleur-rarete); }
+  100% { transform: none; box-shadow: var(--ombre); }
+}
+.paquet__etiquette { font-size: 0.8rem; color: var(--encre-douce); text-align: center; }
+.paquet__etiquette--nouvelle { color: var(--accent); font-weight: 700; letter-spacing: 0.04em; }
+
+.dos-de-carte {
+  aspect-ratio: 5 / 7;
+  border-radius: var(--rayon-carte);
+  border: 4px solid var(--encre);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 9px, rgba(255, 255, 255, 0.07) 9px 10px),
+    repeating-linear-gradient(-45deg, transparent 0 9px, rgba(255, 255, 255, 0.07) 9px 10px),
+    var(--encre);
+  color: var(--papier);
+  box-shadow: var(--ombre);
+  display: grid; place-items: center;
+  font-family: var(--police-titre); font-size: 3rem; font-weight: 700;
+  transition: transform 0.15s ease-out;
+}
+.dos-de-carte:hover, .dos-de-carte:focus-visible { transform: translateY(-4px); }
+
+/* ── Collection ─────────────────────────────────────────────────────────── */
+
+.progressions { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 16px; }
+.progression { width: 100%; background: none; border: 0; padding: 6px 4px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; text-align: left; border-radius: 6px; }
+.progression[aria-pressed='true'] { background: var(--papier-fonce); }
+.progression__compte { font-family: var(--police-chiffres); color: var(--encre-douce); font-size: 0.88rem; }
+.progression__barre { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--papier-fonce); overflow: hidden; }
+.progression__barre span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+
+.filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.filtres input, .filtres select {
+  font: inherit; color: inherit; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--filet); border-radius: 10px; background: var(--carte-fond);
+}
+
+/* ── Réglages ───────────────────────────────────────────────────────────── */
+
+.option { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 6px 0; cursor: pointer; }
+.option input { width: 22px; height: 22px; margin-top: 3px; accent-color: var(--accent); }
+.option span { display: flex; flex-direction: column; gap: 2px; }
+.tableau-defilant { overflow-x: auto; }
+.tableau { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+.tableau th, .tableau td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--filet); white-space: nowrap; }
+.tableau thead th { font-weight: 400; color: var(--encre-douce); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ── Confort : moins d'animations si l'appareil ou le joueur le demande ── */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+[data-animations-reduites] *, [data-animations-reduites] *::before, [data-animations-reduites] *::after { animation: none !important; transition: none !important; }
+
+/* Bloc que l'on déplie d'un toucher (progression par faction) */
+.repliable > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.repliable > summary::-webkit-details-marker { display: none; }
+.repliable > summary::after { content: '＋'; color: var(--encre-douce); }
+.repliable[open] > summary::after { content: '－'; }

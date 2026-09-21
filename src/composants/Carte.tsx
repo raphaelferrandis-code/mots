@@ -24,7 +24,8 @@ export function Carte({ carte, cliquable = true }: Props) {
       </div>
 
       <div className="carte__centre">
-        <span className="carte__mot" lang="fr">{carte.mot}</span>
+        {/* La taille du mot s'adapte à sa longueur, pour qu'il tienne toujours sur une ligne. */}
+        <span className="carte__mot" lang="fr" style={{ fontSize: `clamp(0.8rem, ${Math.min(15, 132 / carte.mot.length)}cqi, 2rem)` }}>{carte.mot}</span>
         <span className="carte__faction">{carte.type.toLowerCase()} · {carte.faction}</span>
         {carte.registre.length > 0 && (
           <span className="carte__badges">
