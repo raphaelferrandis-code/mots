@@ -11,6 +11,7 @@ export function preparerAccueil(sauvegarde: Sauvegarde, cartes: readonly CarteIn
   const horsSerie = visibles.filter((c) => c.rarete === 'Hors-série');
   const possedees = visibles.filter((c) => c.id in sauvegarde.cartes);
   return {
+    recentes: [...possedees].sort((a, b) => sauvegarde.cartes[b.id].obtenueLe - sauvegarde.cartes[a.id].obtenueLe || a.mot.localeCompare(b.mot, 'fr')).slice(0, 6),
     deck: cartesDuDeck(sauvegarde, new Map(possedees.map((c) => [c.id, c]))),
     collection: {
       possedees: ordinaires.filter((c) => c.id in sauvegarde.cartes).length,

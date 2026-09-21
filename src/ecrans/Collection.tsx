@@ -33,6 +33,8 @@ export function Collection() {
   const [recherche, setRecherche] = useState('');
   const [tri, setTri] = useState<Tri>('recentes');
   const [pages, setPages] = useState(1);
+  const [progressionVisible, setProgressionVisible] = useState(false);
+  const [filtresVisibles, setFiltresVisibles] = useState(false);
 
   const pret = partie.etat === 'prete' && edition.etat === 'pret';
   const sauvegarde = partie.etat === 'prete' ? partie.sauvegarde : null;
@@ -91,22 +93,24 @@ export function Collection() {
   if (!pret) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
   const filtrer = <T,>(regler: (valeur: T) => void) => (valeur: T): void => { regler(valeur); setPages(1); };
+  const nombreDeFiltres = [rarete, type, faction].filter(Boolean).length;
+  const rechercheActive = recherche.trim() !== '' || nombreDeFiltres > 0;
+  const reinitialiser = (): void => { setRecherche(''); setRarete(''); setType(''); setFaction(''); setPages(1); };
 
   return (
-    <main className="ecran ecran--large">
-      <Entete titre="Ton album">
+    <main className="ecran ecran--large album">
+      <Entete titre="Ton album" actions={possedees.length > 0 && <button className="outil" type="button" aria-expanded={progressionVisible} aria-controls="progression-album" onClick={() => setProgressionVisible(!progressionVisible)}>Progression <span aria-hidden="true">{progressionVisible ? '−' : '+'}</span></button>}>
         {bilan.possedees.toLocaleString('fr-FR')} / {bilan.total.toLocaleString('fr-FR')} timbres · {bilan.horsSeriePossedees} / {bilan.horsSerie} hors-série
       </Entete>
 
       {possedees.length === 0 ? (
-        <section className="bloc">
+        <section className="rubrique">
           <p>Ton album est vide pour l'instant.</p>
           <a className="bouton" href={lien({ ecran: 'paquet' })}>Ouvrir mon premier paquet</a>
         </section>
       ) : (
         <>
-          <details className="bloc repliable">
-            <summary><h2>Progression et statistiques</h2></summary>
+          <section id="progression-album" className="rubrique album__progression" aria-label="Progression et statistiques" hidden={!progressionVisible}>
             <p className="texte-doux petit">Finitions : {bilan.brillantes} brillantes · {bilan.holographiques} holographiques</p>
             <p className="texte-doux petit">{bilan.maitrises} mot{bilan.maitrises > 1 ? 's' : ''} maîtrisé{bilan.maitrises > 1 ? 's' : ''} · {sauvegarde!.paquets.ouverts} paquet{sauvegarde!.paquets.ouverts > 1 ? 's' : ''} ouvert{sauvegarde!.paquets.ouverts > 1 ? 's' : ''}</p>
             <ul className="progressions">
@@ -120,10 +124,16 @@ export function Collection() {
                 </li>
               ))}
             </ul>
-          </details>
+          </section>
 
-          <section className="filtres" aria-label="Filtres">
+          <section className="outils-album" aria-label="Rechercher et trier les timbres">
             <input type="search" placeholder="Chercher un mot…" value={recherche} onChange={(e) => filtrer(setRecherche)(e.target.value)} aria-label="Chercher un mot" />
+            <select value={tri} onChange={(e) => filtrer(setTri)(e.target.value as Tri)} aria-label="Tri">
+              {Object.entries(TRIS).map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}
+            </select>
+            <button type="button" className="outil" aria-expanded={filtresVisibles} aria-controls="filtres-album" onClick={() => setFiltresVisibles(!filtresVisibles)}>Filtres{nombreDeFiltres > 0 && ` · ${nombreDeFiltres}`} <span aria-hidden="true">{filtresVisibles ? '−' : '+'}</span></button>
+          </section>
+          <section id="filtres-album" className="filtres" aria-label="Filtres" hidden={!filtresVisibles}>
             <select value={rarete} onChange={(e) => filtrer(setRarete)(e.target.value as Rarete | '')} aria-label="Rareté">
               <option value="">Toutes les raretés</option>
               {[...RARETES].reverse().map((r) => <option key={r}>{r}</option>)}
@@ -136,13 +146,13 @@ export function Collection() {
               <option value="">Toutes les factions</option>
               {factions.map(([nom]) => <option key={nom}>{nom}</option>)}
             </select>
-            <select value={tri} onChange={(e) => filtrer(setTri)(e.target.value as Tri)} aria-label="Tri">
-              {Object.entries(TRIS).map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}
-            </select>
           </section>
 
-          {(recherche.trim() !== '' || rarete !== '' || type !== '' || faction !== '') && (
-            <p className="texte-doux petit" role="status">{affichees.length.toLocaleString('fr-FR')} résultat{affichees.length > 1 ? 's' : ''}</p>
+          {rechercheActive && (
+            <div className="album__resultats">
+              <p className="texte-doux petit" role="status">{affichees.length.toLocaleString('fr-FR')} résultat{affichees.length > 1 ? 's' : ''}{faction && ` · ${faction}`}</p>
+              <button className="outil" type="button" onClick={reinitialiser}>Effacer les filtres</button>
+            </div>
           )}
           <div className="rangee-de-cartes">
             {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} />)}

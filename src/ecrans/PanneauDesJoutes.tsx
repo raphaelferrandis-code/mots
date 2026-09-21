@@ -91,7 +91,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
 
   return (
     <div className="panneaux joutes">
-      <section className="bloc">
+      <section className="rubrique">
         <p className="entete__surtitre">Ligue {ligue.nom}</p>
         {saisie === null ? (
           <>
@@ -122,7 +122,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
         )}
       </section>
 
-      <section className="bloc">
+      <section className="rubrique">
         <h2>Choisis ton adversaire</h2>
         <p className="texte-doux petit">L'ordinateur joue son deck selon ses résultats aux définitions.</p>
         {adversaires.etat === 'erreur' && <p className="joute__refus" role="alert">{adversaires.message}</p>}
@@ -143,7 +143,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
       </section>
 
       {rang && (
-        <details className="bloc repliable panneaux__large">
+        <details className="rubrique repliable panneaux__large">
           <summary><h2>Le classement</h2></summary>
           <ol className="classement">
             {[...rang.tete, ...rang.voisins.filter((v) => v.rang > rang.tete.length)].map((ligne, i, toutes) => (

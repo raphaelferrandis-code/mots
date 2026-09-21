@@ -7,7 +7,7 @@ import { useOuvertureAnimee } from '../composants/paquet/useOuvertureAnimee.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
-import { acheterEtOuvrirUnPaquet, changerUnReglage, ouvrirUnPaquet } from '../services/partie.ts';
+import { acheterEtOuvrirUnPaquet, ouvrirUnPaquet } from '../services/partie.ts';
 
 const viserTimbres = (liste: HTMLUListElement | null): void => {
   liste?.focus({ preventScroll: true });
@@ -48,17 +48,11 @@ export function OuverturePaquet() {
 
   return (
     <main className="ecran ecran--large atelier-paquets" style={rythme}>
-      <div className="atelier-paquets__entete">
-        <Entete surtitre="Le bureau des découvertes" titre={cartesVisibles ? 'Ton paquet' : 'Une nouvelle trouvaille'}>
-          {cartesVisibles
-            ? toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : 'Touche pour retourner. Fais glisser pour défiler.'
-            : `${EQUILIBRAGE.paquets.emplacements.length} timbres, encore secrets.`}
-        </Entete>
-        <button type="button" className="commande-son" aria-pressed={sonsActifs} aria-label="Sons des paquets" onClick={() => changerUnReglage('sonsPaquets', !sonsActifs)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5Z" />{sonsActifs ? <path d="M15 8q5 4 0 8m3-11q8 7 0 14" /> : <path d="m16 9 6 6m0-6-6 6" />}</svg>
-          <span>Son {sonsActifs ? 'activé' : 'coupé'}</span>
-        </button>
-      </div>
+      <Entete titre={cartesVisibles ? 'Ton paquet' : 'Les paquets'}>
+        {cartesVisibles
+          ? toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : 'Touche pour retourner. Fais glisser pour défiler.'
+          : `${EQUILIBRAGE.paquets.emplacements.length} timbres, encore secrets.`}
+      </Entete>
 
       {!cartesVisibles ? (
         <section className="scene-paquet" data-phase={phase} aria-label="Ouverture du paquet">

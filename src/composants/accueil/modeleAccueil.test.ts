@@ -19,6 +19,7 @@ describe('données de l’accueil', () => {
     const avant = structuredClone(sauvegarde);
     const vue = preparerAccueil(sauvegarde, [carte('non-possedee'), carte('masquee', { registre: ['Injurieux'] }), carte('visible')]);
     assert.deepEqual(vue.deck.map((c) => c.id), ['visible']);
+    assert.deepEqual(vue.recentes.map((c) => c.id), ['visible']);
     assert.deepEqual(sauvegarde, avant, 'préparer un affichage ne modifie pas la partie');
   });
 
@@ -36,6 +37,15 @@ describe('données de l’accueil', () => {
   it('garde un état vide cohérent pour un nouveau joueur ou une édition vide', () => {
     const vue = preparerAccueil(nouvelleSauvegarde(0, 3), []);
     assert.deepEqual(vue.deck, []);
+    assert.deepEqual(vue.recentes, []);
     assert.deepEqual(vue.collection, { possedees: 0, total: 0, horsSeriePossedees: 0, horsSerieTotal: 0, maitrisees: 0 });
+  });
+
+  it('montre les six dernières acquisitions sans confondre finition et nouveau timbre', () => {
+    const sauvegarde = nouvelleSauvegarde(0, 3);
+    const cartes = Array.from({ length: 8 }, (_, i) => carte(`mot-${i}`));
+    for (const [i, c] of cartes.entries()) sauvegarde.cartes[c.id] = { ...possedee(), obtenueLe: i + 1 };
+    sauvegarde.cartes['mot-0'].finitions.Brillante = 1;
+    assert.deepEqual(preparerAccueil(sauvegarde, cartes).recentes.map((c) => c.id), ['mot-7', 'mot-6', 'mot-5', 'mot-4', 'mot-3', 'mot-2']);
   });
 });

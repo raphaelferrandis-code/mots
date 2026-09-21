@@ -179,15 +179,15 @@ export function Duel() {
     const pleinesRestantes = Math.max(0, REGLES.victoiresPleinesParJour - victoiresDuJour);
     return (
       <main className="ecran duel-salon">
-        <Entete titre="Les duels" />
-
-        <div className="modes" role="tablist" aria-label="Mode de duel">
-          <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement<small>Ordinateur</small></button>
-          <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées<small>Classement</small></button>
-        </div>
+        <Entete titre="Les duels" actions={
+          <div className="modes" role="tablist" aria-label="Mode de duel">
+            <button type="button" role="tab" aria-selected={mode === 'entrainement'} onClick={() => setMode('entrainement')}>Entraînement</button>
+            <button type="button" role="tab" aria-selected={mode === 'joute'} onClick={() => setMode('joute')}>Joutes classées</button>
+          </div>
+        } />
 
         {!pret ? (
-          <section className="bloc">
+          <section className="rubrique">
             <p>Deck incomplet : {deck.donnees.length} / {REGLES.tailleDuDeck} timbres jouables.</p>
             <a className="bouton" href={lien({ ecran: 'deck' })}>Composer mon deck</a>
           </section>
@@ -198,7 +198,7 @@ export function Duel() {
           </>
         ) : (
           <div className="panneaux">
-            <section className="bloc panneaux__large">
+            <section className="rubrique panneaux__large">
               <h2>Difficulté</h2>
               <div className="niveaux niveaux--entrainement" role="radiogroup" aria-label="Niveau de l'ordinateur">
                 {NIVEAUX.map((n) => (
@@ -222,14 +222,14 @@ export function Duel() {
               </div>
             </section>
 
-            <details className="bloc repliable">
+            <details className="rubrique repliable">
               <summary><h2>Voir mon deck</h2></summary>
               <div className="deck">
                 {deck.donnees.map((carte) => <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />)}
               </div>
             </details>
 
-            <details className="bloc repliable">
+            <details className="rubrique repliable">
               <summary><h2>Règles du duel</h2></summary>
               <ul className="regles">
                 <li><strong>Départ :</strong> {REGLES.pointsDeVie} points de vie et {REGLES.cartesEnMain} cartes en main. Choisis une carte face au mot adverse.</li>
@@ -277,7 +277,7 @@ export function Duel() {
               {choisie ? <MotPose titre="Ton mot" habillage={timbreDuJoueur(choisie)} carte={choisie} secret /> : <figure className="duel__mot-pose"><figcaption className="entete__surtitre">Ton mot</figcaption><div className="deck__vide" /></figure>}
             </section>
 
-            <section className="bloc duel__tour" aria-live="polite">
+            <section className="rubrique duel__tour" aria-live="polite">
               <h2>Ta main</h2>
               <div className="duel__main">
                 {joueur.main.map((carte) => (
@@ -340,7 +340,7 @@ export function Duel() {
               <MotPose titre="Ton mot" habillage={timbreDuJoueur(etape.carte)} carte={etape.carte} />
             </section>
 
-            <section className="bloc duel__tour" aria-live="polite">
+            <section className="rubrique duel__tour" aria-live="polite">
               <h2>Manche {manche.numero}</h2>
               <p className="duel__verdict" data-reussi={manche.joueur.reussie}>
                 <span className="entete__surtitre">Ton attaque</span>

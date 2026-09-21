@@ -3,6 +3,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -49,7 +50,10 @@ button {
 }
 .ecran--large { max-width: var(--largeur-collection); }
 
-.entete { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; }
+.entete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; padding-block: 4px 12px; border-bottom: 1px solid var(--filet); }
+.entete__texte { display: grid; gap: 4px; min-width: 0; }
+.entete__texte > p { font-size: 0.88rem; }
+.entete__actions { display: flex; align-items: center; gap: 8px; }
 .entete__surtitre { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--encre-douce); }
 .texte-doux { color: var(--encre-douce); }
 .petit { font-size: 0.88rem; }
@@ -64,6 +68,21 @@ button {
   gap: 10px;
 }
 .bloc--a-venir { border-style: dashed; background: transparent; }
+
+/* Sections ouvertes du bureau. Les encadrés restent réservés aux alertes et
+   aux choix interactifs ; les mêmes outils s'utilisent sur tous les écrans. */
+.rubrique { min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding-block: 16px; border-top: 1px solid var(--filet); }
+/* Juste sous l'en-tête, le filet de celui-ci suffit. */
+.entete + .rubrique { border-top: 0; padding-top: 0; }
+.rubrique > h2 { font-size: 1.1rem; }
+.rubrique.repliable { padding-block: 0; }
+.rubrique.repliable > summary { min-height: 48px; gap: 16px; }
+.rubrique.repliable > summary h2 { font: 500 0.88rem var(--police-texte); }
+.rubrique.repliable[open] > :last-child { margin-bottom: 16px; }
+.rubrique.repliable[open] > summary { margin-bottom: 12px; }
+.outil { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--encre-douce); font-size: 0.85rem; text-decoration: none; }
+.outil[aria-expanded='true'] { color: var(--accent); background: var(--papier-fonce); }
+@media (hover: hover) { .outil:hover { color: var(--encre); background: var(--papier-fonce); } }
 
 .bouton {
   border: 1px solid var(--accent);
@@ -154,16 +173,31 @@ button {
 .progression__barre span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 
 .filtres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-.filtres input, .filtres select {
+.filtres input, .filtres select, .outils-album input, .outils-album select {
   font: inherit; color: inherit; min-height: 44px; padding: 8px 12px;
-  border: 1px solid var(--filet); border-radius: 10px; background: var(--carte-fond);
+  border: 1px solid var(--filet); border-radius: 4px; background: var(--carte-fond); min-width: 0; width: 100%;
+}
+.outils-album { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) auto; gap: 8px; }
+.outils-album input { background: transparent; }
+.album > .entete { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.album > .album__progression { background: var(--carte-fond); padding: 16px; border: 0; }
+.album__resultats { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.album__resultats .outil { padding-block: 0; }
+@media (max-width: 519px) {
+  .outils-album { grid-template-columns: minmax(0, 1fr) auto; }
+  .outils-album input { grid-column: 1 / -1; }
 }
 
 /* ── Réglages ───────────────────────────────────────────────────────────── */
 
-.option { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 6px 0; cursor: pointer; }
+.option { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 10px 0; cursor: pointer; }
 .option input { width: 22px; height: 22px; margin-top: 3px; accent-color: var(--accent); }
 .option span { display: flex; flex-direction: column; gap: 2px; }
+.reglages__preferences, .reglages__gestion { display: grid; gap: 20px; min-width: 0; }
+/* Le filet de l'en-tête suffit au-dessus de la première rubrique. Celles de la
+   seconde colonne le perdent aussi, sur grand écran seulement (responsive.css). */
+.reglages__preferences > .rubrique:first-child,
+.duel-salon > .panneaux > .rubrique:first-child { border-top: 0; padding-top: 0; }
 .tableau-defilant { overflow-x: auto; }
 .tableau { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
 .tableau th, .tableau td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--filet); white-space: nowrap; }
@@ -189,6 +223,7 @@ button {
 
 /* Le nombre de colonnes suit la place disponible, y compris dans un encart. */
 .deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 100px), 1fr)); gap: 14px; }
+.atelier-deck__selection .rangee-de-boutons { border-top: 1px solid var(--filet); padding-top: 14px; }
 
 /* Un petit timbre et sa légende en clair (le texte gravé devient trop fin pour être lu). */
 .carte-legendee { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -198,15 +233,14 @@ button {
 .deck__vide { aspect-ratio: 5 / 7; border: 2px dashed var(--filet); border-radius: 6px; }
 .regles { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .option--liste { grid-template-columns: 1fr; cursor: default; }
-.option--liste select { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--filet); border-radius: 8px; background: var(--carte-fond); max-width: 260px; }
+.option--liste select { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--filet); border-radius: 4px; min-height: 44px; background: var(--carte-fond); max-width: 260px; }
 
 /* ── Duel ───────────────────────────────────────────────────────────────── */
 
 /* Les deux modes de duel : entraînement, joutes classées. */
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 1px solid var(--filet); border-radius: var(--rayon); background: var(--papier-fonce); }
-.modes button { display: grid; gap: 1px; padding: 8px 6px; border: 0; border-radius: 9px; background: transparent; font: inherit; color: var(--encre-douce); cursor: pointer; }
-.modes button small { font-family: var(--police-mention); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
-.modes button[aria-selected='true'] { background: var(--carte-fond); color: var(--encre); font-weight: 700; box-shadow: var(--ombre); }
+.modes { display: flex; gap: 16px; }
+.modes button { min-height: 44px; padding: 8px 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 0.9rem; color: var(--encre-douce); cursor: pointer; }
+.modes button[aria-selected='true'] { border-bottom-color: var(--accent); color: var(--encre); }
 
 /* Joutes : la cote, le classement. */
 .joute__cote { font-family: var(--police-mention); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); white-space: nowrap; }
@@ -214,7 +248,7 @@ button {
 .joute__refus { margin: 0; color: var(--accent); font-size: 0.92rem; }
 .joute__saisie { display: grid; gap: 8px; }
 .joute__saisie label { display: grid; gap: 2px; }
-.joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 8px; background: var(--carte-fond); width: 100%; }
+.joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 4px; background: var(--carte-fond); width: 100%; }
 .joute__saisie input[aria-invalid='true'] { border-color: var(--accent); }
 .niveau:disabled { opacity: 0.6; cursor: default; }
 .classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }

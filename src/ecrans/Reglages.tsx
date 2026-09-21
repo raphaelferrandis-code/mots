@@ -10,11 +10,13 @@ import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde, toutEffa
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
 
-const OPTIONS: { cle: ReglageACocher; nom: string; aide: string }[] = [
+const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string; aide: string }[] = [
   { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Inclut les mots populaires, argotiques et vulgaires.' },
   { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Selon les indications du dictionnaire.' },
-  { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
+];
+const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
   { cle: 'sonsPaquets', nom: 'Sons des paquets', aide: 'Ouverture et manipulation des timbres.' },
+  { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
 ];
 
 function telecharger(nom: string, contenu: string): void {
@@ -63,96 +65,110 @@ export function Reglages() {
   const dernierExport = sauvegarde.dernierExport ? new Date(sauvegarde.dernierExport.le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
 
   return (
-    <main className="ecran panneaux">
+    <main className="ecran panneaux reglages">
       <Entete titre="Réglages" />
 
-      <section className="bloc">
-        <h2>Contenu et confort</h2>
-        <p className="texte-doux petit">Les mots masqués sont exclus des paquets et cachés dans l'album, sans être perdus.</p>
-        {OPTIONS.map((option) => (
-          <label key={option.cle} className="option">
-            <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
-            <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
+      <div className="reglages__preferences">
+        <section className="rubrique">
+          <h2>Son et confort</h2>
+          {OPTIONS_CONFORT.map((option) => (
+            <label key={option.cle} className="option">
+              <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
+              <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
+            </label>
+          ))}
+          <label className="option option--liste">
+            <span><strong>Temps par définition en duel</strong></span>
+            <select value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
+              <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
+              <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
+              <option value="illimite">Sans limite</option>
+            </select>
           </label>
-        ))}
-        <label className="option option--liste">
-          <span><strong>Temps par définition en duel</strong></span>
-          <select value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
-            <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
-            <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
-            <option value="illimite">Sans limite</option>
-          </select>
-        </label>
-      </section>
+        </section>
 
-      <section className="bloc">
-        <h2>Ta sauvegarde</h2>
-        <p className="petit">
-          {partie.emplacement === 'mémoire seulement'
-            ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
-            : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
-        </p>
-        <p className="texte-doux petit">{dernierExport ? `Dernier export : ${dernierExport}.` : 'Aucun export pour le moment.'}</p>
-        <div className="rangee-de-boutons">
-          <button type="button" className="bouton" onClick={exporter}>Exporter ma sauvegarde</button>
-          <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>
-          <input ref={fichier} type="file" accept="application/json,.json" hidden onChange={(e) => void importer(e.target.files?.[0])} />
-        </div>
-        {message && <p role="status" className="petit">{message}</p>}
-        <button type="button" className="bouton bouton--danger" onClick={effacer}>Effacer ma partie</button>
-      </section>
+        <section className="rubrique">
+          <h2>Les mots de ta collection</h2>
+          <p className="texte-doux petit">Les mots masqués sont exclus des paquets et cachés dans l'album, sans être perdus.</p>
+          {OPTIONS_CONTENU.map((option) => (
+            <label key={option.cle} className="option">
+              <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
+              <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
+            </label>
+          ))}
+        </section>
+      </div>
 
-      <details className="bloc repliable">
-        <summary><h2>Paquets et probabilités</h2></summary>
-        <p className="texte-doux petit">
-          Un paquet gratuit toutes les {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets} minutes, jusqu'à {EQUILIBRAGE.paquets.stockMaximum} en réserve.
-          Une Légendaire garantie au plus tard au {EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie}ᵉ paquet sans Légendaire.
-        </p>
-        <div className="tableau-defilant">
-          <table className="tableau">
-            <caption>Chances par rareté et position dans le paquet</caption>
-            <thead>
-              <tr><th scope="col">Carte</th>{RARETES_ORDINAIRES.map((r) => <th key={r} scope="col">{r}</th>)}</tr>
-            </thead>
-            <tbody>
-              {EQUILIBRAGE.paquets.emplacements.map((chances, i) => (
-                <tr key={i}><th scope="row">{i + 1}</th>{RARETES_ORDINAIRES.map((r) => <td key={r}>{chances[r] ? `${chances[r]} %` : '—'}</td>)}</tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="texte-doux petit">
-          <strong>Hors-série :</strong> environ 1 paquet sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}, en dernière position.
-        </p>
-        <p className="texte-doux petit">
-          <strong>Finitions :</strong> brillante 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}, tirées indépendamment de la rareté.
-          Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
-        </p>
-        <p className="texte-doux petit">
-          Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
-        </p>
-      </details>
+      <div className="reglages__gestion">
+        <section className="rubrique">
+          <h2>Ta sauvegarde</h2>
+          <p className="petit">
+            {partie.emplacement === 'mémoire seulement'
+              ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
+              : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
+          </p>
+          <p className="texte-doux petit">{dernierExport ? `Dernier export : ${dernierExport}.` : 'Aucun export pour le moment.'}</p>
+          <div className="rangee-de-boutons">
+            <button type="button" className="bouton" onClick={exporter}>Exporter ma sauvegarde</button>
+            <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>
+            <input ref={fichier} type="file" accept="application/json,.json" hidden onChange={(e) => void importer(e.target.files?.[0])} />
+          </div>
+          {message && <p role="status" className="petit">{message}</p>}
+          <button type="button" className="bouton bouton--danger" onClick={effacer}>Effacer ma partie</button>
+        </section>
 
-      <details className="bloc repliable">
-        <summary><h2>Crédits et sources</h2></summary>
-        <p>
-          Les définitions et les étymologies sont adaptées (raccourcies, nettoyées) du{' '}
-          <a href="https://fr.wiktionary.org" target="_blank" rel="noreferrer">Wiktionnaire</a>, le dictionnaire libre,
-          sous licence <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>.
-          Chaque fiche de carte renvoie vers la page du mot, où figure la liste de ses auteurs.
-          Données extraites grâce au projet wiktextract (kaikki.org).
-        </p>
-        <p>
-          La fréquence des mots et la part des gens qui les connaissent viennent de{' '}
-          <a href="http://www.lexique.org" target="_blank" rel="noreferrer">Lexique 4</a>, sous licence CC BY-SA 4.0 :
-          New, B., Pallier, C., Schalchli, G., Bourgin, J., &amp; Gimenes, M. (2026). Lexique 4: A major upgrade of the
-          “Lexique” French lexical database. <em>Behavior Research Methods</em>, 58(5), 140.
-        </p>
-        <p className="texte-doux petit">
-          Les fichiers de cartes du jeu, tirés de ces deux sources, sont eux aussi sous licence CC BY-SA 4.0.
-          Ce jeu ne collecte aucune donnée personnelle et n'utilise aucun outil de mesure d'audience.
-        </p>
-      </details>
+        <details className="rubrique repliable">
+          <summary><h2>Paquets et probabilités</h2></summary>
+          <p className="texte-doux petit">
+            Un paquet gratuit toutes les {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets} minutes, jusqu'à {EQUILIBRAGE.paquets.stockMaximum} en réserve.
+            Une Légendaire garantie au plus tard au {EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie}ᵉ paquet sans Légendaire.
+          </p>
+          <div className="tableau-defilant">
+            <table className="tableau">
+              <caption>Chances par rareté et position dans le paquet</caption>
+              <thead>
+                <tr><th scope="col">Carte</th>{RARETES_ORDINAIRES.map((r) => <th key={r} scope="col">{r}</th>)}</tr>
+              </thead>
+              <tbody>
+                {EQUILIBRAGE.paquets.emplacements.map((chances, i) => (
+                  <tr key={i}><th scope="row">{i + 1}</th>{RARETES_ORDINAIRES.map((r) => <td key={r}>{chances[r] ? `${chances[r]} %` : '—'}</td>)}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="texte-doux petit">
+            <strong>Hors-série :</strong> environ 1 paquet sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}, en dernière position.
+          </p>
+          <p className="texte-doux petit">
+            <strong>Finitions :</strong> brillante 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}, tirées indépendamment de la rareté.
+            Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
+          </p>
+          <p className="texte-doux petit">
+            Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
+          </p>
+        </details>
+
+        <details className="rubrique repliable">
+          <summary><h2>Crédits et sources</h2></summary>
+          <p>
+            Les définitions et les étymologies sont adaptées (raccourcies, nettoyées) du{' '}
+            <a href="https://fr.wiktionary.org" target="_blank" rel="noreferrer">Wiktionnaire</a>, le dictionnaire libre,
+            sous licence <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>.
+            Chaque fiche de carte renvoie vers la page du mot, où figure la liste de ses auteurs.
+            Données extraites grâce au projet wiktextract (kaikki.org).
+          </p>
+          <p>
+            La fréquence des mots et la part des gens qui les connaissent viennent de{' '}
+            <a href="http://www.lexique.org" target="_blank" rel="noreferrer">Lexique 4</a>, sous licence CC BY-SA 4.0 :
+            New, B., Pallier, C., Schalchli, G., Bourgin, J., &amp; Gimenes, M. (2026). Lexique 4: A major upgrade of the
+            “Lexique” French lexical database. <em>Behavior Research Methods</em>, 58(5), 140.
+          </p>
+          <p className="texte-doux petit">
+            Les fichiers de cartes du jeu, tirés de ces deux sources, sont eux aussi sous licence CC BY-SA 4.0.
+            Ce jeu ne collecte aucune donnée personnelle et n'utilise aucun outil de mesure d'audience.
+          </p>
+        </details>
+      </div>
     </main>
   );
 }

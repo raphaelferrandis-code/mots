@@ -43,7 +43,7 @@ export function FicheCarte({ id }: { id: string }) {
         </div>
 
         <div className="fiche__contenu">
-          <section className="bloc">
+          <section className="rubrique">
             <h2>Dans ton album</h2>
             {possedee ? (
               <p>
@@ -62,7 +62,7 @@ export function FicheCarte({ id }: { id: string }) {
             )}
           </section>
 
-          <section className="bloc">
+          <section className="rubrique">
             <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>
             <ol className="definitions">
               {details.definitions.map((definition) => (
@@ -74,7 +74,7 @@ export function FicheCarte({ id }: { id: string }) {
             </ol>
           </section>
 
-          <section className="bloc">
+          <section className="rubrique">
             <h2>Origine</h2>
             <p>{details.etymologie || 'Le Wiktionnaire ne donne pas l\'étymologie de ce mot.'}</p>
             <dl className="donnees">

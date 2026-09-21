@@ -3,6 +3,8 @@ import { DuelsAccueil } from '../composants/accueil/DuelsAccueil.tsx';
 import { PaquetsAccueil } from '../composants/accueil/PaquetsAccueil.tsx';
 import { ResumeCollection } from '../composants/accueil/ResumeCollection.tsx';
 import { preparerAccueil } from '../composants/accueil/modeleAccueil.ts';
+import { Carte } from '../composants/carte/Carte.tsx';
+import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -32,6 +34,14 @@ export function Accueil() {
         <DuelsAccueil deck={vue?.deck ?? null} sauvegarde={partie.sauvegarde} erreur={edition.etat === 'erreur'} />
       </div>
       <ResumeCollection collection={vue?.collection ?? null} erreur={edition.etat === 'erreur' ? edition.message : undefined} />
+      {vue && vue.recentes.length > 0 && (
+        <section className="accueil-trouvailles" aria-labelledby="titre-trouvailles">
+          <h2 id="titre-trouvailles">Dernières trouvailles</h2>
+          <div className="accueil-trouvailles__timbres">
+            {vue.recentes.map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(partie.sauvegarde.cartes[carte.id])} maitriseeLe={partie.sauvegarde.cartes[carte.id].maitriseeLe} />)}
+          </div>
+        </section>
+      )}
       {rappelerLExport && (
         <aside className="accueil__rappel">
           <div><h2>Garde une copie de ta partie</h2><p>Elle est enregistrée uniquement sur cet appareil.</p></div>

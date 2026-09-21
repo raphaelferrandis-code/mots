@@ -81,19 +81,19 @@ export function Deck() {
   const factionsPossedees = [...new Set(possedees.map((c) => c.faction))].sort((a, b) => a.localeCompare(b, 'fr'));
 
   return (
-    <main className="ecran ecran--large">
+    <main className="ecran ecran--large atelier-deck">
       <Entete titre="Ton deck">
         {deck.length} / {REGLES.tailleDuDeck} timbres{possedees.length >= REGLES.tailleDuDeck && ". Touche un timbre pour l'ajouter ou le retirer."}
       </Entete>
 
       {possedees.length < REGLES.tailleDuDeck ? (
-        <section className="bloc">
+        <section className="rubrique">
           <p>Encore {REGLES.tailleDuDeck - possedees.length} timbre{REGLES.tailleDuDeck - possedees.length > 1 ? 's' : ''} à collectionner pour composer ton deck.</p>
           <a className="bouton" href={lien({ ecran: 'paquet' })}>Ouvrir des paquets</a>
         </section>
       ) : (
         <>
-          <section className="bloc">
+          <section className="rubrique atelier-deck__selection" aria-label="Timbres sélectionnés">
             <div className="deck">
               {deck.map((carte) => (
                 <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} onChoisir={() => retirer(carte)} action="retirer du deck" />
@@ -117,7 +117,7 @@ export function Deck() {
             </div>
           </section>
 
-          <details className="bloc repliable">
+          <details className="rubrique repliable">
             <summary><h2>Conseils de composition</h2></summary>
             <ul className="regles">
               <li><strong>Valeurs du timbre :</strong> attaque à gauche, défense à droite.</li>

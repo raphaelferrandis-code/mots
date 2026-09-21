@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
 
-export function Entete({ surtitre, titre, children }: { surtitre?: string; titre: string; children?: ReactNode }) {
+export function Entete({ surtitre, titre, children, actions }: { surtitre?: string; titre: string; children?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="entete">
-      {surtitre && <span className="entete__surtitre">{surtitre}</span>}
-      <h1>{titre}</h1>
-      {children && <p className="texte-doux">{children}</p>}
+      <div className="entete__texte">
+        {surtitre && <span className="entete__surtitre">{surtitre}</span>}
+        <h1>{titre}</h1>
+        {children && <p className="texte-doux">{children}</p>}
+      </div>
+      {actions && <div className="entete__actions">{actions}</div>}
     </header>
   );
 }
