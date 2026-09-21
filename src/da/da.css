@@ -203,12 +203,6 @@
 .pas__valeurs small { font-family: Bahnschrift, 'Segoe UI', Arial, sans-serif; font-weight: 600; margin-bottom: 0.7cqi; }
 
 .pas__tampon { position: absolute; right: 2cqi; bottom: 12.5cqi; width: 41cqi; color: var(--encre-tampon); opacity: 0.92; mix-blend-mode: multiply; }
-.pas__tampon circle { fill: none; stroke: currentColor; stroke-width: 2.2; }
-.pas__tampon .pas__tampon-fin { stroke-width: 0.9; }
-.pas__tampon text { fill: currentColor; font-family: Bahnschrift, 'Arial Narrow', Arial, sans-serif; font-weight: 700; }
-.pas__tampon-tour { font-size: 7.4px; }
-.pas__tampon-centre { font-size: 8.4px; letter-spacing: 0.04em; }
-.pas__tampon-date { font-size: 9.5px; font-family: 'OCR A Extended', Consolas, monospace; }
 
 .pas__hologramme { position: absolute; top: 0; bottom: 0; left: 36.2cqi; width: 2.4cqi; background: var(--irise) 0% 50% / 200% 100%; opacity: 0.75; animation: da-reflet 6s linear infinite; }
 
@@ -231,6 +225,15 @@
   .pas__tampon { width: 46cqi; bottom: 3cqi; }
 }
 
+/* ═══ Cachet rond, commun aux pistes Passeport et Timbre ══════════════════ */
+
+.tampon__trait { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.tampon__trait--fin { stroke-width: 0.9; }
+.tampon__tour, .tampon__centre, .tampon__date { fill: currentColor; font-family: Bahnschrift, 'Arial Narrow', Arial, sans-serif; font-weight: 700; }
+.tampon__tour { font-size: 7.4px; }
+.tampon__centre { font-size: 8.4px; letter-spacing: 0.04em; }
+.tampon__date { font-size: 9.5px; font-family: 'OCR A Extended', Consolas, monospace; }
+
 /* ═══ Page de l'atelier ════════════════════════════════════════════════════ */
 
 .atelier__piste { display: grid; gap: 14px; padding-top: 10px; border-top: 1px solid var(--filet); }
@@ -238,3 +241,4 @@
 .atelier__vignettes { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
 .atelier__vignettes > * { width: 112px; flex: none; }
 .atelier__points { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.atelier__figure { margin: 0; min-width: 0; display: grid; gap: 8px; text-align: center; align-content: start; }

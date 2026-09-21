@@ -111,6 +111,34 @@ export function enLignes(mot: string, longueurMaximale: number): string[] {
   });
 }
 
+// Rosace de guillochis : plusieurs courbes fermées légèrement décalées, comme sur les billets de banque
+// et les timbres gravés. Le mot décide du nombre de lobes et de leur amplitude : chaque carte a la sienne.
+export function rosaceDeGuillochis(idCarte: string, courbes: number): string[] {
+  const hasard = hasardDe(idCarte);
+  const k1 = entier(hasard, 5, 11);
+  const k2 = entier(hasard, 3, 9) * 2 + 1;
+  const a = entre(hasard, 5, 9);
+  const b = entre(hasard, 2, 5);
+  const chemins: string[] = [];
+  for (let j = 0; j < courbes; j++) {
+    const phase = (j / courbes) * Math.PI * 2;
+    let d = '';
+    for (let i = 0; i <= 240; i++) {
+      const t = (i / 240) * Math.PI * 2;
+      const r = 17 + a * Math.sin(k1 * t + phase) + b * Math.cos(k2 * t - phase);
+      d += `${i === 0 ? 'M' : 'L'}${(30 + r * Math.cos(t)).toFixed(2)} ${(30 + r * Math.sin(t)).toFixed(2)}`;
+    }
+    chemins.push(`${d}Z`);
+  }
+  return chemins;
+}
+
+// L'année à écrire sur un cachet, d'après la date de première apparition du mot (« 1786 », « XIIᵉ siècle », « c. 1100 »…).
+export function anneeDuCachet(attestation: string | undefined): string {
+  if (!attestation) return '····';
+  return attestation.match(/\d{3,4}/)?.[0] ?? attestation.match(/[IVX]+ᵉ/)?.[0]?.concat(' s.') ?? '····';
+}
+
 // Ligne « lisible par une machine », comme au bas d'un passeport : majuscules, sans accents, complétée par des « < ».
 export function ligneMachine(morceaux: string[], longueur: number): string {
   const texte = morceaux.map((m) => sansAccents(m).toUpperCase().replace(/[^A-Z0-9]+/g, '<')).join('<<');

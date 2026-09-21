@@ -1,11 +1,15 @@
-// Atelier de direction artistique (écran provisoire) : les mêmes cartes, dessinées selon trois pistes,
-// pour que Raphaël puisse choisir sur pièces. Il disparaîtra quand la direction sera arrêtée.
+// Atelier de direction artistique (écran provisoire) : la piste retenue par Raphaël — les timbres —,
+// ses finitions, une proposition de rang ultime, et les pistes précédentes pour mémoire.
+// Il disparaîtra quand la direction sera arrêtée et appliquée à tout le jeu.
 
 import type { ReactNode } from 'react';
 import '../da/da.css';
+import '../da/timbre.css';
 import { CarteAffiche } from '../da/CarteAffiche.tsx';
 import { CarteEnluminure } from '../da/CarteEnluminure.tsx';
 import { CartePasseport } from '../da/CartePasseport.tsx';
+import { CarteTimbre } from '../da/CarteTimbre.tsx';
+import type { Finition } from '../da/CarteTimbre.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
@@ -23,47 +27,25 @@ async function chargerExemples(): Promise<Exemple[]> {
   return Promise.all(cartes.map(async (carte) => ({ carte, details: await chargerDetails(carte.id) })));
 }
 
-type Piste = {
-  nom: string;
-  idee: string;
-  points: string[];
-  dessiner: (exemple: Exemple) => ReactNode;
-};
+const FINITIONS: { finition: Finition; nom: string; chance: string }[] = [
+  { finition: 'normale', nom: 'Normale', chance: 'le tirage ordinaire' },
+  { finition: 'brillante', nom: 'Brillante', chance: 'par exemple 1 carte sur 12' },
+  { finition: 'holographique', nom: 'Holographique', chance: 'par exemple 1 carte sur 80' },
+];
 
-const PISTES: Piste[] = [
-  {
-    nom: '1 — Enluminure',
-    idee: "La carte est une entrée de manuscrit. L'illustration, c'est la lettrine : la première lettre du mot, posée sur un fond ornemental calculé à partir du mot, dans le pigment de sa faction.",
-    points: [
-      'Rareté : la richesse du cadre — filet simple, double filet, écoinçons, cordelière, puis feuille d’or qui miroite.',
-      'Faction : la couleur du pigment (rouge pour le latin, bleu lapis pour le grec, vert pour l’arabe…).',
-      'Détails : stats en chiffres romains, définition justifiée comme dans un vieux dictionnaire.',
-      'Ton : précieux, littéraire, chaleureux. Le plus « naturel » pour un jeu de mots — donc le moins surprenant des trois.',
-    ],
-    dessiner: ({ carte }) => <CarteEnluminure carte={carte} />,
-  },
-  {
-    nom: '2 — Affiche',
-    idee: "La carte est une affiche typographique. Le mot, en capitales énormes, remplit la carte et joue avec des formes géométriques propres à chaque mot.",
-    points: [
-      'Rareté : la richesse de l’impression — une encre, deux encres, fond de couleur, surimpression, puis encre irisée sur fond noir.',
-      'Faction : un duo de couleurs franches par faction ; une collection triée par faction devient un mur d’affiches.',
-      'Ton : moderne, graphique, très lisible même en tout petit. Le plus éloigné de l’imagerie habituelle des jeux de cartes.',
-      'Limite : les mots très longs sont coupés sur deux ou trois lignes.',
-    ],
-    dessiner: ({ carte }) => <CarteAffiche carte={carte} />,
-  },
-  {
-    nom: '3 — Passeport',
-    idee: "Les mots sont des voyageurs. Chaque carte est le papier d’identité d’un mot entré en français : tampon de sa langue d’origine, date d’entrée (sa première apparition connue), rosace de sécurité unique comme sur un billet de banque.",
-    points: [
-      'Rareté : le niveau de sécurité du document — rosace plus dense, micro-texte, bande irisée, puis papier et encres dorés.',
-      'Faction : le tampon d’origine, dans l’encre de la faction. C’est la seule piste qui raconte l’étymologie au lieu de simplement la colorer.',
-      'Détails : la « date d’entrée en français » exploite une donnée que nous avons déjà ; les stats sont reprises dans la ligne « lisible par une machine ».',
-      'Ton : ludique, original, plein de petits détails à découvrir. Le plus chargé des trois : à alléger si on le retient.',
-    ],
-    dessiner: ({ carte, details }) => <CartePasseport carte={carte} attestation={details?.attestation} />,
-  },
+// Proposition de rang ultime : les mots qui détiennent un record, trouvés automatiquement dans les données.
+// (Exemples écrits à la main pour cette maquette ; les chiffres et les définitions sont les vrais.)
+const HORS_SERIE: { carte: CarteIndex; attestation?: string; record: string }[] = [
+  { record: 'Le plus long mot de la langue · 25 lettres', attestation: 'XIXᵉ siècle', carte: { id: 'anticonstitutionnellement-adv', mot: 'anticonstitutionnellement', type: 'Adverbe', rarete: 'Légendaire', attaque: 10, defense: 5, faction: 'Latin', registre: [], definition: 'Contrairement aux règles constitutionnelles de l’organisation des pouvoirs publics d’un gouvernement.' } },
+  { record: 'Le plus vieux mot daté · Serments de Strasbourg', attestation: '842', carte: { id: 'amour-nom', mot: 'amour', type: 'Nom', rarete: 'Légendaire', attaque: 1, defense: 10, faction: 'Vieux français', registre: [], definition: 'Sentiment intense et agréable qui incite les êtres à s’unir.' } },
+  { record: 'Le plus long palindrome · se lit dans les deux sens', carte: { id: 'ressasser-verbe', mot: 'ressasser', type: 'Verbe', rarete: 'Légendaire', attaque: 3, defense: 8, faction: 'Latin', registre: [], definition: 'Revenir constamment en esprit sur le même sujet ou revenir sans cesse sur les mêmes propos.' } },
+];
+
+type Piste = { nom: string; dessiner: (exemple: Exemple) => ReactNode };
+const PISTES_PRECEDENTES: Piste[] = [
+  { nom: 'Enluminure', dessiner: ({ carte }) => <CarteEnluminure carte={carte} /> },
+  { nom: 'Affiche', dessiner: ({ carte }) => <CarteAffiche carte={carte} /> },
+  { nom: 'Passeport', dessiner: ({ carte, details }) => <CartePasseport carte={carte} attestation={details?.attestation} /> },
 ];
 
 export function Atelier() {
@@ -72,29 +54,77 @@ export function Atelier() {
   return (
     <main className="ecran ecran--large">
       <Entete surtitre="Écran provisoire" titre="Atelier de direction artistique">
-        Trois pistes pour les cartes, essayées sur les six mêmes mots. Aucune illustration n'est faite à la main :
-        tout le décor est calculé à partir du mot, donc chaque carte est unique. Les polices sont celles de cet
-        ordinateur ; la piste retenue aura ses propres polices, livrées avec le jeu.
+        La piste des timbres, avec ses finitions brillantes et une proposition de rang ultime. Aucune illustration n'est faite
+        à la main : la rosace de chaque timbre est calculée à partir du mot. Les polices sont celles de cet appareil ; les
+        polices définitives seront livrées avec le jeu.
       </Entete>
 
       {exemples.etat === 'en cours' && <p className="texte-doux">Chargement des cartes…</p>}
       {exemples.etat === 'erreur' && <p role="alert">Les cartes n'ont pas pu être chargées. {exemples.message}</p>}
-      {exemples.etat === 'pret' && PISTES.map((piste) => (
-        <section key={piste.nom} className="atelier__piste">
-          <h2>{piste.nom}</h2>
-          <p>{piste.idee}</p>
-          <div className="atelier__cartes">
-            {exemples.donnees.map((exemple) => <div key={exemple.carte.id}>{piste.dessiner(exemple)}</div>)}
-          </div>
-          <ul className="atelier__points texte-doux petit">
-            {piste.points.map((point) => <li key={point}>{point}</li>)}
-          </ul>
-          <p className="texte-doux petit">En tout petit, comme dans la grille de la collection (la définition s'efface, le mot grossit) :</p>
-          <div className="atelier__vignettes">
-            {exemples.donnees.filter((e) => VIGNETTES.includes(e.carte.id)).map((exemple) => <div key={exemple.carte.id}>{piste.dessiner(exemple)}</div>)}
-          </div>
-        </section>
-      ))}
+      {exemples.etat === 'pret' && (
+        <>
+          <section className="atelier__piste">
+            <h2>Les timbres</h2>
+            <p>
+              Chaque mot est un timbre émis par sa langue d'origine : dentelure, attaque et défense dans les coins comme des
+              valeurs faciales, rosace gravée unique au centre, et cachet d'origine daté de la première apparition du mot.
+              La collection devient un album de timbres.
+            </p>
+            <div className="atelier__cartes">
+              {exemples.donnees.map(({ carte, details }) => <div key={carte.id}><CarteTimbre carte={carte} attestation={details?.attestation} /></div>)}
+            </div>
+            <ul className="atelier__points texte-doux petit">
+              <li>Rareté : la qualité de l'impression — une encre, deux encres, double cadre et fond teinté, encre argentée (Épique), dorure (Légendaire).</li>
+              <li>Faction : la couleur de l'encre, et le nom de la langue en haut du timbre comme un pays émetteur.</li>
+              <li>En tout petit, comme dans la grille de la collection :</li>
+            </ul>
+            <div className="atelier__vignettes">
+              {exemples.donnees.filter((e) => VIGNETTES.includes(e.carte.id)).map(({ carte, details }) => <div key={carte.id}><CarteTimbre carte={carte} attestation={details?.attestation} /></div>)}
+            </div>
+          </section>
+
+          <section className="atelier__piste">
+            <h2>Les finitions : la même carte, avec ou sans effet</h2>
+            <p>
+              La finition est tirée au sort à part, pour chaque carte de chaque paquet, quelle que soit sa rareté : une Commune
+              peut être holographique, une Légendaire peut ne pas l'être. Passe le doigt ou la souris sur une carte : le reflet suit.
+            </p>
+            {[exemples.donnees[0], exemples.donnees[exemples.donnees.length - 1]].filter(Boolean).map(({ carte, details }) => (
+              <div key={carte.id} className="atelier__cartes">
+                {FINITIONS.map(({ finition, nom, chance }) => (
+                  <figure key={finition} className="atelier__figure">
+                    <CarteTimbre carte={carte} attestation={details?.attestation} finition={finition} />
+                    <figcaption className="texte-doux petit"><strong>{nom}</strong> — {chance}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            ))}
+          </section>
+
+          <section className="atelier__piste">
+            <h2>Proposition de rang ultime : les « Hors-série »</h2>
+            <p>
+              Des mots qui détiennent un record, trouvés automatiquement dans les données : chaque carte porte son titre.
+              Papier noir, impression irisée, finition prismatique.
+            </p>
+            <div className="atelier__cartes">
+              {HORS_SERIE.map(({ carte, attestation, record }) => <div key={carte.id}><CarteTimbre carte={carte} attestation={attestation} finition="prismatique" horsSerie={record} /></div>)}
+            </div>
+          </section>
+
+          <details className="bloc repliable">
+            <summary><h2>Les trois premières pistes, pour mémoire</h2></summary>
+            {PISTES_PRECEDENTES.map((piste) => (
+              <section key={piste.nom} className="atelier__piste">
+                <h2>{piste.nom}</h2>
+                <div className="atelier__cartes">
+                  {exemples.donnees.slice(0, 4).map((exemple) => <div key={exemple.carte.id}>{piste.dessiner(exemple)}</div>)}
+                </div>
+              </section>
+            ))}
+          </details>
+        </>
+      )}
     </main>
   );
 }

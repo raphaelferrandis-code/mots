@@ -351,6 +351,7 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
   1. **Enluminure** — la carte est une entrée de manuscrit ; l'illustration est la lettrine du mot sur un fond ornemental ; rareté = richesse du cadre, jusqu'à la feuille d'or.
   2. **Affiche** — la carte est une affiche typographique : le mot en capitales énormes joue avec des formes géométriques ; un duo de couleurs par faction ; rareté = richesse de l'impression, jusqu'à l'encre irisée.
   3. **Passeport** — les mots sont des voyageurs : tampon de la langue d'origine, date d'entrée en français (la première attestation), rosace de sécurité unique, ligne « lisible par une machine » ; rareté = niveau de sécurité du document.
+  **Piste retenue par Raphaël : les timbres** (issue de la piste Passeport, dont il a aimé les cachets). Chaque mot est un timbre-poste émis par sa langue d'origine : dentelure, attaque et défense dans les coins comme des valeurs faciales, nom de la langue en haut comme un pays émetteur, rosace gravée unique calculée à partir du mot, cachet d'origine daté de la première apparition du mot. La collection devient un album de timbres. La rareté se lit à la qualité de l'impression (une encre, deux encres, double cadre, encre argentée, dorure) ; s'y ajoute une **finition** indépendante de la rareté (normale, brillante, holographique) dont le reflet suit le doigt ou la souris. Code : `src/da/CarteTimbre.tsx` et `src/da/timbre.css`.
   La piste retenue sera affinée, dotée de ses propres polices (libres de droits, livrées avec le jeu, rien n'est chargé chez un tiers), puis appliquée à tout le site.
 - En attendant, style sobre et neutre, facile à remplacer : **couleurs, polices et ornements centralisés dans un fichier de thème**.
 - **Contenu (écran Réglages)** : options « Masquer les mots familiers » et « Masquer les mots injurieux » (§5.3).
@@ -428,7 +429,9 @@ Commande `npm run simulation` : fait s'affronter deux IA sur 10 000 duels avec d
 | 18 | Outils de test | **Celui intégré à Node**, pour le pipeline comme pour la logique du jeu (rien à installer) ; Vitest seulement si l'on teste un jour l'interface elle-même |
 | 19 | Définition sur la carte | **La définition du mot est imprimée sur la carte** (sauf dans la main du joueur pendant un duel) |
 | 20 | Hébergement | **GitHub Pages**, avec mise en ligne automatique à chaque envoi de code (`.github/workflows/mise-en-ligne.yml`). Le dépôt sera public |
-| 21 | Direction artistique | Elle doit **sortir de l'ordinaire** ; à choisir parmi les trois pistes de l'Atelier (§6) |
+| 21 | Direction artistique | **Les timbres** : chaque mot est un timbre-poste émis par sa langue d'origine (dentelure, valeurs dans les coins, rosace gravée calculée à partir du mot, cachet d'origine daté). Des **effets brillants et holographiques** s'ajoutent selon la rareté |
+| 22 | Finitions | **Une même carte peut exister avec ou sans effet** (normale, brillante, holographique) : la finition est une variante de tirage qui ajoute de la rareté. Règles détaillées à valider (§10.2) |
+| 23 | Publication | Claude peut **publier le site à chaque étape terminée et testée**, sans redemander |
 
 ### 10.2 Propositions encore à confirmer (🟡)
 
@@ -442,7 +445,10 @@ Aucune ne bloque le démarrage : ce sont des réglages, ou des choix qui se pré
 | Taille définitive de l'édition | À fixer avec le simulateur de collection | §4.4, §5.5 |
 | Mots injurieux : visibles ou masqués par défaut ? | Visibles par défaut (deux options séparées dans les Réglages pour masquer les familiers et les injurieux) | §5.3 |
 | Homographes (« avocat ») | Une seule carte, faction de la première étymologie | §4.2 |
-| Direction artistique | Choisir entre Enluminure, Affiche et Passeport (ou en mélanger deux), sur pièces, dans l'Atelier du site | §6 |
+| Maquette des timbres | Première version visible dans l'Atelier du site (`#/atelier`) : à valider ou corriger avant de l'appliquer à tout le jeu | §6 |
+| Finitions : les règles | Tirées au sort pour chaque carte, quelle que soit sa rareté : brillante environ 1 carte sur 12, holographique environ 1 sur 80. Chaque finition possédée compte à part dans la collection ; un doublon ne devient de l'Encre que si l'on possède déjà cette finition (Encre multipliée pour une finition rare) | §5.2 |
+| Rang ultime « Hors-série » | Une vingtaine de mots qui détiennent un record, trouvés automatiquement dans les données (le plus long mot, le plus long palindrome, le plus vieux mot daté…), plus ceux que Raphaël ajoute à la main. Environ 1 chance sur 300 par paquet, hors garantie, comptés à part de la collection | §4.3, §5.1 |
+| Prix du paquet en Encre | 150 (au lieu de 50) | §5.2 |
 
 ### 10.3 Questions de fond
 - **Nom définitif du jeu** (« Mots de Maîtres » ?)
