@@ -3,13 +3,12 @@
 // Deux fonctionnements, selon src/config/serveur.ts :
 //  • sans serveur (valeurs vides) : les adversaires sont les « joueurs maison » fabriqués par le jeu, et la cote du
 //    joueur est calculée et rangée sur son appareil ;
-//  • avec le serveur Supabase : tout passe par les fonctions de serveur/supabase.sql. C'est alors le serveur qui
+//  • avec le serveur Supabase : tout passe par les fonctions de serveur/1-structure.sql. C'est alors le serveur qui
 //    tient la cote, choisit les adversaires et refuse les pseudonymes déjà pris.
 // Les écrans et les règles (src/jeu/joute.ts) sont les mêmes dans les deux cas.
 
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
-import { SERVEUR } from '../config/serveur.ts';
 import { hasardDuSysteme } from '../jeu/hasard.ts';
 import { fabriquerLesJoueursMaison, pseudonymeAuHasard } from '../jeu/joueursMaison.ts';
 import { proposerDesAdversaires, rangDansLeClassement } from '../jeu/joute.ts';
@@ -17,9 +16,8 @@ import type { ProfilDeJoute } from '../jeu/joute.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import { cleDuPseudo, examinerLePseudo } from '../jeu/pseudo.ts';
 import { chargerEdition } from './cartes.ts';
+import { chacunSonTour, clientDuServeur, serveurUtilise } from './compte.ts';
 import { quitterLesJoutes, toutEffacer } from './partie.ts';
-import { creerLeClient } from './supabase.ts';
-import type { Session } from './supabase.ts';
 
 const REGLES = EQUILIBRAGE.joute;
 
@@ -27,6 +25,8 @@ export type MonProfil = Pick<ProfilDeJoute, 'pseudo' | 'deck' | 'savoirs' | 'par
 export type LigneDeClassement = { rang: number; pseudo: string; cote: number; moi: boolean };
 export type Classement = { joueurs: number; rang: number; tete: LigneDeClassement[]; voisins: LigneDeClassement[] };
 export type Publication = { accepte: true; cote: number | null } | { accepte: false; raison: string };
+// La fin d'une joute vue par le serveur : la cote avant et après ; et l'Encre versée, quand il tient aussi la collection.
+export type FinDeJouteDuServeur = { avant: number; apres: number; encre?: number; reduite?: boolean };
 
 export type ServeurDeJoutes = {
   enLigne: boolean;
@@ -35,11 +35,11 @@ export type ServeurDeJoutes = {
   adversaires(cote: number, recents: readonly string[]): Promise<ProfilDeJoute[]>;
   // Début et fin d'une joute. Sans serveur, il n'y a ni ticket ni cote imposée : le jeu calcule lui-même.
   commencer(adversaire: ProfilDeJoute): Promise<number | null>;
-  terminer(ticket: number | null, resultat: Resultat): Promise<{ avant: number; apres: number } | null>;
+  terminer(ticket: number | null, resultat: Resultat): Promise<FinDeJouteDuServeur | null>;
   classement(pseudo: string, cote: number): Promise<Classement>;
   // Cet appareil a-t-il un compte sur le serveur ? (Il peut en rester un alors que la partie a été effacée.)
   aUnCompte(): boolean;
-  // Le droit à l'effacement : retire du serveur le profil du joueur, ses joutes et son compte anonyme.
+  // Le droit à l'effacement : retire du serveur le profil du joueur, ses joutes, sa collection et son compte anonyme.
   supprimer(): Promise<void>;
 };
 
@@ -82,24 +82,8 @@ const serveurLocal: ServeurDeJoutes = {
 };
 
 // ── Avec le serveur Supabase ───────────────────────────────────────────────
-const CLE_DE_SESSION = 'mots.session';
-
 function serveurSupabase(): ServeurDeJoutes {
-  const client = creerLeClient(SERVEUR.adresse, SERVEUR.clePublique, {
-    requete: (...args) => fetch(...args),
-    maintenant: () => Date.now(),
-    lireLaSession: () => { try { return JSON.parse(localStorage.getItem(CLE_DE_SESSION) ?? 'null') as Session | null; } catch { return null; } },
-    ecrireLaSession: (session) => { try { if (session) localStorage.setItem(CLE_DE_SESSION, JSON.stringify(session)); else localStorage.removeItem(CLE_DE_SESSION); } catch { /* stockage indisponible : la session vaut pour cette visite */ } },
-  });
-
-  // Une publication à la fois. Constaté à la première mise en route (21/09/2026) : deux envois simultanés du tout
-  // premier profil d'un joueur se gênent sur le serveur, et le second revient en erreur (« 409 »).
-  let file: Promise<unknown> = Promise.resolve();
-  const chacunSonTour = <T>(tache: () => Promise<T>): Promise<T> => {
-    const resultat = file.then(tache, tache);
-    file = resultat.catch(() => undefined);
-    return resultat;
-  };
+  const client = clientDuServeur();
 
   return {
     enLigne: true,
@@ -114,9 +98,8 @@ function serveurSupabase(): ServeurDeJoutes {
 
     adversaires: () => client.appeler<ProfilDeJoute[]>('adversaires'),
     commencer: (adversaire) => client.appeler<number>('commencer_une_joute', { p_adversaire: adversaire.id }),
-    terminer: (ticket, resultat) => client.appeler<{ avant: number; apres: number }>('terminer_une_joute', { p_ticket: ticket, p_resultat: resultat }),
+    terminer: (ticket, resultat) => chacunSonTour(() => client.appeler<FinDeJouteDuServeur>('terminer_une_joute', { p_ticket: ticket, p_resultat: resultat })),
     classement: () => client.appeler<Classement>('classement'),
-
     aUnCompte: () => client.aUneSession(),
 
     // Un appareil sans compte n'a jamais rien envoyé : on n'en ouvre pas un pour le supprimer aussitôt.
@@ -128,16 +111,7 @@ function serveurSupabase(): ServeurDeJoutes {
   };
 }
 
-// Pendant le développement (« npm run dev »), le jeu ne touche pas au vrai serveur : chaque essai y créerait un vrai
-// joueur, visible dans le classement de tout le monde. Pour l'essayer quand même, dans la console du navigateur :
-//   localStorage.setItem('mots.vrai-serveur', 'oui')   puis recharger la page (removeItem pour revenir en arrière).
-function vraiServeurPermis(): boolean {
-  if (!import.meta.env.DEV) return true;
-  try { return localStorage.getItem('mots.vrai-serveur') === 'oui'; } catch { return false; }
-}
-
-const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '';
-export const serveurDeJoutes: ServeurDeJoutes = serveurRegle && vraiServeurPermis() ? serveurSupabase() : serveurLocal;
+export const serveurDeJoutes: ServeurDeJoutes = serveurUtilise ? serveurSupabase() : serveurLocal;
 
 // Quitter les joutes, ou effacer toute sa partie : le serveur d'abord. S'il ne répond pas, rien n'est effacé
 // sur l'appareil, et le joueur peut réessayer — sinon il perdrait le moyen de retirer son profil du classement.

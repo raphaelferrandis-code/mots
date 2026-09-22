@@ -1,6 +1,11 @@
 // La partie du joueur : sa sauvegarde en mémoire, les actions qui la modifient, et son enregistrement.
-// Les écrans ne touchent jamais au stockage : ils passent par ici. Le jour où la sauvegarde vivra sur
-// un serveur, seul ce dossier changera.
+// Les écrans ne touchent jamais au stockage : ils passent par ici.
+//
+// Deux fonctionnements, selon src/config/serveur.ts (collectionsSurLeServeur, BRIEF-marche.md §5a) :
+//  • la partie vit sur l'appareil : les règles de src/jeu/ s'appliquent ici, et tout est enregistré sur place ;
+//  • le serveur en est propriétaire : tout ce qui a de la valeur (timbres, Encre, paquets, deck, récompenses) passe
+//    par ses fonctions (src/services/collections.ts), et l'appareil n'en garde qu'une copie, tenue à jour après
+//    chaque action. Ce qu'il garde en propre — réglages, résultats en duel, maîtrise, joutes — ne bouge pas.
 
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { hasardDuSysteme } from '../jeu/hasard.ts';
@@ -15,17 +20,33 @@ import type { Resultat } from '../jeu/progression.ts';
 import type { Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
+import { aQuelqueChoseAImporter, fusionner } from '../jeu/synchronisation.ts';
+import type { EtatDuCompte } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
+import { serveurDesCollections } from './collections.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
 import type { Emplacement } from './stockage.ts';
+import { ErreurDuServeur } from './supabase.ts';
+
+// Où en est le serveur des collections : « appareil » quand il n'en est pas propriétaire.
+export type EtatDuServeur =
+  | { etat: 'appareil' }
+  | { etat: 'synchronisation' }
+  | { etat: 'en ligne' }
+  | { etat: 'hors ligne'; message: string };
 
 export type Partie =
   | { etat: 'chargement' }
   | { etat: 'erreur'; message: string }
-  | { etat: 'prete'; sauvegarde: Sauvegarde; emplacement: Emplacement; stockageDurable: boolean };
+  | { etat: 'prete'; sauvegarde: Sauvegarde; emplacement: Emplacement; stockageDurable: boolean; serveur: EtatDuServeur };
 
-// L'heure du jeu. Aujourd'hui celle de l'appareil ; demain celle d'un serveur.
-const maintenant = (): number => Date.now();
+export const HORS_LIGNE = "Le serveur du jeu ne répond pas. Les paquets s'ouvrent en ligne : réessaie dans un moment.";
+
+// L'heure du jeu : celle de l'appareil, recalée sur celle du serveur quand c'est lui qui tient la collection
+// (le compte à rebours des paquets suit alors la même horloge que le serveur).
+let decalage = 0;
+const maintenant = (): number => Date.now() + decalage;
+export const decalageDuServeur = (): number => decalage;
 
 let partie: Partie = { etat: 'chargement' };
 const abonnes = new Set<() => void>();
@@ -51,6 +72,8 @@ function enregistrer(sauvegarde: Sauvegarde): void {
   });
 }
 
+const etatDuServeurAuDepart = (): EtatDuServeur => (serveurDesCollections.actif ? { etat: 'synchronisation' } : { etat: 'appareil' });
+
 let demarrage: Promise<void> | undefined;
 export function demarrerLaPartie(): Promise<void> {
   demarrage ??= (async () => {
@@ -58,8 +81,9 @@ export function demarrerLaPartie(): Promise<void> {
       const { contenu, emplacement } = await lireLaSauvegarde();
       const lue = contenu === undefined ? nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart) : relireSauvegarde(contenu, maintenant());
       const sauvegarde = mettreAJour(lue, maintenant(), EQUILIBRAGE);
-      publier({ etat: 'prete', sauvegarde, emplacement, stockageDurable: false });
+      publier({ etat: 'prete', sauvegarde, emplacement, stockageDurable: false, serveur: etatDuServeurAuDepart() });
       enregistrer(sauvegarde);
+      if (serveurDesCollections.actif) void synchroniser();
       const durable = await demanderUnStockageDurable();
       if (partie.etat === 'prete') publier({ ...partie, stockageDurable: durable });
     } catch (erreur) {
@@ -68,6 +92,64 @@ export function demarrerLaPartie(): Promise<void> {
   })();
   return demarrage;
 }
+
+// ── Le serveur des collections ─────────────────────────────────────────────
+
+// Ce que le serveur vient de dire remplace ce que l'appareil croyait.
+function appliquer(etat: EtatDuCompte): void {
+  if (partie.etat !== 'prete') return;
+  decalage = etat.maintenant - Date.now();
+  publier({ ...partie, serveur: { etat: 'en ligne' } });
+  enregistrer(fusionner(partie.sauvegarde, etat));
+}
+
+function signalerLaPanne(erreur: unknown): void {
+  if (partie.etat === 'prete') publier({ ...partie, serveur: { etat: 'hors ligne', message: erreur instanceof Error ? erreur.message : String(erreur) } });
+}
+
+// Au démarrage, et après une panne : l'état du serveur remplace celui de l'appareil. Un joueur qui n'a pas encore de
+// compte sur le serveur en reçoit un — en y important, une seule fois, la partie qui vivait sur son appareil.
+// Rend vrai si le serveur a répondu.
+let synchronisation: Promise<boolean> | undefined;
+export function synchroniser(): Promise<boolean> {
+  synchronisation ??= (async () => {
+    try {
+      if (partie.etat !== 'prete' || !serveurDesCollections.actif) return false;
+      publier({ ...partie, serveur: { etat: 'synchronisation' } });
+      let etat = await serveurDesCollections.monCompte();
+      if (partie.etat !== 'prete') return false;
+      etat ??= aQuelqueChoseAImporter(partie.sauvegarde) ? await serveurDesCollections.importer(partie.sauvegarde) : await serveurDesCollections.ouvrirMonCompte();
+      appliquer(etat);
+      return true;
+    } catch (erreur) {
+      signalerLaPanne(erreur);
+      return false;
+    } finally {
+      synchronisation = undefined;
+    }
+  })();
+  return synchronisation;
+}
+
+// Avant une action qui a de la valeur : le serveur doit répondre.
+async function serveurPret(): Promise<void> {
+  if (partie.etat === 'prete' && partie.serveur.etat === 'en ligne') return;
+  if (!(await synchroniser())) throw new Error(HORS_LIGNE);
+}
+
+// Une action sur le serveur. Un refus motivé (« Aucun paquet en réserve… ») remonte tel quel ; une panne met
+// l'appareil hors ligne, et l'action suivante réessaiera.
+async function surLeServeur<T>(action: () => Promise<T>): Promise<T> {
+  await serveurPret();
+  try {
+    return await action();
+  } catch (erreur) {
+    if (!(erreur instanceof ErreurDuServeur && erreur.refus)) signalerLaPanne(erreur);
+    throw erreur;
+  }
+}
+
+// ── Les paquets ────────────────────────────────────────────────────────────
 
 // Les cartes disponibles au tirage, selon ce que le joueur a choisi de masquer.
 const reserves = new Map<string, Reserve>();
@@ -78,7 +160,7 @@ async function reservePour(sauvegarde: Sauvegarde): Promise<Reserve> {
   return reserves.get(cle)!;
 }
 
-async function ouvrir(action: (sauvegarde: Sauvegarde, contexte: Parameters<typeof ouvrirUnPaquetGratuit>[1]) => Ouverture): Promise<CarteObtenue[]> {
+async function ouvrirSurLAppareil(action: (sauvegarde: Sauvegarde, contexte: Parameters<typeof ouvrirUnPaquetGratuit>[1]) => Ouverture): Promise<CarteObtenue[]> {
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
   const reserve = await reservePour(partie.sauvegarde);
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
@@ -87,8 +169,20 @@ async function ouvrir(action: (sauvegarde: Sauvegarde, contexte: Parameters<type
   return ouverture.cartes;
 }
 
-export const ouvrirUnPaquet = (): Promise<CarteObtenue[]> => ouvrir(ouvrirUnPaquetGratuit);
-export const acheterEtOuvrirUnPaquet = (): Promise<CarteObtenue[]> => ouvrir(acheterUnPaquet);
+async function ouvrirSurLeServeur(achat: boolean): Promise<CarteObtenue[]> {
+  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  const masques = registresMasques(partie.sauvegarde);
+  const [reponse, edition] = await Promise.all([surLeServeur(() => serveurDesCollections.ouvrirUnPaquet(masques, achat)), chargerEdition()]);
+  const connues = new Map(edition.cartes.map((c) => [c.id, c]));
+  appliquer(reponse.etat);
+  return reponse.cartes.flatMap((t) => {
+    const carte = connues.get(t.id);
+    return carte ? [{ carte, finition: t.finition, nouvelle: t.nouvelle, nouvelleFinition: t.nouvelleFinition, encre: t.encre }] : [];
+  });
+}
+
+export const ouvrirUnPaquet = (): Promise<CarteObtenue[]> => (serveurDesCollections.actif ? ouvrirSurLeServeur(false) : ouvrirSurLAppareil(ouvrirUnPaquetGratuit));
+export const acheterEtOuvrirUnPaquet = (): Promise<CarteObtenue[]> => (serveurDesCollections.actif ? ouvrirSurLeServeur(true) : ouvrirSurLAppareil(acheterUnPaquet));
 
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
   if (partie.etat !== 'prete') return;
@@ -96,9 +190,14 @@ export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeu
 }
 
 // ── Le duel ─────────────────────────────────────────────────────────────────
+// Le deck change sur l'appareil tout de suite ; le serveur, s'il tient la collection, le reçoit ensuite et a le dernier mot.
 export function changerLeDeck(ids: readonly string[]): void {
   if (partie.etat !== 'prete') return;
   enregistrer(enregistrerLeDeck(partie.sauvegarde, ids, EQUILIBRAGE.duel));
+  if (!serveurDesCollections.actif || partie.serveur.etat !== 'en ligne') return;
+  void serveurDesCollections.changerDeDeck(partie.sauvegarde.deck).then((propre) => {
+    if (partie.etat === 'prete' && JSON.stringify(propre) !== JSON.stringify(partie.sauvegarde.deck)) enregistrer({ ...partie.sauvegarde, deck: propre });
+  }).catch(signalerLaPanne);
 }
 
 // Note la réponse du joueur à une épreuve de maîtrise. Rend vrai si le mot vient d'être maîtrisé.
@@ -115,18 +214,46 @@ export function noterLaParade(rarete: Rarete, reussie: boolean): void {
   enregistrer(noterUneParade(partie.sauvegarde, rarete, reussie));
 }
 
+// Un duel d'entraînement commence : quand le serveur tient la collection, il donne un ticket (c'est lui qui versera l'Encre).
+export async function commencerUnDuel(niveau: Niveau): Promise<number | null> {
+  if (!serveurDesCollections.actif) return null;
+  return surLeServeur(() => serveurDesCollections.commencerUnDuel(niveau));
+}
+
 export type FinDeDuel = { encre: number; reduite: boolean; cote: { avant: number; apres: number } | null };
+export type RecompenseDuServeur = { encre: number; reduite: boolean };
 
 // Fin d'un duel : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge.
-// (« coteDuServeur » : la cote avant et après la joute, quand c'est un serveur qui tient le classement.)
-export function finirLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, resultat: Resultat, coteDuServeur?: { avant: number; apres: number }): FinDeDuel {
+// Quand le serveur tient la collection, c'est lui qui verse l'Encre : d'après le ticket du duel d'entraînement, ou
+// d'après ce que le serveur des joutes a répondu (« recompenseDuServeur »). Sinon, le jeu calcule tout lui-même.
+export async function finirLeDuel(
+  adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute },
+  resultat: Resultat,
+  ticket: number | null = null,
+  coteDuServeur?: { avant: number; apres: number },
+  recompenseDuServeur?: RecompenseDuServeur,
+): Promise<FinDeDuel> {
   if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
+  const avant = partie.sauvegarde.encre;
   if (adversaire.type === 'entrainement') {
     const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);
     enregistrer(fin.sauvegarde);
+    if (serveurDesCollections.actif && ticket !== null) {
+      try {
+        const recompense = await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, resultat));
+        appliquer(recompense.etat);
+        return { encre: recompense.encre, reduite: recompense.reduite, cote: null };
+      } catch {
+        // Le serveur n'a pas pu compter ce duel : l'Encre affichée est celle du jeu, jusqu'à la prochaine synchronisation.
+      }
+    }
     return { encre: fin.encre, reduite: fin.reduite, cote: null };
   }
   const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, coteDuServeur);
+  if (serveurDesCollections.actif && recompenseDuServeur) {
+    enregistrer({ ...fin.sauvegarde, encre: avant + recompenseDuServeur.encre });
+    return { encre: recompenseDuServeur.encre, reduite: recompenseDuServeur.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
+  }
   enregistrer(fin.sauvegarde);
   return { encre: fin.encre, reduite: fin.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
 }
@@ -150,6 +277,8 @@ export function recevoirLaCoteDuServeur(cote: number): void {
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });
 }
 
+// ── La sauvegarde ──────────────────────────────────────────────────────────
+
 // Le fichier de sauvegarde à télécharger. L'export est noté, pour espacer les rappels.
 export function exporterLaSauvegarde(): { nom: string; contenu: string } | null {
   if (partie.etat !== 'prete') return null;
@@ -160,16 +289,21 @@ export function exporterLaSauvegarde(): { nom: string; contenu: string } | null 
 }
 
 // Remplace la partie par le contenu d'un fichier. Lève une erreur compréhensible si le fichier n'est pas une sauvegarde.
+// Quand le serveur tient la collection, un fichier ne peut plus la remplacer.
 export function importerUneSauvegarde(texte: string): void {
   if (partie.etat !== 'prete') return;
+  if (serveurDesCollections.actif) throw new Error("Ta collection est gardée par le serveur du jeu : elle ne s'importe plus depuis un fichier.");
   let brut: unknown;
   try { brut = JSON.parse(texte); } catch { throw new Error("Ce fichier n'est pas une sauvegarde du jeu."); }
   enregistrer(mettreAJour(relireSauvegarde(brut, maintenant()), maintenant(), EQUILIBRAGE));
 }
 
+// Tout effacer sur l'appareil. (Le compte du serveur, lui, est supprimé par src/services/joutes.ts, juste avant.)
 export async function toutEffacer(): Promise<void> {
   if (partie.etat !== 'prete') return;
   await ecritures;
   await effacerLaSauvegarde();
+  publier({ ...partie, serveur: etatDuServeurAuDepart() });
   enregistrer(nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart));
+  if (serveurDesCollections.actif) void synchroniser();
 }

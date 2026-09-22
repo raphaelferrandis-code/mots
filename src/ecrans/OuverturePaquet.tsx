@@ -8,7 +8,7 @@ import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants
 import { NIVEAU } from '../composants/carte/decor.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
-import { acheterEtOuvrirUnPaquet, ouvrirUnPaquet } from '../services/partie.ts';
+import { HORS_LIGNE, acheterEtOuvrirUnPaquet, ouvrirUnPaquet, synchroniser } from '../services/partie.ts';
 
 const viserTimbres = (liste: HTMLUListElement | null): void => {
   liste?.focus({ preventScroll: true });
@@ -97,7 +97,10 @@ export function OuverturePaquet() {
         </div>
         {toutEstRetourne && <p className="atelier-paquets__reserve texte-doux petit">{paquets.stock > 0 ? `${paquets.stock} en réserve` : paquets.attente !== null ? `Prochain paquet dans ${enMinutesEtSecondes(paquets.attente)}` : 'Réserve vide'}</p>}
       </>}
-      {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
+      {partie.serveur.etat === 'hors ligne' && (
+        <p className="bloc bloc--alerte" role="alert">{HORS_LIGNE} <button type="button" className="outil" onClick={() => void synchroniser()}>Réessayer</button></p>
+      )}
+      {erreur && erreur !== HORS_LIGNE && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
       <a className="atelier-paquets__retour" href={lien({ ecran: 'accueil' })}>Retour à l’accueil</a>
     </main>
   );

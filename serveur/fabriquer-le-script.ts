@@ -1,6 +1,7 @@
-// Fabrique les deux scripts à coller dans Supabase (voir GUIDE-supabase.md) :
-//   serveur/1-structure.sql       les tables, les règles d'accès et les fonctions des joutes ;
-//   serveur/2-joueurs-maison.sql  les joueurs maison, pour que les joutes aient du monde dès le premier jour.
+// Fabrique les trois scripts à coller dans Supabase (voir GUIDE-supabase.md) :
+//   serveur/1-structure.sql       les tables, les règles d'accès et les fonctions des joutes et des collections ;
+//   serveur/2-joueurs-maison.sql  les joueurs maison, pour que les joutes aient du monde dès le premier jour ;
+//   serveur/3-cartes.sql          les cartes de l'édition, pour que le serveur tire lui-même les paquets.
 // Les chiffres (classement, pseudonymes) et la liste des mots interdits viennent des fichiers du jeu : il n'y a
 // qu'un seul endroit où les changer. Après une modification : « npm run serveur:script », puis recoller dans Supabase.
 //
@@ -13,6 +14,7 @@ import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
+import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections } from './collections.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -25,6 +27,8 @@ const HEURES_DE_VALIDITE_DU_TICKET = 2;
 
 const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
 
+const FONCTIONS_DES_JOUTES = ['public.publier_mon_profil(text, jsonb, jsonb, jsonb)', 'public.adversaires()', 'public.commencer_une_joute(uuid)', 'public.terminer_une_joute(bigint, text)', 'public.classement()', 'public.supprimer_mon_profil()'];
+
 export function structure(): string {
   const interdits = [
     ...PSEUDOS_INTERDITS.motsEntiers.map((mot) => `(${texte(mot)}, true)`),
@@ -32,7 +36,7 @@ export function structure(): string {
   ].join(', ');
 
   return String.raw`-- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur des joutes classées (1/2 : la structure)
+-- MOTS — le serveur du jeu (1/3 : la structure — joutes classées et collections)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase : SQL Editor → New query → coller → Run. Peut être relancé sans danger.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
@@ -240,6 +244,7 @@ declare
   cote_adverse integer;
   obtenu numeric;
   nouvelle integer;
+  recompense jsonb;
 begin
   if p_resultat not in ('victoire', 'defaite', 'nul') then raise exception 'Résultat inconnu.'; end if;
   select * into moi from public.profils where utilisateur = auth.uid() for update;
@@ -254,7 +259,9 @@ begin
 
   update public.profils set cote = nouvelle, jouees = jouees + 1, gagnees = gagnees + (p_resultat = 'victoire')::integer, maj_le = now() where id = moi.id;
   update public.joutes set terminee_le = now(), resultat = p_resultat, cote_avant = moi.cote, cote_apres = nouvelle where id = joute.id;
-  return jsonb_build_object('avant', moi.cote, 'apres', nouvelle);
+  -- L'Encre de la joute, si le serveur tient la collection du joueur (même plafond quotidien que les duels d'entraînement).
+  recompense := public.recompenser(moi.utilisateur, ${J.encreParVictoire}, p_resultat);
+  return jsonb_build_object('avant', moi.cote, 'apres', nouvelle) || coalesce(recompense, '{}'::jsonb);
 end $$;
 
 -- Le classement : les dix premiers, et les voisins du joueur.
@@ -291,17 +298,19 @@ begin
   delete from auth.users where id = auth.uid();
 end $$;
 
--- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler ces fonctions.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text) from public, anon;
-revoke execute on function public.pseudo_refuse(text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil() to authenticated;
+${collections()}
+-- ── Les droits ───────────────────────────────────────────────────────────────
+-- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
+revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_INTERNES].join(', ')} from public, anon;
+revoke execute on function ${['public.pseudo_refuse(text)', ...FONCTIONS_INTERNES].join(', ')} from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIONS].join(', ')} to authenticated;
 `;
 }
 
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur des joutes classées (2/2 : les ${joueurs.length} joueurs maison)
+-- MOTS — le serveur du jeu (2/3 : les ${joueurs.length} joueurs maison des joutes)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql. Peut être relancé sans danger : il ne touche qu'aux joueurs maison.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
@@ -315,10 +324,11 @@ on conflict (id) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.p
 `;
 }
 
-// Lancé directement (npm run serveur:script) : écrit les deux fichiers. Importé par les tests : ne fait rien.
+// Lancé directement (npm run serveur:script) : écrit les trois fichiers. Importé par les tests : ne fait rien.
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {
   const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
   writeFileSync(path.join(RACINE, 'serveur', '1-structure.sql'), structure());
   writeFileSync(path.join(RACINE, 'serveur', '2-joueurs-maison.sql'), joueursMaison(edition));
-  console.log('Écrits : serveur/1-structure.sql et serveur/2-joueurs-maison.sql');
+  writeFileSync(path.join(RACINE, 'serveur', '3-cartes.sql'), cartes(edition));
+  console.log('Écrits : serveur/1-structure.sql, serveur/2-joueurs-maison.sql et serveur/3-cartes.sql');
 }

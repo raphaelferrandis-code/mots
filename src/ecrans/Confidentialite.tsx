@@ -6,6 +6,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
+import { serveurDesCollections } from '../services/collections.ts';
 import { serveurDeJoutes, supprimerMonProfilDeJoute } from '../services/joutes.ts';
 
 type Suppression = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'faite' } | { etat: 'erreur'; message: string };
@@ -16,6 +17,7 @@ export function Confidentialite() {
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
   const aUnProfil = partie.sauvegarde.joutes.pseudo !== '' || serveurDeJoutes.aUnCompte();
+  const collectionSurLeServeur = serveurDesCollections.actif;
 
   const supprimer = async (): Promise<void> => {
     if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, ta cote et tes joutes seront effacés du serveur. Cette action est définitive.')) return;
@@ -37,8 +39,9 @@ export function Confidentialite() {
       <section className="rubrique">
         <h2>En bref</h2>
         <ul className="regles">
-          <li>Ta partie reste sur ton appareil.</li>
-          <li>Rien n'est envoyé à un serveur tant que tu n'as pas rejoint les joutes classées.</li>
+          {collectionSurLeServeur
+            ? <><li>Ta collection est gardée par le serveur du jeu, sous un compte anonyme : ni nom, ni e-mail, ni mot de passe.</li><li>Tes réglages et tes résultats en duel restent sur ton appareil.</li></>
+            : <><li>Ta partie reste sur ton appareil.</li><li>Rien n'est envoyé à un serveur tant que tu n'as pas rejoint les joutes classées.</li></>}
           <li>Pas de publicité, pas de mesure d'audience, pas de pistage.</li>
           <li>Tu peux tout effacer à tout moment, ici même.</li>
         </ul>
@@ -46,12 +49,38 @@ export function Confidentialite() {
 
       <section className="rubrique">
         <h2>Sur ton appareil</h2>
-        <p>
-          Ta collection, ton Encre, tes paquets, ton deck, tes réglages et tes résultats en duel sont enregistrés dans le
-          navigateur de cet appareil, et nulle part ailleurs. Le fichier que tu exportes depuis les réglages est à toi :
-          le jeu ne le reçoit pas.
-        </p>
+        {collectionSurLeServeur ? (
+          <p>
+            Tes réglages, tes résultats en duel (les mots que tu as retrouvés, ceux que tu as maîtrisés) et une copie de ta
+            collection sont enregistrés dans le navigateur de cet appareil. Le fichier que tu exportes depuis les réglages
+            est à toi : le jeu ne le reçoit pas.
+          </p>
+        ) : (
+          <p>
+            Ta collection, ton Encre, tes paquets, ton deck, tes réglages et tes résultats en duel sont enregistrés dans le
+            navigateur de cet appareil, et nulle part ailleurs. Le fichier que tu exportes depuis les réglages est à toi :
+            le jeu ne le reçoit pas.
+          </p>
+        )}
       </section>
+
+      {collectionSurLeServeur && (
+        <section className="rubrique">
+          <h2>Sur le serveur du jeu : ta collection</h2>
+          <p>Pour que tes timbres aient un propriétaire connu (c'est ce qui permettra de les échanger), le serveur du jeu garde :</p>
+          <ul className="regles">
+            <li>tes timbres, avec leurs finitions, leurs doublons et la date où tu les as obtenus ;</li>
+            <li>ton Encre, ta réserve de paquets et le nombre de paquets ouverts ;</li>
+            <li>ton deck ;</li>
+            <li>l'heure de début et de fin de tes duels d'entraînement, pour verser l'Encre gagnée.</li>
+          </ul>
+          <p>
+            Tout cela est attaché au même compte anonyme que les joutes : un simple numéro, lié à ce navigateur. La
+            première fois, la collection qui vivait sur ton appareil y a été copiée une fois pour toutes ; ensuite,
+            c'est le serveur qui fait foi.
+          </p>
+        </section>
+      )}
 
       <section className="rubrique">
         <h2>Sur le serveur des joutes classées</h2>
@@ -99,7 +128,7 @@ export function Confidentialite() {
         {suppression.etat === 'erreur' && <p className="joute__refus" role="alert">{suppression.message} Rien n'a été effacé : réessaie dans un moment.</p>}
         <p className="texte-doux petit">
           Pour effacer aussi ta partie sur cet appareil, utilise « Effacer ma partie » dans les <a href={lien({ ecran: 'reglages' })}>réglages</a> :
-          ton profil de joute est alors supprimé en même temps.
+          ton profil de joute{collectionSurLeServeur && ', ta collection'} et ton compte anonyme sont alors supprimés en même temps.
         </p>
       </section>
 

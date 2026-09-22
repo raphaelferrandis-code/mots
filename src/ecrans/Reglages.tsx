@@ -104,14 +104,16 @@ export function Reglages() {
         <section className="rubrique">
           <h2>Ta sauvegarde</h2>
           <p className="petit">
-            {partie.emplacement === 'mémoire seulement'
-              ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
-              : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
+            {partie.serveur.etat !== 'appareil'
+              ? 'Ta collection est gardée par le serveur du jeu, sous le compte anonyme de ce navigateur. Le fichier exporté n’en est qu’une copie : il ne peut plus être importé.'
+              : partie.emplacement === 'mémoire seulement'
+                ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
+                : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
           </p>
           <p className="texte-doux petit">{dernierExport ? `Dernier export : ${dernierExport}.` : 'Aucun export pour le moment.'}</p>
           <div className="rangee-de-boutons">
             <button type="button" className="bouton" onClick={exporter}>Exporter ma sauvegarde</button>
-            <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>
+            {partie.serveur.etat === 'appareil' && <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>}
             <input ref={fichier} type="file" accept="application/json,.json" hidden onChange={(e) => void importer(e.target.files?.[0])} />
           </div>
           {message && <p role="status" className="petit">{message}</p>}

@@ -9,6 +9,7 @@ import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { NOMBRE_DE_JOUEURS_MAISON, fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
+import { cartes } from './collections.ts';
 import { joueursMaison, structure } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -19,6 +20,27 @@ describe('les scripts du serveur', () => {
   it('sont à jour : sinon, lancer « npm run serveur:script » et les recoller dans Supabase', () => {
     assert.equal(lire('1-structure.sql'), structure());
     assert.equal(lire('2-joueurs-maison.sql'), joueursMaison(edition));
+    assert.equal(lire('3-cartes.sql'), cartes(edition));
+  });
+
+  it('reprennent les chiffres des paquets, de l’Encre et des duels, et toutes les cartes de l’édition', () => {
+    const sql = structure();
+    const P = EQUILIBRAGE.paquets;
+    assert.ok(sql.includes(`'${JSON.stringify(P.emplacements)}'::jsonb`));
+    assert.ok(sql.includes(`>= ${P.paquetsAvantLegendaireGarantie};`));
+    assert.ok(sql.includes(`random() < ${P.chanceHorsSerie}`));
+    assert.ok(sql.includes(`< ${P.prixEnEncre} then raise exception`));
+    assert.ok(sql.includes(`interval '${P.minutesEntreDeuxPaquets} minutes'`));
+    assert.ok(sql.includes(`when 'Légendaire' then ${EQUILIBRAGE.encreParDoublon['Légendaire']}`));
+    assert.ok(sql.includes(`when 'Holographique' then ${EQUILIBRAGE.finitions.encre.Holographique}`));
+    assert.ok(sql.includes(`>= ${EQUILIBRAGE.duel.victoiresPleinesParJour};`));
+    assert.ok(sql.includes(`when 'Difficile' then ${EQUILIBRAGE.duel.encreParVictoire.Difficile}`));
+    assert.ok(sql.includes(`recompenser(moi.utilisateur, ${EQUILIBRAGE.joute.encreParVictoire}, p_resultat)`));
+    const script = cartes(edition);
+    for (const carte of edition.cartes) assert.ok(script.includes(`"id":"${carte.id}"`), carte.id);
+    // Les aides internes ne sont offertes à personne ; les fonctions du jeu seulement aux joueurs connectés.
+    assert.match(sql, /revoke execute on function [^;]*public\.tirer_un_paquet\(uuid, text\[\]\)[^;]* from authenticated;/);
+    assert.match(sql, /grant execute on function [^;]*public\.ouvrir_un_paquet\(text\[\]\)[^;]* to authenticated;/);
   });
 
   it('reprennent les chiffres du classement et tous les mots interdits du jeu', () => {

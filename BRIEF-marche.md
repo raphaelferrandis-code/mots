@@ -1,6 +1,6 @@
 # Brief — Le Marché : échanges et enchères entre joueurs
 
-*Version 1 du 22 septembre 2026. Ce document complète `BRIEF-v2.md`. Il répond à la demande de Raphaël du 21 septembre 2026 : « un nouvel onglet Marché, où les joueurs pourront échanger et vendre leurs cartes aux enchères ». Il décrit ce que le marché peut contenir, ce qu'il faut construire avant, et les décisions à prendre. Rien n'est commencé : c'est un plan à valider.*
+*Version 2 du 22 septembre 2026 — intègre les deux décisions de Raphaël du même jour (§7 bis). Version 1 du 22 septembre 2026. Ce document complète `BRIEF-v2.md`. Il répond à la demande de Raphaël du 21 septembre 2026 : « un nouvel onglet Marché, où les joueurs pourront échanger et vendre leurs cartes aux enchères ». Il décrit ce que le marché peut contenir, ce qu'il faut construire avant, et les décisions à prendre. Rien n'est commencé : c'est un plan à valider.*
 
 ---
 
@@ -75,7 +75,7 @@ Comme pour les paquets et les duels, il faudra un **simulateur de marché** (`np
 | Étape | Contenu | Validée quand… |
 |---|---|---|
 | **M0. Décisions** | Les choix du §7, un simulateur de marché, ce brief mis à jour | Raphaël a tranché les questions du §7 |
-| **M1. Collection sur le serveur** | Tables, fonctions, migration, moyen de récupération, page Confidentialité mise à jour | Deux appareils voient la même collection ; avancer l'heure du téléphone ne donne plus de paquet ; un joueur retrouve sa collection après avoir effacé son navigateur |
+| **M1. Collection sur le serveur** *(code prêt le 22/09/2026, à mettre en route : GUIDE-supabase.md, étape 8)* | Tables, fonctions, migration, page Confidentialité mise à jour ; **le moyen de récupération reste à faire** (question 6) | Avancer l'heure du téléphone ne donne plus de paquet ; la collection importée est bornée au plausible ; les paquets, l'Encre, le deck et les récompenses passent par le serveur. (Deux appareils sur la même collection : quand le compte sera récupérable) |
 | **M2. Classeur de doubles** | Les doublons sont gardés selon la règle choisie (§7) ; l'écran Album les montre | Un joueur possède deux exemplaires d'un timbre et voit ce qu'il peut en faire |
 | **M3. Ventes, avis de recherche, provenance** (A, D, G) | Annonces, achats, commission, plafonds, cachet de provenance | Deux joueurs s'échangent un timbre contre de l'Encre ; l'Encre totale du jeu a baissé de la commission ; le timbre porte son cachet |
 | **M4. La cote** (E) | Calcul sur le serveur, affichage sur les fiches et dans l'album | La cote d'un timbre suit ses ventes réelles |
@@ -105,10 +105,23 @@ Ordre de grandeur : M1 est comparable à tout le travail fait pour les joutes (s
 | 9 | **Argent réel** | Jamais / un jour, pour l'accélération seulement / un jour, aussi pour acheter de l'Encre | Jamais pour l'Encre. L'accélération payante reste possible plus tard, avec un juriste |
 | 10 | **Nom de l'onglet** | « Marché », « Bourse », « Salle des ventes », « La Poste » | « Marché » : c'est le mot que Raphaël emploie |
 
+## 7 bis. Les décisions prises par Raphaël (22 septembre 2026)
+
+1. **Un timbre vendu quitte l'album.** On peut vendre n'importe lequel de ses timbres, pas seulement ses doubles : « c'est bien qu'un timbre disparaisse à la vente, ça crée une économie ». (Réponse à la question 3 : option b. Ma recommandation n'est pas retenue, et c'est cohérent : la rareté vient de ce qu'on renonce à quelque chose.) Conséquence : l'écran de vente doit prévenir clairement quand on vend son dernier exemplaire, et le classeur de doubles (M2) n'est plus indispensable — la règle actuelle des doublons (ils deviennent de l'Encre) peut rester.
+2. **Une version payante du jeu** viendra, avec : des paquets plus rapides, de l'Encre, les statistiques des prix du marché (la cote), des achats et reventes illimités. (Réponses aux questions 5 et 9 : les joueurs gratuits ont donc un plafond d'opérations par jour, les payants non ; et l'Encre s'achètera un jour en argent réel.)
+
+**Ce que la version payante change au plan :**
+- **L'Encre achetable en argent réel** est la décision la plus lourde de conséquences : l'Encre devient de l'argent, les timbres qui s'achètent avec en deviennent aussi, et les paquets tirés au sort avec de l'Encre achetée sont des « loteries » au sens de plusieurs réglementations (§7 de `BRIEF-v2.md`). **Avant le premier euro : un juriste, obligatoirement.** Deux points sont déjà connus : les 240 joueurs maison non signalés devront l'être ou disparaître (un jeu payant ne peut pas faire croire à de vrais adversaires), et les mineurs (question de fond du §10.3 du brief) devront être traités.
+- **L'économie** doit être réglée avec cette entrée d'Encre illimitée en tête : les puits (commission, salle des ventes) deviennent obligatoires, sinon les prix s'envolent pour les joueurs gratuits. Le simulateur de marché devra modéliser une part de joueurs payants.
+- **Le compte devient indispensable** (on ne perd pas ce qu'on a payé) : le moyen de récupération (question 6) passe de « souhaitable » à « nécessaire avant tout paiement ».
+- **La cote réservée aux payants** : à vérifier à l'usage — un marché où seuls les payants connaissent les prix peut décourager les gratuits de vendre. Une variante : la cote du jour pour tous, l'historique et les statistiques pour les payants.
+
+**Questions qui restent ouvertes** (une ligne suffit) : la question 2 (les doublons : garder la règle actuelle ?), la 6 (récupération du compte : e-mail, code, les deux ?) et la 7 (première brique : ventes à prix fixe d'abord ?). Sans réponse, je pars sur : doublons inchangés, e-mail + code, ventes à prix fixe d'abord.
+
 ## 8. Ce que je propose de faire ensuite
 
-1. Raphaël répond au §7 (une ligne par question suffit).
-2. J'écris le simulateur de marché et je propose les chiffres du §4.
-3. Je mets ce brief à jour (version 2), puis j'attaque M1 : le compte et la collection sur le serveur, avec un guide pas à pas comme `GUIDE-supabase.md` pour la partie qui lui revient (le script à coller, les réglages du compte).
+1. ~~Raphaël répond au §7~~ — fait en partie le 22/09/2026 (§7 bis) ; trois questions restent ouvertes, avec une réponse par défaut.
+2. **M1, le compte et la collection sur le serveur — code prêt le 22/09/2026, endormi jusqu'à la mise en route** : les scripts (`serveur/1-structure.sql` mis à jour, `serveur/3-cartes.sql`), le jeu qui parle au serveur (`src/services/collections.ts`, `src/jeu/synchronisation.ts`), et l'étape 8 de `GUIDE-supabase.md` pour la partie qui revient à Raphaël (coller deux scripts). Sans moyen de récupération du compte pour l'instant (question 6). Vérifié dans un Postgres en mémoire et contre un faux Supabase ; reste la vérification contre le vrai serveur, après le collage des scripts.
+3. Ensuite le simulateur de marché (avec une part de joueurs payants), puis M3 (ventes à prix fixe, avis de recherche, provenance).
 
 Tant que M1 n'est pas fait, le jeu continue de fonctionner comme aujourd'hui : rien de ce plan ne bloque les joueurs actuels.

@@ -51,7 +51,7 @@ Toutes les commandes se lancent depuis le dossier du projet.
 | `npm run sources` | Télécharge les deux bases de données (735 Mo au total) dans `data/brut/`. Ne retélécharge pas un fichier déjà présent. | quelques minutes, selon la connexion |
 | `npm run pipeline` | **Fabrique les cartes** : la base complète, l'Édition 1, et le rapport à relire. | environ 30 secondes |
 | `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 2 à 3 minutes |
-| `npm run serveur:script` | Refabrique les deux scripts à coller dans Supabase (`serveur/1-structure.sql`, `serveur/2-joueurs-maison.sql`) à partir des chiffres et des listes du jeu. À relancer après avoir changé les chiffres des joutes ou la liste des pseudonymes interdits ; un test signale l'oubli. | immédiat |
+| `npm run serveur:script` (trois scripts : structure, joueurs maison, cartes de l'édition) | Refabrique les deux scripts à coller dans Supabase (`serveur/1-structure.sql`, `serveur/2-joueurs-maison.sql`) à partir des chiffres et des listes du jeu. À relancer après avoir changé les chiffres des joutes ou la liste des pseudonymes interdits ; un test signale l'oubli. | immédiat |
 | `npm run simulation:collection` | Simule des mois d'ouverture de paquets pour trois profils de joueurs, et quelques variantes de réglages. Résultat dans `data/simulation-collection.md`. | 2 secondes |
 | `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |
@@ -116,6 +116,6 @@ Après une modification, lancer `npm run build` et `npm test`, puis vérifier l�
 | `src/jeu/` | **Les règles du jeu**, sans écran ni stockage : tirage des paquets, recharge, Encre, sauvegarde, duel (`duel.ts`), épreuve de maîtrise (`epreuve.ts`), joutes classées (`joute.ts`), deck, maîtrise et récompenses (`progression.ts`). Entièrement couvertes par des tests |
 | `serveur/` | Les scripts de la base Supabase (fabriqués, ne pas les modifier à la main) et le programme qui les fabrique |
 | `simulateurs/` | Les outils d'équilibrage : simulateur de collection et simulateur de duel |
-| `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données (aujourd'hui des fichiers, demain un serveur). `joutes.ts` choisit entre le jeu sans serveur et Supabase (`supabase.ts`), selon `src/config/serveur.ts` |
+| `src/services/` | Le seul endroit du jeu qui sait d'où viennent les données. `joutes.ts` choisit entre le jeu sans serveur et Supabase (`supabase.ts`, `compte.ts`), selon `src/config/serveur.ts` ; `collections.ts` fait de même pour la collection elle-même quand le serveur en est propriétaire (`collectionsSurLeServeur`), et `partie.ts` synchronise alors l'appareil avec lui |
 | `public/data/` | Les fichiers de cartes que le jeu chargera |
 | `data/` | Listes tenues par Raphaël, rapports, et données brutes (hors Git) |

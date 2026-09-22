@@ -107,6 +107,35 @@ Sur le site, écran **Duel** → onglet **Joutes classées** :
 
 ---
 
+## Étape 8 — Les collections sur le serveur (ajoutée le 22 septembre 2026)
+
+Depuis la décision du marché (`BRIEF-marche.md`, §2), le serveur doit devenir propriétaire des collections : c'est lui qui
+tire les paquets, compte l'Encre et connaît le propriétaire de chaque timbre. Le code du jeu est prêt, mais **il reste
+endormi** tant que `collectionsSurLeServeur` vaut `false` dans `src/config/serveur.ts` : rien ne change pour les joueurs.
+
+Ce qui te revient (dix minutes) :
+
+1. SQL Editor → New query → coller **tout** le contenu de `serveur/1-structure.sql` (mis à jour : il contient maintenant les
+   tables et les fonctions des collections, en plus de celles des joutes) → vérifier que le petit menu à gauche de « Save »
+   indique **Database** → Run. Il se relance sans danger : les joueurs et les joutes existants restent en place.
+2. New query → coller `serveur/3-cartes.sql` (les 3 016 cartes de l'édition, pour que le serveur puisse tirer les paquets)
+   → Database → Run. À recoller à chaque nouvelle édition. (Inutile de recoller `2-joueurs-maison.sql`.)
+3. Me dire que c'est fait. Je passe alors `collectionsSurLeServeur` à `true`, je vérifie contre le vrai serveur avec un
+   joueur d'essai (que j'efface ensuite), puis je publie.
+
+Ce qui se passera alors pour les joueurs :
+- à leur première visite, la collection qui vivait sur leur téléphone est **copiée une seule fois** sur le serveur
+  (ramenée à ce qui est plausible : au plus 200 paquets par jour depuis la création de la partie, cinq cartes par paquet,
+  2 000 + 30 Encre par paquet) ; ensuite, c'est le serveur qui fait foi ;
+- sans réseau, ils voient leur collection mais n'ouvrent pas de paquet (un message le dit, avec un bouton « Réessayer ») ;
+- « Importer une sauvegarde » disparaît des réglages (l'export reste possible, comme copie) ;
+- leur compte anonyme, lié au navigateur, porte désormais leur collection : perdre son navigateur, c'est perdre sa
+  collection tant qu'il n'y a pas de moyen de récupération (question 6 du `BRIEF-marche.md`, §7).
+
+Comment je l'ai vérifié sans toucher au vrai serveur : les scripts ont été joués dans un Postgres en mémoire (PGlite) avec un
+scénario de 34 vérifications (tirage, recharge, achat, garantie de Légendaire, mots masqués, doublons, deck, duels, joutes,
+importation bornée, suppression, droits), puis le jeu entier a tourné contre un faux Supabase branché sur ces mêmes scripts.
+
 ## La vie du serveur
 
 **Le projet s'est endormi.** Avec la formule gratuite, Supabase met un projet en sommeil après une semaine sans aucune activité. Les joutes affichent alors « Le serveur des joutes ne répond pas » (l'entraînement contre l'ordinateur, lui, fonctionne toujours). Pour le réveiller : ouvrir le tableau de bord Supabase → le projet → **Restore project**. Tant que le jeu a peu de joueurs, cela peut arriver.
@@ -135,7 +164,7 @@ drop table if exists public.joutes, public.profils, public.mots_interdits cascad
 
 ## Ce que le serveur garde sur un joueur
 
-Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, et des compteurs de bonnes réponses. **Ni nom, ni adresse e-mail, ni localisation.** Le jeu a une page « Confidentialité » (dans les Réglages) qui l'explique au joueur, avec un bouton « Supprimer mon profil de joute » : il efface le profil, les joutes et le compte anonyme (fonction `supprimer_mon_profil`).
+Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, et des compteurs de bonnes réponses — et, une fois les collections sur le serveur (étape 8) : ses timbres (finitions, doublons, date d'obtention), son Encre, sa réserve de paquets, et l'heure de début et de fin de ses duels d'entraînement. **Ni nom, ni adresse e-mail, ni localisation.** Le jeu a une page « Confidentialité » (dans les Réglages) qui l'explique au joueur, avec un bouton « Supprimer mon profil de joute » : il efface le profil, les joutes et le compte anonyme (fonction `supprimer_mon_profil`).
 
 ## Ce que ce classement vaut
 

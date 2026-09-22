@@ -26,8 +26,8 @@ import type { CarteIndex, Finition } from '../partage/types.ts';
 import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, prevoirLaManche, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
 import { serveurDeJoutes } from '../services/joutes.ts';
-import { finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
-import type { FinDeDuel } from '../services/partie.ts';
+import { commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
+import type { FinDeDuel, RecompenseDuServeur } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
 
 const REGLES = EQUILIBRAGE.duel;
@@ -105,7 +105,8 @@ export function Duel() {
     setErreur(null);
     try {
       const pret = await preparerUnDuel(adversaire);
-      setTicket(adversaire.type === 'joute' ? await serveurDeJoutes.commencer(adversaire.profil) : null);
+      // Le ticket de la joute, ou celui du duel d'entraînement quand le serveur tient la collection (il versera l'Encre).
+      setTicket(adversaire.type === 'joute' ? await serveurDeJoutes.commencer(adversaire.profil) : await commencerUnDuel(adversaire.niveau));
       setTerrain(pret.terrain);
       setDuel(pret.duel);
       setBilan(BILAN_VIDE);
@@ -167,17 +168,25 @@ export function Duel() {
     const resultat: Resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite';
     // En joute, si un serveur tient le classement, c'est lui qui donne la nouvelle cote. S'il ne répond pas, la cote ne bouge pas.
     let coteDuServeur: { avant: number; apres: number } | undefined;
+    let recompenseDuServeur: RecompenseDuServeur | undefined;
     let nonEnregistree = false;
     if (terrain.adversaire.type === 'joute' && serveurDeJoutes.enLigne) {
       setEnregistrement(true);
-      try { coteDuServeur = (await serveurDeJoutes.terminer(ticket, resultat)) ?? undefined; } catch {
+      try {
+        const finDeJoute = await serveurDeJoutes.terminer(ticket, resultat);
+        coteDuServeur = finDeJoute ?? undefined;
+        if (finDeJoute && typeof finDeJoute.encre === 'number') recompenseDuServeur = { encre: finDeJoute.encre, reduite: finDeJoute.reduite === true };
+      } catch {
         const actuelle = sauvegarde.joutes.cote ?? EQUILIBRAGE.joute.coteDeDepart;
         coteDuServeur = { avant: actuelle, apres: actuelle };
         nonEnregistree = true;
       } finally { setEnregistrement(false); }
     }
     if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
-    changerDEtape({ nom: 'fin', resultat, nonEnregistree, ...finirLeDuel(terrain.adversaire, resultat, coteDuServeur) });
+    setEnregistrement(true);
+    const fin = await finirLeDuel(terrain.adversaire, resultat, ticket, coteDuServeur, recompenseDuServeur);
+    setEnregistrement(false);
+    changerDEtape({ nom: 'fin', resultat, nonEnregistree, ...fin });
   };
 
   const abandonner = (): void => {

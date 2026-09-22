@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// LE SERVEUR DES JOUTES (Supabase)
+// LE SERVEUR DU JEU (Supabase) : les joutes classées, et les collections quand on le lui demande.
 // Tant que les deux valeurs ci-dessous sont vides, le jeu se passe de serveur : les joutes se jouent contre les
 // « joueurs maison », et la cote du joueur reste sur son appareil.
 //
@@ -14,4 +14,8 @@
 export const SERVEUR = {
   adresse: 'https://cgubfyxyivgufslpwlld.supabase.co',
   clePublique: 'sb_publishable_e0z7sHui3kHetOMNXF1lYw_1shQroI4',
+  // Le serveur tient-il les collections (timbres, Encre, paquets, deck) ? À passer à « true » une fois les scripts
+  // 1-structure.sql et 3-cartes.sql collés dans Supabase (GUIDE-supabase.md, étape 8). Tant que c'est « false »,
+  // la partie vit sur l'appareil, comme avant.
+  collectionsSurLeServeur: false,
 };

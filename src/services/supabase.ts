@@ -22,7 +22,7 @@ export class ErreurDuServeur extends Error {
   }
 }
 
-const PANNE = 'Le serveur des joutes ne répond pas. Réessaie dans un moment.';
+const PANNE = 'Le serveur du jeu ne répond pas. Réessaie dans un moment.';
 const MARGE_AVANT_EXPIRATION = 60_000;
 
 export function creerLeClient(adresse: string, clePublique: string, exterieur: Exterieur) {
