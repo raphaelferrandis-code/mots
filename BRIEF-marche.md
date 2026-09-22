@@ -75,7 +75,7 @@ Comme pour les paquets et les duels, il faudra un **simulateur de marché** (`np
 | Étape | Contenu | Validée quand… |
 |---|---|---|
 | **M0. Décisions** | Les choix du §7, un simulateur de marché, ce brief mis à jour | Raphaël a tranché les questions du §7 |
-| **M1. Collection sur le serveur** *(code prêt le 22/09/2026, à mettre en route : GUIDE-supabase.md, étape 8)* | Tables, fonctions, migration, page Confidentialité mise à jour ; **le moyen de récupération reste à faire** (question 6) | Avancer l'heure du téléphone ne donne plus de paquet ; la collection importée est bornée au plausible ; les paquets, l'Encre, le deck et les récompenses passent par le serveur. (Deux appareils sur la même collection : quand le compte sera récupérable) |
+| **M1. Collection sur le serveur** *(en service depuis le 22/09/2026)* | Tables, fonctions, migration, page Confidentialité mise à jour ; **le moyen de récupération reste à faire** (question 6) | Avancer l'heure du téléphone ne donne plus de paquet ; la collection importée est bornée au plausible ; les paquets, l'Encre, le deck et les récompenses passent par le serveur. (Deux appareils sur la même collection : quand le compte sera récupérable) |
 | **M2. Classeur de doubles** | Les doublons sont gardés selon la règle choisie (§7) ; l'écran Album les montre | Un joueur possède deux exemplaires d'un timbre et voit ce qu'il peut en faire |
 | **M3. Ventes, avis de recherche, provenance** (A, D, G) | Annonces, achats, commission, plafonds, cachet de provenance | Deux joueurs s'échangent un timbre contre de l'Encre ; l'Encre totale du jeu a baissé de la commission ; le timbre porte son cachet |
 | **M4. La cote** (E) | Calcul sur le serveur, affichage sur les fiches et dans l'album | La cote d'un timbre suit ses ventes réelles |
@@ -121,7 +121,7 @@ Ordre de grandeur : M1 est comparable à tout le travail fait pour les joutes (s
 ## 8. Ce que je propose de faire ensuite
 
 1. ~~Raphaël répond au §7~~ — fait en partie le 22/09/2026 (§7 bis) ; trois questions restent ouvertes, avec une réponse par défaut.
-2. **M1, le compte et la collection sur le serveur — code prêt le 22/09/2026, endormi jusqu'à la mise en route** : les scripts (`serveur/1-structure.sql` mis à jour, `serveur/3-cartes.sql`), le jeu qui parle au serveur (`src/services/collections.ts`, `src/jeu/synchronisation.ts`), et l'étape 8 de `GUIDE-supabase.md` pour la partie qui revient à Raphaël (coller deux scripts). Sans moyen de récupération du compte pour l'instant (question 6). Vérifié dans un Postgres en mémoire et contre un faux Supabase ; reste la vérification contre le vrai serveur, après le collage des scripts.
+2. **M1, le compte et la collection sur le serveur — en service depuis le 22/09/2026** (Raphaël a collé les scripts ; vérifié contre le vrai serveur avec un joueur d'essai, effacé ensuite) : les scripts (`serveur/1-structure.sql` mis à jour, `serveur/3-cartes.sql`), le jeu qui parle au serveur (`src/services/collections.ts`, `src/jeu/synchronisation.ts`), et l'étape 8 de `GUIDE-supabase.md` pour la partie qui revient à Raphaël (coller deux scripts). Sans moyen de récupération du compte pour l'instant (question 6). Vérifié dans un Postgres en mémoire et contre un faux Supabase ; reste la vérification contre le vrai serveur, après le collage des scripts.
 3. Ensuite le simulateur de marché (avec une part de joueurs payants), puis M3 (ventes à prix fixe, avis de recherche, provenance).
 
 Tant que M1 n'est pas fait, le jeu continue de fonctionner comme aujourd'hui : rien de ce plan ne bloque les joueurs actuels.

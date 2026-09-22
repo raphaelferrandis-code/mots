@@ -17,5 +17,5 @@ export const SERVEUR = {
   // Le serveur tient-il les collections (timbres, Encre, paquets, deck) ? À passer à « true » une fois les scripts
   // 1-structure.sql et 3-cartes.sql collés dans Supabase (GUIDE-supabase.md, étape 8). Tant que c'est « false »,
   // la partie vit sur l'appareil, comme avant.
-  collectionsSurLeServeur: false,
+  collectionsSurLeServeur: true,
 };

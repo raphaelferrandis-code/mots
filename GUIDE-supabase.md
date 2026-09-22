@@ -110,8 +110,8 @@ Sur le site, écran **Duel** → onglet **Joutes classées** :
 ## Étape 8 — Les collections sur le serveur (ajoutée le 22 septembre 2026)
 
 Depuis la décision du marché (`BRIEF-marche.md`, §2), le serveur doit devenir propriétaire des collections : c'est lui qui
-tire les paquets, compte l'Encre et connaît le propriétaire de chaque timbre. Le code du jeu est prêt, mais **il reste
-endormi** tant que `collectionsSurLeServeur` vaut `false` dans `src/config/serveur.ts` : rien ne change pour les joueurs.
+tire les paquets, compte l'Encre et connaît le propriétaire de chaque timbre. **En service depuis le 22 septembre 2026** (`collectionsSurLeServeur: true` dans `src/config/serveur.ts`) : les scripts ci-dessous ont été
+collés, et le jeu vérifié contre le vrai serveur. Ce qui suit reste utile pour un nouveau projet, ou pour recoller les scripts.
 
 Ce qui te revient (dix minutes) :
 
@@ -121,7 +121,7 @@ Ce qui te revient (dix minutes) :
 2. New query → coller `serveur/3-cartes.sql` (les 3 016 cartes de l'édition, pour que le serveur puisse tirer les paquets)
    → Database → Run. À recoller à chaque nouvelle édition. (Inutile de recoller `2-joueurs-maison.sql`.)
 3. Me dire que c'est fait. Je passe alors `collectionsSurLeServeur` à `true`, je vérifie contre le vrai serveur avec un
-   joueur d'essai (que j'efface ensuite), puis je publie.
+   joueur d'essai (que j'efface ensuite), puis je publie. *(Fait le 22 septembre 2026.)*
 
 Ce qui se passera alors pour les joueurs :
 - à leur première visite, la collection qui vivait sur leur téléphone est **copiée une seule fois** sur le serveur
