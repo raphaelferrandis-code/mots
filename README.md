@@ -53,6 +53,7 @@ Toutes les commandes se lancent depuis le dossier du projet.
 | `npm run simulation:duel` | Fait jouer des milliers de duels à des joueurs fictifs (hésitant, bon lecteur, expert) contre l'ordinateur : durée des parties, victoires, variantes de réglages. Résultat dans `data/simulation-duel.md`. | 2 à 3 minutes |
 | `npm run serveur:script` (trois scripts : structure, joueurs maison, cartes de l'édition) | Refabrique les deux scripts à coller dans Supabase (`serveur/1-structure.sql`, `serveur/2-joueurs-maison.sql`) à partir des chiffres et des listes du jeu. À relancer après avoir changé les chiffres des joutes ou la liste des pseudonymes interdits ; un test signale l'oubli. | immédiat |
 | `npm run simulation:collection` | Simule des mois d'ouverture de paquets pour trois profils de joueurs, et quelques variantes de réglages. Résultat dans `data/simulation-collection.md`. | 2 secondes |
+| `npm run simulation:marche` | Fait vivre 60 joueurs fictifs pendant 120 jours, paquets, duels et enchères compris : entrées et sorties d'Encre, prix obtenus, invendus par rareté, effet des planchers et des plafonds. Résultat dans `data/simulation-marche.md`. | 1 minute |
 | `npm test` | Lance tous les tests automatiques, pipeline et jeu (ils vérifient que les règles sont bien appliquées). | 1 seconde |
 | `npm run exploration` | Programme de la phase 0a : chiffres bruts sur les données, dans `data/exploration/chiffres.md`. | environ 30 secondes |
 
@@ -69,7 +70,7 @@ Après chaque modification : `npm run pipeline`, puis relire `data/rapport.md`.
 | `data/corrections-factions.txt` | Corrections d'origine, quand l'ordinateur s'est trompé (`mot = Faction`). |
 | `src/config/pseudos-interdits.ts` | Les mots refusés dans les pseudonymes des joutes. Après une modification : `npm run serveur:script`, puis recoller le premier script dans Supabase. |
 | `src/config/serveur.ts` | L'adresse et la clé **publique** du projet Supabase. Vides = le jeu se passe de serveur. **Jamais de clé secrète ici.** |
-| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus d'attaque et de défense des cartes rares, **tout le duel** (points de vie, poids de la défense, parade, bonus, rareté et réussite des mots de l'ordinateur, récompenses, seuil de maîtrise) **et les joutes classées** (cote de départ, ampleur des gains, ligues, adversaires proposés). Après une modification : `npm test` puis `npm run simulation:collection`. |
+| `src/config/equilibrage.ts` | **Les chiffres du jeu** : chances de chaque rareté dans un paquet, délai et stock de paquets, garantie de Légendaire, Encre par doublon, prix d'un paquet, bonus d'attaque et de défense des cartes rares, **tout le duel** (points de vie, poids de la défense, parade, bonus, rareté et réussite des mots de l'ordinateur, récompenses, seuil de maîtrise) **et les joutes classées** (cote de départ, ampleur des gains, ligues, adversaires proposés). **et le marché** (commission, durées, planchers par rareté, plafonds des joueurs gratuits, fenêtre de la cote). Après une modification : `npm test` puis `npm run simulation:collection` ou `npm run simulation:marche`. |
 
 ## Ce que le pipeline produit
 
