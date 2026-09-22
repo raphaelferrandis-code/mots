@@ -127,7 +127,7 @@ Ordre de grandeur : M1 est comparable à tout le travail fait pour les joutes (s
 7. **Durée au choix du vendeur : 12, 24 ou 48 heures.**
 8. **Prix d'achat immédiat facultatif**, fixé par le vendeur : la vente à prix fixe existe ainsi sans écran de plus.
 9. **Commission de 10 %** : le vendeur reçoit 90 % de l'Encre payée, le reste disparaît (chiffre dans `src/config/equilibrage.ts`, à confirmer au simulateur).
-10. **Joueurs gratuits : 3 ventes en cours et 3 achats par jour au plus** ; les payants n'auront pas de limite (décision n° 34).
+10. **Joueurs gratuits : 10 ventes en cours et 10 achats par jour au plus** ; les payants n'auront pas de limite (décision n° 34). *(D'abord fixé à 3 et 3 ; porté à 10 et 10 le 22/09/2026 au soir, après le simulateur : à 3 et 3 le marché ne conclut que 119 ventes par jour, et monter les seules ventes à 10 ferait passer les invendus de 30 % à 72 %.)*
 
 Règles techniques qui en découlent (choix de Claude, à contester si besoin) : l'Encre d'une mise est bloquée aussitôt et rendue dès qu'une mise plus haute arrive ; une mise dans les cinq dernières minutes prolonge l'enchère de cinq minutes (contre les coups de dernière seconde) ; un vendeur ne peut ni miser sur sa propre enchère, ni la retirer quand une mise existe ; le timbre mis en vente quitte l'album (et le deck) dès la mise en vente, et y revient s'il n'est pas vendu ; les enchères se clôturent au passage du premier joueur venu après l'heure (le serveur n'a pas besoin de tâche planifiée) ; des prix planchers par rareté empêchent de brader un timbre rare (chiffres à confirmer au simulateur).
 

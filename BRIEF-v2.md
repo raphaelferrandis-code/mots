@@ -470,7 +470,7 @@ Décidé par Raphaël le 21/09/2026 : il attendait du duel qu'il oppose des joue
 | 39 | Enchères : durée | **Décidé le 22/09/2026** : le vendeur choisit 12, 24 ou 48 heures |
 | 40 | Enchères : achat immédiat | **Décidé le 22/09/2026** : prix d'achat immédiat facultatif, fixé par le vendeur |
 | 41 | Enchères : commission | **Décidé le 22/09/2026** : 10 % de l'Encre payée disparaît |
-| 42 | Marché : limites des joueurs gratuits | **Décidé le 22/09/2026** : 3 ventes en cours et 3 achats par jour ; aucune limite pour la version payante |
+| 42 | Marché : limites des joueurs gratuits | **Décidé le 22/09/2026** : 3 ventes en cours et 3 achats par jour ; aucune limite pour la version payante. **Révisé le soir même, après le simulateur de marché** : **10 ventes en cours et 10 achats par jour**. Raphaël avait demandé « monte le plafond à dix » pour les ventes ; le simulateur a montré que monter les ventes sans monter les achats fait passer les invendus de 30 % à 72 %, parce que les vendeurs deviennent plus libres que les acheteurs. Les deux plafonds sont donc montés ensemble : 392 ventes par jour et 24 % d'invendus, contre 119 ventes et 30 % d'invendus à 3 et 3. Voir `data/simulation-marche.md` |
 | 32 | Rareté des coups de cœur non mesurés | **Calcul automatique seul** (choisi le 21/09/2026 parmi trois options) : le mot est rangé parmi les mots mesurés, d'après sa seule fréquence (§4.3). Pas de rareté écrite à la main : tout vient des données |
 
 ### 10.2 Propositions encore à confirmer (🟡)

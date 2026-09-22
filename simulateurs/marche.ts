@@ -49,10 +49,12 @@ type Reglages = {
   commission: number;
   planchers: Record<Rarete, number>;
   partDePayants: number;
-  plafonds: boolean; // les plafonds des joueurs gratuits s'appliquent-ils
+  // Les plafonds d'un joueur gratuit : ventes en cours et achats par jour. « null » = aucun plafond pour personne.
+  plafonds: { ventes: number; achats: number } | null;
 };
 
-const REGLAGES_ACTUELS = { commission: M.commission, planchers: M.planchers, partDePayants: 0, plafonds: true };
+const PLAFONDS_ACTUELS = { ventes: M.ventesEnCoursAuPlus, achats: M.achatsParJourAuPlus };
+const REGLAGES_ACTUELS = { commission: M.commission, planchers: M.planchers, partDePayants: 0, plafonds: PLAFONDS_ACTUELS };
 
 // ── Un joueur ────────────────────────────────────────────────────────────────
 type Timbre = { carte: string; finition: Finition };
@@ -88,6 +90,7 @@ type Bilan = {
   butoirsDeVentes: number;
   butoirsDAchats: number;
   joueursAuButoir: number;
+  joueursAuButoirDAchats: number;
 };
 
 const parRarete = <T,>(valeur: () => T): Record<Rarete, T> => Object.fromEntries(RARETES.map((r) => [r, valeur()])) as Record<Rarete, T>;
@@ -131,7 +134,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
   const bilan: Bilan = {
     encreCreee: 0, encreDetruite: 0, encreDesDoublons: 0, encreDesDuels: 0, encreDesAchats: 0, encreDesPaquets: 0, encreDeLaCommission: 0,
     encreFinale: [], ventesParRarete: parRarete<number[]>(() => []), invendusParRarete: parRarete(() => 0), misesEnVenteParRarete: parRarete(() => 0),
-    butoirsDeVentes: 0, butoirsDAchats: 0, joueursAuButoir: 0,
+    butoirsDeVentes: 0, butoirsDAchats: 0, joueursAuButoir: 0, joueursAuButoirDAchats: 0,
   };
 
   // Un paquet ouvert : les cartes entrent dans l'album, les vrais doublons deviennent de l'Encre.
@@ -155,7 +158,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
     for (const e of aDenouer) {
       // Qui veut ce timbre : celui qui ne l'a pas, qui peut payer, et qui n'a pas atteint son plafond d'achats.
       const candidats = joueurs
-        .filter((j) => j !== e.vendeur && !possede(j, e.timbre) && (j.payant || !reglages.plafonds || j.achatsDuJour < M.achatsParJourAuPlus))
+        .filter((j) => j !== e.vendeur && !possede(j, e.timbre) && (j.payant || reglages.plafonds === null || j.achatsDuJour < reglages.plafonds.achats))
         .map((j) => ({ j, valeur: Math.min(valeurDAchat(e.rarete, e.timbre.finition, reglages.desir, hasard), j.encre) }))
         .filter((c) => c.valeur >= e.mise)
         .sort((a, b) => b.valeur - a.valeur);
@@ -180,6 +183,11 @@ function simuler(reglages: Reglages, graine: number): Bilan {
       bilan.encreDetruite += commission;
       bilan.encreDeLaCommission += commission;
       bilan.ventesParRarete[e.rarete].push(prix);
+    }
+
+    // Qui a épuisé son droit d'acheter pour la journée ?
+    if (reglages.plafonds) {
+      for (const j of joueurs) if (!j.payant && j.achatsDuJour >= reglages.plafonds.achats) j.butoirDAchats++;
     }
 
     // ── La journée de chaque joueur ──
@@ -218,7 +226,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
         if (aVendre.length >= 12) break;
       }
       for (const timbre of aVendre) {
-        const plafond = reglages.plafonds && !j.payant ? M.ventesEnCoursAuPlus : Number.POSITIVE_INFINITY;
+        const plafond = reglages.plafonds && !j.payant ? reglages.plafonds.ventes : Number.POSITIVE_INFINITY;
         if (j.ventesEnCours >= plafond) { j.butoirDeVentes++; break; }
         const rarete = RARETE_DE.get(timbre.carte)!;
         const plancher = reglages.planchers[rarete];
@@ -248,6 +256,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
   bilan.butoirsDeVentes = joueurs.reduce((s, j) => s + j.butoirDeVentes, 0);
   bilan.butoirsDAchats = joueurs.reduce((s, j) => s + j.butoirDAchats, 0);
   bilan.joueursAuButoir = joueurs.filter((j) => j.butoirDeVentes > 0).length;
+  bilan.joueursAuButoirDAchats = joueurs.filter((j) => j.butoirDAchats > 0).length;
   return bilan;
 }
 
@@ -307,7 +316,7 @@ for (const commission of [0, 0.2]) {
   economie.push(ligneDEconomie(`Désir ×5 — commission ${pourcent(commission)}`, simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, commission }, 55)));
 }
 economie.push(ligneDEconomie('Désir ×5 — un joueur sur dix est payant', simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, partDePayants: 0.1 }, 56)));
-economie.push(ligneDEconomie('Désir ×5 — sans plafond pour personne', simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds: false }, 57)));
+economie.push(ligneDEconomie('Désir ×5 — sans plafond pour personne', simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds: null }, 57)));
 
 const parDesir = DESIRS.map((desir) => ({ desir, bilan: simuler({ nom: '', desir, ...REGLAGES_ACTUELS }, 100 + desir) }));
 // Et si les planchers valaient simplement le double de l'Encre d'un doublon ?
@@ -317,7 +326,13 @@ const parDesirDoubles = DESIRS.map((desir) => ({ desir, bilan: simuler({ nom: ''
 const sansPlancher = simuler({ nom: '', desir: 2, ...REGLAGES_ACTUELS, planchers: sansPlanchers }, 200);
 const avecPlancherDesir2 = parDesir.find((p) => p.desir === 2)!.bilan;
 const plafonds = simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS }, 300);
-const sansPlafond = simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds: false }, 301);
+const sansPlafond = simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds: null }, 301);
+
+// Les couples de plafonds : ce qui compte est l'équilibre entre ce qu'on peut vendre et ce qu'on peut acheter.
+const COUPLES: ({ ventes: number; achats: number } | null)[] = [
+  { ventes: 3, achats: 3 }, { ventes: 10, achats: 3 }, { ventes: 3, achats: 10 }, { ventes: 10, achats: 10 }, { ventes: 20, achats: 20 }, null,
+];
+const parCouple = COUPLES.map((plafonds) => ({ plafonds, bilan: simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds }, 500) }));
 
 const invendusGlobal = (b: Bilan): number => {
   const proposes = RARETES.reduce((s, r) => s + b.misesEnVenteParRarete[r], 0);
@@ -369,7 +384,27 @@ const rapport = [
   ),
   '## 3. Les plafonds des joueurs gratuits',
   '',
-  `Avec les réglages actuels (${M.ventesEnCoursAuPlus} ventes en cours, ${M.achatsParJourAuPlus} achats par jour), au désir ×5 : **${plafonds.joueursAuButoir} joueurs sur ${TOTAL_DE_JOUEURS}** ont buté sur le plafond de ventes au moins une fois, ${nombre(plafonds.butoirsDeVentes / JOURS)} fois par jour en tout pour l'ensemble des joueurs.`,
+`Réglages actuels : **${M.ventesEnCoursAuPlus} ventes en cours** et **${M.achatsParJourAuPlus} achats par jour** pour un joueur gratuit. Au désir ×5 :`,
+  '',
+  ...tableau(['Plafond', 'Joueurs qui y butent', 'Fois par jour, tous joueurs confondus'], [
+    [`${M.ventesEnCoursAuPlus} ventes en cours`, `${plafonds.joueursAuButoir} sur ${TOTAL_DE_JOUEURS}`, nombre(plafonds.butoirsDeVentes / JOURS)],
+    [`${M.achatsParJourAuPlus} achats par jour`, `${plafonds.joueursAuButoirDAchats} sur ${TOTAL_DE_JOUEURS}`, nombre(plafonds.butoirsDAchats / JOURS)],
+  ]),
+  '',
+  '### Quel couple de plafonds ?',
+  '',
+  "Ce qui compte n'est pas chaque plafond pris à part, mais l'équilibre entre ce qu'un joueur peut vendre et ce qu'il peut acheter. Si les vendeurs sont plus libres que les acheteurs, le marché se remplit d'invendus. Au désir ×5 :",
+  '',
+  ...tableau(
+    ['Ventes en cours', 'Achats par jour', 'Ventes conclues par jour', 'Invendus', 'Encre gardée par le joueur du milieu'],
+    parCouple.map(({ plafonds, bilan }) => [
+      plafonds ? String(plafonds.ventes) : 'sans limite',
+      plafonds ? String(plafonds.achats) : 'sans limite',
+      nombre(RARETES.reduce((s, r) => s + bilan.ventesParRarete[r].length, 0) / JOURS),
+      pourcent(invendusGlobal(bilan)),
+      nombre(mediane(bilan.encreFinale)),
+    ]),
+  ),
   '',
   '## Ce que ces chiffres disent',
   '',
@@ -379,7 +414,7 @@ const rapport = [
   '',
   `**3. Le plancher des Légendaires est le plus dur.** Même au désir ×5, ${pourcent(parDesir.find((p) => p.desir === 5)!.bilan.invendusParRarete['Légendaire'] / Math.max(1, parDesir.find((p) => p.desir === 5)!.bilan.misesEnVenteParRarete['Légendaire']))} des Légendaires proposées restent invendues à ${M.planchers['Légendaire']} Encre.`,
   '',
-  `**4. Le plafond de ${M.ventesEnCoursAuPlus} ventes en cours touche tout le monde, pas seulement les revendeurs.** ${plafonds.joueursAuButoir} joueurs sur ${TOTAL_DE_JOUEURS} y butent. Sans plafond, le marché voit ${nombre(RARETES.reduce((s, r) => s + sansPlafond.ventesParRarete[r].length, 0) / JOURS)} ventes par jour au lieu de ${nombre(RARETES.reduce((s, r) => s + plafonds.ventesParRarete[r].length, 0) / JOURS)}. La raison est simple : un joueur qui ouvre ses paquets accumule sans cesse des timbres en double finition, bien plus vite que ${M.ventesEnCoursAuPlus} à la fois.`,
+`**4. Des deux plafonds, c'est celui des achats qui pèse le plus.** ${plafonds.joueursAuButoir} joueurs sur ${TOTAL_DE_JOUEURS} butent sur les ${M.ventesEnCoursAuPlus} ventes en cours, ${plafonds.joueursAuButoirDAchats} sur ${TOTAL_DE_JOUEURS} sur les ${M.achatsParJourAuPlus} achats par jour. Sans aucun plafond, le marché voit ${nombre(RARETES.reduce((s, r) => s + sansPlafond.ventesParRarete[r].length, 0) / JOURS)} ventes par jour au lieu de ${nombre(RARETES.reduce((s, r) => s + plafonds.ventesParRarete[r].length, 0) / JOURS)}. Un joueur accumule des timbres en double finition bien plus vite qu'il ne peut en acheter : si les vendeurs sont plus libres que les acheteurs, les invendus montent.`,
   '',
   '## Comment lire ces chiffres',
   '',

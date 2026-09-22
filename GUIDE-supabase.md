@@ -171,7 +171,7 @@ Pour l'essayer : la fiche d'un timbre que tu possèdes → « Vendre ce timbre �
 12, 24 ou 48 heures) ; puis, depuis un autre compte (un second téléphone, ou un navigateur en navigation privée), l'onglet
 Marché → « Miser » ou « Acheter ». Une vente terminée se règle au passage du premier joueur qui ouvre le marché ou son
 compte après l'heure de fin : le gagnant reçoit le timbre, le vendeur le prix moins 10 %, les autres leur Encre. Un joueur
-gratuit a au plus 3 ventes en cours et 3 achats par jour (décision n° 42).
+gratuit a au plus 10 ventes en cours et 10 achats par jour (décision n° 42, revue au simulateur).
 
 **La cote.** Sur la fiche de chaque timbre, une rubrique « Sur le marché » donne sa cote du jour : la **médiane** des prix
 de ses ventes des 30 derniers jours, par finition. Le serveur la relève **une fois par jour**, au premier passage d'un

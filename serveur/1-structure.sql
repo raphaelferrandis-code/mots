@@ -912,8 +912,8 @@ begin
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
   if p_finition is null or p_finition not in ('Normale', 'Brillante', 'Holographique') then raise exception 'Finition inconnue.'; end if;
-  if not c.payant and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 3 then
-    raise exception 'Tu as déjà 3 ventes en cours : attends qu''elles se terminent.';
+  if not c.payant and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 10 then
+    raise exception 'Tu as déjà 10 ventes en cours : attends qu''elles se terminent.';
   end if;
   select k.rarete into rarete from public.cartes k where k.id = p_carte;
   if not found then raise exception 'Cette carte est inconnue.'; end if;
@@ -983,11 +983,11 @@ begin
   if e.vendeur = moi then raise exception 'C''est ta propre vente.'; end if;
   -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
   if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
-  -- Les joueurs gratuits : 3 achats par jour au plus (les mises en tête comptent comme des achats en cours).
+  -- Les joueurs gratuits : 10 achats par jour au plus (les mises en tête comptent comme des achats en cours).
   if not c.payant then
     select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
       or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
-    if achats >= 3 then raise exception 'Tu as déjà 3 achats aujourd''hui : reviens demain.'; end if;
+    if achats >= 10 then raise exception 'Tu as déjà 10 achats aujourd''hui : reviens demain.'; end if;
   end if;
   minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * 0.05)::integer) end;
   if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
