@@ -136,6 +136,23 @@ Comment je l'ai vérifié sans toucher au vrai serveur : les scripts ont été j
 scénario de 34 vérifications (tirage, recharge, achat, garantie de Légendaire, mots masqués, doublons, deck, duels, joutes,
 importation bornée, suppression, droits), puis le jeu entier a tourné contre un faux Supabase branché sur ces mêmes scripts.
 
+## Étape 9 — Le code de secours (ajoutée le 22 septembre 2026, soir)
+
+Décision n° 36 : un joueur peut noter un **code de secours** (Réglages → « Ton compte ») qui lui rend sa collection et
+son profil de joute sur un autre appareil. Le serveur n'en garde que l'empreinte. Pour l'installer :
+
+1. SQL Editor → New query → coller de nouveau **tout** `serveur/1-structure.sql` (il contient maintenant les fonctions du
+   code de secours et deux colonnes de plus) → menu sur **Database** → Run. Sans danger pour les joueurs et leurs collections.
+2. Rien d'autre : pas besoin de recoller `3-cartes.sql`.
+
+Tant que ce n'est pas fait, le bouton « Créer mon code de secours » répond « Le serveur du jeu n'est pas à jour : cette
+fonction n'y est pas encore installée. » — et tout le reste du jeu fonctionne normalement.
+
+**Et l'e-mail ?** La décision n° 36 prévoit aussi une connexion par e-mail (lien magique). Le service d'e-mail fourni par
+Supabase est limité à **2 e-mails par heure** pour tout le projet : il ne convient qu'aux essais. Avant de brancher l'e-mail,
+il faudra un service d'envoi (par exemple Resend ou Brevo, qui ont une offre gratuite) et le déclarer dans Supabase
+(Authentication → SMTP Settings). Je te guiderai le moment venu.
+
 ## La vie du serveur
 
 **Le projet s'est endormi.** Avec la formule gratuite, Supabase met un projet en sommeil après une semaine sans aucune activité. Les joutes affichent alors « Le serveur des joutes ne répond pas » (l'entraînement contre l'ordinateur, lui, fonctionne toujours). Pour le réveiller : ouvrir le tableau de bord Supabase → le projet → **Restore project**. Tant que le jeu a peu de joueurs, cela peut arriver.

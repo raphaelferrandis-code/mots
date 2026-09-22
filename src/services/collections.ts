@@ -6,11 +6,12 @@ import { SERVEUR } from '../config/serveur.ts';
 import type { Niveau } from '../jeu/duel.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
-import { aImporter, lireEtat } from '../jeu/synchronisation.ts';
-import type { EtatDuCompte } from '../jeu/synchronisation.ts';
+import { aImporter, lireEtat, lireRecuperation } from '../jeu/synchronisation.ts';
+import type { EtatDuCompte, Recuperation } from '../jeu/synchronisation.ts';
 import { FINITIONS } from '../partage/types.ts';
 import type { Finition, Registre } from '../partage/types.ts';
 import { chacunSonTour, clientDuServeur, serveurUtilise } from './compte.ts';
+import { ErreurDuServeur } from './supabase.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 export type CarteTireeParLeServeur = { id: string; finition: Finition; nouvelle: boolean; nouvelleFinition: boolean; encre: number };
@@ -28,6 +29,9 @@ export type ServeurDesCollections = {
   changerDeDeck(deck: readonly string[]): Promise<string[]>;
   commencerUnDuel(niveau: Niveau): Promise<number>;
   terminerUnDuel(ticket: number, resultat: Resultat): Promise<Recompense>;
+  // Le code de secours (décision n° 36) : le définir, ou retrouver une collection avec.
+  definirUnCode(code: string): Promise<EtatDuCompte>;
+  recupererParCode(code: string): Promise<Recuperation>;
 };
 
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -66,6 +70,13 @@ export function serveurDesCollectionsAvec(client: ClientSupabase): ServeurDesCol
     }),
     commencerUnDuel: (niveau) => client.appeler<number>('commencer_un_duel', { p_niveau: niveau }),
     terminerUnDuel: (ticket, resultat) => chacunSonTour(async () => lireLaRecompense(await client.appeler<unknown>('terminer_un_duel', { p_ticket: ticket, p_resultat: resultat }))),
+    definirUnCode: (code) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('definir_un_code_de_secours', { p_code: code }))),
+    recupererParCode: (code) => chacunSonTour(async () => {
+      const brut = await client.appeler<unknown>('recuperer_par_code', { p_code: code });
+      // Un mauvais code : un refus motivé, que le joueur peut lire tel quel (et qui ne met pas l'appareil hors ligne).
+      if (estUnObjet(brut) && typeof brut.refus === 'string') throw new ErreurDuServeur(brut.refus, true);
+      return lireRecuperation(brut);
+    }),
   };
 }
 
@@ -79,6 +90,8 @@ const inactif: ServeurDesCollections = {
   changerDeDeck: async () => jamais(),
   commencerUnDuel: async () => jamais(),
   terminerUnDuel: async () => jamais(),
+  definirUnCode: async () => jamais(),
+  recupererParCode: async () => jamais(),
 };
 
 export const serveurDesCollections: ServeurDesCollections = SERVEUR.collectionsSurLeServeur && serveurUtilise ? serveurDesCollectionsAvec(clientDuServeur()) : inactif;

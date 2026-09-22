@@ -8,7 +8,7 @@ import { lien } from '../navigation/routes.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
 import { telechargerUnFichier } from '../services/partage.ts';
-import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
+import { changerUnReglage, definirUnCodeDeSecours, exporterLaSauvegarde, importerUneSauvegarde, recupererAvecUnCode } from '../services/partie.ts';
 
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
@@ -26,6 +26,12 @@ export function Reglages() {
   const partie = usePartie();
   const fichier = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
+  // Le code de secours : montré une seule fois quand on le crée ; et le formulaire pour retrouver une collection.
+  const [code, setCode] = useState<string | null>(null);
+  const [saisie, setSaisie] = useState('');
+  const [recuperation, setRecuperation] = useState(false);
+  const [occupe, setOccupe] = useState(false);
+  const [messageDuCompte, setMessageDuCompte] = useState<string | null>(null);
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
   const { sauvegarde } = partie;
@@ -53,6 +59,31 @@ export function Reglages() {
 
   // Le profil de joute gardé par le serveur part avec la partie. Si le serveur ne répond pas, rien n'est effacé :
   // le joueur garderait sinon un profil au classement sans plus pouvoir le retirer.
+  const creerUnCode = async (): Promise<void> => {
+    if (partie.etat === 'prete' && partie.compte?.codeDeSecoursLe && !window.confirm("Un nouveau code annule l'ancien. Continuer ?")) return;
+    setOccupe(true);
+    setMessageDuCompte(null);
+    try { setCode(await definirUnCodeDeSecours()); } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
+  };
+
+  const copierLeCode = async (): Promise<void> => {
+    if (!code) return;
+    try { await navigator.clipboard.writeText(code); setMessageDuCompte('Code copié.'); } catch { setMessageDuCompte("Le navigateur n'a pas voulu copier : note le code à la main."); }
+  };
+
+  const recuperer = async (evenement: React.FormEvent): Promise<void> => {
+    evenement.preventDefault();
+    if (!window.confirm('La collection attachée à ce code remplacera celle de cet appareil. Continuer ?')) return;
+    setOccupe(true);
+    setMessageDuCompte(null);
+    try {
+      const retrouvee = await recupererAvecUnCode(saisie);
+      setRecuperation(false);
+      setSaisie('');
+      setMessageDuCompte(`Collection retrouvée : ${retrouvee.timbres} timbre${retrouvee.timbres > 1 ? 's' : ''}${retrouvee.profil ? `, et ton profil de joute « ${retrouvee.profil.pseudo} »` : ''}.`);
+    } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
+  };
+
   const effacer = async (): Promise<void> => {
     if (!window.confirm('Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ? Cette action est définitive.')) return;
     try {
@@ -119,6 +150,46 @@ export function Reglages() {
           {message && <p role="status" className="petit">{message}</p>}
           <button type="button" className="bouton bouton--danger" onClick={() => void effacer()}>Effacer ma partie</button>
         </section>
+
+        {partie.serveur.etat !== 'appareil' && (
+          <section className="rubrique">
+            <h2>Ton compte</h2>
+            <p className="petit">Ta collection est attachée au compte anonyme de ce navigateur. Un code de secours permet de la retrouver sur un autre appareil, ou après un changement de navigateur.</p>
+            {code ? (
+              <div className="code-de-secours" role="status">
+                <p className="petit"><strong>Note ce code quelque part de sûr : il ne sera plus affiché.</strong></p>
+                <code className="code-de-secours__code">{code}</code>
+                <div className="rangee-de-boutons">
+                  <button type="button" className="bouton bouton--discret" onClick={() => void copierLeCode()}>Copier</button>
+                  <button type="button" className="bouton bouton--discret" onClick={() => { setCode(null); setMessageDuCompte(null); }}>J'ai noté mon code</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="texte-doux petit">
+                  {partie.compte?.codeDeSecoursLe
+                    ? `Un code a été créé le ${new Date(partie.compte.codeDeSecoursLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}. En créer un nouveau annule l'ancien.`
+                    : "Aucun code pour l'instant : sans lui, perdre ce navigateur, c'est perdre ta collection."}
+                </p>
+                <div className="rangee-de-boutons">
+                  <button type="button" className="bouton" disabled={occupe} onClick={() => void creerUnCode()}>{partie.compte?.codeDeSecoursLe ? 'Créer un nouveau code' : 'Créer mon code de secours'}</button>
+                  {!recuperation && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(true); setMessageDuCompte(null); }}>Retrouver ma collection avec un code</button>}
+                </div>
+              </>
+            )}
+            {recuperation && (
+              <form className="joute__saisie" onSubmit={(e) => void recuperer(e)}>
+                <label htmlFor="code-de-secours"><strong>Code de secours</strong><span className="texte-doux petit">La collection attachée à ce code remplacera celle de cet appareil.</span></label>
+                <input id="code-de-secours" type="text" value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="MOTS-XXXXX-XXXXX-XXXXX-XXXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+                <div className="rangee-de-boutons">
+                  <button type="submit" className="bouton" disabled={occupe}>{occupe ? 'Recherche…' : 'Retrouver ma collection'}</button>
+                  <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(false); setSaisie(''); }}>Annuler</button>
+                </div>
+              </form>
+            )}
+            {messageDuCompte && <p role="status" className="petit">{messageDuCompte}</p>}
+          </section>
+        )}
 
         <section className="rubrique">
           <h2>Confidentialité</h2>

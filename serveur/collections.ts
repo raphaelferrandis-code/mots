@@ -71,9 +71,14 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
+  code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
+  code_defini_le timestamptz,
   cree_le timestamptz not null default now(),
   maj_le timestamptz not null default now()
 );
+-- (Pour un serveur installé avant le 22/09/2026 au soir : les deux colonnes du code de secours.)
+alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz;
+create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
 create table if not exists public.possessions (
@@ -94,6 +99,12 @@ create table if not exists public.duels (
   termine_le timestamptz
 );
 create index if not exists duels_par_joueur on public.duels (utilisateur, commence_le desc);
+
+-- La récupération par code transfère un compte à un autre joueur : ses timbres et ses duels doivent le suivre.
+alter table public.possessions drop constraint if exists possessions_utilisateur_fkey,
+  add constraint possessions_utilisateur_fkey foreign key (utilisateur) references public.comptes (utilisateur) on delete cascade on update cascade;
+alter table public.duels drop constraint if exists duels_utilisateur_fkey,
+  add constraint duels_utilisateur_fkey foreign key (utilisateur) references public.comptes (utilisateur) on delete cascade on update cascade;
 
 alter table public.cartes enable row level security;
 alter table public.comptes enable row level security;
@@ -118,6 +129,7 @@ as $$
     'encre', c.encre,
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
                from public.possessions p where p.utilisateur = c.utilisateur)

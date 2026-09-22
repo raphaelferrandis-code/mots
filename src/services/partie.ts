@@ -20,8 +20,9 @@ import type { Resultat } from '../jeu/progression.ts';
 import type { Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
+import { afficherUnCode, estUnCodeValable, fabriquerUnCode, normaliserUnCode } from '../jeu/codeDeSecours.ts';
 import { aQuelqueChoseAImporter, fusionner } from '../jeu/synchronisation.ts';
-import type { EtatDuCompte } from '../jeu/synchronisation.ts';
+import type { EtatDuCompte, ProfilRetrouve } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
 import { serveurDesCollections } from './collections.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
@@ -35,10 +36,13 @@ export type EtatDuServeur =
   | { etat: 'en ligne' }
   | { etat: 'hors ligne'; message: string };
 
+// Ce que le serveur sait du compte et que l'appareil n'enregistre pas : la date du code de secours.
+export type Compte = { codeDeSecoursLe: number | null };
+
 export type Partie =
   | { etat: 'chargement' }
   | { etat: 'erreur'; message: string }
-  | { etat: 'prete'; sauvegarde: Sauvegarde; emplacement: Emplacement; stockageDurable: boolean; serveur: EtatDuServeur };
+  | { etat: 'prete'; sauvegarde: Sauvegarde; emplacement: Emplacement; stockageDurable: boolean; serveur: EtatDuServeur; compte: Compte | null };
 
 export const HORS_LIGNE = "Le serveur du jeu ne répond pas. Les paquets s'ouvrent en ligne : réessaie dans un moment.";
 
@@ -81,7 +85,7 @@ export function demarrerLaPartie(): Promise<void> {
       const { contenu, emplacement } = await lireLaSauvegarde();
       const lue = contenu === undefined ? nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart) : relireSauvegarde(contenu, maintenant());
       const sauvegarde = mettreAJour(lue, maintenant(), EQUILIBRAGE);
-      publier({ etat: 'prete', sauvegarde, emplacement, stockageDurable: false, serveur: etatDuServeurAuDepart() });
+      publier({ etat: 'prete', sauvegarde, emplacement, stockageDurable: false, serveur: etatDuServeurAuDepart(), compte: null });
       enregistrer(sauvegarde);
       if (serveurDesCollections.actif) void synchroniser();
       const durable = await demanderUnStockageDurable();
@@ -99,8 +103,31 @@ export function demarrerLaPartie(): Promise<void> {
 function appliquer(etat: EtatDuCompte): void {
   if (partie.etat !== 'prete') return;
   decalage = etat.maintenant - Date.now();
-  publier({ ...partie, serveur: { etat: 'en ligne' } });
+  publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe } });
   enregistrer(fusionner(partie.sauvegarde, etat));
+}
+
+// ── Le code de secours (décision n° 36) ────────────────────────────────────
+// Le jeu tire le code, le serveur n'en garde que l'empreinte : il est montré une seule fois, au joueur, qui le note.
+export async function definirUnCodeDeSecours(): Promise<string> {
+  const code = fabriquerUnCode(hasardDuSysteme);
+  appliquer(await surLeServeur(() => serveurDesCollections.definirUnCode(code)));
+  return afficherUnCode(code);
+}
+
+// Sur un autre appareil : la collection (et le profil de joute) reviennent ; la partie de cet appareil est remplacée.
+export async function recupererAvecUnCode(saisie: string): Promise<{ timbres: number; profil: ProfilRetrouve | null }> {
+  const code = normaliserUnCode(saisie);
+  if (!estUnCodeValable(code)) throw new Error('Ce code est incomplet : il compte vingt lettres et chiffres, en quatre groupes de cinq.');
+  const retrouvee = await surLeServeur(() => serveurDesCollections.recupererParCode(code));
+  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  // Le profil de joute retrouvé remplace celui de l'appareil ; ce que l'appareil sait des mots (maîtrise) reste à lui.
+  const joutes = retrouvee.profil
+    ? { ...partie.sauvegarde.joutes, pseudo: retrouvee.profil.pseudo, cote: retrouvee.profil.cote, jouees: retrouvee.profil.jouees, gagnees: retrouvee.profil.gagnees }
+    : nouvelleSauvegarde(maintenant(), 0).joutes;
+  enregistrer({ ...partie.sauvegarde, joutes });
+  appliquer(retrouvee.etat);
+  return { timbres: Object.keys(retrouvee.etat.cartes).length, profil: retrouvee.profil };
 }
 
 function signalerLaPanne(erreur: unknown): void {
@@ -303,7 +330,7 @@ export async function toutEffacer(): Promise<void> {
   if (partie.etat !== 'prete') return;
   await ecritures;
   await effacerLaSauvegarde();
-  publier({ ...partie, serveur: etatDuServeurAuDepart() });
+  publier({ ...partie, serveur: etatDuServeurAuDepart(), compte: null });
   enregistrer(nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart));
   if (serveurDesCollections.actif) void synchroniser();
 }

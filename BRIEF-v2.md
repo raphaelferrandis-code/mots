@@ -463,6 +463,10 @@ Décidé par Raphaël le 21/09/2026 : il attendait du duel qu'il oppose des joue
 | 29 | Polices | **Playfair Display**, police libre livrée avec le jeu (choisie le 21/09/2026 parmi trois familles à l'essai) ; Barlow Condensed pour les petites mentions en capitales |
 | 33 | Marché : un timbre vendu quitte l'album | **Décidé le 22/09/2026** : on peut vendre n'importe lequel de ses timbres, pas seulement ses doubles — « c'est bien qu'un timbre disparaisse à la vente, ça crée une économie ». Voir `BRIEF-marche.md` §7 bis |
 | 34 | Version payante | **Décidé le 22/09/2026** : une version payante du jeu donnera des paquets plus rapides, de l'Encre, les statistiques des prix du marché et des achats/reventes illimités. Précise la décision n° 7 (accélération payante). Conséquences et préalables (juriste, joueurs maison, mineurs, compte récupérable) dans `BRIEF-marche.md` §7 bis |
+| 35 | Doublons et marché | **Décidé le 22/09/2026** : un doublon (même carte, même finition) reste changé en Encre ; pas de classeur de doubles |
+| 36 | Récupération du compte | **Décidé le 22/09/2026** : e-mail par lien magique + code de secours. Le code d'abord (rien à régler), l'e-mail ensuite (service d'envoi à brancher) |
+| 37 | Première brique du marché | **Décidé le 22/09/2026** : les enchères d'abord (durée fixe, clôture par le serveur), avec un prix d'achat immédiat facultatif proposé par Claude |
+| 38 | La cote | **Décidé le 22/09/2026** : la cote du jour pour tous les joueurs ; l'historique et les statistiques des prix pour la version payante |
 | 32 | Rareté des coups de cœur non mesurés | **Calcul automatique seul** (choisi le 21/09/2026 parmi trois options) : le mot est rangé parmi les mots mesurés, d'après sa seule fréquence (§4.3). Pas de rareté écrite à la main : tout vient des données |
 
 ### 10.2 Propositions encore à confirmer (🟡)

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { nouvelleSauvegarde } from './sauvegarde.ts';
-import { aImporter, aQuelqueChoseAImporter, fusionner, lireEtat } from './synchronisation.ts';
+import { aImporter, aQuelqueChoseAImporter, fusionner, lireEtat, lireRecuperation } from './synchronisation.ts';
 import type { EtatDuCompte } from './synchronisation.ts';
 
 const T0 = 1_700_000_000_000;
@@ -29,6 +29,7 @@ const etatDuServeur: EtatDuCompte = {
     'zeugma-nom': { obtenueLe: T0, doublons: 3, finitions: { Normale: 3, Holographique: 1 } },
     'cabale-nom': { obtenueLe: T0 + 2, doublons: 0, finitions: { Normale: 1 } },
   },
+  codeDeSecoursLe: null,
 };
 
 describe('la collection tenue par le serveur', () => {
@@ -49,8 +50,12 @@ describe('la collection tenue par le serveur', () => {
 
   it('relit un état du serveur sans rien supposer de sa forme', () => {
     const lu = lireEtat({ encre: 5, paquets: { stock: 'x', ouverts: 2 }, deck: ['a', 3], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, finitions: { Normale: 0, Fausse: 2 } }, 'b-nom': 'abîmée' } });
-    assert.deepEqual(lu, { encre: 5, paquets: { stock: 0, reference: 0, ouverts: 2, sansLegendaire: 0 }, deck: ['a'], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, doublons: 0, finitions: { Normale: 1 } } } });
+    assert.deepEqual(lu, { encre: 5, paquets: { stock: 0, reference: 0, ouverts: 2, sansLegendaire: 0 }, deck: ['a'], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null });
     assert.throws(() => lireEtat(null), /illisible/);
+    assert.equal(lireEtat({ ...etatDuServeur, codeDeSecoursLe: 42 }).codeDeSecoursLe, 42);
+    const recuperation = lireRecuperation({ ...etatDuServeur, profil: { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 } });
+    assert.deepEqual(recuperation.profil, { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 });
+    assert.equal(lireRecuperation({ ...etatDuServeur, profil: null }).profil, null);
   });
 
   it('sait quand une partie mérite d’être importée, et n’envoie que ce qui a de la valeur', () => {

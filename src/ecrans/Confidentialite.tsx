@@ -72,7 +72,8 @@ export function Confidentialite() {
             <li>tes timbres, avec leurs finitions, leurs doublons et la date où tu les as obtenus ;</li>
             <li>ton Encre, ta réserve de paquets et le nombre de paquets ouverts ;</li>
             <li>ton deck ;</li>
-            <li>l'heure de début et de fin de tes duels d'entraînement, pour verser l'Encre gagnée.</li>
+            <li>l'heure de début et de fin de tes duels d'entraînement, pour verser l'Encre gagnée ;</li>
+            <li>l'empreinte de ton code de secours, si tu en as créé un — jamais le code lui-même.</li>
           </ul>
           <p>
             Tout cela est attaché au même compte anonyme que les joutes : un simple numéro, lié à ce navigateur. La

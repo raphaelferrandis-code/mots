@@ -84,6 +84,9 @@ describe('le client Supabase', () => {
     const interne = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 500, corps: { code: 'XX000', message: 'détail technique' } }));
     await assert.rejects(interne.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && !erreur.refus && !erreur.message.includes('technique'));
 
+    const absente = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 404, corps: { code: 'PGRST202', message: 'Could not find the function public.recuperer_par_code' } }));
+    await assert.rejects(absente.client.appeler('recuperer_par_code'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.message.includes("pas à jour"));
+
     const ferme = fauxMonde(() => ({ statut: 422, corps: { msg: 'Anonymous sign-ins are disabled' } }));
     await assert.rejects(ferme.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.message.includes("n'accepte pas"));
   });

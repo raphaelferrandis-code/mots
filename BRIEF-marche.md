@@ -1,6 +1,6 @@
 # Brief — Le Marché : échanges et enchères entre joueurs
 
-*Version 2 du 22 septembre 2026 — intègre les deux décisions de Raphaël du même jour (§7 bis). Version 1 du 22 septembre 2026. Ce document complète `BRIEF-v2.md`. Il répond à la demande de Raphaël du 21 septembre 2026 : « un nouvel onglet Marché, où les joueurs pourront échanger et vendre leurs cartes aux enchères ». Il décrit ce que le marché peut contenir, ce qu'il faut construire avant, et les décisions à prendre. Rien n'est commencé : c'est un plan à valider.*
+*Version 3 du 22 septembre 2026 — intègre les six décisions de Raphaël du même jour (§7 bis) ; les collections sont sur le serveur depuis ce jour (M1). Version 1 du 22 septembre 2026. Ce document complète `BRIEF-v2.md`. Il répond à la demande de Raphaël du 21 septembre 2026 : « un nouvel onglet Marché, où les joueurs pourront échanger et vendre leurs cartes aux enchères ». Il décrit ce que le marché peut contenir, ce qu'il faut construire avant, et les décisions à prendre. Rien n'est commencé : c'est un plan à valider.*
 
 ---
 
@@ -76,10 +76,11 @@ Comme pour les paquets et les duels, il faudra un **simulateur de marché** (`np
 |---|---|---|
 | **M0. Décisions** | Les choix du §7, un simulateur de marché, ce brief mis à jour | Raphaël a tranché les questions du §7 |
 | **M1. Collection sur le serveur** *(en service depuis le 22/09/2026)* | Tables, fonctions, migration, page Confidentialité mise à jour ; **le moyen de récupération reste à faire** (question 6) | Avancer l'heure du téléphone ne donne plus de paquet ; la collection importée est bornée au plausible ; les paquets, l'Encre, le deck et les récompenses passent par le serveur. (Deux appareils sur la même collection : quand le compte sera récupérable) |
-| **M2. Classeur de doubles** | Les doublons sont gardés selon la règle choisie (§7) ; l'écran Album les montre | Un joueur possède deux exemplaires d'un timbre et voit ce qu'il peut en faire |
-| **M3. Ventes, avis de recherche, provenance** (A, D, G) | Annonces, achats, commission, plafonds, cachet de provenance | Deux joueurs s'échangent un timbre contre de l'Encre ; l'Encre totale du jeu a baissé de la commission ; le timbre porte son cachet |
-| **M4. La cote** (E) | Calcul sur le serveur, affichage sur les fiches et dans l'album | La cote d'un timbre suit ses ventes réelles |
-| **M5. Enchères et salle des ventes** (B, F) | Mises, durée, clôture automatique, vente hebdomadaire du jeu | Une enchère se clôt correctement même si personne n'est connecté ; le gagnant reçoit le timbre, les perdants leur Encre |
+| ~~**M2. Classeur de doubles**~~ | Abandonné le 22/09/2026 : les doublons restent de l'Encre (décision 3 du §7 bis) | — |
+| **M2 bis. Récupération du compte** *(le code de secours est fait le 22/09/2026 : Réglages → « Ton compte » ; l'e-mail attend un service d'envoi, voir GUIDE-supabase.md, étape 9)* | Un code de secours (à noter) qui transfère la collection sur un nouvel appareil ; puis l'e-mail par lien magique | Un joueur retrouve sa collection sur un autre téléphone avec son code ; puis avec son e-mail |
+| **M3. Les enchères** (B, + G) *(choix de Raphaël du 22/09/2026)* | Mise en vente, mises, durée fixe, clôture par le serveur, prix d'achat immédiat facultatif, commission, plafonds pour les joueurs gratuits, cachet de provenance | Une enchère se clôt correctement même si personne n'est connecté ; le gagnant reçoit le timbre, les perdants leur Encre ; l'Encre totale du jeu a baissé de la commission |
+| **M4. La cote** (E) | Calcul sur le serveur ; la cote du jour pour tous, l'historique et les statistiques pour les payants | La cote d'un timbre suit ses ventes réelles |
+| **M5. Avis de recherche et salle des ventes du jeu** (D, F) | « Je cherche X » ; vente hebdomadaire du jeu | Un timbre rare trouve preneur ; la vente du jeu retire de l'Encre |
 | **M6. Troc** (C) | Propositions d'échange entre pseudonymes | Deux joueurs échangent deux timbres sans Encre |
 
 Ordre de grandeur : M1 est comparable à tout le travail fait pour les joutes (serveur + jeu + guide) ; M3 à la phase 2 (paquets et collection). Le reste est plus petit.
@@ -116,12 +117,17 @@ Ordre de grandeur : M1 est comparable à tout le travail fait pour les joutes (s
 - **Le compte devient indispensable** (on ne perd pas ce qu'on a payé) : le moyen de récupération (question 6) passe de « souhaitable » à « nécessaire avant tout paiement ».
 - **La cote réservée aux payants** : à vérifier à l'usage — un marché où seuls les payants connaissent les prix peut décourager les gratuits de vendre. Une variante : la cote du jour pour tous, l'historique et les statistiques pour les payants.
 
-**Questions qui restent ouvertes** (une ligne suffit) : la question 2 (les doublons : garder la règle actuelle ?), la 6 (récupération du compte : e-mail, code, les deux ?) et la 7 (première brique : ventes à prix fixe d'abord ?). Sans réponse, je pars sur : doublons inchangés, e-mail + code, ventes à prix fixe d'abord.
+**Réponses du 22 septembre 2026 (soir)** aux questions restées ouvertes :
+3. **Les doublons deviennent de l'Encre, comme aujourd'hui** (question 2) : pas de classeur de doubles ; M2 est abandonné.
+4. **Récupération du compte : e-mail par lien magique + un code de secours** (question 6). **Le code de secours est fait** (Réglages → « Ton compte » : vingt signes en quatre groupes, montrés une seule fois, dont le serveur ne garde que l'empreinte ; sur un autre appareil, le code transfère la collection et le profil de joute, et ferme l'ancien compte anonyme ; dix essais par heure au plus). L'e-mail attend un service d'envoi : celui fourni par Supabase est limité à 2 e-mails par heure pour tout le projet (vérifié dans sa documentation), prévu pour les essais.
+5. **Les enchères d'abord** (question 7 ; ma recommandation — les ventes à prix fixe — n'est pas retenue). Conséquences : une enchère a une durée fixe et le serveur la clôt lui-même, même si personne n'est connecté ; le gagnant reçoit le timbre et les perdants leur Encre à leur visite suivante ; sans notifications sur un site web, le joueur absent découvre le résultat en revenant. Je proposerai d'ajouter aux enchères un **prix d'achat immédiat** facultatif, pour que les ventes à prix fixe existent quand même.
+6. **La cote du jour pour tous, l'historique et les statistiques pour les payants** (question 4 de l'échange). Un joueur gratuit sait à quel prix vendre ; le payant voit les tendances.
 
 ## 8. Ce que je propose de faire ensuite
 
 1. ~~Raphaël répond au §7~~ — fait en partie le 22/09/2026 (§7 bis) ; trois questions restent ouvertes, avec une réponse par défaut.
 2. **M1, le compte et la collection sur le serveur — en service depuis le 22/09/2026** (Raphaël a collé les scripts ; vérifié contre le vrai serveur avec un joueur d'essai, effacé ensuite) : les scripts (`serveur/1-structure.sql` mis à jour, `serveur/3-cartes.sql`), le jeu qui parle au serveur (`src/services/collections.ts`, `src/jeu/synchronisation.ts`), et l'étape 8 de `GUIDE-supabase.md` pour la partie qui revient à Raphaël (coller deux scripts). Sans moyen de récupération du compte pour l'instant (question 6). Vérifié dans un Postgres en mémoire et contre un faux Supabase ; reste la vérification contre le vrai serveur, après le collage des scripts.
-3. Ensuite le simulateur de marché (avec une part de joueurs payants), puis M3 (ventes à prix fixe, avis de recherche, provenance).
+3. **Le moyen de récupération du compte** (décision 4 du §7 bis) : le code de secours, puis l'e-mail.
+4. Le simulateur de marché (avec une part de joueurs payants), puis **M3 = les enchères** (décision 5), avec un prix d'achat immédiat facultatif, le cachet de provenance, puis la cote du jour pour tous (M4).
 
 Tant que M1 n'est pas fait, le jeu continue de fonctionner comme aujourd'hui : rien de ce plan ne bloque les joueurs actuels.

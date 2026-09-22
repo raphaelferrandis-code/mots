@@ -243,6 +243,9 @@ main:focus, main h1:focus { outline: none; }
 .deck__vide { aspect-ratio: 5 / 7; border: 2px dashed var(--filet); border-radius: 6px; }
 .regles { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .option--liste { grid-template-columns: 1fr; cursor: default; }
+/* Le code de secours, montré une seule fois : bien lisible, facile à sélectionner. */
+.code-de-secours { display: grid; gap: 10px; padding: 14px; border: 1px dashed var(--accent); border-radius: 6px; }
+.code-de-secours__code { font-family: var(--police-chiffres); font-size: 1.25rem; letter-spacing: 0.08em; overflow-wrap: anywhere; user-select: all; }
 .option--liste select { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid var(--filet-fort); border-radius: 4px; min-height: 44px; background: var(--carte-fond); max-width: 260px; }
 
 /* ── Duel ───────────────────────────────────────────────────────────────── */

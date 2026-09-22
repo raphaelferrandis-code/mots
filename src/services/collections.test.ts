@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { nouvelleSauvegarde } from '../jeu/sauvegarde.ts';
 import { serveurDesCollectionsAvec } from './collections.ts';
+import { ErreurDuServeur } from './supabase.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 type Appel = { fonction: string; parametres: object };
@@ -22,7 +23,7 @@ function doublure(reponses: Record<string, unknown>) {
   return { service: serveurDesCollectionsAvec(client), appels };
 }
 
-const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: ['a-nom'], maintenant: 5000, cartes: { 'a-nom': { obtenueLe: 900, doublons: 0, finitions: { Normale: 1 } } } };
+const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: ['a-nom'], maintenant: 5000, cartes: { 'a-nom': { obtenueLe: 900, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null };
 
 describe('le service des collections', () => {
   it('distingue « pas de compte » d’un compte vide, et relit l’état du serveur', async () => {
@@ -67,5 +68,16 @@ describe('le service des collections', () => {
     assert.deepEqual({ encre: fin.encre, reduite: fin.reduite, total: fin.etat.encre }, { encre: 30, reduite: false, total: 12 });
     assert.deepEqual(appels.map((a) => a.fonction), ['changer_de_deck', 'commencer_un_duel', 'terminer_un_duel']);
     assert.deepEqual(appels[2].parametres, { p_ticket: 7, p_resultat: 'victoire' });
+  });
+
+  it('définit un code de secours et retrouve une collection avec', async () => {
+    const { service, appels } = doublure({ definir_un_code_de_secours: { ...ETAT, codeDeSecoursLe: 777 }, recuperer_par_code: { ...ETAT, profil: { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 } } });
+    assert.equal((await service.definirUnCode('ABCDEFGHJKMNPQRSTUVW')).codeDeSecoursLe, 777);
+    const retrouvee = await service.recupererParCode('ABCDEFGHJKMNPQRSTUVW');
+    assert.equal(Object.keys(retrouvee.etat.cartes).length, 1);
+    assert.equal(retrouvee.profil?.pseudo, 'Zeugma 12');
+    assert.deepEqual(appels.map((a) => [a.fonction, a.parametres]), [['definir_un_code_de_secours', { p_code: 'ABCDEFGHJKMNPQRSTUVW' }], ['recuperer_par_code', { p_code: 'ABCDEFGHJKMNPQRSTUVW' }]]);
+    const { service: refus } = doublure({ recuperer_par_code: { refus: 'Ce code ne correspond à aucune collection.' } });
+    await assert.rejects(refus.recupererParCode('ZZZZZZZZZZZZZZZZZZZZ'), (e: unknown) => e instanceof ErreurDuServeur && e.refus && e.message.includes('aucune collection'));
   });
 });

@@ -290,9 +290,14 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
+  code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
+  code_defini_le timestamptz,
   cree_le timestamptz not null default now(),
   maj_le timestamptz not null default now()
 );
+-- (Pour un serveur installé avant le 22/09/2026 au soir : les deux colonnes du code de secours.)
+alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz;
+create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
 create table if not exists public.possessions (
@@ -313,6 +318,12 @@ create table if not exists public.duels (
   termine_le timestamptz
 );
 create index if not exists duels_par_joueur on public.duels (utilisateur, commence_le desc);
+
+-- La récupération par code transfère un compte à un autre joueur : ses timbres et ses duels doivent le suivre.
+alter table public.possessions drop constraint if exists possessions_utilisateur_fkey,
+  add constraint possessions_utilisateur_fkey foreign key (utilisateur) references public.comptes (utilisateur) on delete cascade on update cascade;
+alter table public.duels drop constraint if exists duels_utilisateur_fkey,
+  add constraint duels_utilisateur_fkey foreign key (utilisateur) references public.comptes (utilisateur) on delete cascade on update cascade;
 
 alter table public.cartes enable row level security;
 alter table public.comptes enable row level security;
@@ -337,6 +348,7 @@ as $$
     'encre', c.encre,
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
                from public.possessions p where p.utilisateur = c.utilisateur)
@@ -662,8 +674,77 @@ begin
   return coalesce(recompense, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
 end $$;
 
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- LA RÉCUPÉRATION DU COMPTE : LE CODE DE SECOURS (BRIEF-marche.md, §7 bis)
+-- ═════════════════════════════════════════════════════════════════════════════
+
+-- Les essais de récupération, pour qu'un code ne puisse pas se deviner à force d'essayer.
+create table if not exists public.tentatives_de_recuperation (
+  utilisateur uuid not null,
+  quand timestamptz not null default now()
+);
+create index if not exists tentatives_par_joueur on public.tentatives_de_recuperation (utilisateur, quand desc);
+alter table public.tentatives_de_recuperation enable row level security;
+revoke all on public.tentatives_de_recuperation from anon, authenticated;
+
+-- Le code tel qu'on le compare : majuscules, sans tirets ni espaces, sans le préfixe « MOTS » (même règle que src/jeu/codeDeSecours.ts).
+create or replace function public.code_propre(p_code text) returns text language sql immutable set search_path = ''
+as $$ select case when c ~ '^MOTS[A-Z0-9]{20}$' then substr(c, 5) else c end from (select upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')) as c) t $$;
+
+-- L'empreinte d'un code (SHA-256). Le code lui-même n'est jamais gardé.
+create or replace function public.empreinte_du_code(p_code text) returns text language sql immutable set search_path = ''
+as $$ select encode(sha256(convert_to(public.code_propre(p_code), 'UTF8')), 'hex') $$;
+
+-- Le joueur choisit (le jeu tire) un code ; un nouveau code remplace l'ancien.
+create or replace function public.definir_un_code_de_secours(p_code text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  propre text := public.code_propre(p_code);
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if char_length(propre) <> 20 then raise exception 'Ce code ne peut pas servir de code de secours.'; end if;
+  update public.comptes set code_hache = public.empreinte_du_code(propre), code_defini_le = now(), maj_le = now() where utilisateur = auth.uid();
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return public.etat_du_compte(auth.uid());
+end $$;
+
+-- Sur un autre appareil : le code transfère la collection (et le profil de joute) au compte anonyme de l'appareil.
+-- La partie commencée sur cet appareil disparaît ; l'ancien compte anonyme est fermé. Le code reste valable ensuite.
+-- Un mauvais code est un « refus » rendu, pas une exception : une exception annulerait l'enregistrement de l'essai,
+-- et la limite d'essais ne servirait à rien.
+create or replace function public.recuperer_par_code(p_code text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  ancien uuid;
+  p public.profils%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(moi::text, 2));
+  if (select count(*) from public.tentatives_de_recuperation where utilisateur = moi and quand > now() - interval '1 hour') >= 10 then
+    return jsonb_build_object('refus', 'Trop d''essais : attends une heure.');
+  end if;
+  insert into public.tentatives_de_recuperation (utilisateur) values (moi);
+  select utilisateur into ancien from public.comptes where code_hache is not null and code_hache = public.empreinte_du_code(p_code);
+  if not found then return jsonb_build_object('refus', 'Ce code ne correspond à aucune collection.'); end if;
+  if ancien <> moi then
+    perform 1 from public.comptes where utilisateur = ancien for update;
+    delete from public.comptes where utilisateur = moi;
+    delete from public.profils where utilisateur = moi;
+    update public.comptes set utilisateur = moi, maj_le = now() where utilisateur = ancien; -- les timbres et les duels suivent
+    update public.profils set utilisateur = moi, maj_le = now() where utilisateur = ancien;
+    delete from public.tentatives_de_recuperation where utilisateur in (moi, ancien);
+    delete from auth.users where id = ancien;
+  end if;
+  select * into p from public.profils where utilisateur = moi;
+  return public.etat_du_compte(moi) || jsonb_build_object('profil', case when p.id is null then null else jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) end);
+end $$;
+
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]) from public, anon;
-revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text) to authenticated;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text) from public, anon;
+revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text) to authenticated;

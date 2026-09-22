@@ -72,6 +72,8 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       const erreur = await reponse.json().catch(() => null) as { code?: string; message?: string } | null;
       // « P0001 » : une exception levée exprès par nos fonctions, avec un message écrit pour le joueur.
       if (erreur?.code === 'P0001' && erreur.message) throw new ErreurDuServeur(erreur.message, true);
+      // « PGRST202 » : la fonction n'existe pas encore sur le serveur (script pas recollé) — ce n'est pas une panne.
+      if (reponse.status === 404 && erreur?.code === 'PGRST202') throw new ErreurDuServeur("Le serveur du jeu n'est pas à jour : cette fonction n'y est pas encore installée.", true);
       throw new ErreurDuServeur(PANNE, false);
     }
     // Une fonction qui ne rend rien (supprimer_mon_profil) répond sans contenu.

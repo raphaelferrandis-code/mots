@@ -13,7 +13,19 @@ export type EtatDuCompte = {
   deck: string[];
   maintenant: number; // l'heure du serveur, en millisecondes
   cartes: Record<string, { obtenueLe: number; doublons: number; finitions: Partial<Record<Finition, number>> }>;
+  codeDeSecoursLe: number | null; // quand le joueur a défini son code de secours (décision n° 36), sinon null
 };
+
+// Ce que rend une récupération par code : l'état du compte retrouvé, et le profil de joute s'il y en a un.
+export type ProfilRetrouve = { pseudo: string; cote: number; jouees: number; gagnees: number };
+export type Recuperation = { etat: EtatDuCompte; profil: ProfilRetrouve | null };
+
+export function lireRecuperation(brut: unknown): Recuperation {
+  const etat = lireEtat(brut);
+  const lu = estUnObjet(brut) && estUnObjet(brut.profil) ? brut.profil : null;
+  const profil: ProfilRetrouve | null = lu && typeof lu.pseudo === 'string' ? { pseudo: lu.pseudo, cote: nombre(lu.cote), jouees: nombre(lu.jouees), gagnees: nombre(lu.gagnees) } : null;
+  return { etat, profil };
+}
 
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const nombre = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
@@ -39,6 +51,7 @@ export function lireEtat(brut: unknown): EtatDuCompte {
     deck: Array.isArray(brut.deck) ? brut.deck.filter((id): id is string => typeof id === 'string') : [],
     maintenant: nombre(brut.maintenant),
     cartes,
+    codeDeSecoursLe: typeof brut.codeDeSecoursLe === 'number' && Number.isFinite(brut.codeDeSecoursLe) ? brut.codeDeSecoursLe : null,
   };
 }
 

@@ -7,6 +7,7 @@ import path from 'node:path';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { NOMBRE_DE_JOUEURS_MAISON, fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
+import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { cartes } from './collections.ts';
@@ -41,6 +42,11 @@ describe('les scripts du serveur', () => {
     // Les aides internes ne sont offertes à personne ; les fonctions du jeu seulement aux joueurs connectés.
     assert.match(sql, /revoke execute on function [^;]*public\.tirer_un_paquet\(uuid, text\[\]\)[^;]* from authenticated;/);
     assert.match(sql, /grant execute on function [^;]*public\.ouvrir_un_paquet\(text\[\]\)[^;]* to authenticated;/);
+    // Le code de secours : sa longueur est celle du jeu, son empreinte reste interne, et un transfert emporte timbres et duels.
+    assert.ok(sql.includes(`char_length(propre) <> ${LONGUEUR_DU_CODE}`));
+    assert.match(sql, /revoke execute on function [^;]*public\.empreinte_du_code\(text\)[^;]* from authenticated;/);
+    assert.match(sql, /grant execute on function [^;]*public\.recuperer_par_code\(text\)[^;]* to authenticated;/);
+    assert.ok(sql.includes('references public.comptes (utilisateur) on delete cascade on update cascade'));
   });
 
   it('reprennent les chiffres du classement et tous les mots interdits du jeu', () => {
