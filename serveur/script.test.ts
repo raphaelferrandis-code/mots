@@ -31,7 +31,9 @@ describe('les scripts du serveur', () => {
     assert.ok(sql.includes(`>= ${P.paquetsAvantLegendaireGarantie};`));
     assert.ok(sql.includes(`random() < ${P.chanceHorsSerie}`));
     assert.ok(sql.includes(`< ${P.prixEnEncre} then raise exception`));
-    assert.ok(sql.includes(`interval '${P.minutesEntreDeuxPaquets} minutes'`));
+    assert.ok(sql.includes(`else ${P.minutesEntreDeuxPaquets} end`), 'la recharge gratuite');
+    assert.ok(sql.includes(`when c.payant then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
+    assert.ok(sql.includes(`when c.payant then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');
     assert.ok(sql.includes(`when 'Légendaire' then ${EQUILIBRAGE.encreParDoublon['Légendaire']}`));
     assert.ok(sql.includes(`when 'Holographique' then ${EQUILIBRAGE.finitions.encre.Holographique}`));
     assert.ok(sql.includes(`>= ${EQUILIBRAGE.duel.victoiresPleinesParJour};`));

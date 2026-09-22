@@ -154,6 +154,13 @@ export function Reglages() {
         {partie.serveur.etat !== 'appareil' && (
           <section className="rubrique">
             <h2>Ton compte</h2>
+            {partie.compte?.payant && (
+              <p className="petit">
+                <strong>Version payante.</strong> Un paquet toutes les {EQUILIBRAGE.payant.minutesEntreDeuxPaquets} minutes au lieu de {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets},
+                {' '}{EQUILIBRAGE.payant.stockMaximum} en réserve au lieu de {EQUILIBRAGE.paquets.stockMaximum}, aucune limite de ventes ni d'achats au marché,
+                et l'histoire des prix sur la fiche de chaque timbre.
+              </p>
+            )}
             <p className="petit">Ta collection est attachée au compte anonyme de ce navigateur. Un code de secours permet de la retrouver sur un autre appareil, ou après un changement de navigateur.</p>
             {code ? (
               <div className="code-de-secours" role="status">

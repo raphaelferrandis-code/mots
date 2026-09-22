@@ -28,10 +28,12 @@ export function registresMasques(sauvegarde: Sauvegarde): Registre[] {
   return masques;
 }
 
-// Remet une sauvegarde d'aplomb par rapport aux règles actuelles (stock plafonné, paquets gagnés depuis la dernière visite).
-export function mettreAJour(sauvegarde: Sauvegarde, maintenant: number, equilibrage: Equilibrage): Sauvegarde {
-  const plafonne = { ...sauvegarde.paquets, stock: Math.min(sauvegarde.paquets.stock, equilibrage.paquets.stockMaximum) };
-  return { ...sauvegarde, paquets: { ...plafonne, ...rechargerLesPaquets(plafonne, maintenant, equilibrage.paquets) } };
+// Remet une sauvegarde d'aplomb par rapport aux règles actuelles (stock plafonné, paquets gagnés depuis la dernière
+// visite). « payant » : la version payante recharge plus vite et garde une réserve plus grande (décision n° 34).
+export function mettreAJour(sauvegarde: Sauvegarde, maintenant: number, equilibrage: Equilibrage, payant = false): Sauvegarde {
+  const reglages = payant ? equilibrage.payant : equilibrage.paquets;
+  const plafonne = { ...sauvegarde.paquets, stock: Math.min(sauvegarde.paquets.stock, reglages.stockMaximum) };
+  return { ...sauvegarde, paquets: { ...plafonne, ...rechargerLesPaquets(plafonne, maintenant, reglages) } };
 }
 
 export type Contexte = {

@@ -4,10 +4,12 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 
 *Le jeu s'est appelé « MOTS » jusqu'au 22 septembre 2026. Raphaël a choisi **Philamots** (philatélie et mots) et pris les noms de domaine correspondants. Le dépôt, lui, garde son nom `mots` : changer l'adresse d'un dépôt casserait les liens existants pour rien.*
 
+- **Où en est le projet, et ce qui reste à faire : [ETAT-DU-PROJET.md](ETAT-DU-PROJET.md).** Commencer par là.
 - Le projet est décrit dans [BRIEF-v2.md](BRIEF-v2.md) — c'est le document de référence.
 - Le plan du serveur des joutes classées (duels contre d'autres joueurs) : [BRIEF-joutes.md](BRIEF-joutes.md) ; sa mise en route pas à pas : [GUIDE-supabase.md](GUIDE-supabase.md).
 - Le programme des testeurs : [GUIDE-testeurs.md](GUIDE-testeurs.md), et leurs retours : [RETOURS-testeurs.md](RETOURS-testeurs.md).
-- Le plan du marché (échanges et enchères entre joueurs), à valider : [BRIEF-marche.md](BRIEF-marche.md).
+- Le plan du marché (échanges et enchères entre joueurs) : [BRIEF-marche.md](BRIEF-marche.md).
+- Ce qui bloque la version payante : [BRIEF-version-payante.md](BRIEF-version-payante.md).
 - L'origine et la licence des données sont dans [SOURCES.md](SOURCES.md).
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).
 - **Le résultat de la fabrication des cartes : [data/rapport.md](data/rapport.md).**

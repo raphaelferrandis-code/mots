@@ -2,7 +2,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { EQUILIBRAGE, reglagesDeRecharge } from '../config/equilibrage.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import type { CarteIndex, Rarete } from '../partage/types.ts';
 import { hasardReproductible } from './hasard.ts';
@@ -209,6 +209,17 @@ describe('une partie', () => {
   it('ajoute au retour du joueur les paquets gagnés pendant son absence', () => {
     const sauvegarde = { ...nouvelleSauvegarde(T0, 0) };
     assert.equal(mettreAJour(sauvegarde, T0 + 35 * MINUTE, EQUILIBRAGE).paquets.stock, 3);
+  });
+  it('recharge plus vite et plus haut pour la version payante (décision n° 34)', () => {
+    const sauvegarde = { ...nouvelleSauvegarde(T0, 0) };
+    const gratuit = mettreAJour(sauvegarde, T0 + 35 * MINUTE, EQUILIBRAGE).paquets.stock;
+    const payant = mettreAJour(sauvegarde, T0 + 35 * MINUTE, EQUILIBRAGE, true).paquets.stock;
+    assert.ok(payant > gratuit, `la version payante gagne plus de paquets (${payant} contre ${gratuit})`);
+    const longtemps = 48 * 60 * MINUTE;
+    assert.equal(mettreAJour(sauvegarde, T0 + longtemps, EQUILIBRAGE).paquets.stock, EQUILIBRAGE.paquets.stockMaximum);
+    assert.equal(mettreAJour(sauvegarde, T0 + longtemps, EQUILIBRAGE, true).paquets.stock, EQUILIBRAGE.payant.stockMaximum);
+    assert.equal(reglagesDeRecharge(false).minutesEntreDeuxPaquets, EQUILIBRAGE.paquets.minutesEntreDeuxPaquets);
+    assert.equal(reglagesDeRecharge(true).minutesEntreDeuxPaquets, EQUILIBRAGE.payant.minutesEntreDeuxPaquets);
   });
 });
 

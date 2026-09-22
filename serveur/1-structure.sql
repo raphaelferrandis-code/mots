@@ -364,14 +364,17 @@ language plpgsql stable set search_path = ''
 as $$
 declare
   gagnes integer;
+  -- La version payante (décision n° 34) : un paquet plus souvent, et une réserve plus grande.
+  minutes integer := case when c.payant then 5 else 10 end;
+  maximum integer := case when c.payant then 20 else 10 end;
 begin
-  c.stock := least(c.stock, 10);
+  c.stock := least(c.stock, maximum);
   -- Réserve pleine : le compte à rebours est à l'arrêt. Il repart quand un paquet est ouvert.
-  if c.stock >= 10 or now() < c.reference then c.reference := now(); return c; end if;
-  gagnes := floor(extract(epoch from (now() - c.reference)) / 600);
-  c.stock := least(10, c.stock + gagnes);
+  if c.stock >= maximum or now() < c.reference then c.reference := now(); return c; end if;
+  gagnes := floor(extract(epoch from (now() - c.reference)) / (minutes * 60));
+  c.stock := least(maximum, c.stock + gagnes);
   -- Le temps déjà écoulé vers le paquet suivant est conservé, sauf si la réserve vient de se remplir.
-  c.reference := case when c.stock >= 10 then now() else c.reference + gagnes * interval '10 minutes' end;
+  c.reference := case when c.stock >= maximum then now() else c.reference + gagnes * interval '1 minute' * minutes end;
   return c;
 end $$;
 

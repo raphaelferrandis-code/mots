@@ -218,6 +218,18 @@ export const EQUILIBRAGE = {
     cote: { fenetreEnJours: 30, historiqueEnJours: 90, ventesMontrees: 30, conservationEnJours: 400 },
   },
 
+  // ── La version payante (décision n° 34) ───────────────────────────────────
+  // Ce qu'un compte payant reçoit de plus. Le compte porte un drapeau « payant » (serveur/collections.ts) ;
+  // personne ne l'a encore, et il n'existe aucun moyen de payer : voir BRIEF-version-payante.md.
+  // ⚠️ Ces deux chiffres sont une proposition, pas une décision de Raphaël. Le prix, la durée de l'abonnement et
+  // la question de l'Encre (achetée à l'unité ou versée chaque jour ?) restent à trancher.
+  payant: {
+    // Un paquet gratuit deux fois plus vite…
+    minutesEntreDeuxPaquets: 5,
+    // …et une réserve deux fois plus grande.
+    stockMaximum: 20,
+  },
+
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.
   paquetsEntreDeuxRappelsDExport: 100,
@@ -229,4 +241,10 @@ export function attaqueEnJeu(attaque: number, rarete: Rarete): number {
 
 export function defenseEnJeu(defense: number, rarete: Rarete): number {
   return Math.min(EQUILIBRAGE.statMaximale, defense + EQUILIBRAGE.bonusDefenseParRarete[rarete]);
+}
+
+// La recharge des paquets d'un joueur, selon qu'il a la version payante ou non. Le serveur applique la même règle
+// (fonction « recharger » de serveur/collections.ts) : c'est lui qui fait foi, le jeu ne fait qu'afficher la même chose.
+export function reglagesDeRecharge(payant: boolean): { minutesEntreDeuxPaquets: number; stockMaximum: number } {
+  return payant ? { ...EQUILIBRAGE.payant } : { minutesEntreDeuxPaquets: EQUILIBRAGE.paquets.minutesEntreDeuxPaquets, stockMaximum: EQUILIBRAGE.paquets.stockMaximum };
 }
