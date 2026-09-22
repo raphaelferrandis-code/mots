@@ -24,7 +24,7 @@ export function couperEnLignes(texte: string, largeurMaximum: number, mesurer: (
 export const tailleDuMot = (mot: string): number => Math.min(10.5, 96 / mot.length);
 
 // Le nom du fichier image et le message qui l'accompagne quand on partage un timbre.
-export const nomDuFichierImage = (idCarte: string): string => `mots-timbre-${idCarte}.png`;
+export const nomDuFichierImage = (idCarte: string): string => `philamots-timbre-${idCarte}.png`;
 export function texteDePartage(mot: string, rarete: string, faction: string, adresse: string): string {
-  return `« ${mot} » — un timbre ${rarete.toLowerCase()} venu de la faction ${faction}, dans MOTS, le jeu de cartes des mots français. ${adresse}`;
+  return `« ${mot} » — un timbre ${rarete.toLowerCase()} venu de la faction ${faction}, dans Philamots, le jeu de cartes des mots français. ${adresse}`;
 }

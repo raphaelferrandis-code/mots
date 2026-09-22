@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
+import { SITE } from '../../config/site.ts';
 import './paquet.css';
 
 // Un dessin vectoriel commun à l'accueil et à l'ouverture. Les groupes séparés
@@ -23,7 +24,7 @@ export function PaquetScelle() {
         <rect x="23" y="22" width="274" height="394" fill={`url(#${id}-grain)`} />
         <rect x="23" y="402" width="274" height="16" fill={`url(#${id}-pli)`} />
         <text x="160" y="82" textAnchor="middle" fill="#bdd2e3" fontSize="10" letterSpacing="3">LE BUREAU DU COLLECTIONNEUR</text>
-        <text x="160" y="145" textAnchor="middle" fill="#f2e9d7" fontFamily="var(--police-serif)" fontSize="55" fontWeight="700" letterSpacing="-2">MOTS</text>
+        <text x="160" y="143" textAnchor="middle" fill="#f2e9d7" fontFamily="var(--police-serif)" fontSize="38" fontWeight="700" letterSpacing="-1.5">{SITE.nomEnCapitales}</text>
         <g fill="none" stroke="#a2c3dc" strokeWidth="0.65" opacity="0.6">
           {Array.from({ length: 12 }, (_, i) => <ellipse key={i} cx="160" cy="242" rx="67" ry="29" transform={`rotate(${i * 15} 160 242)`} />)}
           <circle cx="160" cy="242" r="76" /><circle cx="160" cy="242" r="81" strokeDasharray="1 5" />
@@ -36,13 +37,13 @@ export function PaquetScelle() {
       <g className="paquet-scelle__bande">
         <rect x="19" y="16" width="282" height="31" rx="2" fill={`url(#${id}-cuivre)`} />
         <path d="M28 40h264" stroke="#653c2a" strokeDasharray="3 4" opacity="0.65" />
-        <text x="160" y="33" textAnchor="middle" fill="#382920" fontSize="9" fontWeight="700" letterSpacing="3">MOTS · ÉDITION ORIGINALE</text>
+        <text x="160" y="33" textAnchor="middle" fill="#382920" fontSize="9" fontWeight="700" letterSpacing="2">{SITE.nomEnCapitales} · ÉDITION ORIGINALE</text>
         <path d="m286 25 7 5-7 5" fill="none" stroke="#382920" />
       </g>
       <g className="paquet-scelle__sceau">
         <circle cx="270" cy="58" r="23" fill={`url(#${id}-cuivre)`} stroke="#e8b47d" />
         <circle cx="270" cy="58" r="18" fill="none" stroke="#714127" />
-        <text x="270" y="65" textAnchor="middle" fontFamily="var(--police-serif)" fontSize="21" fontWeight="700" fill="#50311f">M</text>
+        <text x="270" y="65" textAnchor="middle" fontFamily="var(--police-serif)" fontSize="21" fontWeight="700" fill="#50311f">{SITE.initiale}</text>
       </g>
     </svg>
   );

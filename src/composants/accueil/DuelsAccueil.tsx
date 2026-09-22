@@ -1,4 +1,5 @@
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
+import { SITE } from '../../config/site.ts';
 import { ligueDe } from '../../jeu/joute.ts';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
@@ -14,7 +15,7 @@ function ApercuDeck({ cartes, sauvegarde }: { cartes: readonly CarteIndex[]; sau
         return <div className="apercu-deck__carte" key={carte?.id ?? `vide-${i}`}>
           {carte
             ? <Carte carte={carte} cliquable={false} sansDefinition finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />
-            : <div className="apercu-deck__dos"><span>M</span></div>}
+            : <div className="apercu-deck__dos"><span>{SITE.initiale}</span></div>}
         </div>;
       })}
       <div className="apercu-deck__support" />

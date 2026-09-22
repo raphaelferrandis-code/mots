@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import type { Route } from '../navigation/routes.ts';
 import { Icone } from './Icone.tsx';
@@ -20,7 +21,7 @@ const ONGLETS: Onglet[] = [
 export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: number | null }) {
   return (
     <header className="entete-application">
-      <a className="marque" href={lien({ ecran: 'accueil' })} aria-label="MOTS — accueil">MOTS</a>
+      <a className="marque" href={lien({ ecran: 'accueil' })} aria-label={`${SITE.nom} — accueil`}>{SITE.nom}</a>
       <nav className="navigation" aria-label="Navigation principale">
         <ul className="navigation__liste">
           {ONGLETS.map((onglet) => (

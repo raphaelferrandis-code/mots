@@ -8,6 +8,7 @@ import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import '../composants/accueil/accueil.css';
@@ -28,7 +29,7 @@ export function Accueil() {
 
   return (
     <main className="ecran accueil">
-      <h1 className="visuellement-cache">MOTS — ton bureau de collectionneur</h1>
+      <h1 className="visuellement-cache">{SITE.nom} — ton bureau de collectionneur</h1>
       <div className="accueil__poles">
         <PaquetsAccueil partie={partie} />
         <DuelsAccueil deck={vue?.deck ?? null} sauvegarde={partie.sauvegarde} erreur={edition.etat === 'erreur'} />

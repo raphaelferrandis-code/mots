@@ -26,7 +26,7 @@ describe('mise en lignes du texte du timbre', () => {
   it('donne au mot la taille du timbre à l’écran, et un nom de fichier stable', () => {
     assert.equal(tailleDuMot('chic'), 10.5);
     assert.equal(tailleDuMot('anticonstitutionnellement'), 96 / 25);
-    assert.equal(nomDuFichierImage('velum-nom'), 'mots-timbre-velum-nom.png');
+    assert.equal(nomDuFichierImage('velum-nom'), 'philamots-timbre-velum-nom.png');
     assert.match(texteDePartage('velum', 'Épique', 'Latin', 'https://x.test/'), /« velum ».*épique.*Latin.*https:\/\/x\.test\//);
   });
 });

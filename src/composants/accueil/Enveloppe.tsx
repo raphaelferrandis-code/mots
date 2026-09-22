@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { SITE } from '../../config/site.ts';
 
 // Illustration autonome, recolorable dans theme.css. Aucun texte figé dans une image.
 export function Enveloppe() {
@@ -30,7 +31,7 @@ export function Enveloppe() {
         <circle cx="300" cy="233" r="48" /><circle cx="300" cy="233" r="40" strokeWidth="0.7" />
         <path d="M342 221c16-10 25 10 41 0s25 10 41 0 25 10 41 0M345 233c16-10 25 10 41 0s25 10 41 0 25 10 41 0M342 245c16-10 25 10 41 0s25 10 41 0 25 10 41 0" />
       </g>
-      <text x="300" y="240" textAnchor="middle" fill="#c1d8ed" fontFamily="var(--police-serif)" fontSize="23" fontWeight="700">MOTS</text>
+      <text x="300" y="239" textAnchor="middle" fill="#c1d8ed" fontFamily="var(--police-serif)" fontSize="15" fontWeight="700" letterSpacing="0.5">{SITE.nomEnCapitales}</text>
     </svg>
   );
 }

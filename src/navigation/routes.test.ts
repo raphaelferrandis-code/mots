@@ -24,10 +24,10 @@ describe('adresses des écrans', () => {
     for (const route of routes) assert.deepEqual(lireRoute(lien(route)), route);
   });
   it("donne à chaque écran son titre d'onglet, avec le mot pour une fiche", () => {
-    assert.equal(titreDeLaRoute({ ecran: 'accueil' }), 'MOTS');
-    assert.equal(titreDeLaRoute({ ecran: 'collection' }), 'Album — MOTS');
-    assert.equal(titreDeLaRoute({ ecran: 'marche' }), 'Marché — MOTS');
-    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'arc-en-ciel-nom' }), 'arc-en-ciel — MOTS');
-    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'sérendipité-nom' }), 'sérendipité — MOTS');
+    assert.equal(titreDeLaRoute({ ecran: 'accueil' }), 'Philamots');
+    assert.equal(titreDeLaRoute({ ecran: 'collection' }), 'Album — Philamots');
+    assert.equal(titreDeLaRoute({ ecran: 'marche' }), 'Marché — Philamots');
+    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'arc-en-ciel-nom' }), 'arc-en-ciel — Philamots');
+    assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'sérendipité-nom' }), 'sérendipité — Philamots');
   });
 });

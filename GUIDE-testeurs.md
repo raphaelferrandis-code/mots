@@ -1,10 +1,10 @@
-# Guide des testeurs — MOTS
+# Guide des testeurs — Philamots
 
 *Pour Raphaël, qui recrute cinq personnes, et pour ces cinq personnes. Écrit le 22 septembre 2026, pour la fin de la phase 4 du brief (`BRIEF-v2.md`, §8) : la phase est validée quand cinq testeurs extérieurs ont joué plusieurs jours et que leurs retours sont notés dans `RETOURS-testeurs.md`.*
 
 ## 1. Ce qu'on teste
 
-MOTS est un jeu de cartes à collectionner où chaque carte est un vrai mot de la langue française, présenté comme un timbre-poste. On ouvre des paquets, on remplit son album, on compose un deck de dix timbres et on affronte l'ordinateur ou le « double » d'autres joueurs en retrouvant les définitions.
+Philamots est un jeu de cartes à collectionner où chaque carte est un vrai mot de la langue française, présenté comme un timbre-poste. On ouvre des paquets, on remplit son album, on compose un deck de dix timbres et on affronte l'ordinateur ou le « double » d'autres joueurs en retrouvant les définitions.
 
 Le jeu est un prototype : il est gratuit, il n'y a rien à acheter, et il peut avoir des défauts. C'est précisément ce qu'on cherche à savoir.
 

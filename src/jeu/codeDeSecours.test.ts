@@ -17,12 +17,13 @@ describe('le code de secours', () => {
   it('s’affiche avec un préfixe et des tirets, et se relit tel qu’on l’a tapé', () => {
     const code = fabriquerUnCode(hasardReproductible(7));
     const affiche = afficherUnCode(code);
-    assert.match(affiche, /^MOTS(-[A-Z2-9]{5}){4}$/);
+    assert.match(affiche, /^PHIL(-[A-Z2-9]{5}){4}$/);
     assert.equal(normaliserUnCode(affiche), code);
     assert.equal(normaliserUnCode(affiche.toLowerCase()), code);
     assert.equal(normaliserUnCode(` ${code.slice(0, 10)} ${code.slice(10)} `), code, 'espaces et tirets ne comptent pas');
-    assert.equal(normaliserUnCode('mots abcde'), 'MOTSABCDE', 'un préfixe sans code complet derrière est gardé tel quel');
-    assert.equal(estUnCodeValable('MOTSABCDE'), false);
+    assert.equal(normaliserUnCode(`MOTS-${code.slice(0, 5)}-${code.slice(5, 10)}-${code.slice(10, 15)}-${code.slice(15)}`), code, 'un code noté du temps où le jeu s’appelait MOTS marche encore');
+    assert.equal(normaliserUnCode('phil abcde'), 'PHILABCDE', 'un préfixe sans code complet derrière est gardé tel quel');
+    assert.equal(estUnCodeValable('PHILABCDE'), false);
     assert.equal(estUnCodeValable(code.slice(0, 19) + 'O'), false, 'un signe hors alphabet est refusé');
   });
 });

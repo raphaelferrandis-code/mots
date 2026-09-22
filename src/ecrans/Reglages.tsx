@@ -180,7 +180,7 @@ export function Reglages() {
             {recuperation && (
               <form className="joute__saisie" onSubmit={(e) => void recuperer(e)}>
                 <label htmlFor="code-de-secours"><strong>Code de secours</strong><span className="texte-doux petit">La collection attachée à ce code remplacera celle de cet appareil.</span></label>
-                <input id="code-de-secours" type="text" value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="MOTS-XXXXX-XXXXX-XXXXX-XXXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+                <input id="code-de-secours" type="text" value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="PHIL-XXXXX-XXXXX-XXXXX-XXXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
                 <div className="rangee-de-boutons">
                   <button type="submit" className="bouton" disabled={occupe}>{occupe ? 'Recherche…' : 'Retrouver ma collection'}</button>
                   <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(false); setSaisie(''); }}>Annuler</button>

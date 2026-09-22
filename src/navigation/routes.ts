@@ -2,6 +2,8 @@
 // L'adresse d'un écran est la partie après le « # » : monsite.fr/#/collection. Ce système fonctionne
 // chez n'importe quel hébergeur sans aucun réglage, et le bouton « retour » du navigateur marche.
 
+import { SITE } from '../config/site.ts';
+
 export type Route =
   | { ecran: 'accueil' }
   | { ecran: 'paquet' }
@@ -36,7 +38,7 @@ const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
 };
 export function titreDeLaRoute(route: Route): string {
   const nom = route.ecran === 'carte' ? route.id.replace(/-(?:nom|verbe|adj|adv)$/, '') : TITRES[route.ecran];
-  return nom ? `${nom} — MOTS` : 'MOTS';
+  return nom ? `${nom} — ${SITE.nom}` : SITE.nom;
 }
 
 export function lien(route: Route): string {

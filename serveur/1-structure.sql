@@ -694,7 +694,7 @@ revoke all on public.tentatives_de_recuperation from anon, authenticated;
 
 -- Le code tel qu'on le compare : majuscules, sans tirets ni espaces, sans le préfixe « MOTS » (même règle que src/jeu/codeDeSecours.ts).
 create or replace function public.code_propre(p_code text) returns text language sql immutable set search_path = ''
-as $$ select case when c ~ '^MOTS[A-Z0-9]{20}$' then substr(c, 5) else c end from (select upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')) as c) t $$;
+as $$ select case when c ~ '^(PHIL|MOTS)[A-Z0-9]{20}$' then substr(c, 5) else c end from (select upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')) as c) t $$;
 
 -- L'empreinte d'un code (SHA-256). Le code lui-même n'est jamais gardé.
 create or replace function public.empreinte_du_code(p_code text) returns text language sql immutable set search_path = ''

@@ -7,6 +7,7 @@ import { useId, useMemo, useRef } from 'react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import './timbre.css';
 import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
+import { SITE } from '../../config/site.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
@@ -98,7 +99,7 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
 export function DosDeCarte({ onRetourner, etiquette }: { onRetourner: () => void; etiquette: string }) {
   return (
     <button type="button" className="tim tim--dos" onClick={onRetourner} aria-label={etiquette}>
-      <span className="tim__papier"><span className="tim__filigrane" aria-hidden="true">M</span></span>
+      <span className="tim__papier"><span className="tim__filigrane" aria-hidden="true">{SITE.initiale}</span></span>
     </button>
   );
 }
