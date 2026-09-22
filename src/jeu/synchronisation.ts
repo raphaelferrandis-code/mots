@@ -14,6 +14,7 @@ export type EtatDuCompte = {
   maintenant: number; // l'heure du serveur, en millisecondes
   cartes: Record<string, { obtenueLe: number; doublons: number; finitions: Partial<Record<Finition, number>> }>;
   codeDeSecoursLe: number | null; // quand le joueur a défini son code de secours (décision n° 36), sinon null
+  payant: boolean; // la version payante (décision n° 34) : sans limite au marché, avec l'histoire des cotes
 };
 
 // Ce que rend une récupération par code : l'état du compte retrouvé, et le profil de joute s'il y en a un.
@@ -52,6 +53,7 @@ export function lireEtat(brut: unknown): EtatDuCompte {
     maintenant: nombre(brut.maintenant),
     cartes,
     codeDeSecoursLe: typeof brut.codeDeSecoursLe === 'number' && Number.isFinite(brut.codeDeSecoursLe) ? brut.codeDeSecoursLe : null,
+    payant: brut.payant === true,
   };
 }
 

@@ -794,6 +794,21 @@ alter table public.encheres enable row level security;
 alter table public.mises enable row level security;
 revoke all on public.encheres, public.mises from anon, authenticated;
 
+-- La cote du jour de chaque timbre, par finition (décision n° 38) : relevée une fois par jour, gardée jour après jour.
+create table if not exists public.cotes (
+  carte text not null,
+  finition text not null,
+  jour date not null,
+  cote integer not null, -- la médiane des prix des ventes des 30 derniers jours
+  ventes integer not null, -- combien de ventes ont compté
+  primary key (carte, finition, jour)
+);
+-- Les jours déjà relevés (même un jour sans aucune vente).
+create table if not exists public.cotes_calculees (jour date primary key, calculees_le timestamptz not null default now());
+alter table public.cotes enable row level security;
+alter table public.cotes_calculees enable row level security;
+revoke all on public.cotes, public.cotes_calculees from anon, authenticated;
+
 -- ── Les aides internes ───────────────────────────────────────────────────────
 -- Le pseudonyme d'un joueur (celui des joutes), ou un nom neutre.
 create or replace function public.pseudonyme_de(p_utilisateur uuid) returns text language sql stable set search_path = ''
@@ -811,6 +826,30 @@ begin
         provenance = coalesce(excluded.provenance, public.possessions.provenance);
 end $$;
 
+-- Relève les cotes du jour si ce n'est pas encore fait : une seule fois par jour, quel que soit le joueur qui passe.
+create or replace function public.calculer_les_cotes() returns void
+language plpgsql set search_path = ''
+as $$
+begin
+  if exists (select 1 from public.cotes_calculees where jour = current_date) then return; end if;
+  perform pg_advisory_xact_lock(20260922); -- deux joueurs à la même seconde : un seul relève
+  if exists (select 1 from public.cotes_calculees where jour = current_date) then return; end if;
+  insert into public.cotes (carte, finition, jour, cote, ventes)
+  select e.carte, e.finition, current_date,
+         round(percentile_cont(0.5) within group (order by e.prix_final))::integer, count(*)::integer
+  from public.encheres e
+  where e.etat = 'vendue' and e.cloturee_le > now() - make_interval(days => 30)
+  group by e.carte, e.finition
+  on conflict do nothing;
+  insert into public.cotes_calculees (jour) values (current_date) on conflict do nothing;
+  delete from public.cotes where jour < current_date - 400;
+  delete from public.cotes_calculees where jour < current_date - 400;
+end $$;
+
+-- La cote du jour d'un timbre dans une finition ; null tant qu'il n'a pas de vente depuis 30 jours.
+create or replace function public.cote_du_jour(p_carte text, p_finition text) returns integer language sql stable set search_path = ''
+as $$ select c.cote from public.cotes c where c.carte = p_carte and c.finition = p_finition and c.jour = (select max(jour) from public.cotes_calculees) $$;
+
 -- Une enchère vue par le jeu.
 create or replace function public.enchere_en_json(e public.encheres) returns jsonb language sql stable set search_path = ''
 as $$
@@ -821,6 +860,7 @@ as $$
     'fermeLe', public.en_millisecondes(e.ferme_le), 'etat', e.etat, 'prixFinal', e.prix_final,
     'acheteur', case when e.acheteur is null then null else public.pseudonyme_de(e.acheteur) end,
     'remportee', e.acheteur is not null and e.acheteur = auth.uid(),
+    'cote', public.cote_du_jour(e.carte, e.finition),
     'cloturee_le', public.en_millisecondes(e.cloturee_le)
   )
 $$;
@@ -846,6 +886,8 @@ begin
       update public.encheres set etat = 'vendue', cloturee_le = now(), prix_final = e.meilleure_mise, acheteur = e.meilleur_encherisseur where id = e.id;
     end if;
   end loop;
+  -- Au passage, les cotes du jour (une fois par jour).
+  perform public.calculer_les_cotes();
 end $$;
 
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
@@ -1007,8 +1049,51 @@ begin
   );
 end $$;
 
+-- La cote d'un timbre, pour tous : par finition, la cote du jour et le nombre de ventes qui ont compté.
+create or replace function public.cotes(p_carte text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  jour_releve date;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  jour_releve := (select max(jour) from public.cotes_calculees);
+  return jsonb_build_object(
+    'jour', jour_releve,
+    'cotes', (select coalesce(jsonb_agg(jsonb_build_object('finition', c.finition, 'cote', c.cote, 'ventes', c.ventes) order by c.finition), '[]'::jsonb)
+              from public.cotes c where c.carte = p_carte and c.jour = jour_releve),
+    'maintenant', public.en_millisecondes(now())
+  );
+end $$;
+
+-- L'histoire de la cote et les statistiques : la version payante (décision n° 38).
+create or replace function public.historique_de_la_cote(p_carte text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  if not exists (select 1 from public.comptes where utilisateur = moi and payant) then
+    raise exception 'L''histoire des prix et les statistiques font partie de la version payante.';
+  end if;
+  perform public.cloturer_les_encheres();
+  return jsonb_build_object(
+    'serie', (select coalesce(jsonb_agg(jsonb_build_object('jour', c.jour, 'finition', c.finition, 'cote', c.cote, 'ventes', c.ventes) order by c.jour, c.finition), '[]'::jsonb)
+              from public.cotes c where c.carte = p_carte and c.jour > current_date - 90),
+    'ventes', (select coalesce(jsonb_agg(jsonb_build_object('quand', public.en_millisecondes(e.cloturee_le), 'finition', e.finition, 'prix', e.prix_final) order by e.cloturee_le desc), '[]'::jsonb)
+               from (select * from public.encheres v where v.carte = p_carte and v.etat = 'vendue' order by v.cloturee_le desc limit 30) e),
+    'stats', (select coalesce(jsonb_agg(s.stat order by s.finition), '[]'::jsonb)
+              from (select e.finition, jsonb_build_object('finition', e.finition, 'mini', min(e.prix_final), 'maxi', max(e.prix_final), 'nombre', count(*)) as stat
+                    from public.encheres e where e.carte = p_carte and e.etat = 'vendue' and e.cloturee_le > now() - make_interval(days => 90)
+                    group by e.finition) s),
+    'maintenant', public.en_millisecondes(now())
+  );
+end $$;
+
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres() from public, anon;
-revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres() from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres() to authenticated;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;

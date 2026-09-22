@@ -2,6 +2,8 @@
 // collections — le marché n'existe pas sans lui.
 
 import { SERVEUR } from '../config/serveur.ts';
+import { lireCotes, lireHistoire } from '../jeu/cote.ts';
+import type { CotesDUnTimbre, HistoireDeLaCote } from '../jeu/cote.ts';
 import { lireDesEncheres, lireEnchere } from '../jeu/marche.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import { lireEtat } from '../jeu/synchronisation.ts';
@@ -21,6 +23,8 @@ export type ServeurDuMarche = {
   mettreEnVente(carte: string, finition: Finition, mise: number, achatImmediat: number | null, heures: number): Promise<ReponseDuMarche>;
   retirer(id: number): Promise<EtatDuCompte>;
   encherir(id: number, montant: number): Promise<ReponseDuMarche>;
+  cotes(carte: string): Promise<CotesDUnTimbre>;
+  histoire(carte: string): Promise<HistoireDeLaCote>; // version payante : le serveur refuse aux autres
 };
 
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -49,6 +53,8 @@ export function serveurDuMarcheAvec(client: ClientSupabase): ServeurDuMarche {
     mettreEnVente: (carte, finition, mise, achatImmediat, heures) => chacunSonTour(async () => lireLaReponse(await client.appeler<unknown>('mettre_en_vente', { p_carte: carte, p_finition: finition, p_mise: mise, p_achat_immediat: achatImmediat, p_heures: heures }))),
     retirer: (id) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('retirer_de_la_vente', { p_enchere: id }))),
     encherir: (id, montant) => chacunSonTour(async () => lireLaReponse(await client.appeler<unknown>('encherir', { p_enchere: id, p_montant: montant }))),
+    cotes: async (carte) => lireCotes(await client.appeler<unknown>('cotes', { p_carte: carte })),
+    histoire: async (carte) => lireHistoire(await client.appeler<unknown>('historique_de_la_cote', { p_carte: carte })),
   };
 }
 
@@ -60,6 +66,8 @@ const inactif: ServeurDuMarche = {
   mettreEnVente: async () => jamais(),
   retirer: async () => jamais(),
   encherir: async () => jamais(),
+  cotes: async () => jamais(),
+  histoire: async () => jamais(),
 };
 
 export const serveurDuMarche: ServeurDuMarche = SERVEUR.collectionsSurLeServeur && serveurUtilise ? serveurDuMarcheAvec(clientDuServeur()) : inactif;

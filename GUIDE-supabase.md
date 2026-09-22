@@ -153,15 +153,15 @@ Supabase est limité à **2 e-mails par heure** pour tout le projet : il ne conv
 il faudra un service d'envoi (par exemple Resend ou Brevo, qui ont une offre gratuite) et le déclarer dans Supabase
 (Authentication → SMTP Settings). Je te guiderai le moment venu.
 
-## Étape 10 — Le marché aux enchères (ajoutée le 22 septembre 2026, soir)
+## Étape 10 — Le marché aux enchères et la cote des timbres (ajoutée le 22 septembre 2026, soir)
 
-Étape M3 du plan du marché (`BRIEF-marche.md`) : l'onglet « Marché », où l'on met ses timbres aux enchères et où l'on mise
-sur ceux des autres. Tout se passe sur le serveur : les enchères, l'Encre bloquée par une mise, la clôture, la commission
-de 10 %. Pour l'installer :
+Étapes M3 et M4 du plan du marché (`BRIEF-marche.md`) : l'onglet « Marché », où l'on met ses timbres aux enchères et où
+l'on mise sur ceux des autres, et la **cote** de chaque timbre, sur sa fiche. Tout se passe sur le serveur : les enchères,
+l'Encre bloquée par une mise, la clôture, la commission de 10 %, le relevé des prix. Pour l'installer :
 
 1. SQL Editor → New query → coller de nouveau **tout** `serveur/1-structure.sql` (il contient maintenant les tables et les
-   fonctions du marché) → menu sur **Database** → Run. Sans danger pour les joueurs et leurs collections. Ce collage
-   installe aussi le code de secours de l'étape 9, si ce n'était pas encore fait.
+   fonctions du marché et de la cote) → menu sur **Database** → Run. Sans danger pour les joueurs et leurs collections.
+   Ce collage installe aussi le code de secours de l'étape 9, si ce n'était pas encore fait.
 2. Rien d'autre.
 
 Tant que ce n'est pas fait, l'onglet « Marché » répond « Le serveur du jeu n'est pas à jour : cette fonction n'y est pas
@@ -172,6 +172,13 @@ Pour l'essayer : la fiche d'un timbre que tu possèdes → « Vendre ce timbre �
 Marché → « Miser » ou « Acheter ». Une vente terminée se règle au passage du premier joueur qui ouvre le marché ou son
 compte après l'heure de fin : le gagnant reçoit le timbre, le vendeur le prix moins 10 %, les autres leur Encre. Un joueur
 gratuit a au plus 3 ventes en cours et 3 achats par jour (décision n° 42).
+
+**La cote.** Sur la fiche de chaque timbre, une rubrique « Sur le marché » donne sa cote du jour : la **médiane** des prix
+de ses ventes des 30 derniers jours, par finition. Le serveur la relève **une fois par jour**, au premier passage d'un
+joueur : une vente d'aujourd'hui compte dans la cote de demain, comme dans un catalogue de philatéliste. Tant qu'un timbre
+n'a pas été vendu, il n'a pas de cote, et la fiche le dit. La version payante (décision n° 38) verra en plus l'histoire de
+la cote : une courbe jour par jour, les statistiques sur 90 jours et les dernières ventes — personne n'est encore payant,
+le serveur refuse cette partie aux autres comptes.
 
 ## La vie du serveur
 

@@ -56,6 +56,11 @@ describe('les scripts du serveur', () => {
     assert.ok(sql.includes(`when 'Légendaire' then ${M.planchers['Légendaire']}`));
     assert.match(sql, /grant execute on function [^;]*public\.encherir\(bigint, integer\)[^;]* to authenticated;/);
     assert.match(sql, /revoke execute on function [^;]*public\.cloturer_les_encheres\(\)[^;]* from authenticated;/);
+    // La cote (décision n° 38) : la fenêtre des ventes, pour tous ; le relevé reste interne.
+    assert.ok(sql.includes(`make_interval(days => ${M.cote.fenetreEnJours})`));
+    assert.match(sql, /grant execute on function [^;]*public\.cotes\(text\)[^;]* to authenticated;/);
+    assert.match(sql, /grant execute on function [^;]*public\.historique_de_la_cote\(text\)[^;]* to authenticated;/);
+    assert.match(sql, /revoke execute on function [^;]*public\.calculer_les_cotes\(\)[^;]* from authenticated;/);
   });
 
   it('reprennent les chiffres du classement et tous les mots interdits du jeu', () => {

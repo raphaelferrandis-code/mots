@@ -25,6 +25,7 @@ export type Enchere = {
   prixFinal: number | null;
   acheteur: string | null; // le pseudonyme de l'acheteur, une fois vendue
   remportee: boolean; // c'est moi qui l'ai remportée
+  cote: number | null; // la cote du jour du timbre dans cette finition (décision n° 38), s'il en a une
   clotureeLe: number | null;
 };
 
@@ -53,6 +54,7 @@ export function lireEnchere(brut: unknown): Enchere | null {
     prixFinal: nombreOuNull(brut.prixFinal),
     acheteur: typeof brut.acheteur === 'string' ? brut.acheteur : null,
     remportee: brut.remportee === true,
+    cote: nombreOuNull(brut.cote),
     clotureeLe: nombreOuNull(brut.cloturee_le ?? brut.clotureeLe),
   };
 }

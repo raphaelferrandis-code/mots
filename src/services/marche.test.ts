@@ -50,6 +50,13 @@ describe('le service du marché', () => {
     ]);
   });
 
+  it('lit la cote et son histoire', async () => {
+    const { service, appels } = doublure({ cotes: { jour: '2026-09-22', cotes: [{ finition: 'Normale', cote: 120, ventes: 3 }] }, historique_de_la_cote: { serie: [], ventes: [{ quand: 1, finition: 'Normale', prix: 120 }], stats: [] } });
+    assert.equal((await service.cotes('zeugma-nom')).cotes[0]?.cote, 120);
+    assert.equal((await service.histoire('zeugma-nom')).ventes.length, 1);
+    assert.deepEqual(appels.map((a) => [a.fonction, a.parametres]), [['cotes', { p_carte: 'zeugma-nom' }], ['historique_de_la_cote', { p_carte: 'zeugma-nom' }]]);
+  });
+
   it('refuse une réponse sans enchère lisible', async () => {
     const { service } = doublure({ encherir: { enchere: 'rien', etat: ETAT } });
     await assert.rejects(service.encherir(3, 30), /illisible/);

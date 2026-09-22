@@ -130,6 +130,7 @@ function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere:
           <p className="enchere__prix">
             {enchere.meilleureMise === null ? <>Mise de départ <strong>{enchere.miseDeDepart}</strong> Encre</> : <>Meilleure mise <strong>{prixActuel(enchere)}</strong> Encre{enchere.enTete && <span className="enchere__tete"> · tu es en tête</span>}</>}
             {enchere.achatImmediat !== null && <span className="texte-doux petit"> · achat immédiat {enchere.achatImmediat} Encre</span>}
+            {enchere.cote !== null && <span className="texte-doux petit"> · cote {enchere.cote} Encre</span>}
           </p>
         )}
         {enCours && !enchere.mienne && (

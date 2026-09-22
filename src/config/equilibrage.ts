@@ -213,6 +213,9 @@ export const EQUILIBRAGE = {
     // Ce que le marché montre à chaque appel, et combien d'enchères échues il clôt d'un coup.
     encheresParPage: 30,
     cloturesParAppel: 50,
+    // La cote d'un timbre (décision n° 38) : la médiane des prix de ses ventes des derniers jours, par finition, calculée
+    // une fois par jour et gardée jour après jour (l'historique de la version payante).
+    cote: { fenetreEnJours: 30, historiqueEnJours: 90, ventesMontrees: 30, conservationEnJours: 400 },
   },
 
   // ── Sauvegarde ────────────────────────────────────────────────────────────

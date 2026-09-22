@@ -5,6 +5,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { coteDe } from '../jeu/cote.ts';
+import type { CotesDUnTimbre } from '../jeu/cote.ts';
 import { plancherPour, verifierLaMiseEnVente } from '../jeu/marche.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import type { CartePossedee } from '../jeu/sauvegarde.ts';
@@ -17,7 +19,7 @@ const entier = (texte: string): number | null => (texte.trim() === '' ? null : N
 
 type Etat = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'erreur'; message: string };
 
-export function MiseEnVente({ carte, possedee, dansLeDeck, onVendu }: { carte: CarteIndex; possedee: CartePossedee; dansLeDeck: boolean; onVendu: (enchere: Enchere) => void }) {
+export function MiseEnVente({ carte, possedee, dansLeDeck, cotes = null, onVendu }: { carte: CarteIndex; possedee: CartePossedee; dansLeDeck: boolean; cotes?: CotesDUnTimbre | null; onVendu: (enchere: Enchere) => void }) {
   const finitions = FINITIONS.filter((f) => (possedee.finitions[f] ?? 0) > 0);
   const exemplaires = finitions.reduce((n, f) => n + (possedee.finitions[f] ?? 0), 0);
   const plancher = plancherPour(carte.rarete, REGLES);
@@ -26,6 +28,7 @@ export function MiseEnVente({ carte, possedee, dansLeDeck, onVendu }: { carte: C
   const [achat, setAchat] = useState('');
   const [heures, setHeures] = useState(24);
   const [etat, setEtat] = useState<Etat>({ etat: 'repos' });
+  const cote = cotes ? coteDe(cotes, finition) : null;
 
   const envoyer = async (evenement: FormEvent): Promise<void> => {
     evenement.preventDefault();
@@ -65,6 +68,7 @@ export function MiseEnVente({ carte, possedee, dansLeDeck, onVendu }: { carte: C
           <input type="number" inputMode="numeric" min={plancher} step={1} value={achat} onChange={(e) => setAchat(e.target.value)} placeholder="aucun" />
         </label>
       </div>
+      {cote && <p className="texte-doux petit">Cote du jour de ce timbre en finition {finition.toLowerCase()} : {cote.cote} Encre.</p>}
       <fieldset className="vente__duree">
         <legend>Durée de la vente</legend>
         {REGLES.dureesEnHeures.map((h) => (

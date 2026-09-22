@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
+import { CoteDuTimbre } from '../composants/CoteDuTimbre.tsx';
 import { MiseEnVente } from '../composants/MiseEnVente.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -11,6 +12,7 @@ import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
 import { chargerCarte, chargerDetails } from '../services/cartes.ts';
 import { partagerLeTimbre } from '../services/partage.ts';
+import { lireLesCotes } from '../services/partie.ts';
 
 async function chargerFiche(id: string) {
   const [carte, details] = await Promise.all([chargerCarte(id), chargerDetails(id)]);
@@ -28,6 +30,10 @@ export function FicheCarte({ id }: { id: string }) {
   const partie = usePartie();
   const [partage, setPartage] = useState<Partage>({ etat: 'repos' });
   const [vente, setVente] = useState<Enchere | null>(null); // le timbre vient d'être mis en vente depuis cette fiche
+  const marcheOuvert = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
+  const payant = partie.etat === 'prete' && partie.compte?.payant === true;
+  // La cote du timbre (décision n° 38), dès que le marché est ouvert et la fiche connue.
+  const cotes = useChargement(async () => (marcheOuvert && fiche.etat === 'pret' && fiche.donnees ? lireLesCotes(id) : null), `cotes:${id}:${marcheOuvert}:${fiche.etat}`);
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><p role="alert">La fiche n'a pas pu être chargée. {fiche.message}</p></main>;
@@ -43,7 +49,6 @@ export function FicheCarte({ id }: { id: string }) {
   const { carte, details } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
   const finition = possedee ? meilleureFinition(possedee) : 'Normale';
-  const marcheOuvert = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
   const dansLeDeck = partie.etat === 'prete' && partie.sauvegarde.deck.includes(carte.id);
 
   // L'image du timbre, telle qu'on la voit ici, part vers la feuille de partage du téléphone, ou se télécharge.
@@ -95,6 +100,13 @@ export function FicheCarte({ id }: { id: string }) {
             )}
           </section>
 
+          {marcheOuvert && (
+            <section className="rubrique">
+              <h2>Sur le marché</h2>
+              <CoteDuTimbre carte={carte.id} cotes={cotes} payant={payant} />
+            </section>
+          )}
+
           {marcheOuvert && (vente || possedee) && (
             <section className="rubrique">
               <h2>{vente ? 'En vente sur le marché' : 'Vendre ce timbre'}</h2>
@@ -104,7 +116,7 @@ export function FicheCarte({ id }: { id: string }) {
                 </p>
               )}
               {vente && possedee && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" onClick={() => setVente(null)}>Vendre un autre exemplaire</button></div>}
-              {!vente && possedee && <MiseEnVente carte={carte} possedee={possedee} dansLeDeck={dansLeDeck} onVendu={setVente} />}
+              {!vente && possedee && <MiseEnVente carte={carte} possedee={possedee} dansLeDeck={dansLeDeck} cotes={cotes.etat === 'pret' ? cotes.donnees : null} onVendu={setVente} />}
             </section>
           )}
 

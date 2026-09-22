@@ -386,3 +386,10 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .vente__duree legend { padding: 0; margin-bottom: 6px; font-size: 0.88rem; }
 .vente__duree label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
 .vente__duree input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+
+/* La cote d'un timbre sur sa fiche : courbes par finition (version payante), statistiques, dernières ventes. */
+.cote { display: grid; gap: 12px; }
+.cote__courbe { margin: 0; display: grid; gap: 4px; color: var(--accent); }
+.cote__courbe figcaption { color: var(--encre); }
+.cote__courbe svg { width: 100%; max-width: 420px; height: auto; overflow: visible; }
+.cote__ventes { gap: 2px; }

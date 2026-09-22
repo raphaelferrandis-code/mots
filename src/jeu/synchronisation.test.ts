@@ -30,6 +30,7 @@ const etatDuServeur: EtatDuCompte = {
     'cabale-nom': { obtenueLe: T0 + 2, doublons: 0, finitions: { Normale: 1 } },
   },
   codeDeSecoursLe: null,
+  payant: false,
 };
 
 describe('la collection tenue par le serveur', () => {
@@ -50,9 +51,10 @@ describe('la collection tenue par le serveur', () => {
 
   it('relit un état du serveur sans rien supposer de sa forme', () => {
     const lu = lireEtat({ encre: 5, paquets: { stock: 'x', ouverts: 2 }, deck: ['a', 3], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, finitions: { Normale: 0, Fausse: 2 } }, 'b-nom': 'abîmée' } });
-    assert.deepEqual(lu, { encre: 5, paquets: { stock: 0, reference: 0, ouverts: 2, sansLegendaire: 0 }, deck: ['a'], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null });
+    assert.deepEqual(lu, { encre: 5, paquets: { stock: 0, reference: 0, ouverts: 2, sansLegendaire: 0 }, deck: ['a'], maintenant: 1, cartes: { 'a-nom': { obtenueLe: 1, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null, payant: false });
     assert.throws(() => lireEtat(null), /illisible/);
     assert.equal(lireEtat({ ...etatDuServeur, codeDeSecoursLe: 42 }).codeDeSecoursLe, 42);
+    assert.equal(lireEtat({ ...etatDuServeur, payant: true }).payant, true, 'la version payante vient du serveur');
     const recuperation = lireRecuperation({ ...etatDuServeur, profil: { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 } });
     assert.deepEqual(recuperation.profil, { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 });
     assert.equal(lireRecuperation({ ...etatDuServeur, profil: null }).profil, null);

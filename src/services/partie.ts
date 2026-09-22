@@ -17,6 +17,7 @@ import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
 import type { Resultat } from '../jeu/progression.ts';
+import type { CotesDUnTimbre, HistoireDeLaCote } from '../jeu/cote.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import type { Finition, Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
@@ -39,8 +40,8 @@ export type EtatDuServeur =
   | { etat: 'en ligne' }
   | { etat: 'hors ligne'; message: string };
 
-// Ce que le serveur sait du compte et que l'appareil n'enregistre pas : la date du code de secours.
-export type Compte = { codeDeSecoursLe: number | null };
+// Ce que le serveur sait du compte et que l'appareil n'enregistre pas : la date du code de secours, la version payante.
+export type Compte = { codeDeSecoursLe: number | null; payant: boolean };
 
 export type Partie =
   | { etat: 'chargement' }
@@ -106,7 +107,7 @@ export function demarrerLaPartie(): Promise<void> {
 function appliquer(etat: EtatDuCompte): void {
   if (partie.etat !== 'prete') return;
   decalage = etat.maintenant - Date.now();
-  publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe } });
+  publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, payant: etat.payant } });
   enregistrer(fusionner(partie.sauvegarde, etat));
 }
 
@@ -335,6 +336,11 @@ export async function encherir(id: number, montant: number): Promise<Enchere> {
   appliquer(reponse.etat);
   return reponse.enchere;
 }
+
+// ── La cote (décision n° 38) ───────────────────────────────────────────────
+// La cote du jour d'un timbre, pour tous ; son histoire, pour la version payante (le serveur la refuse aux autres).
+export const lireLesCotes = (carte: string): Promise<CotesDUnTimbre> => surLeServeur(() => serveurDuMarche.cotes(carte));
+export const lireLHistoireDeLaCote = (carte: string): Promise<HistoireDeLaCote> => surLeServeur(() => serveurDuMarche.histoire(carte));
 
 // ── La sauvegarde ──────────────────────────────────────────────────────────
 
