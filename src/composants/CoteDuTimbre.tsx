@@ -16,7 +16,8 @@ const jourEnClair = (jour: string): string => new Date(`${jour}T12:00:00Z`).toLo
 const dateEnClair = (ms: number): string => new Date(ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export function CoteDuTimbre({ carte, cotes, payant }: { carte: string; cotes: Chargement<CotesDUnTimbre | null>; payant: boolean }) {
-  if (cotes.etat === 'erreur') return <p className="joute__refus" role="alert">{cotes.message}</p>;
+  // La cote est un renseignement de plus : si le serveur ne répond pas, on le dit sans alarmer — la fiche se lit quand même.
+  if (cotes.etat === 'erreur') return <p className="texte-doux petit">La cote n’a pas pu être lue : le serveur du jeu ne répond pas.</p>;
   if (cotes.etat === 'en cours' || !cotes.donnees) return <p className="texte-doux petit">Cote du jour…</p>;
   const description = decrireLesCotes(cotes.donnees);
   const ventes = cotes.donnees.cotes.reduce((n, c) => n + c.ventes, 0);
@@ -34,7 +35,7 @@ export function CoteDuTimbre({ carte, cotes, payant }: { carte: string; cotes: C
 
 function HistoireDeLaCoteDuTimbre({ carte }: { carte: string }) {
   const histoire = useChargement(() => lireLHistoireDeLaCote(carte), `histoire:${carte}`);
-  if (histoire.etat === 'erreur') return <p className="joute__refus" role="alert">{histoire.message}</p>;
+  if (histoire.etat === 'erreur') return <p className="texte-doux petit">{histoire.message}</p>;
   if (histoire.etat === 'en cours') return <p className="texte-doux petit">Histoire de la cote…</p>;
   const h = histoire.donnees;
   if (h.ventes.length === 0) return <p className="texte-doux petit">Aucune vente enregistrée pour ce timbre.</p>;
