@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -7,6 +8,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
 import { chargerCarte, chargerDetails } from '../services/cartes.ts';
+import { partagerLeTimbre } from '../services/partage.ts';
 
 async function chargerFiche(id: string) {
   const [carte, details] = await Promise.all([chargerCarte(id), chargerDetails(id)]);
@@ -16,9 +18,12 @@ async function chargerFiche(id: string) {
 const enToutesLettres = (date: number): string => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 const pageDuWiktionnaire = (mot: string): string => `https://fr.wiktionary.org/wiki/${encodeURIComponent(mot)}`;
 
+type Partage = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'fait'; message: string } | { etat: 'erreur'; message: string };
+
 export function FicheCarte({ id }: { id: string }) {
   const fiche = useChargement(() => chargerFiche(id), id);
   const partie = usePartie();
+  const [partage, setPartage] = useState<Partage>({ etat: 'repos' });
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><p role="alert">La fiche n'a pas pu être chargée. {fiche.message}</p></main>;
@@ -33,13 +38,35 @@ export function FicheCarte({ id }: { id: string }) {
 
   const { carte, details } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
+  const finition = possedee ? meilleureFinition(possedee) : 'Normale';
+
+  // L'image du timbre, telle qu'on la voit ici, part vers la feuille de partage du téléphone, ou se télécharge.
+  const partager = async (): Promise<void> => {
+    setPartage({ etat: 'en cours' });
+    try {
+      const issue = await partagerLeTimbre(carte, { finition, maitriseeLe: possedee?.maitriseeLe ?? null });
+      setPartage(issue === 'telecharge' ? { etat: 'fait', message: "L'image du timbre est enregistrée sur cet appareil." } : { etat: 'repos' });
+    } catch (erreur) {
+      setPartage({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+    }
+  };
+
   return (
     <main className="ecran">
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
         <div className="fiche__visuel">
-          <div className="fiche__carte"><Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
+          <div className="fiche__carte"><Carte carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
           {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
+          {possedee && (
+            <div className="fiche__partage">
+              <button type="button" className="bouton bouton--discret" disabled={partage.etat === 'en cours'} onClick={() => void partager()}>
+                {partage.etat === 'en cours' ? 'Préparation de l’image…' : 'Partager ce timbre'}
+              </button>
+              {partage.etat === 'fait' && <p className="texte-doux petit" role="status">{partage.message}</p>}
+              {partage.etat === 'erreur' && <p className="joute__refus" role="alert">{partage.message}</p>}
+            </div>
+          )}
         </div>
 
         <div className="fiche__contenu">

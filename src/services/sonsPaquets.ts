@@ -14,4 +14,11 @@ export class SonsPaquets extends SortieSonore {
   }
 
   retourner(): void { this.preparer(); this.carte(); }
+
+  // Un timbre rare qui se découvre : un carillon, d'autant plus long et haut que le rang est élevé
+  // (rien en dessous de Rare ; argent pour une Épique, or pour une Légendaire, et une volée pour un Hors-série).
+  rare(niveau: number, delai = 0): void {
+    const notes = niveau >= 6 ? [659.3, 830.6, 987.8, 1318.5, 1760] : niveau === 5 ? [784, 987.8, 1318.5] : niveau === 4 ? [880, 1174.7] : niveau === 3 ? [1046.5] : [];
+    notes.forEach((frequence, i) => this.note(frequence, 0.45 + i * 0.12 + (niveau >= 5 ? 0.3 : 0), 0.14 + niveau * 0.015, delai + i * 0.09));
+  }
 }

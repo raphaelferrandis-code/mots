@@ -123,6 +123,7 @@ main:focus, main h1:focus { outline: none; }
 .fiche { display: grid; gap: var(--marge); }
 .fiche__carte { width: min(300px, 82%); margin: 0 auto; }
 .fiche__record { text-align: center; font-style: italic; }
+.fiche__partage { display: grid; justify-items: center; gap: 8px; text-align: center; }
 .definitions { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .definitions li::marker { font-family: var(--police-chiffres); color: var(--accent); font-weight: 700; }
 .donnees { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }

@@ -20,6 +20,12 @@ function sortieDeTest() {
       sources.push(source);
       return source;
     },
+    // Les notes du carillon des timbres rares.
+    createOscillator: () => {
+      const source = { ...noeud(), type: '', frequency: parametre(), debut: null as number | null, arrets: 0, onended: null as (() => void) | null, start(quand: number) { this.debut = quand; }, stop() { this.arrets++; } };
+      sources.push(source);
+      return source;
+    },
   };
   const sons = new SonsPaquets(() => { creations++; return contexte as unknown as AudioContext; });
   return { sons, sources, creations: () => creations, fermetures: () => fermetures };
@@ -44,6 +50,17 @@ describe('sons des paquets', () => {
     assert.ok(t.sources.every((s) => s.arrets === 2));
     t.sons.retourner();
     assert.equal(t.sources.length, 2);
+  });
+  it('carillonne pour un timbre rare, de plus en plus longtemps, et se tait pour les timbres courants', () => {
+    const t = sortieDeTest();
+    t.sons.preparer();
+    t.sons.rare(1); t.sons.rare(2);
+    assert.equal(t.sources.length, 0, 'rien pour une Commune ni une Peu commune');
+    t.sons.rare(3, 0.5);
+    assert.equal(t.sources.length, 1);
+    assert.equal(t.sources[0].debut, 2.5);
+    t.sons.rare(6);
+    assert.equal(t.sources.length, 6, 'cinq notes pour un Hors-série');
   });
   it('libère la sortie et tolère un navigateur sans audio', () => {
     const t = sortieDeTest();

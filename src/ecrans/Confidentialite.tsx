@@ -4,10 +4,9 @@
 import { useState } from 'react';
 import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
+import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { serveurDeJoutes, supprimerMonProfilDeJoute } from '../services/joutes.ts';
-
-const PAGE_DU_PROJET = 'https://github.com/raphaelferrandis-code/mots';
 
 type Suppression = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'faite' } | { etat: 'erreur'; message: string };
 
@@ -107,7 +106,7 @@ export function Confidentialite() {
       <section className="rubrique">
         <h2>Une question ?</h2>
         <p>
-          Écris à l'auteur du jeu depuis la <a href={PAGE_DU_PROJET} target="_blank" rel="noreferrer">page du projet</a>.
+          Écris à l'auteur du jeu depuis la <a href={SITE.pageDuProjet} target="_blank" rel="noreferrer">page du projet</a>.
         </p>
       </section>
     </main>

@@ -7,6 +7,7 @@ import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
+import { telechargerUnFichier } from '../services/partage.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
 
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
@@ -21,15 +22,6 @@ const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
   { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
 ];
 
-function telecharger(nom: string, contenu: string): void {
-  const adresse = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
-  const lienTemporaire = document.createElement('a');
-  lienTemporaire.href = adresse;
-  lienTemporaire.download = nom;
-  lienTemporaire.click();
-  URL.revokeObjectURL(adresse);
-}
-
 export function Reglages() {
   const partie = usePartie();
   const fichier = useRef<HTMLInputElement>(null);
@@ -41,7 +33,7 @@ export function Reglages() {
   const exporter = (): void => {
     const sortie = exporterLaSauvegarde();
     if (!sortie) return;
-    telecharger(sortie.nom, sortie.contenu);
+    telechargerUnFichier(sortie.nom, new Blob([sortie.contenu], { type: 'application/json' }));
     setMessage(`Sauvegarde exportée : ${sortie.nom}.`);
   };
 

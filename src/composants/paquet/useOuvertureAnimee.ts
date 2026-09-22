@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CarteObtenue } from '../../jeu/partie.ts';
+import { NIVEAU } from '../carte/decor.ts';
 import { SonsPaquets } from '../../services/sonsPaquets.ts';
 import { RYTHME_PAQUET } from './rythme.ts';
 
@@ -91,12 +92,24 @@ export function useOuvertureAnimee(sonsActifs: boolean, reduireAnimations: boole
     if (phase !== 'cartes' || revelees.current.has(position)) return;
     revelees.current.add(position);
     sons.retourner();
+    const carte = ouverture?.cartes[position]?.carte;
+    if (carte) sons.rare(NIVEAU[carte.rarete], 0.18);
     setOuverture((o) => o && { ...o, retournees: o.retournees.map((r, i) => r || i === position) });
   };
   const toutRetourner = (): void => {
     if (!ouverture || phase !== 'cartes') return;
     sons.preparer();
-    ouverture.cartes.forEach((_, i) => { if (!revelees.current.has(i)) sons.carte(i, i * 0.06); revelees.current.add(i); });
+    // Le carillon ne sonne qu'une fois, pour le plus rare des timbres qui se découvrent.
+    let plusRare = 0;
+    let quand = 0;
+    ouverture.cartes.forEach((obtenue, i) => {
+      if (revelees.current.has(i)) return;
+      sons.carte(i, i * 0.06);
+      const niveau = NIVEAU[obtenue.carte.rarete];
+      if (niveau > plusRare) { plusRare = niveau; quand = i * 0.06 + 0.18; }
+      revelees.current.add(i);
+    });
+    sons.rare(plusRare, quand);
     setOuverture((o) => o && { ...o, retournees: o.retournees.map(() => true) });
   };
 

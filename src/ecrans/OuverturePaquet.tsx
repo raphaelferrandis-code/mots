@@ -5,6 +5,7 @@ import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { RYTHME_PAQUET } from '../composants/paquet/rythme.ts';
 import { useOuvertureAnimee } from '../composants/paquet/useOuvertureAnimee.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants/usePartie.ts';
+import { NIVEAU } from '../composants/carte/decor.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
 import { acheterEtOuvrirUnPaquet, ouvrirUnPaquet } from '../services/partie.ts';
@@ -83,6 +84,8 @@ export function OuverturePaquet() {
                 <span className={obtenue.nouvelleFinition ? 'paquet__etiquette paquet__etiquette--nouvelle' : 'paquet__etiquette'}>
                   {obtenue.nouvelle ? 'Nouveau !' : obtenue.nouvelleFinition ? `Nouvelle finition : ${obtenue.finition.toLowerCase()}` : `Doublon · +${obtenue.encre} Encre`}
                   {obtenue.nouvelle && obtenue.finition !== 'Normale' && ` · ${obtenue.finition}`}
+                  {/* À partir de Rare, la rareté se lit aussi sous le timbre : à l'écran, ses petites lettres se remarquent peu. */}
+                  {NIVEAU[obtenue.carte.rarete] >= 3 && ` · ${obtenue.carte.rarete}`}
                 </span>
               </> : <DosDeCarte onRetourner={() => retourner(position)} etiquette={`Retourner le timbre ${position + 1}`} />}
             </li>
