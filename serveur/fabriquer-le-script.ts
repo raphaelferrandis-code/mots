@@ -15,6 +15,7 @@ import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections } from './collections.ts';
+import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -301,11 +302,12 @@ end $$;
 
 ${collections()}
 ${recuperation()}
+${marche()}
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION].join(', ')} from public, anon;
-revoke execute on function ${['public.pseudo_refuse(text)', ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION].join(', ')} from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION].join(', ')} to authenticated;
+revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
+revoke execute on function ${['public.pseudo_refuse(text)', ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE].join(', ')} to authenticated;
 `;
 }
 

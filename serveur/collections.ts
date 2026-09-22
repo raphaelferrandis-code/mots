@@ -71,13 +71,14 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
+  payant boolean not null default false, -- la version payante (décision n° 34) : pas de limite au marché
   code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
   code_defini_le timestamptz,
   cree_le timestamptz not null default now(),
   maj_le timestamptz not null default now()
 );
 -- (Pour un serveur installé avant le 22/09/2026 au soir : les deux colonnes du code de secours.)
-alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz;
+alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz, add column if not exists payant boolean not null default false;
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
@@ -130,6 +131,7 @@ as $$
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
+    'payant', c.payant,
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
                from public.possessions p where p.utilisateur = c.utilisateur)
@@ -303,12 +305,14 @@ end $$;
 
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
--- Le compte du joueur, ou rien s'il n'en a pas encore ici.
+-- Le compte du joueur, ou rien s'il n'en a pas encore ici. (Au passage, les enchères échues sont clôturées : un vendeur
+-- retrouve ainsi son Encre en ouvrant le jeu, sans que personne ait à visiter le marché.)
 create or replace function public.mon_compte() returns jsonb
-language plpgsql stable security definer set search_path = ''
+language plpgsql security definer set search_path = ''
 as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
   return public.etat_du_compte(auth.uid());
 end $$;
 

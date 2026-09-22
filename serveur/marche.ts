@@ -1,0 +1,280 @@
+// Le marché : les enchères entre joueurs (BRIEF-marche.md, décisions n° 37 à 42). Le serveur tient tout : le timbre
+// mis en vente quitte l'album du vendeur et attend dans l'enchère ; chaque mise bloque l'Encre de l'enchérisseur et rend
+// celle du précédent ; à l'heure dite, la première fonction du marché appelée clôt l'enchère (le serveur n'a pas besoin
+// de tâche planifiée) : le timbre va à l'acheteur, l'Encre au vendeur moins la commission, qui disparaît.
+// Les chiffres viennent de src/config/equilibrage.ts (marche). Ce fichier est utilisé par fabriquer-le-script.ts.
+
+import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
+import { FINITIONS, RARETES } from '../src/partage/types.ts';
+import type { Rarete } from '../src/partage/types.ts';
+
+const M = EQUILIBRAGE.marche;
+const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
+const liste = (valeurs: readonly string[]): string => valeurs.map(texte).join(', ');
+const cas = (valeurs: readonly string[], valeur: (v: string) => string | number): string => valeurs.map((v) => `when ${texte(v)} then ${valeur(v)}`).join(' ');
+
+export function marche(): string {
+  return String.raw`
+-- ═════════════════════════════════════════════════════════════════════════════
+-- LE MARCHÉ : LES ENCHÈRES ENTRE JOUEURS (BRIEF-marche.md, décisions n° 37 à 42)
+-- ═════════════════════════════════════════════════════════════════════════════
+
+-- ── Les tables ───────────────────────────────────────────────────────────────
+-- La version payante (décision n° 34) : pas de limite au marché. Personne ne l'a encore ; la colonne est prête.
+alter table public.comptes add column if not exists payant boolean not null default false;
+-- Le cachet de provenance : le pseudonyme du vendeur, sur un timbre acheté au marché.
+alter table public.possessions add column if not exists provenance text;
+
+create table if not exists public.encheres (
+  id bigint generated always as identity primary key,
+  vendeur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  carte text not null,
+  finition text not null,
+  obtenue_le timestamptz not null, -- pour rendre le timbre tel quel s'il n'est pas vendu
+  mise_de_depart integer not null check (mise_de_depart >= 1),
+  achat_immediat integer check (achat_immediat is null or achat_immediat >= mise_de_depart),
+  ouverte_le timestamptz not null default now(),
+  ferme_le timestamptz not null,
+  meilleure_mise integer,
+  meilleur_encherisseur uuid references public.comptes (utilisateur) on delete set null on update cascade,
+  etat text not null default 'ouverte' check (etat in ('ouverte', 'vendue', 'invendue', 'retiree')),
+  cloturee_le timestamptz,
+  prix_final integer,
+  acheteur uuid references public.comptes (utilisateur) on delete set null on update cascade
+);
+create index if not exists encheres_ouvertes on public.encheres (ferme_le) where etat = 'ouverte';
+create index if not exists encheres_par_vendeur on public.encheres (vendeur, ouverte_le desc);
+create index if not exists encheres_par_acheteur on public.encheres (acheteur, cloturee_le desc);
+create index if not exists encheres_par_carte on public.encheres (carte, cloturee_le desc) where etat = 'vendue';
+
+-- Chaque mise, pour l'historique (et pour rendre son Encre à celui qui est dépassé).
+create table if not exists public.mises (
+  id bigint generated always as identity primary key,
+  enchere bigint not null references public.encheres (id) on delete cascade,
+  encherisseur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  montant integer not null,
+  quand timestamptz not null default now()
+);
+create index if not exists mises_par_enchere on public.mises (enchere, quand desc);
+
+alter table public.encheres enable row level security;
+alter table public.mises enable row level security;
+revoke all on public.encheres, public.mises from anon, authenticated;
+
+-- ── Les aides internes ───────────────────────────────────────────────────────
+-- Le pseudonyme d'un joueur (celui des joutes), ou un nom neutre.
+create or replace function public.pseudonyme_de(p_utilisateur uuid) returns text language sql stable set search_path = ''
+as $$ select coalesce((select p.pseudo from public.profils p where p.utilisateur = p_utilisateur), 'Un collectionneur') $$;
+
+-- Rend un timbre à un joueur : une finition de plus, ou une carte qui revient dans l'album.
+create or replace function public.rendre_un_timbre(p_utilisateur uuid, p_carte text, p_finition text, p_obtenue_le timestamptz, p_provenance text) returns void
+language plpgsql set search_path = ''
+as $$
+begin
+  insert into public.possessions (utilisateur, carte, finitions, obtenue_le, provenance)
+  values (p_utilisateur, p_carte, jsonb_build_object(p_finition, 1), p_obtenue_le, p_provenance)
+  on conflict (utilisateur, carte) do update
+    set finitions = jsonb_set(public.possessions.finitions, array[p_finition], to_jsonb(coalesce((public.possessions.finitions ->> p_finition)::integer, 0) + 1)),
+        provenance = coalesce(excluded.provenance, public.possessions.provenance);
+end $$;
+
+-- Une enchère vue par le jeu.
+create or replace function public.enchere_en_json(e public.encheres) returns jsonb language sql stable set search_path = ''
+as $$
+  select jsonb_build_object(
+    'id', e.id, 'carte', e.carte, 'finition', e.finition, 'vendeur', public.pseudonyme_de(e.vendeur), 'mienne', e.vendeur = auth.uid(),
+    'miseDeDepart', e.mise_de_depart, 'achatImmediat', e.achat_immediat, 'meilleureMise', e.meilleure_mise,
+    'enTete', e.meilleur_encherisseur is not null and e.meilleur_encherisseur = auth.uid(),
+    'fermeLe', public.en_millisecondes(e.ferme_le), 'etat', e.etat, 'prixFinal', e.prix_final,
+    'acheteur', case when e.acheteur is null then null else public.pseudonyme_de(e.acheteur) end,
+    'remportee', e.acheteur is not null and e.acheteur = auth.uid(),
+    'cloturee_le', public.en_millisecondes(e.cloturee_le)
+  )
+$$;
+
+-- Clôt les enchères échues (${M.cloturesParAppel} au plus par appel) : le timbre à l'acheteur, l'Encre au vendeur moins la commission,
+-- ou le timbre rendu au vendeur s'il n'y a pas eu de mise. Appelée par toutes les fonctions du marché et par mon_compte.
+create or replace function public.cloturer_les_encheres() returns void
+language plpgsql set search_path = ''
+as $$
+declare
+  e public.encheres%rowtype;
+  vendeur_recoit integer;
+begin
+  for e in select * from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le limit ${M.cloturesParAppel} for update skip locked loop
+    if e.meilleure_mise is null then
+      perform public.rendre_un_timbre(e.vendeur, e.carte, e.finition, e.obtenue_le, null);
+      update public.encheres set etat = 'invendue', cloturee_le = now() where id = e.id;
+    else
+      -- L'Encre de la mise est déjà bloquée : le vendeur en reçoit ${Math.round((1 - M.commission) * 100)} %, le reste disparaît.
+      vendeur_recoit := e.meilleure_mise - ceil(e.meilleure_mise * ${M.commission})::integer;
+      perform public.rendre_un_timbre(e.meilleur_encherisseur, e.carte, e.finition, now(), public.pseudonyme_de(e.vendeur));
+      update public.comptes set encre = encre + vendeur_recoit, maj_le = now() where utilisateur = e.vendeur;
+      update public.encheres set etat = 'vendue', cloturee_le = now(), prix_final = e.meilleure_mise, acheteur = e.meilleur_encherisseur where id = e.id;
+    end if;
+  end loop;
+end $$;
+
+-- ── Les fonctions appelées par le jeu ────────────────────────────────────────
+
+-- Mettre un timbre en vente : il quitte l'album (et le deck) tout de suite.
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  possession public.possessions%rowtype;
+  rarete text;
+  plancher integer;
+  restantes jsonb;
+  e public.encheres%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
+  if p_heures is null or p_heures not in (${M.dureesEnHeures.join(', ')}) then raise exception 'Durée inconnue.'; end if;
+  if p_finition is null or p_finition not in (${liste(FINITIONS)}) then raise exception 'Finition inconnue.'; end if;
+  if not c.payant and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= ${M.ventesEnCoursAuPlus} then
+    raise exception 'Tu as déjà ${M.ventesEnCoursAuPlus} ventes en cours : attends qu''elles se terminent.';
+  end if;
+  select k.rarete into rarete from public.cartes k where k.id = p_carte;
+  if not found then raise exception 'Cette carte est inconnue.'; end if;
+  plancher := case rarete ${cas(RARETES, (r) => M.planchers[r as Rarete])} else 1 end;
+  if p_mise is null or p_mise < plancher then raise exception 'La mise de départ d''un timbre % est d''au moins % Encre.', lower(rarete), plancher; end if;
+  if p_achat_immediat is not null and p_achat_immediat < p_mise then raise exception 'Le prix d''achat immédiat ne peut pas être plus bas que la mise de départ.'; end if;
+  if p_mise > 1000000 or coalesce(p_achat_immediat, 0) > 1000000 then raise exception 'Ce prix est déraisonnable.'; end if;
+
+  select * into possession from public.possessions where utilisateur = moi and carte = p_carte for update;
+  if not found or coalesce((possession.finitions ->> p_finition)::integer, 0) < 1 then raise exception 'Tu ne possèdes pas ce timbre dans cette finition.'; end if;
+  -- Le timbre sort de l'album : une finition de moins, ou la carte entière s'il ne reste rien.
+  restantes := case when (possession.finitions ->> p_finition)::integer > 1
+    then jsonb_set(possession.finitions, array[p_finition], to_jsonb((possession.finitions ->> p_finition)::integer - 1))
+    else possession.finitions - p_finition end;
+  if restantes = '{}'::jsonb then
+    delete from public.possessions where utilisateur = moi and carte = p_carte;
+    update public.comptes set deck = (select coalesce(jsonb_agg(d) filter (where d <> p_carte), '[]'::jsonb) from jsonb_array_elements_text(deck) d), maj_le = now() where utilisateur = moi;
+  else
+    update public.possessions set finitions = restantes where utilisateur = moi and carte = p_carte;
+  end if;
+
+  insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
+  values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
+  returning * into e;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
+-- Retirer une vente qui n'a pas encore reçu de mise : le timbre revient dans l'album.
+create or replace function public.retirer_de_la_vente(p_enchere bigint) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  e public.encheres%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  select * into e from public.encheres where id = p_enchere and vendeur = moi for update;
+  if not found then raise exception 'Cette vente n''existe pas.'; end if;
+  if e.etat <> 'ouverte' then raise exception 'Cette vente est déjà terminée.'; end if;
+  if e.meilleure_mise is not null then raise exception 'Quelqu''un a déjà misé : la vente ne peut plus être retirée.'; end if;
+  perform public.rendre_un_timbre(moi, e.carte, e.finition, e.obtenue_le, null);
+  update public.encheres set etat = 'retiree', cloturee_le = now() where id = e.id;
+  return public.etat_du_compte(moi);
+end $$;
+
+-- Miser, ou acheter tout de suite quand la mise atteint le prix d'achat immédiat. L'Encre est bloquée aussitôt ;
+-- celle de l'enchérisseur dépassé lui revient dans le même mouvement.
+create or replace function public.encherir(p_enchere bigint, p_montant integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  e public.encheres%rowtype;
+  minimum integer;
+  montant integer := p_montant;
+  achats integer;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verra le vendeur.'; end if;
+  select * into e from public.encheres where id = p_enchere for update;
+  if not found or e.etat <> 'ouverte' or e.ferme_le <= now() then raise exception 'Cette enchère est terminée.'; end if;
+  if e.vendeur = moi then raise exception 'C''est ta propre vente.'; end if;
+  -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
+  if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
+  -- Les joueurs gratuits : ${M.achatsParJourAuPlus} achats par jour au plus (les mises en tête comptent comme des achats en cours).
+  if not c.payant then
+    select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
+      or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
+    if achats >= ${M.achatsParJourAuPlus} then raise exception 'Tu as déjà ${M.achatsParJourAuPlus} achats aujourd''hui : reviens demain.'; end if;
+  end if;
+  minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * ${M.surencherMinimale})::integer) end;
+  if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat; end if;
+  if c.encre < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
+
+  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient.
+  update public.comptes set encre = encre - montant, maj_le = now() where utilisateur = moi;
+  if e.meilleur_encherisseur is not null then
+    update public.comptes set encre = encre + e.meilleure_mise, maj_le = now() where utilisateur = e.meilleur_encherisseur;
+  end if;
+  insert into public.mises (enchere, encherisseur, montant) values (e.id, moi, montant);
+  update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
+    -- Une mise dans les ${M.prolongationEnMinutes} dernières minutes prolonge l'enchère d'autant.
+    ferme_le = case when e.achat_immediat is not null and montant >= e.achat_immediat then now()
+                    when e.ferme_le - now() < interval '${M.prolongationEnMinutes} minutes' then now() + interval '${M.prolongationEnMinutes} minutes'
+                    else e.ferme_le end
+    where id = e.id;
+  -- Un achat immédiat se règle sur-le-champ.
+  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_les_encheres(); end if;
+  select * into e from public.encheres where id = p_enchere;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
+-- Le marché : les enchères en cours, les plus proches de la fin d'abord, avec une recherche par mot.
+create or replace function public.marche(p_recherche text, p_page integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  cherche text := lower(coalesce(p_recherche, ''));
+  page integer := greatest(0, coalesce(p_page, 0));
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  return jsonb_build_object(
+    'encheres', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.ferme_le), '[]'::jsonb) from (
+      select * from public.encheres e where e.etat = 'ouverte' and (cherche = '' or e.carte like cherche || '%') order by e.ferme_le limit ${M.encheresParPage} offset page * ${M.encheresParPage}
+    ) e),
+    'total', (select count(*) from public.encheres e where e.etat = 'ouverte' and (cherche = '' or e.carte like cherche || '%')),
+    'maintenant', public.en_millisecondes(now())
+  );
+end $$;
+
+-- Mes ventes et mes mises : en cours, et terminées depuis peu.
+create or replace function public.mes_encheres() returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  return jsonb_build_object(
+    'ventes', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
+               from public.encheres e where e.vendeur = moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
+    'mises', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
+              from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur <> moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
+    'maintenant', public.en_millisecondes(now())
+  );
+end $$;
+`;
+}
+
+export const FONCTIONS_DU_MARCHE = ['public.mettre_en_vente(text, text, integer, integer, integer)', 'public.retirer_de_la_vente(bigint)', 'public.encherir(bigint, integer)', 'public.marche(text, integer)', 'public.mes_encheres()'];
+export const FONCTIONS_INTERNES_DU_MARCHE = ['public.pseudonyme_de(uuid)', 'public.rendre_un_timbre(uuid, text, text, timestamptz, text)', 'public.enchere_en_json(public.encheres)', 'public.cloturer_les_encheres()'];

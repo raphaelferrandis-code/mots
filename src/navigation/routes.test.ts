@@ -14,10 +14,11 @@ describe('adresses des écrans', () => {
     assert.deepEqual(lireRoute('#/reglages'), { ecran: 'reglages' });
     assert.deepEqual(lireRoute('#/duel'), { ecran: 'duel' });
     assert.deepEqual(lireRoute('#/confidentialite'), { ecran: 'confidentialite' });
+    assert.deepEqual(lireRoute('#/marche'), { ecran: 'marche' });
   });
   it('fait l\'aller-retour pour toutes les routes, y compris les mots accentués ou composés', () => {
     const routes: Route[] = [
-      { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' },
+      { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' }, { ecran: 'marche' },
       { ecran: 'carte', id: 'callipyge-adj' }, { ecran: 'carte', id: 'sérendipité-nom' }, { ecran: 'carte', id: 'arc-en-ciel-nom' },
     ];
     for (const route of routes) assert.deepEqual(lireRoute(lien(route)), route);
@@ -25,6 +26,7 @@ describe('adresses des écrans', () => {
   it("donne à chaque écran son titre d'onglet, avec le mot pour une fiche", () => {
     assert.equal(titreDeLaRoute({ ecran: 'accueil' }), 'MOTS');
     assert.equal(titreDeLaRoute({ ecran: 'collection' }), 'Album — MOTS');
+    assert.equal(titreDeLaRoute({ ecran: 'marche' }), 'Marché — MOTS');
     assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'arc-en-ciel-nom' }), 'arc-en-ciel — MOTS');
     assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'sérendipité-nom' }), 'sérendipité — MOTS');
   });

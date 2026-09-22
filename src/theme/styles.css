@@ -359,3 +359,30 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .sablier__barre span { display: block; height: 100%; background: var(--encre); transition: width 0.2s linear; }
 .sablier[data-presse='true'] .sablier__barre span { background: var(--accent); }
 .sablier__secondes { font-family: var(--police-chiffres); font-weight: 700; min-width: 2.6em; text-align: right; }
+
+/* ── Marché : les enchères entre joueurs ─────────────────────────────────── */
+
+.marche__message { margin: 0; color: var(--accent); }
+.marche__encheres { gap: 0; }
+.enchere { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: start; padding-block: 14px; border-top: 1px solid var(--filet); }
+.enchere:first-child { border-top: 0; padding-top: 0; }
+.enchere__timbre > .tim, .enchere__timbre > .deck__vide { width: 100%; }
+.enchere__corps { min-width: 0; display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
+.enchere__titre { font-size: 1.05rem; }
+.enchere__prix strong { font-family: var(--police-chiffres); font-size: 1.15rem; }
+.enchere__tete { color: var(--accent); font-weight: 700; }
+.enchere__mise { display: grid; gap: 8px; max-width: 340px; }
+.enchere__mise input, .vente input, .vente select {
+  font: inherit; color: inherit; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); min-width: 0; width: 100%;
+}
+.enchere[data-etat='vendue'] .enchere__timbre, .enchere[data-etat='invendue'] .enchere__timbre, .enchere[data-etat='retiree'] .enchere__timbre { opacity: 0.6; }
+
+/* Le formulaire de vente, sur la fiche d'un timbre. */
+.vente { display: grid; gap: 12px; max-width: 560px; }
+.vente__champ { display: grid; gap: 4px; font-size: 0.88rem; }
+.vente__prix { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+.vente__duree { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.vente__duree legend { padding: 0; margin-bottom: 6px; font-size: 0.88rem; }
+.vente__duree label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.vente__duree input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }

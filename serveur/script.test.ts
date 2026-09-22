@@ -47,6 +47,15 @@ describe('les scripts du serveur', () => {
     assert.match(sql, /revoke execute on function [^;]*public\.empreinte_du_code\(text\)[^;]* from authenticated;/);
     assert.match(sql, /grant execute on function [^;]*public\.recuperer_par_code\(text\)[^;]* to authenticated;/);
     assert.ok(sql.includes('references public.comptes (utilisateur) on delete cascade on update cascade'));
+    // Le marché : les réglages de Raphaël (décisions n° 39 à 42) sont ceux du fichier d'équilibrage.
+    const M = EQUILIBRAGE.marche;
+    assert.ok(sql.includes(`p_heures not in (${M.dureesEnHeures.join(', ')})`));
+    assert.ok(sql.includes(`ceil(e.meilleure_mise * ${M.commission})`));
+    assert.ok(sql.includes(`>= ${M.ventesEnCoursAuPlus} then`));
+    assert.ok(sql.includes(`if achats >= ${M.achatsParJourAuPlus} then`));
+    assert.ok(sql.includes(`when 'Légendaire' then ${M.planchers['Légendaire']}`));
+    assert.match(sql, /grant execute on function [^;]*public\.encherir\(bigint, integer\)[^;]* to authenticated;/);
+    assert.match(sql, /revoke execute on function [^;]*public\.cloturer_les_encheres\(\)[^;]* from authenticated;/);
   });
 
   it('reprennent les chiffres du classement et tous les mots interdits du jeu', () => {

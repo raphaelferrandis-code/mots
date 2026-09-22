@@ -17,7 +17,8 @@ import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
 import type { Resultat } from '../jeu/progression.ts';
-import type { Rarete } from '../partage/types.ts';
+import type { Enchere } from '../jeu/marche.ts';
+import type { Finition, Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { afficherUnCode, estUnCodeValable, fabriquerUnCode, normaliserUnCode } from '../jeu/codeDeSecours.ts';
@@ -25,6 +26,8 @@ import { aQuelqueChoseAImporter, fusionner } from '../jeu/synchronisation.ts';
 import type { EtatDuCompte, ProfilRetrouve } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
 import { serveurDesCollections } from './collections.ts';
+import { serveurDuMarche } from './marche.ts';
+import type { MesEncheres, PageDuMarche } from './marche.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
 import type { Emplacement } from './stockage.ts';
 import { ErreurDuServeur } from './supabase.ts';
@@ -302,6 +305,35 @@ export function quitterLesJoutes(): void {
 export function recevoirLaCoteDuServeur(cote: number): void {
   if (partie.etat !== 'prete' || partie.sauvegarde.joutes.cote === cote) return;
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });
+}
+
+// ── Le marché (BRIEF-marche.md, étape M3) ───────────────────────────────────
+// Les enchères vivent sur le serveur : l'appareil les affiche, et après chaque action, l'état du compte que le
+// serveur renvoie (Encre, timbres) remplace le sien.
+export const lireLeMarche = (recherche: string, page: number): Promise<PageDuMarche> => surLeServeur(() => serveurDuMarche.marche(recherche, page));
+
+// Mes ventes et mes mises. Le compte est relu d'abord : le serveur clôt au passage les enchères échues, et une
+// vente conclue entre-temps (remportée, ou la mienne) a pu changer l'Encre et les timbres.
+export async function lireMesEncheres(): Promise<MesEncheres> {
+  const etat = await surLeServeur(() => serveurDesCollections.monCompte());
+  if (etat) appliquer(etat);
+  return surLeServeur(() => serveurDuMarche.mesEncheres());
+}
+
+export async function mettreEnVente(carte: string, finition: Finition, mise: number, achatImmediat: number | null, heures: number): Promise<Enchere> {
+  const reponse = await surLeServeur(() => serveurDuMarche.mettreEnVente(carte, finition, mise, achatImmediat, heures));
+  appliquer(reponse.etat);
+  return reponse.enchere;
+}
+
+export async function retirerDeLaVente(id: number): Promise<void> {
+  appliquer(await surLeServeur(() => serveurDuMarche.retirer(id)));
+}
+
+export async function encherir(id: number, montant: number): Promise<Enchere> {
+  const reponse = await surLeServeur(() => serveurDuMarche.encherir(id, montant));
+  appliquer(reponse.etat);
+  return reponse.enchere;
 }
 
 // ── La sauvegarde ──────────────────────────────────────────────────────────

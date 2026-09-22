@@ -34,7 +34,7 @@
   .entete-application { min-height: 72px; padding-inline: 20px; justify-content: space-between; }
   .marque { font-size: 34px; }
   .navigation { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--papier); border-top: 1px solid var(--filet); padding-bottom: env(safe-area-inset-bottom); }
-  .navigation__liste { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--hauteur-navigation); gap: 0; }
+  .navigation__liste { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); height: var(--hauteur-navigation); gap: 0; }
   .navigation__liste li:last-child { margin-left: 0; }
   .navigation__lien { flex-direction: column; justify-content: center; gap: 2px; font-size: 0.7rem; }
   .navigation__icone { display: flex; }

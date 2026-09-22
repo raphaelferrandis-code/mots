@@ -467,6 +467,10 @@ Décidé par Raphaël le 21/09/2026 : il attendait du duel qu'il oppose des joue
 | 36 | Récupération du compte | **Décidé le 22/09/2026** : e-mail par lien magique + code de secours. Le code d'abord (rien à régler), l'e-mail ensuite (service d'envoi à brancher) |
 | 37 | Première brique du marché | **Décidé le 22/09/2026** : les enchères d'abord (durée fixe, clôture par le serveur), avec un prix d'achat immédiat facultatif proposé par Claude |
 | 38 | La cote | **Décidé le 22/09/2026** : la cote du jour pour tous les joueurs ; l'historique et les statistiques des prix pour la version payante |
+| 39 | Enchères : durée | **Décidé le 22/09/2026** : le vendeur choisit 12, 24 ou 48 heures |
+| 40 | Enchères : achat immédiat | **Décidé le 22/09/2026** : prix d'achat immédiat facultatif, fixé par le vendeur |
+| 41 | Enchères : commission | **Décidé le 22/09/2026** : 10 % de l'Encre payée disparaît |
+| 42 | Marché : limites des joueurs gratuits | **Décidé le 22/09/2026** : 3 ventes en cours et 3 achats par jour ; aucune limite pour la version payante |
 | 32 | Rareté des coups de cœur non mesurés | **Calcul automatique seul** (choisi le 21/09/2026 parmi trois options) : le mot est rangé parmi les mots mesurés, d'après sa seule fréquence (§4.3). Pas de rareté écrite à la main : tout vient des données |
 
 ### 10.2 Propositions encore à confirmer (🟡)

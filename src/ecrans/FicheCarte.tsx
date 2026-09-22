@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
+import { MiseEnVente } from '../composants/MiseEnVente.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import type { Enchere } from '../jeu/marche.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { FINITIONS } from '../partage/types.ts';
 import { Entete } from '../composants/Entete.tsx';
@@ -16,6 +18,7 @@ async function chargerFiche(id: string) {
 }
 
 const enToutesLettres = (date: number): string => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const enDateEtHeure = (date: number): string => new Date(date).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 const pageDuWiktionnaire = (mot: string): string => `https://fr.wiktionary.org/wiki/${encodeURIComponent(mot)}`;
 
 type Partage = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'fait'; message: string } | { etat: 'erreur'; message: string };
@@ -24,6 +27,7 @@ export function FicheCarte({ id }: { id: string }) {
   const fiche = useChargement(() => chargerFiche(id), id);
   const partie = usePartie();
   const [partage, setPartage] = useState<Partage>({ etat: 'repos' });
+  const [vente, setVente] = useState<Enchere | null>(null); // le timbre vient d'être mis en vente depuis cette fiche
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><p role="alert">La fiche n'a pas pu être chargée. {fiche.message}</p></main>;
@@ -39,6 +43,8 @@ export function FicheCarte({ id }: { id: string }) {
   const { carte, details } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
   const finition = possedee ? meilleureFinition(possedee) : 'Normale';
+  const marcheOuvert = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
+  const dansLeDeck = partie.etat === 'prete' && partie.sauvegarde.deck.includes(carte.id);
 
   // L'image du timbre, telle qu'on la voit ici, part vers la feuille de partage du téléphone, ou se télécharge.
   const partager = async (): Promise<void> => {
@@ -79,7 +85,7 @@ export function FicheCarte({ id }: { id: string }) {
                   ? 'Hors-série : finition unique.'
                   : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
               </p>
-            ) : <p className="texte-doux">Tu ne possèdes pas encore ce timbre.</p>}
+            ) : <p className="texte-doux">{vente ? 'Ton exemplaire est en vente sur le marché.' : 'Tu ne possèdes pas encore ce timbre.'}</p>}
             {possedee && (
               <p>
                 {possedee.maitriseeLe !== null
@@ -88,6 +94,19 @@ export function FicheCarte({ id }: { id: string }) {
               </p>
             )}
           </section>
+
+          {marcheOuvert && (vente || possedee) && (
+            <section className="rubrique">
+              <h2>{vente ? 'En vente sur le marché' : 'Vendre ce timbre'}</h2>
+              {vente && (
+                <p role="status">
+                  « {carte.mot} » est en vente jusqu'au {enDateEtHeure(vente.fermeLe)}. <a href={lien({ ecran: 'marche' })}>Suivre la vente sur le marché</a>
+                </p>
+              )}
+              {vente && possedee && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" onClick={() => setVente(null)}>Vendre un autre exemplaire</button></div>}
+              {!vente && possedee && <MiseEnVente carte={carte} possedee={possedee} dansLeDeck={dansLeDeck} onVendu={setVente} />}
+            </section>
+          )}
 
           <section className="rubrique">
             <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>

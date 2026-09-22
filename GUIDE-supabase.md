@@ -153,6 +153,26 @@ Supabase est limité à **2 e-mails par heure** pour tout le projet : il ne conv
 il faudra un service d'envoi (par exemple Resend ou Brevo, qui ont une offre gratuite) et le déclarer dans Supabase
 (Authentication → SMTP Settings). Je te guiderai le moment venu.
 
+## Étape 10 — Le marché aux enchères (ajoutée le 22 septembre 2026, soir)
+
+Étape M3 du plan du marché (`BRIEF-marche.md`) : l'onglet « Marché », où l'on met ses timbres aux enchères et où l'on mise
+sur ceux des autres. Tout se passe sur le serveur : les enchères, l'Encre bloquée par une mise, la clôture, la commission
+de 10 %. Pour l'installer :
+
+1. SQL Editor → New query → coller de nouveau **tout** `serveur/1-structure.sql` (il contient maintenant les tables et les
+   fonctions du marché) → menu sur **Database** → Run. Sans danger pour les joueurs et leurs collections. Ce collage
+   installe aussi le code de secours de l'étape 9, si ce n'était pas encore fait.
+2. Rien d'autre.
+
+Tant que ce n'est pas fait, l'onglet « Marché » répond « Le serveur du jeu n'est pas à jour : cette fonction n'y est pas
+encore installée. » — et tout le reste du jeu fonctionne normalement.
+
+Pour l'essayer : la fiche d'un timbre que tu possèdes → « Vendre ce timbre » (mise de départ, achat immédiat facultatif,
+12, 24 ou 48 heures) ; puis, depuis un autre compte (un second téléphone, ou un navigateur en navigation privée), l'onglet
+Marché → « Miser » ou « Acheter ». Une vente terminée se règle au passage du premier joueur qui ouvre le marché ou son
+compte après l'heure de fin : le gagnant reçoit le timbre, le vendeur le prix moins 10 %, les autres leur Encre. Un joueur
+gratuit a au plus 3 ventes en cours et 3 achats par jour (décision n° 42).
+
 ## La vie du serveur
 
 **Le projet s'est endormi.** Avec la formule gratuite, Supabase met un projet en sommeil après une semaine sans aucune activité. Les joutes affichent alors « Le serveur des joutes ne répond pas » (l'entraînement contre l'ordinateur, lui, fonctionne toujours). Pour le réveiller : ouvrir le tableau de bord Supabase → le projet → **Restore project**. Tant que le jeu a peu de joueurs, cela peut arriver.

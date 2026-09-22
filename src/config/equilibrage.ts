@@ -195,6 +195,26 @@ export const EQUILIBRAGE = {
     encreParVictoire: 35,
   },
 
+  // ── Le marché : les enchères entre joueurs (BRIEF-marche.md, décisions n° 37 à 42) ──
+  marche: {
+    // Part de l'Encre payée qui disparaît à chaque vente : c'est ce qui empêche l'Encre de s'accumuler.
+    commission: 0.1,
+    // Durées qu'un vendeur peut choisir, en heures.
+    dureesEnHeures: [12, 24, 48],
+    // Une mise dans les dernières minutes prolonge l'enchère d'autant : pas de coup de dernière seconde.
+    prolongationEnMinutes: 5,
+    // Une mise doit dépasser la précédente d'au moins cette part (et d'au moins 1 Encre).
+    surencherMinimale: 0.05,
+    // Les joueurs gratuits (la version payante n'a pas de limite).
+    ventesEnCoursAuPlus: 3,
+    achatsParJourAuPlus: 3,
+    // Mise de départ minimale selon la rareté : on ne brade pas un timbre rare. ⚠️ À confirmer au simulateur de marché.
+    planchers: { 'Commune': 5, 'Peu commune': 10, 'Rare': 30, 'Épique': 100, 'Légendaire': 300, 'Hors-série': 1000 } satisfies Record<Rarete, number>,
+    // Ce que le marché montre à chaque appel, et combien d'enchères échues il clôt d'un coup.
+    encheresParPage: 30,
+    cloturesParAppel: 50,
+  },
+
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.
   paquetsEntreDeuxRappelsDExport: 100,
