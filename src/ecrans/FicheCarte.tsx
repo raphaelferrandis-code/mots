@@ -4,6 +4,7 @@ import { CoteDuTimbre } from '../composants/CoteDuTimbre.tsx';
 import { MiseEnVente } from '../composants/MiseEnVente.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { histoireDesPrix } from '../jeu/formule.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { FINITIONS } from '../partage/types.ts';
@@ -31,7 +32,7 @@ export function FicheCarte({ id }: { id: string }) {
   const [partage, setPartage] = useState<Partage>({ etat: 'repos' });
   const [vente, setVente] = useState<Enchere | null>(null); // le timbre vient d'être mis en vente depuis cette fiche
   const marcheOuvert = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
-  const payant = partie.etat === 'prete' && partie.compte?.payant === true;
+  const payant = partie.etat === 'prete' && partie.compte !== null && histoireDesPrix(partie.compte.formule);
   // La cote du timbre (décision n° 38), dès que le marché est ouvert et la fiche connue.
   const cotes = useChargement(async () => (marcheOuvert && fiche.etat === 'pret' && fiche.donnees ? lireLesCotes(id) : null), `cotes:${id}:${marcheOuvert}:${fiche.etat}`);
 

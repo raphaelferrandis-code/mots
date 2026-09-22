@@ -38,7 +38,7 @@ export function structure(): string {
   ].join(', ');
 
   return String.raw`-- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur du jeu (1/3 : la structure — joutes classées et collections)
+-- PHILAMOTS — le serveur du jeu (1/3 : la structure — joutes classées et collections)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase : SQL Editor → New query → coller → Run. Peut être relancé sans danger.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
@@ -314,7 +314,7 @@ grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIO
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur du jeu (2/3 : les ${joueurs.length} joueurs maison des joutes)
+-- PHILAMOTS — le serveur du jeu (2/3 : les ${joueurs.length} joueurs maison des joutes)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql. Peut être relancé sans danger : il ne touche qu'aux joueurs maison.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».

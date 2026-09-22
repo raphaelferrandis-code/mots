@@ -18,6 +18,7 @@ import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import type { CotesDUnTimbre, HistoireDeLaCote } from '../jeu/cote.ts';
+import type { Formule } from '../jeu/formule.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import type { Finition, Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
@@ -40,8 +41,8 @@ export type EtatDuServeur =
   | { etat: 'en ligne' }
   | { etat: 'hors ligne'; message: string };
 
-// Ce que le serveur sait du compte et que l'appareil n'enregistre pas : la date du code de secours, la version payante.
-export type Compte = { codeDeSecoursLe: number | null; payant: boolean };
+// Ce que le serveur sait du compte et que l'appareil n'enregistre pas : la date du code de secours, la formule payée.
+export type Compte = { codeDeSecoursLe: number | null; formule: Formule };
 
 export type Partie =
   | { etat: 'chargement' }
@@ -107,7 +108,7 @@ export function demarrerLaPartie(): Promise<void> {
 function appliquer(etat: EtatDuCompte): void {
   if (partie.etat !== 'prete') return;
   decalage = etat.maintenant - Date.now();
-  publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, payant: etat.payant } });
+  publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, formule: etat.formule } });
   enregistrer(fusionner(partie.sauvegarde, etat));
 }
 
@@ -335,6 +336,12 @@ export async function encherir(id: number, montant: number): Promise<Enchere> {
   const reponse = await surLeServeur(() => serveurDuMarche.encherir(id, montant));
   appliquer(reponse.etat);
   return reponse.enchere;
+}
+
+// ── La version payante (décision n° 34) ────────────────────────────────────
+// L'année de naissance n'est demandée qu'à qui regarde les formules : le paiement est réservé aux majeurs.
+export async function declarerMonAge(annee: number): Promise<void> {
+  appliquer(await surLeServeur(() => serveurDesCollections.declarerMonAge(annee)));
 }
 
 // ── La cote (décision n° 38) ───────────────────────────────────────────────

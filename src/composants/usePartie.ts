@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { EQUILIBRAGE, reglagesDeRecharge } from '../config/equilibrage.ts';
+import { paquetsPlusVite } from '../jeu/formule.ts';
 import { mettreAJour } from '../jeu/partie.ts';
 import { attenteAvantLeProchain } from '../jeu/recharge.ts';
 import { abonner, decalageDuServeur, demarrerLaPartie, lirePartie } from '../services/partie.ts';
@@ -27,7 +28,7 @@ export function useStockDePaquets(partie: Partie): { stock: number; maximum: num
   const maintenant = useMaintenant() + decalageDuServeur();
   if (partie.etat !== 'prete') return null;
   // La version payante recharge plus vite : l'affichage suit la même règle que le serveur.
-  const payant = partie.compte?.payant === true;
+  const payant = partie.compte !== null && paquetsPlusVite(partie.compte.formule);
   const reglages = reglagesDeRecharge(payant);
   const aJour = mettreAJour(partie.sauvegarde, maintenant, EQUILIBRAGE, payant);
   return { stock: aJour.paquets.stock, maximum: reglages.stockMaximum, attente: attenteAvantLeProchain(aJour.paquets, maintenant, reglages) };

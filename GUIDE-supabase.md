@@ -180,6 +180,31 @@ n'a pas été vendu, il n'a pas de cote, et la fiche le dit. La version payante 
 la cote : une courbe jour par jour, les statistiques sur 90 jours et les dernières ventes — personne n'est encore payant,
 le serveur refuse cette partie aux autres comptes.
 
+## Étape 11 — La version payante (ajoutée le 22 septembre 2026, soir)
+
+Les trois formules sont construites, mais **rien ne permet encore de payer** : c'est voulu, et
+`BRIEF-version-payante.md` dit pourquoi. Pour installer les règles :
+
+1. SQL Editor → New query → coller de nouveau **tout** `serveur/1-structure.sql` → menu sur **Database** → Run.
+2. Rien d'autre.
+
+**Pour essayer une formule sur ton propre compte**, dans l'éditeur SQL. Remplace l'identifiant par le tien, que tu
+trouves dans Authentication → Users :
+
+```sql
+-- « Le nécessaire » : acquis pour toujours.
+update public.comptes set achat_unique = true where utilisateur = '<ton identifiant>';
+-- « Collectionneur » ou « Expert » pendant un mois.
+update public.comptes set abonnement = 'expert', abonnement_jusqu_au = now() + interval '30 days' where utilisateur = '<ton identifiant>';
+-- De l'Encre achetée (utilisable au marché seulement).
+update public.comptes set encre_achetee = encre_achetee + 1000 where utilisateur = '<ton identifiant>';
+-- Pour revenir à la version gratuite.
+update public.comptes set achat_unique = false, abonnement = 'aucun', abonnement_jusqu_au = null where utilisateur = '<ton identifiant>';
+```
+
+Un abonnement échu retombe tout seul au niveau de l'achat unique, ou à la version gratuite. Rien n'est perdu : les
+timbres, l'Encre et le classement restent au joueur, seuls les avantages cessent.
+
 ## La vie du serveur
 
 **Le projet s'est endormi.** Avec la formule gratuite, Supabase met un projet en sommeil après une semaine sans aucune activité. Les joutes affichent alors « Le serveur des joutes ne répond pas » (l'entraînement contre l'ordinateur, lui, fonctionne toujours). Pour le réveiller : ouvrir le tableau de bord Supabase → le projet → **Restore project**. Tant que le jeu a peu de joueurs, cela peut arriver.

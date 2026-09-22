@@ -72,14 +72,29 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
-  payant boolean not null default false, -- la version payante (décision n° 34) : pas de limite au marché
+  -- La version payante (décision n° 34, offre arrêtée le 22/09/2026 : voir BRIEF-version-payante.md).
+  achat_unique boolean not null default false, -- la formule « Le nécessaire », versée une seule fois
+  abonnement text not null default 'aucun' check (abonnement in ('aucun', 'collectionneur', 'expert')),
+  abonnement_jusqu_au timestamptz,
+  -- L'Encre reçue contre de l'argent (achetée, ou versée par la rente de la formule Expert). Elle ne peut servir
+  -- qu'au marché, jamais à acheter un paquet : c'est ce qui empêche l'argent d'acheter un tirage au sort.
+  encre_achetee integer not null default 0 check (encre_achetee >= 0),
+  annee_de_naissance integer, -- demandée seulement à qui veut payer, pas à tout le monde
+  rente_le date, -- le jour du dernier versement de la rente quotidienne
   code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
   code_defini_le timestamptz,
   cree_le timestamptz not null default now(),
   maj_le timestamptz not null default now()
 );
--- (Pour un serveur installé avant le 22/09/2026 au soir : les deux colonnes du code de secours.)
-alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz, add column if not exists payant boolean not null default false;
+-- (Pour un serveur installé avant : le code de secours, puis les colonnes de la version payante.)
+alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz;
+alter table public.comptes
+  add column if not exists achat_unique boolean not null default false,
+  add column if not exists abonnement text not null default 'aucun',
+  add column if not exists abonnement_jusqu_au timestamptz,
+  add column if not exists encre_achetee integer not null default 0,
+  add column if not exists annee_de_naissance integer,
+  add column if not exists rente_le date;
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
@@ -118,6 +133,30 @@ revoke all on public.cartes, public.comptes, public.possessions, public.duels fr
 create or replace function public.nombre_entier(t text) returns bigint language sql immutable set search_path = ''
 as $$ select case when t ~ '^[0-9]{1,15}$' then t::bigint end $$;
 
+-- Le niveau d'un compte : 0 gratuit, 1 « Le nécessaire », 2 « Collectionneur », 3 « Expert ». Un abonnement échu
+-- retombe au niveau de l'achat unique, s'il a été fait. C'est la seule fonction qui dit ce qu'un joueur a payé.
+create or replace function public.niveau(c public.comptes) returns integer language sql stable set search_path = ''
+as $$ select case
+  when c.abonnement = 'expert' and c.abonnement_jusqu_au > now() then 3
+  when c.abonnement = 'collectionneur' and c.abonnement_jusqu_au > now() then 2
+  when c.achat_unique then 1
+  else 0 end $$;
+
+-- La rente quotidienne de la formule « Expert » : de l'Encre qui ne sert qu'au marché, comme l'Encre achetée.
+create or replace function public.verser_la_rente(p_utilisateur uuid) returns void
+language plpgsql set search_path = ''
+as $$
+declare
+  c public.comptes%rowtype;
+  aujourd_hui date := (now() at time zone 'utc')::date;
+begin
+  select * into c from public.comptes where utilisateur = p_utilisateur for update;
+  if not found or public.niveau(c) < 3 then return; end if;
+  if c.rente_le is not null and c.rente_le >= aujourd_hui then return; end if;
+  update public.comptes set encre_achetee = encre_achetee + ${PAYANT.renteQuotidienne}, rente_le = aujourd_hui, maj_le = now()
+    where utilisateur = p_utilisateur;
+end $$;
+
 -- Un moment en millisecondes, comme le jeu compte le temps.
 create or replace function public.en_millisecondes(t timestamptz) returns bigint language sql immutable set search_path = ''
 as $$ select (extract(epoch from t) * 1000)::bigint $$;
@@ -132,7 +171,14 @@ as $$
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
-    'payant', c.payant,
+    'formule', jsonb_build_object(
+      'niveau', public.niveau(c),
+      'achatUnique', c.achat_unique,
+      'abonnement', c.abonnement,
+      'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
+      'encreAchetee', c.encre_achetee,
+      'anneeDeNaissance', c.annee_de_naissance
+    ),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
                from public.possessions p where p.utilisateur = c.utilisateur)
@@ -147,8 +193,9 @@ as $$
 declare
   gagnes integer;
   -- La version payante (décision n° 34) : un paquet plus souvent, et une réserve plus grande.
-  minutes integer := case when c.payant then ${PAYANT.minutesEntreDeuxPaquets} else ${P.minutesEntreDeuxPaquets} end;
-  maximum integer := case when c.payant then ${PAYANT.stockMaximum} else ${P.stockMaximum} end;
+  paye integer := public.niveau(c);
+  minutes integer := case when paye >= 1 then ${PAYANT.minutesEntreDeuxPaquets} else ${P.minutesEntreDeuxPaquets} end;
+  maximum integer := case when paye >= 1 then ${PAYANT.stockMaximum} else ${P.stockMaximum} end;
 begin
   c.stock := least(c.stock, maximum);
   -- Réserve pleine : le compte à rebours est à l'arrêt. Il repart quand un paquet est ouvert.
@@ -204,6 +251,8 @@ begin
   victoires := case when c.jour = aujourd_hui then c.victoires_du_jour else 0 end;
   reduite := gagne and victoires >= ${D.victoiresPleinesParJour};
   gain := case when not gagne then ${D.encreParDefaite} when reduite then greatest(1, round(p_pleine * ${D.partDeLEncreEnsuite})::integer) else p_pleine end;
+  -- « Collectionneur » et au-dessus : l'Encre gagnée en jouant est doublée.
+  if public.niveau(c) >= 2 then gain := gain * ${PAYANT.multiplicateurDEncre}; end if;
   update public.comptes set encre = encre + gain, jour = aujourd_hui, victoires_du_jour = victoires + gagne::integer, maj_le = now() where utilisateur = p_utilisateur;
   return jsonb_build_object('encre', gain, 'reduite', reduite);
 end $$;
@@ -292,7 +341,8 @@ begin
       tirees := tirees || jsonb_build_object('id', id_choisie, 'finition', finition, 'nouvelle', false, 'nouvelleFinition', true, 'encre', 0);
     else
       gain := (case rarete_choisie ${cas(RARETES, (r) => EQUILIBRAGE.encreParDoublon[r as Rarete])} else 0 end)
-            * (case finition ${cas(FINITIONS, (f) => F.encre[f as keyof typeof F.encre])} else 1 end);
+            * (case finition ${cas(FINITIONS, (f) => F.encre[f as keyof typeof F.encre])} else 1 end)
+            * (case when public.niveau(c) >= 2 then ${PAYANT.multiplicateurDEncre} else 1 end);
       update public.possessions
         set finitions = jsonb_set(finitions, array[finition], to_jsonb((possession.finitions ->> finition)::integer + 1)), doublons = doublons + 1
         where utilisateur = p_utilisateur and carte = id_choisie;
@@ -317,6 +367,7 @@ as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   perform public.cloturer_les_encheres();
+  perform public.verser_la_rente(auth.uid());
   return public.etat_du_compte(auth.uid());
 end $$;
 
@@ -414,6 +465,21 @@ begin
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
+-- L'âge, déclaré par le joueur au moment où il regarde la version payante (décision du 22/09/2026 : le paiement
+-- est réservé aux majeurs). On ne garde que l'année : c'est assez pour savoir, et c'est le moins qu'on puisse demander.
+create or replace function public.declarer_mon_age(p_annee integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  annee_actuelle integer := extract(year from now())::integer;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if p_annee is null or p_annee < annee_actuelle - 120 or p_annee > annee_actuelle then raise exception 'Cette année de naissance n''est pas possible.'; end if;
+  update public.comptes set annee_de_naissance = p_annee, maj_le = now() where utilisateur = auth.uid();
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return public.etat_du_compte(auth.uid());
+end $$;
+
 -- Le deck : seulement des cartes possédées, ${D.tailleDuDeck} au plus. Rend le deck tel qu'il est enregistré.
 create or replace function public.changer_de_deck(p_deck jsonb) returns jsonb
 language plpgsql security definer set search_path = ''
@@ -469,18 +535,19 @@ end $$;
 export const FONCTIONS_DES_COLLECTIONS = [
   'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
   'public.ouvrir_un_paquet(text[])', 'public.acheter_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
-  'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)',
+  'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)',
 ];
 export const FONCTIONS_INTERNES = [
   'public.nombre_entier(text)', 'public.en_millisecondes(timestamptz)', 'public.etat_du_compte(uuid)', 'public.recharger(public.comptes)',
   'public.deck_propre(uuid, jsonb)', 'public.finitions_propres(jsonb)', 'public.recompenser(uuid, integer, text)', 'public.tirer_un_paquet(uuid, text[])',
+  'public.niveau(public.comptes)', 'public.verser_la_rente(uuid)',
 ];
 
 // Le script des cartes de l'édition : à recoller à chaque changement de l'édition (voir le test des scripts).
 export function cartes(edition: IndexEdition): string {
   const lignes = edition.cartes.map((c) => ({ id: c.id, rarete: c.rarete, registre: c.registre }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur (3/3 : les ${lignes.length} cartes de l'édition ${edition.meta.edition}, version ${edition.meta.version})
+-- PHILAMOTS — le serveur (3/3 : les ${lignes.length} cartes de l'édition ${edition.meta.edition}, version ${edition.meta.version})
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql, et à recoller à chaque nouvelle édition. Peut être relancé sans danger.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».

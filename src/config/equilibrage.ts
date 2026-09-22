@@ -224,10 +224,23 @@ export const EQUILIBRAGE = {
   // ⚠️ Ces deux chiffres sont une proposition, pas une décision de Raphaël. Le prix, la durée de l'abonnement et
   // la question de l'Encre (achetée à l'unité ou versée chaque jour ?) restent à trancher.
   payant: {
-    // Un paquet gratuit deux fois plus vite…
+    // Un paquet gratuit deux fois plus vite (à partir de la formule « Le nécessaire »)…
     minutesEntreDeuxPaquets: 5,
     // …et une réserve deux fois plus grande.
     stockMaximum: 20,
+    // L'Encre gagnée en jouant est multipliée par ce nombre à partir de la formule « Collectionneur ».
+    multiplicateurDEncre: 2,
+    // La formule « Expert » reçoit chaque jour cette Encre. Comme l'Encre achetée, elle ne sert qu'au marché.
+    renteQuotidienne: 300,
+    // Les trois formules, du plus petit au plus grand ; chacune contient la précédente. Le niveau 0 est la
+    // version gratuite. ⚠️ Les prix sont ceux fixés par Raphaël ; rien ne permet encore de payer.
+    formules: [
+      { cle: 'necessaire', niveau: 1, nom: 'Le nécessaire', prix: 5.99, parMois: false },
+      { cle: 'collectionneur', niveau: 2, nom: 'Collectionneur', prix: 5, parMois: true },
+      { cle: 'expert', niveau: 3, nom: 'Expert', prix: 10, parMois: true },
+    ],
+    // L'âge à partir duquel on peut payer (décision du 22/09/2026).
+    ageMinimumPourPayer: 18,
   },
 
   // ── Sauvegarde ────────────────────────────────────────────────────────────

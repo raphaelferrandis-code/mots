@@ -8,6 +8,7 @@ import { Deck } from './ecrans/Deck.tsx';
 import { Duel } from './ecrans/Duel.tsx';
 import { FicheCarte } from './ecrans/FicheCarte.tsx';
 import { Galerie } from './ecrans/Galerie.tsx';
+import { Formules } from './ecrans/Formules.tsx';
 import { Marche } from './ecrans/Marche.tsx';
 import { OuverturePaquet } from './ecrans/OuverturePaquet.tsx';
 import { Reglages } from './ecrans/Reglages.tsx';
@@ -26,6 +27,7 @@ function Ecran({ route }: { route: Route }) {
     case 'reglages': return <Reglages />;
     case 'confidentialite': return <Confidentialite />;
     case 'marche': return <Marche />;
+    case 'formules': return <Formules />;
     case 'galerie': return import.meta.env.DEV ? <Galerie /> : <Accueil />;
   }
 }

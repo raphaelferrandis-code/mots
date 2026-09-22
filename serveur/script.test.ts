@@ -32,8 +32,15 @@ describe('les scripts du serveur', () => {
     assert.ok(sql.includes(`random() < ${P.chanceHorsSerie}`));
     assert.ok(sql.includes(`< ${P.prixEnEncre} then raise exception`));
     assert.ok(sql.includes(`else ${P.minutesEntreDeuxPaquets} end`), 'la recharge gratuite');
-    assert.ok(sql.includes(`when c.payant then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
-    assert.ok(sql.includes(`when c.payant then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');
+    assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
+    assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');
+    // Les formules : le niveau décide, l'Encre achetée ne sert qu'au marché.
+    assert.ok(sql.includes("when c.abonnement = 'expert' and c.abonnement_jusqu_au > now() then 3"), 'le niveau d’un compte');
+    assert.ok(sql.includes(`gain := gain * ${EQUILIBRAGE.payant.multiplicateurDEncre}`), 'l’Encre doublée');
+    assert.ok(sql.includes(`encre_achetee = encre_achetee + ${EQUILIBRAGE.payant.renteQuotidienne}`), 'la rente quotidienne');
+    assert.ok(sql.includes('if public.niveau(c) < 2 then'), 'les plafonds du marché tombent au niveau 2');
+    assert.match(sql, /revoke execute on function [^;]*public\.niveau\(public\.comptes\)[^;]* from authenticated;/);
+    assert.match(sql, /grant execute on function [^;]*public\.declarer_mon_age\(integer\)[^;]* to authenticated;/);
     assert.ok(sql.includes(`when 'Légendaire' then ${EQUILIBRAGE.encreParDoublon['Légendaire']}`));
     assert.ok(sql.includes(`when 'Holographique' then ${EQUILIBRAGE.finitions.encre.Holographique}`));
     assert.ok(sql.includes(`>= ${EQUILIBRAGE.duel.victoiresPleinesParJour};`));

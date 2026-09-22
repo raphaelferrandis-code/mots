@@ -31,6 +31,7 @@ export type ServeurDesCollections = {
   terminerUnDuel(ticket: number, resultat: Resultat): Promise<Recompense>;
   // Le code de secours (décision n° 36) : le définir, ou retrouver une collection avec.
   definirUnCode(code: string): Promise<EtatDuCompte>;
+  declarerMonAge(annee: number): Promise<EtatDuCompte>;
   recupererParCode(code: string): Promise<Recuperation>;
 };
 
@@ -71,6 +72,7 @@ export function serveurDesCollectionsAvec(client: ClientSupabase): ServeurDesCol
     commencerUnDuel: (niveau) => client.appeler<number>('commencer_un_duel', { p_niveau: niveau }),
     terminerUnDuel: (ticket, resultat) => chacunSonTour(async () => lireLaRecompense(await client.appeler<unknown>('terminer_un_duel', { p_ticket: ticket, p_resultat: resultat }))),
     definirUnCode: (code) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('definir_un_code_de_secours', { p_code: code }))),
+    declarerMonAge: (annee) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('declarer_mon_age', { p_annee: annee }))),
     recupererParCode: (code) => chacunSonTour(async () => {
       const brut = await client.appeler<unknown>('recuperer_par_code', { p_code: code });
       // Un mauvais code : un refus motivé, que le joueur peut lire tel quel (et qui ne met pas l'appareil hors ligne).
@@ -91,6 +93,7 @@ const inactif: ServeurDesCollections = {
   commencerUnDuel: async () => jamais(),
   terminerUnDuel: async () => jamais(),
   definirUnCode: async () => jamais(),
+  declarerMonAge: async () => jamais(),
   recupererParCode: async () => jamais(),
 };
 

@@ -15,10 +15,11 @@ describe('adresses des écrans', () => {
     assert.deepEqual(lireRoute('#/duel'), { ecran: 'duel' });
     assert.deepEqual(lireRoute('#/confidentialite'), { ecran: 'confidentialite' });
     assert.deepEqual(lireRoute('#/marche'), { ecran: 'marche' });
+    assert.deepEqual(lireRoute('#/formules'), { ecran: 'formules' });
   });
   it('fait l\'aller-retour pour toutes les routes, y compris les mots accentués ou composés', () => {
     const routes: Route[] = [
-      { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' }, { ecran: 'marche' },
+      { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' }, { ecran: 'marche' }, { ecran: 'formules' },
       { ecran: 'carte', id: 'callipyge-adj' }, { ecran: 'carte', id: 'sérendipité-nom' }, { ecran: 'carte', id: 'arc-en-ciel-nom' },
     ];
     for (const route of routes) assert.deepEqual(lireRoute(lien(route)), route);

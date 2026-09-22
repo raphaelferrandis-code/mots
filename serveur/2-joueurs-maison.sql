@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur du jeu (2/3 : les 240 joueurs maison des joutes)
+-- PHILAMOTS — le serveur du jeu (2/3 : les 240 joueurs maison des joutes)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql. Peut être relancé sans danger : il ne touche qu'aux joueurs maison.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».

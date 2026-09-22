@@ -25,6 +25,8 @@ Tout ce qui suit est en ligne, vérifié contre le vrai serveur, et jouable.
 - **La cote des timbres.** Sur chaque fiche, la médiane des prix des ventes des 30 derniers jours, par finition,
   relevée une fois par jour.
 - **Le nom.** Le jeu s'appelle Philamots depuis le 22 septembre 2026.
+- **Les trois formules payantes.** Construites et vérifiées, mais **personne ne peut payer** : aucun prestataire
+  n'est branché, et plusieurs points doivent être réglés avant. Une page du jeu les présente honnêtement.
 
 ---
 
@@ -39,8 +41,8 @@ Par ordre d'importance. Rien de tout cela ne demande de savoir programmer.
    collection. Raphaël ne l'a pas encore fait.
 3. **Juger les sons à l'oreille** : ceux du duel, et le carillon des paquets. Je ne les entends pas.
 4. **Essayer le marché sur deux appareils** : vendre d'un côté, acheter de l'autre.
-5. **Trancher la question de l'Encre de la version payante** : rente quotidienne pour les abonnés, ou Encre achetée
-   à l'unité ? Voir `BRIEF-version-payante.md`, §2.
+5. **Remplir les blancs des conditions de vente** (`CGV-brouillon.md`) : forme juridique, adresse, numéro
+   d'immatriculation. Sans cela, rien ne peut être vendu.
 6. **Décider s'il prend un nom de domaine.** `philamots.fr` et `philamots.com` étaient libres le 22 septembre.
    Sans domaine, pas de connexion par e-mail, et le nom peut être pris par quelqu'un d'autre.
 7. **Consulter un juriste** avant le premier euro encaissé. Voir `BRIEF-version-payante.md`, §4.
@@ -84,6 +86,7 @@ Ce ne sont pas des pannes, mais des choses que je sais imparfaites.
 | `BRIEF-v2.md` | Le document de référence du jeu, et toutes les décisions numérotées |
 | `BRIEF-marche.md` | Le plan du marché, étape par étape |
 | `BRIEF-version-payante.md` | Ce qui est construit, ce qui manque, ce qui bloque le premier euro |
+| `CGV-brouillon.md` | Le brouillon des conditions de vente, avec les blancs à remplir |
 | `GUIDE-supabase.md` | La mise en route du serveur, pas à pas, pour Raphaël |
 | `GUIDE-testeurs.md` | Ce qu'on demande aux cinq testeurs |
 | `data/simulation-marche.md` | L'économie du marché, mesurée |

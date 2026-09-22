@@ -3,6 +3,8 @@
 // résultats en duel, maîtrise des mots, joutes), et ce qu'on envoie au serveur pour importer, une fois, une partie
 // qui vivait sur l'appareil. Fonctions pures : rien n'est lu ni écrit ici.
 
+import { lireFormule } from './formule.ts';
+import type { Formule } from './formule.ts';
 import type { Finition } from '../partage/types.ts';
 import type { CartePossedee, Sauvegarde } from './sauvegarde.ts';
 
@@ -14,7 +16,7 @@ export type EtatDuCompte = {
   maintenant: number; // l'heure du serveur, en millisecondes
   cartes: Record<string, { obtenueLe: number; doublons: number; finitions: Partial<Record<Finition, number>> }>;
   codeDeSecoursLe: number | null; // quand le joueur a défini son code de secours (décision n° 36), sinon null
-  payant: boolean; // la version payante (décision n° 34) : sans limite au marché, avec l'histoire des cotes
+  formule: Formule; // ce que le joueur a payé, et l'Encre achetée qui va avec (src/jeu/formule.ts)
 };
 
 // Ce que rend une récupération par code : l'état du compte retrouvé, et le profil de joute s'il y en a un.
@@ -53,7 +55,7 @@ export function lireEtat(brut: unknown): EtatDuCompte {
     maintenant: nombre(brut.maintenant),
     cartes,
     codeDeSecoursLe: typeof brut.codeDeSecoursLe === 'number' && Number.isFinite(brut.codeDeSecoursLe) ? brut.codeDeSecoursLe : null,
-    payant: brut.payant === true,
+    formule: lireFormule(brut.formule),
   };
 }
 

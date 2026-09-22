@@ -56,9 +56,13 @@ create table if not exists public.mises (
   enchere bigint not null references public.encheres (id) on delete cascade,
   encherisseur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
   montant integer not null,
+  -- Ce que cette mise a pris sur l'Encre achetée (le reste vient de l'Encre gagnée en jouant). Sert à rendre
+  -- exactement ce qui a été pris quand une mise plus haute arrive.
+  part_achetee integer not null default 0,
   quand timestamptz not null default now()
 );
 create index if not exists mises_par_enchere on public.mises (enchere, quand desc);
+alter table public.mises add column if not exists part_achetee integer not null default 0;
 
 alter table public.encheres enable row level security;
 alter table public.mises enable row level security;
@@ -182,7 +186,8 @@ begin
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   if p_heures is null or p_heures not in (${M.dureesEnHeures.join(', ')}) then raise exception 'Durée inconnue.'; end if;
   if p_finition is null or p_finition not in (${liste(FINITIONS)}) then raise exception 'Finition inconnue.'; end if;
-  if not c.payant and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= ${M.ventesEnCoursAuPlus} then
+  -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
+  if public.niveau(c) < 2 and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= ${M.ventesEnCoursAuPlus} then
     raise exception 'Tu as déjà ${M.ventesEnCoursAuPlus} ventes en cours : attends qu''elles se terminent.';
   end if;
   select k.rarete into rarete from public.cartes k where k.id = p_carte;
@@ -242,6 +247,8 @@ declare
   minimum integer;
   montant integer := p_montant;
   achats integer;
+  pris_achetee integer;
+  precedente public.mises%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform public.cloturer_les_encheres();
@@ -254,7 +261,7 @@ begin
   -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
   if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
   -- Les joueurs gratuits : ${M.achatsParJourAuPlus} achats par jour au plus (les mises en tête comptent comme des achats en cours).
-  if not c.payant then
+  if public.niveau(c) < 2 then
     select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
       or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
     if achats >= ${M.achatsParJourAuPlus} then raise exception 'Tu as déjà ${M.achatsParJourAuPlus} achats aujourd''hui : reviens demain.'; end if;
@@ -262,14 +269,21 @@ begin
   minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * ${M.surencherMinimale})::integer) end;
   if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
   if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat; end if;
-  if c.encre < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
+  -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
+  if c.encre + c.encre_achetee < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
 
-  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient.
-  update public.comptes set encre = encre - montant, maj_le = now() where utilisateur = moi;
+  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
   if e.meilleur_encherisseur is not null then
-    update public.comptes set encre = encre + e.meilleure_mise, maj_le = now() where utilisateur = e.meilleur_encherisseur;
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by quand desc limit 1;
+    update public.comptes
+      set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
+      where utilisateur = e.meilleur_encherisseur;
   end if;
-  insert into public.mises (enchere, encherisseur, montant) values (e.id, moi, montant);
+  insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
   update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
     -- Une mise dans les ${M.prolongationEnMinutes} dernières minutes prolonge l'enchère d'autant.
     ferme_le = case when e.achat_immediat is not null and montant >= e.achat_immediat then now()
@@ -345,8 +359,8 @@ declare
   moi uuid := auth.uid();
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
-  if not exists (select 1 from public.comptes where utilisateur = moi and payant) then
-    raise exception 'L''histoire des prix et les statistiques font partie de la version payante.';
+  if (select public.niveau(c) from public.comptes c where c.utilisateur = moi) < 3 then
+    raise exception 'L''histoire des prix et les statistiques font partie de la formule Expert.';
   end if;
   perform public.cloturer_les_encheres();
   return jsonb_build_object(

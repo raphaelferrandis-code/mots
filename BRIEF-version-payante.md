@@ -1,98 +1,98 @@
 # La version payante de Philamots
 
-*Document de travail, écrit le 22 septembre 2026. Il prépare la décision n° 34 du brief : « une version payante du
-jeu — paquets plus rapides, Encre, statistiques des prix du marché, achats et reventes illimités ». Rien n'est
-vendable en l'état, et c'est voulu : ce document dit ce qui est déjà construit, ce qui manque, et surtout ce qui
-doit être réglé avant le premier euro.*
+*Mis à jour le 22 septembre 2026 au soir, après les décisions de Raphaël (décision n° 44 du brief). Les trois
+formules sont construites et vérifiées. **Rien ne permet encore de payer**, et ce document dit ce qui manque.*
 
 ---
 
-## 1. Ce qui est déjà construit
+## 1. L'offre
 
-Le serveur donne à chaque compte un drapeau `payant`. **Personne ne l'a**, et il n'existe aucun moyen de l'obtenir :
-il se met à la main dans la base. Quand il est allumé, quatre choses changent, toutes déjà en service.
+Trois étages qui se contiennent : chacun donne tout ce que donne le précédent.
 
-| Avantage | Ce que ça donne | Où c'est écrit |
+| Formule | Prix | Ce qu'elle ajoute |
 |---|---|---|
-| Paquets plus rapides | Un paquet gratuit toutes les 5 minutes au lieu de 10 | `recharger`, dans `serveur/collections.ts` |
-| Réserve plus grande | 20 paquets en attente au lieu de 10 | idem |
-| Marché sans limite | Ni les 10 ventes en cours ni les 10 achats par jour ne s'appliquent | `mettre_en_vente` et `encherir`, dans `serveur/marche.ts` |
-| Histoire des prix | La courbe d'une cote jour par jour, les statistiques sur 90 jours, les 30 dernières ventes | `historique_de_la_cote`, dans `serveur/marche.ts` |
+| **Le nécessaire** | 5,99 € une fois | Un paquet toutes les 5 minutes au lieu de 10 ; une réserve de 20 paquets au lieu de 10 |
+| **Collectionneur** | 5 € par mois | Toute l'Encre gagnée en jouant multipliée par 2 ; aucune limite de ventes ni d'achats au marché |
+| **Expert** | 10 € par mois | L'histoire des prix de chaque timbre ; 300 Encre versée chaque jour |
 
-Le jeu affiche le compte à rebours des paquets avec les mêmes chiffres que le serveur, et la rubrique « Ton compte »
-des réglages dit au joueur payant ce dont il bénéficie. Tout est vérifié : par le scénario dans un Postgres en
-mémoire, et par les tests automatiques.
+Et, à part, **de l'Encre à l'unité**, dont le prix reste à fixer.
 
-**Pour l'essayer**, il suffit d'allumer le drapeau sur un compte, dans l'éditeur SQL de Supabase :
+**Aucune publicité, dans aucune formule.** Le jeu n'en affiche pas et n'en affichera pas. Une régie publicitaire
+aurait suivi les joueurs, imposé une bannière de consentement, compliqué le cas des mineurs, et rapporté très peu à
+cette échelle. La version payante vend donc du confort, pas l'absence de nuisance.
 
-```sql
-update public.comptes set payant = true where utilisateur = '<identifiant du compte>';
-```
+**L'escalier a été corrigé.** L'offre de départ donnait les paquets ×2 *et* l'Encre ×2 pour 5,99 € une fois :
+l'abonnement à 5 € par mois aurait alors donné moins, pour plus cher, et personne ne s'y serait abonné.
 
----
+## 2. Ce qui est construit, et vérifié
 
-## 2. Ce qui n'est pas construit, et pourquoi
+Le compte porte une **formule** : un achat unique acquis pour toujours, et un abonnement avec sa date de fin. Le
+serveur en déduit un niveau de 0 à 3, qui commande tout. Un abonnement échu retombe tout seul au niveau de l'achat
+unique, ou à la version gratuite. **Rien n'est perdu** : les timbres, l'Encre et le classement restent au joueur,
+seuls les avantages cessent.
 
-**Le paiement lui-même.** Aucun prestataire n'est branché, aucun prix n'est fixé, aucun bouton n'existe. Ce n'est pas
-un oubli : encaisser de l'argent change la nature juridique du jeu, et plusieurs décisions doivent venir avant (voir
-le §4). Construire un tunnel de paiement maintenant reviendrait à faire le travail dans le désordre.
+L'Encre reçue contre de l'argent — achetée, ou versée par la rente de la formule Expert — est comptée **à part**,
+dans une seconde bourse. Elle ne sert qu'au marché : elle ne permet jamais d'acheter un paquet. Une mise puise
+d'abord dans cette bourse ; quand une mise plus haute arrive, chaque Encre revient exactement d'où elle venait.
 
-**L'Encre.** La décision n° 34 dit « de l'Encre », sans préciser laquelle des deux choses :
+L'**année de naissance** est demandée seulement à qui regarde les formules, pas à tout le monde : un joueur qui ne
+veut rien payer n'a pas à la donner. Le paiement sera réservé aux 18 ans et plus.
 
-- **(a) de l'Encre achetée à l'unité**, comme on achète des jetons. C'est ce qui pèse le plus sur l'économie : de
-  l'Encre entre dans le jeu sans qu'aucun joueur l'ait gagnée, et les prix du marché montent pour tout le monde.
-- **(b) une rente quotidienne pour les abonnés**, par exemple 300 Encre par jour. Plus facile à équilibrer, plus
-  proche d'un abonnement, et déjà modélisée par le simulateur de marché.
+Tout cela est vérifié : par les tests automatiques, par un scénario dans un Postgres en mémoire (niveaux, abonnement
+échu, rente versée une fois par jour, Encre doublée, Encre achetée qui ne paie pas un paquet, plafonds du marché),
+et dans le navigateur.
 
-**C'est une question pour Raphaël, pas pour moi.** Tant qu'elle n'est pas tranchée, je n'écris rien sur ce point.
+**Pour essayer une formule**, il suffit d'une ligne dans l'éditeur SQL de Supabase : voir `GUIDE-supabase.md`,
+étape 11.
 
-**Le prix et la forme.** Abonnement au mois, achat unique à vie, ou les deux ? Aucun chiffre n'est proposé ici :
-ce serait inventer une décision.
+## 3. Ce qui n'est pas construit
 
----
+**Le paiement.** Aucun prestataire n'est branché, aucun bouton n'existe. Ce n'est pas un oubli : il reste des
+points à régler (§4), et le tunnel de paiement se construit en dernier, pas en premier.
 
-## 3. Ce que le simulateur en dit déjà
-
-`npm run simulation:marche` modélise une part de joueurs payants qui reçoivent 300 Encre par jour (hypothèse (b)).
-Résultat, avec un joueur sur dix payant : l'Encre créée par joueur et par jour passe de 1 119 à 1 160, soit 4 % de
-plus, et les prix du marché ne s'envolent pas. La sortie principale d'Encre reste l'achat de paquets, pas la
-commission du marché. Le rapport complet est dans `data/simulation-marche.md`.
-
-Ce chiffre vaut pour une rente modeste. Une Encre achetée sans limite (hypothèse (a)) n'a pas été modélisée, et il
-faudra le faire avant de la mettre en vente.
-
----
+**Le cachet personnel** promis à la formule Expert, un tampon au pseudonyme du joueur sur ses timbres. C'est
+décoratif, cela ne bloque rien, et cela demande un travail de dessin. À faire quand le reste sera réglé.
 
 ## 4. Ce qui doit être réglé avant le premier euro
 
-Ces points ne sont pas des détails de mise au point. Chacun peut empêcher la vente, ou l'exposer à une sanction.
+| # | Point | Où ça en est |
+|---|---|---|
+| 1 | **Un juriste** | **À faire.** Voir ci-dessous : la question a beaucoup changé. |
+| 2 | **Les 240 joueurs maison** | Raphaël les retirera « quand il y aura du monde ». **Attention : l'échéance qui compte est le premier euro encaissé, pas le nombre de joueurs.** Un jeu payant qui fait croire à de vrais adversaires est une pratique commerciale trompeuse. Ils sont marqués `maison` dans la base : les retirer est l'affaire d'une ligne. |
+| 3 | **Les mineurs** | **Fait.** Année de naissance demandée avant l'achat, paiement réservé aux 18 ans et plus. |
+| 4 | **Le compte récupérable** | **Un seul moyen existe** : le code de secours. La connexion par e-mail attend un nom de domaine, remis à plus tard. Je recommande, à défaut, de **rendre la création du code de secours obligatoire avant tout achat**. |
+| 5 | **Les mentions de vente** | **Brouillon écrit** : `CGV-brouillon.md`. Il attend l'identité juridique de Raphaël et la relecture d'un juriste. |
+| 6 | **Un contact réel** | Attend le nom de domaine, donc une adresse dédiée. En attendant, la page Confidentialité renvoie à la page publique du projet. |
 
-1. **Un juriste, obligatoirement.** Dès que l'Encre s'achète avec de l'argent, les paquets tirés au sort avec cette
-   Encre ressemblent à une loterie au sens de plusieurs réglementations. Le §7 de `BRIEF-v2.md` détaille le sujet.
-   C'est le point le plus lourd, et il ne se règle pas en lisant des articles de blog.
-2. **Les 240 joueurs maison.** Le jeu propose aujourd'hui des adversaires fabriqués sans le dire, à la demande de
-   Raphaël. Tant que le jeu est gratuit, c'est un choix de game design. **Dès qu'il encaisse de l'argent, faire
-   croire à de vrais adversaires devient une pratique commerciale trompeuse.** Ils devront être signalés comme tels,
-   ou retirés. Ils sont marqués `maison` dans la base : les retirer est l'affaire d'une ligne.
-3. **Les mineurs.** Un jeu de collection avec des paquets aléatoires et de l'argent réel attire des joueurs jeunes.
-   Il faudra au minimum un âge déclaré, et se demander si un mineur peut payer. Question ouverte au §10.3 du brief.
-4. **Le compte récupérable.** On ne perd pas ce qu'on a payé. Le code de secours existe ; la connexion par e-mail,
-   non, faute de nom de domaine. **Avant de vendre quoi que ce soit, un joueur doit pouvoir retrouver son compte
-   par deux moyens, pas un seul.**
-5. **Les mentions de vente.** Conditions générales de vente, droit de rétractation, TVA, facturation, identité du
-   vendeur. La page Confidentialité existe ; il n'y a rien pour la vente.
-6. **Un contact réel.** La page Confidentialité renvoie aujourd'hui à la page publique du projet. Un client qui paie
-   doit pouvoir écrire à quelqu'un.
+### Sur le point 1 : ce que la décision sur l'Encre a changé
 
----
+Raphaël demandait si retirer l'achat d'Encre suffisait à écarter le problème. La réponse honnête, et je ne suis pas
+juriste : **cela change beaucoup, mais cela ne remplace pas un avis.**
 
-## 5. Ce que je propose comme suite
+Le sujet est le suivant. Payer pour recevoir un objet tiré au sort ressemble à une loterie dès que cet objet a une
+valeur monétaire. Dans Philamots, l'Encre sert à deux choses : acheter un paquet, et miser aux enchères.
 
-1. **Raphaël tranche la question de l'Encre** (rente quotidienne ou achat à l'unité) et la forme de l'offre.
-2. **Si c'est l'achat à l'unité**, je l'ajoute au simulateur avant tout, pour voir l'effet sur les prix.
-3. **Raphaël consulte un juriste** avant que j'écrive la moindre ligne de paiement.
-4. **Je construis la connexion par e-mail** quand un nom de domaine existera : c'est un préalable, pas un confort.
-5. Alors seulement, le tunnel de paiement.
+- **Avant**, si l'Encre s'achetait sans limite, la chaîne était directe : argent → Encre → paquet tiré au sort.
+- **Maintenant**, l'Encre achetée ne peut pas payer de paquet. **De l'argent n'achète jamais un tirage au sort.**
+  Il achète de la vitesse — des paquets gratuits qui arrivent plus vite — et du pouvoir d'achat au marché.
 
-Tant que rien de tout cela n'est fait, le drapeau `payant` reste ce qu'il est : une porte prête, qui ne s'ouvre que
-de l'intérieur.
+Ce qui reste à faire trancher par un juriste : payer pour recevoir *plus souvent* des paquets aléatoires reste un
+lien entre l'argent et le hasard, même indirect. Et un timbre acheté au marché avec de l'Encre achetée a bien été
+payé en argent, ce qui donne indirectement une valeur monétaire aux timbres.
+
+**Ce que je peux affirmer**, parce que c'est dans le code : aucun euro ne se transforme en paquet tiré au sort, et
+aucune Encre ni aucun timbre ne peut ressortir du jeu en argent.
+
+## 5. La suite, dans l'ordre
+
+1. Raphaël remplit les blancs de `CGV-brouillon.md` : forme juridique, adresse, immatriculation.
+2. Un juriste relit ce texte et tranche la question du §4.
+3. Raphaël fixe le prix de l'Encre à l'unité.
+4. Je rends la création du code de secours obligatoire avant tout achat, ou l'on attend le nom de domaine et la
+   connexion par e-mail.
+5. Les 240 joueurs maison sont retirés ou signalés.
+6. Un prestataire de paiement est choisi, et je construis le tunnel d'achat.
+
+Tant que les cinq premiers points ne sont pas faits, la page « La version payante » dit au joueur ce qui l'attend,
+et lui dit aussi que rien ne s'achète encore. C'est le contraire d'une promesse en l'air : c'est une porte prête,
+qui ne s'ouvre pas.

@@ -14,9 +14,10 @@ export type Route =
   | { ecran: 'reglages' }
   | { ecran: 'confidentialite' }
   | { ecran: 'marche' }
+  | { ecran: 'formules' }
   | { ecran: 'galerie' }; // contrôle visuel des timbres, pendant le développement seulement
 
-const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'galerie'] as const;
+const ECRANS_SIMPLES = ['paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'formules', 'galerie'] as const;
 
 export function lireRoute(hash: string): Route {
   const [premier = '', second = ''] = hash.replace(/^#\/?/, '').split('/');
@@ -34,7 +35,7 @@ export function lireRoute(hash: string): Route {
 // Le titre de l'onglet du navigateur. Il change avec l'écran : on s'y retrouve dans l'historique, et un lecteur
 // d'écran annonce où l'on arrive. (Pour une carte, le mot se lit dans son identifiant : « callipyge-adj ».)
 const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
-  accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Deck', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', galerie: 'Galerie',
+  accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Deck', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', formules: 'Version payante', galerie: 'Galerie',
 };
 export function titreDeLaRoute(route: Route): string {
   const nom = route.ecran === 'carte' ? route.id.replace(/-(?:nom|verbe|adj|adv)$/, '') : TITRES[route.ecran];

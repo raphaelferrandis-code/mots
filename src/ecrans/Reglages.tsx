@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { nomDeLaFormule } from '../jeu/formule.ts';
 import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
@@ -154,11 +155,12 @@ export function Reglages() {
         {partie.serveur.etat !== 'appareil' && (
           <section className="rubrique">
             <h2>Ton compte</h2>
-            {partie.compte?.payant && (
+            {partie.compte && nomDeLaFormule(partie.compte.formule) && (
               <p className="petit">
-                <strong>Version payante.</strong> Un paquet toutes les {EQUILIBRAGE.payant.minutesEntreDeuxPaquets} minutes au lieu de {EQUILIBRAGE.paquets.minutesEntreDeuxPaquets},
-                {' '}{EQUILIBRAGE.payant.stockMaximum} en réserve au lieu de {EQUILIBRAGE.paquets.stockMaximum}, aucune limite de ventes ni d'achats au marché,
-                et l'histoire des prix sur la fiche de chaque timbre.
+                <strong>Formule « {nomDeLaFormule(partie.compte.formule)} ».</strong>
+                {partie.compte.formule.jusquAu !== null && ` Jusqu'au ${new Date(partie.compte.formule.jusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.`}
+                {partie.compte.formule.encreAchetee > 0 && ` Tu as ${partie.compte.formule.encreAchetee} Encre achetée, utilisable au marché seulement.`}
+                {' '}<a href={lien({ ecran: 'formules' })}>Voir ce que donne chaque formule</a>
               </p>
             )}
             <p className="petit">Ta collection est attachée au compte anonyme de ce navigateur. Un code de secours permet de la retrouver sur un autre appareil, ou après un changement de navigateur.</p>

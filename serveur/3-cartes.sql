@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur (3/3 : les 3016 cartes de l'édition 1, version 2026-09-18)
+-- PHILAMOTS — le serveur (3/3 : les 3016 cartes de l'édition 1, version 2026-09-18)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase APRÈS 1-structure.sql, et à recoller à chaque nouvelle édition. Peut être relancé sans danger.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».

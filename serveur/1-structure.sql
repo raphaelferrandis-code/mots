@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- MOTS — le serveur du jeu (1/3 : la structure — joutes classées et collections)
+-- PHILAMOTS — le serveur du jeu (1/3 : la structure — joutes classées et collections)
 -- Fichier fabriqué par « npm run serveur:script » : ne pas le modifier à la main.
 -- À coller dans Supabase : SQL Editor → New query → coller → Run. Peut être relancé sans danger.
 -- Avant « Run » : le petit menu à gauche du bouton « Save » doit indiquer « Database », et non « Logs ».
@@ -290,14 +290,29 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
-  payant boolean not null default false, -- la version payante (décision n° 34) : pas de limite au marché
+  -- La version payante (décision n° 34, offre arrêtée le 22/09/2026 : voir BRIEF-version-payante.md).
+  achat_unique boolean not null default false, -- la formule « Le nécessaire », versée une seule fois
+  abonnement text not null default 'aucun' check (abonnement in ('aucun', 'collectionneur', 'expert')),
+  abonnement_jusqu_au timestamptz,
+  -- L'Encre reçue contre de l'argent (achetée, ou versée par la rente de la formule Expert). Elle ne peut servir
+  -- qu'au marché, jamais à acheter un paquet : c'est ce qui empêche l'argent d'acheter un tirage au sort.
+  encre_achetee integer not null default 0 check (encre_achetee >= 0),
+  annee_de_naissance integer, -- demandée seulement à qui veut payer, pas à tout le monde
+  rente_le date, -- le jour du dernier versement de la rente quotidienne
   code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
   code_defini_le timestamptz,
   cree_le timestamptz not null default now(),
   maj_le timestamptz not null default now()
 );
--- (Pour un serveur installé avant le 22/09/2026 au soir : les deux colonnes du code de secours.)
-alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz, add column if not exists payant boolean not null default false;
+-- (Pour un serveur installé avant : le code de secours, puis les colonnes de la version payante.)
+alter table public.comptes add column if not exists code_hache text, add column if not exists code_defini_le timestamptz;
+alter table public.comptes
+  add column if not exists achat_unique boolean not null default false,
+  add column if not exists abonnement text not null default 'aucun',
+  add column if not exists abonnement_jusqu_au timestamptz,
+  add column if not exists encre_achetee integer not null default 0,
+  add column if not exists annee_de_naissance integer,
+  add column if not exists rente_le date;
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
@@ -336,6 +351,30 @@ revoke all on public.cartes, public.comptes, public.possessions, public.duels fr
 create or replace function public.nombre_entier(t text) returns bigint language sql immutable set search_path = ''
 as $$ select case when t ~ '^[0-9]{1,15}$' then t::bigint end $$;
 
+-- Le niveau d'un compte : 0 gratuit, 1 « Le nécessaire », 2 « Collectionneur », 3 « Expert ». Un abonnement échu
+-- retombe au niveau de l'achat unique, s'il a été fait. C'est la seule fonction qui dit ce qu'un joueur a payé.
+create or replace function public.niveau(c public.comptes) returns integer language sql stable set search_path = ''
+as $$ select case
+  when c.abonnement = 'expert' and c.abonnement_jusqu_au > now() then 3
+  when c.abonnement = 'collectionneur' and c.abonnement_jusqu_au > now() then 2
+  when c.achat_unique then 1
+  else 0 end $$;
+
+-- La rente quotidienne de la formule « Expert » : de l'Encre qui ne sert qu'au marché, comme l'Encre achetée.
+create or replace function public.verser_la_rente(p_utilisateur uuid) returns void
+language plpgsql set search_path = ''
+as $$
+declare
+  c public.comptes%rowtype;
+  aujourd_hui date := (now() at time zone 'utc')::date;
+begin
+  select * into c from public.comptes where utilisateur = p_utilisateur for update;
+  if not found or public.niveau(c) < 3 then return; end if;
+  if c.rente_le is not null and c.rente_le >= aujourd_hui then return; end if;
+  update public.comptes set encre_achetee = encre_achetee + 300, rente_le = aujourd_hui, maj_le = now()
+    where utilisateur = p_utilisateur;
+end $$;
+
 -- Un moment en millisecondes, comme le jeu compte le temps.
 create or replace function public.en_millisecondes(t timestamptz) returns bigint language sql immutable set search_path = ''
 as $$ select (extract(epoch from t) * 1000)::bigint $$;
@@ -350,7 +389,14 @@ as $$
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
-    'payant', c.payant,
+    'formule', jsonb_build_object(
+      'niveau', public.niveau(c),
+      'achatUnique', c.achat_unique,
+      'abonnement', c.abonnement,
+      'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
+      'encreAchetee', c.encre_achetee,
+      'anneeDeNaissance', c.annee_de_naissance
+    ),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
                from public.possessions p where p.utilisateur = c.utilisateur)
@@ -365,8 +411,9 @@ as $$
 declare
   gagnes integer;
   -- La version payante (décision n° 34) : un paquet plus souvent, et une réserve plus grande.
-  minutes integer := case when c.payant then 5 else 10 end;
-  maximum integer := case when c.payant then 20 else 10 end;
+  paye integer := public.niveau(c);
+  minutes integer := case when paye >= 1 then 5 else 10 end;
+  maximum integer := case when paye >= 1 then 20 else 10 end;
 begin
   c.stock := least(c.stock, maximum);
   -- Réserve pleine : le compte à rebours est à l'arrêt. Il repart quand un paquet est ouvert.
@@ -422,6 +469,8 @@ begin
   victoires := case when c.jour = aujourd_hui then c.victoires_du_jour else 0 end;
   reduite := gagne and victoires >= 3;
   gain := case when not gagne then 5 when reduite then greatest(1, round(p_pleine * 0.25)::integer) else p_pleine end;
+  -- « Collectionneur » et au-dessus : l'Encre gagnée en jouant est doublée.
+  if public.niveau(c) >= 2 then gain := gain * 2; end if;
   update public.comptes set encre = encre + gain, jour = aujourd_hui, victoires_du_jour = victoires + gagne::integer, maj_le = now() where utilisateur = p_utilisateur;
   return jsonb_build_object('encre', gain, 'reduite', reduite);
 end $$;
@@ -510,7 +559,8 @@ begin
       tirees := tirees || jsonb_build_object('id', id_choisie, 'finition', finition, 'nouvelle', false, 'nouvelleFinition', true, 'encre', 0);
     else
       gain := (case rarete_choisie when 'Commune' then 1 when 'Peu commune' then 3 when 'Rare' then 10 when 'Épique' then 30 when 'Légendaire' then 100 when 'Hors-série' then 500 else 0 end)
-            * (case finition when 'Normale' then 1 when 'Brillante' then 3 when 'Holographique' then 10 else 1 end);
+            * (case finition when 'Normale' then 1 when 'Brillante' then 3 when 'Holographique' then 10 else 1 end)
+            * (case when public.niveau(c) >= 2 then 2 else 1 end);
       update public.possessions
         set finitions = jsonb_set(finitions, array[finition], to_jsonb((possession.finitions ->> finition)::integer + 1)), doublons = doublons + 1
         where utilisateur = p_utilisateur and carte = id_choisie;
@@ -535,6 +585,7 @@ as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   perform public.cloturer_les_encheres();
+  perform public.verser_la_rente(auth.uid());
   return public.etat_du_compte(auth.uid());
 end $$;
 
@@ -630,6 +681,21 @@ begin
   update public.comptes set encre = encre - 150, stock = c.stock, reference = c.reference where utilisateur = c.utilisateur;
   tirees := public.tirer_un_paquet(c.utilisateur, p_masques);
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
+end $$;
+
+-- L'âge, déclaré par le joueur au moment où il regarde la version payante (décision du 22/09/2026 : le paiement
+-- est réservé aux majeurs). On ne garde que l'année : c'est assez pour savoir, et c'est le moins qu'on puisse demander.
+create or replace function public.declarer_mon_age(p_annee integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  annee_actuelle integer := extract(year from now())::integer;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if p_annee is null or p_annee < annee_actuelle - 120 or p_annee > annee_actuelle then raise exception 'Cette année de naissance n''est pas possible.'; end if;
+  update public.comptes set annee_de_naissance = p_annee, maj_le = now() where utilisateur = auth.uid();
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return public.etat_du_compte(auth.uid());
 end $$;
 
 -- Le deck : seulement des cartes possédées, 10 au plus. Rend le deck tel qu'il est enregistré.
@@ -789,9 +855,13 @@ create table if not exists public.mises (
   enchere bigint not null references public.encheres (id) on delete cascade,
   encherisseur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
   montant integer not null,
+  -- Ce que cette mise a pris sur l'Encre achetée (le reste vient de l'Encre gagnée en jouant). Sert à rendre
+  -- exactement ce qui a été pris quand une mise plus haute arrive.
+  part_achetee integer not null default 0,
   quand timestamptz not null default now()
 );
 create index if not exists mises_par_enchere on public.mises (enchere, quand desc);
+alter table public.mises add column if not exists part_achetee integer not null default 0;
 
 alter table public.encheres enable row level security;
 alter table public.mises enable row level security;
@@ -915,7 +985,8 @@ begin
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
   if p_finition is null or p_finition not in ('Normale', 'Brillante', 'Holographique') then raise exception 'Finition inconnue.'; end if;
-  if not c.payant and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 10 then
+  -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
+  if public.niveau(c) < 2 and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 10 then
     raise exception 'Tu as déjà 10 ventes en cours : attends qu''elles se terminent.';
   end if;
   select k.rarete into rarete from public.cartes k where k.id = p_carte;
@@ -975,6 +1046,8 @@ declare
   minimum integer;
   montant integer := p_montant;
   achats integer;
+  pris_achetee integer;
+  precedente public.mises%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform public.cloturer_les_encheres();
@@ -987,7 +1060,7 @@ begin
   -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
   if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
   -- Les joueurs gratuits : 10 achats par jour au plus (les mises en tête comptent comme des achats en cours).
-  if not c.payant then
+  if public.niveau(c) < 2 then
     select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
       or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
     if achats >= 10 then raise exception 'Tu as déjà 10 achats aujourd''hui : reviens demain.'; end if;
@@ -995,14 +1068,21 @@ begin
   minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * 0.05)::integer) end;
   if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
   if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat; end if;
-  if c.encre < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
+  -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
+  if c.encre + c.encre_achetee < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
 
-  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient.
-  update public.comptes set encre = encre - montant, maj_le = now() where utilisateur = moi;
+  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
   if e.meilleur_encherisseur is not null then
-    update public.comptes set encre = encre + e.meilleure_mise, maj_le = now() where utilisateur = e.meilleur_encherisseur;
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by quand desc limit 1;
+    update public.comptes
+      set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
+      where utilisateur = e.meilleur_encherisseur;
   end if;
-  insert into public.mises (enchere, encherisseur, montant) values (e.id, moi, montant);
+  insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
   update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
     -- Une mise dans les 5 dernières minutes prolonge l'enchère d'autant.
     ferme_le = case when e.achat_immediat is not null and montant >= e.achat_immediat then now()
@@ -1078,8 +1158,8 @@ declare
   moi uuid := auth.uid();
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
-  if not exists (select 1 from public.comptes where utilisateur = moi and payant) then
-    raise exception 'L''histoire des prix et les statistiques font partie de la version payante.';
+  if (select public.niveau(c) from public.comptes c where c.utilisateur = moi) < 3 then
+    raise exception 'L''histoire des prix et les statistiques font partie de la formule Expert.';
   end if;
   perform public.cloturer_les_encheres();
   return jsonb_build_object(
@@ -1097,6 +1177,6 @@ end $$;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
-revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
