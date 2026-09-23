@@ -5,7 +5,7 @@
 
 ## Décisions validées le 23 septembre 2026
 
-Deux offres indépendantes, implémentées localement. Prix indicatifs : 5,99 € une fois et 5 €/mois. Paiement fermé, sans prestataire branché.
+Deux offres indépendantes, implémentées localement. Prix indicatifs : 5,99 € une fois et 4,99 €/mois. Paiement fermé, sans prestataire branché.
 
 - **Achat unique :** tous les cosmétiques premium définitivement et une Hors-série tirée parmi toutes celles de l’édition, doublon possible. Un cadeau par compte. Un doublon suit la conversion habituelle (500 Encre pour une Hors-série).
 - **Abonnement :** paquet ordinaire toutes les **8 minutes**, réserve **15**, **+25 % d’XP** sur bonnes réponses et duels ; paquet spécial de **5 cartes tous les 7 jours**. Quatre premières cartes aux probabilités ordinaires, dernière à **89 % Épique, 10 % Légendaire, 1 % Hors-série**. Garantie « Épique ou mieux », sans protection contre les doublons.

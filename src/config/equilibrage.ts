@@ -230,7 +230,7 @@ export const EQUILIBRAGE = {
     // Deux offres indépendantes. Les niveaux servent au protocole des anciens comptes.
     formules: [
       { cle: 'necessaire', niveau: 1, nom: 'Mon album', prix: 5.99, parMois: false },
-      { cle: 'collectionneur', niveau: 2, nom: 'Collectionneur', prix: 5, parMois: true },
+      { cle: 'collectionneur', niveau: 2, nom: 'Collectionneur', prix: 4.99, parMois: true },
     ],
     // L'âge à partir duquel on peut payer (décision du 22/09/2026).
     ageMinimumPourPayer: 18,
