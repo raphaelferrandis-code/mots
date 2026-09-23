@@ -56,7 +56,11 @@ export function Formules() {
               </div>
               <div className="offre-achat">
                 <p className="offre-prix">{prixEnClair(etage)}<small>Tarif envisagé</small></p>
-                <button type="button" className="offre-acheter" disabled={active} aria-label={`Acheter ${etage.nom}`} onClick={() => setAchat(etage)}>{active ? 'Déjà activé' : 'Acheter'}{!active && <span aria-hidden="true">↗</span>}</button>
+                <button type="button" className="offre-acheter" disabled={active} aria-label={`Acheter ${etage.nom}`} onClick={() => setAchat(etage)}>
+                  {!active && <span className="offre-acheter__eclat" aria-hidden="true">✧</span>}
+                  <span>{active ? 'Déjà activé' : 'Acheter'}</span>
+                  {!active && <span className="offre-acheter__fleche" aria-hidden="true">↗</span>}
+                </button>
               </div>
             </div>
           </article>;

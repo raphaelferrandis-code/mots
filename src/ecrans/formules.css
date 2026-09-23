@@ -39,8 +39,29 @@
 .offre-promesse { color:#b8c7d6; margin:10px 0 22px; min-height:3em; line-height:1.5; }
 .offre-achat { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; margin-top:auto; padding-top:22px; border-top:1px solid rgba(var(--lueur),.22); }
 .offre-prix { font:1.65rem var(--police-serif); color:#f6ebd6; margin:0; }.offre-prix small { display:block; font:.7rem var(--police-chiffres); color:#aebecd; letter-spacing:.06em; margin-top:6px; }
-.offre-acheter { display:flex; align-items:center; justify-content:space-between; gap:26px; min-height:48px; padding:12px 22px; border:1px solid var(--teinte); border-radius:5px; background:var(--teinte); color:#131d2d; font:600 1rem var(--police-chiffres); cursor:pointer; transition:filter .2s; }
-.offre-acheter:hover:not(:disabled) { filter:brightness(1.12); }.offre-acheter:focus-visible { outline:2px solid #fff5e6; outline-offset:4px; }.offre-acheter:disabled { opacity:.6; cursor:default; }
+.offre-acheter {
+  --metal-clair:#f5eaff; --metal:#d5b9f4; --metal-sombre:#a58ac8; --encre-bouton:#352349;
+  position:relative; isolation:isolate; overflow:hidden; display:flex; align-items:center; justify-content:center; gap:14px;
+  min-width:186px; min-height:58px; padding:12px 18px; border:1px solid var(--metal-clair); border-radius:10px;
+  background:radial-gradient(ellipse at 25% 0%,#ffffffb3,transparent 60%),linear-gradient(115deg,var(--metal-sombre),var(--metal-clair) 38%,var(--metal) 65%,var(--metal-sombre));
+  color:var(--encre-bouton); font:600 1.05rem var(--police-chiffres); letter-spacing:.035em; text-shadow:0 1px #ffffff70;
+  box-shadow:inset 0 1px 0 #fff9,inset 0 -3px 0 #0002,0 4px 0 #080e1c,0 9px 24px rgba(var(--lueur),.22);
+  cursor:pointer; transition:transform .25s ease,box-shadow .25s ease,filter .25s ease;
+}
+.offre-ecrin[data-offre=collectionneur] .offre-acheter { --metal-clair:#fff2cf; --metal:#efcf89; --metal-sombre:#c6984c; --encre-bouton:#453013; }
+.offre-acheter::before { content:''; position:absolute; inset:4px; border:1px solid #fff8; border-radius:6px; pointer-events:none; }
+.offre-acheter::after { content:''; position:absolute; inset:-50% -70%; background:linear-gradient(110deg,transparent 42%,#fff9 50%,transparent 58%); transform:translateX(-65%); pointer-events:none; }
+.offre-acheter>span { position:relative; z-index:1; }
+.offre-acheter__eclat { font:1.7rem var(--police-serif); line-height:1; text-shadow:0 1px 0 #fff,0 0 10px #fff9; }
+.offre-acheter__fleche { display:grid; place-items:center; width:26px; height:26px; border:1px solid #35234930; border-radius:50%; background:#ffffff24; font-size:.95rem; }
+.offre-acheter:is(:hover,:focus-visible):not(:disabled) { transform:translateY(-3px); filter:brightness(1.06); box-shadow:inset 0 1px 0 #fffc,inset 0 -3px 0 #0002,0 6px 0 #080e1c,0 13px 32px rgba(var(--lueur),.36); }
+.offre-acheter:is(:hover,:focus-visible):not(:disabled)::after { animation:offre-reflet .85s ease-out both; }
+.offre-acheter:active:not(:disabled) { transform:translateY(1px); box-shadow:inset 0 2px 4px #0002,0 2px 0 #080e1c,0 5px 15px rgba(var(--lueur),.2); }
+.offre-acheter:focus-visible { outline:2px solid var(--metal-clair); outline-offset:5px; }
+.offre-acheter:disabled { opacity:.55; cursor:default; box-shadow:inset 0 1px 0 #fff5; filter:saturate(.4); }
+@keyframes offre-reflet { from { transform:translateX(-65%); } to { transform:translateX(65%); } }
+@media(prefers-reduced-motion:reduce) { .offre-acheter { transition:none; }.offre-acheter:is(:hover,:focus-visible,:active):not(:disabled) { transform:none; }.offre-acheter::after { display:none; } }
+[data-animations-reduites] .offre-acheter { transition:none; } [data-animations-reduites] .offre-acheter:is(:hover,:focus-visible,:active):not(:disabled) { transform:none; } [data-animations-reduites] .offre-acheter::after { display:none; }
 .offre-details { padding-bottom:24px; color:#b8c7d6; }
 .offre-avantages { list-style:none; margin:0 0 20px; padding:0; display:grid; gap:12px; font-size:.85rem; line-height:1.6; }
 .offre-avantages li { display:grid; grid-template-columns:16px 1fr; gap:12px; }.offre-avantages li>span:first-child { color:var(--teinte); font-size:1.1rem; }
