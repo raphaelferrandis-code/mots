@@ -1,21 +1,16 @@
 import { XP } from '../jeu/personnalisation.ts';
 import { useRecompensesSuspendues } from '../composants/Recompenses.tsx';
 import type { CSSProperties } from 'react';
-import { TimbreAReveler } from '../composants/paquet/TimbreAReveler.tsx';
+import { CartesDuPaquet } from '../composants/paquet/CartesDuPaquet.tsx';
+import { DosDeCarte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { RYTHME_PAQUET } from '../composants/paquet/rythme.ts';
 import { useOuvertureAnimee } from '../composants/paquet/useOuvertureAnimee.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants/usePartie.ts';
-import { NIVEAU } from '../composants/carte/decor.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
 import { HORS_LIGNE, ouvrirUnPaquet, ouvrirRecompense, synchroniser } from '../services/partie.ts';
-
-const viserTimbres = (liste: HTMLUListElement | null): void => {
-  liste?.focus({ preventScroll: true });
-  liste?.scrollIntoView({ block: 'nearest' });
-};
 
 export function OuverturePaquet() {
   const partie = usePartie();
@@ -23,7 +18,8 @@ export function OuverturePaquet() {
   const reglages = partie.etat === 'prete' ? partie.sauvegarde.reglages : null;
   const sonsActifs = reglages?.sonsPaquets ?? true;
   const { ouverture, phase, erreur, arriveeAnimee, lancer, retourner, toutRetourner, passer } = useOuvertureAnimee(sonsActifs, reglages?.reduireAnimations ?? false);
-  useRecompensesSuspendues(phase === 'chargement' || phase === 'ouverture' || (phase === 'cartes' && !(ouverture?.retournees.every(Boolean) ?? false)));
+  // Les récompenses attendent la sortie de l'écran : elles masqueraient les commandes du carrousel.
+  useRecompensesSuspendues(phase !== 'repos');
 
   if (partie.etat !== 'prete' || !paquets) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
@@ -65,7 +61,8 @@ export function OuverturePaquet() {
           <div className="scene-paquet__halo" aria-hidden="true" />
           <div className="scene-paquet__objet">
             {phase === 'ouverture' ? <>
-              <div className="cartes-envol" aria-hidden="true">{Array.from({ length: EQUILIBRAGE.paquets.emplacements.length }, (_, i) => <span key={i} style={{ '--i': i } as CSSProperties}>M</span>)}</div>
+              <div className="cartes-envol" aria-hidden="true">{Array.from({ length: ouverture?.cartes.length ?? EQUILIBRAGE.paquets.emplacements.length }, (_, i) => <span key={i} style={{ '--i': i, '--centre': ((ouverture?.cartes.length ?? 5) - 1) / 2 } as CSSProperties}><DosDeCarte etiquette="" anime={false} /></span>)}</div>
+              <div className="scene-paquet__eclats" aria-hidden="true">{Array.from({ length: 12 }, (_, i) => <i key={i} style={{ '--i': i } as CSSProperties} />)}</div>
               <PaquetScelle />
             </> : <button className="scene-paquet__ouvrir" type="button" onClick={ouvrir} disabled={!disponibles || occupe} aria-label="Ouvrir le paquet scellé"><PaquetScelle /></button>}
           </div>
@@ -80,21 +77,8 @@ export function OuverturePaquet() {
           </div>
         </section>
       ) : <>
-        <ul ref={viserTimbres} className="paquet paquet--decouverte" data-arrivee={arriveeAnimee} aria-label="Timbres du paquet" aria-live="polite" tabIndex={0}>
-          {ouverture.cartes.map((obtenue, position) => (
-            <li key={`${position}-${obtenue.carte.id}`} className="paquet__place" style={{ '--i': position } as CSSProperties} data-retournee={ouverture.retournees[position]} data-rarete={obtenue.carte.rarete}>
-              <TimbreAReveler carte={obtenue.carte} finition={obtenue.finition} retournee={ouverture.retournees[position]} onRetourner={() => retourner(position)} etiquette={`Retourner le timbre ${position + 1}`} />
-              {ouverture.retournees[position] && <>
-                <span className={obtenue.nouvelleFinition ? 'paquet__etiquette paquet__etiquette--nouvelle' : 'paquet__etiquette'}>
-                  {obtenue.nouvelle ? 'Nouveau !' : obtenue.nouvelleFinition ? `Nouvelle finition : ${obtenue.finition.toLowerCase()}` : `Doublon · +${obtenue.encre} Encre`}
-                  {obtenue.nouvelle && obtenue.finition !== 'Normale' && ` · ${obtenue.finition}`}
-                  {/* À partir de Rare, la rareté se lit aussi sous le timbre : à l'écran, ses petites lettres se remarquent peu. */}
-                  {NIVEAU[obtenue.carte.rarete] >= 3 && ` · ${obtenue.carte.rarete}`}
-                </span>
-              </>}
-            </li>
-          ))}
-        </ul>
+        <CartesDuPaquet cartes={ouverture.cartes} retournees={ouverture.retournees}
+          arriveeAnimee={arriveeAnimee} reduireAnimations={reglages?.reduireAnimations ?? false} retourner={retourner} />
         <div className="atelier-paquets__suite">
           {!toutEstRetourne ? <button type="button" className="bouton" onClick={toutRetourner}>Tout retourner</button> : actions}
           {toutEstRetourne && <a className="bouton bouton--discret" href={lien({ ecran: 'collection' })}>Voir l’album</a>}

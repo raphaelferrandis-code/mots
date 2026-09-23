@@ -3,9 +3,9 @@ import { SortieSonore } from './sons.ts';
 
 export class SonsPaquets extends SortieSonore {
   ouvrir(): void {
-    this.bruit(0.07, 1800, 0.6);
-    this.bruit(0.32, 2600, 0.7, 0.1);
-    this.bruit(0.4, 650, 0.35, 0.23);
+    this.bruit(0.09, 1800, 0.45, 0.12);
+    this.bruit(0.42, 2600, 0.7, 0.34);
+    this.bruit(0.45, 650, 0.35, 0.73);
   }
 
   carte(position = 0, delai = 0): void {

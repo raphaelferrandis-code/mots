@@ -169,7 +169,8 @@ main:focus, main h1:focus { outline: none; }
 /* Les timbres limitent ailleurs les gestes à pan-y. Dans un paquet, un glissement
    commencé sur une carte doit aussi faire défiler la rangée, même face cachée.
    « manipulation » garde les deux axes et le zoom par pincement natifs. */
-.paquet__place > .tim { width: 100%; touch-action: manipulation; }
+.paquet__place > .tim { width: 100%; }
+.paquet, .paquet__place .tim, .paquet__place .revelation__ouvrir { touch-action: manipulation; }
 /* Le timbre se retourne ; plus il est rare, plus son apparition se remarque : halo argenté, doré, puis violet. */
 .paquet__place { --halo: transparent; }
 .paquet__place[data-rarete='Épique'] { --halo: #b9c2cc; }
