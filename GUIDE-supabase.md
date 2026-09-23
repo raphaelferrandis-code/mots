@@ -1,5 +1,19 @@
 # Brancher le serveur des joutes (Supabase) — guide pas à pas
 
+> **Migration appliquée le 23 septembre 2026 :** serveur/6-offres.sql exécuté avec succès sur le projet Supabase cgubfyxyivgufslpwlld. Contrôle avant/après : 38 comptes, 254 possessions, 77 Encre, inchangés. RPC de récompense disponible aux joueurs connectés ; tirage interne inaccessible. Aucun droit payant attribué et aucun déploiement du client dans cette intervention. Cette note remplace les indications antérieures disant que la migration reste à appliquer.
+
+
+## Dernière migration — les deux offres
+
+Pour une base déjà installée, exécuter **serveur/6-offres.sql** dans SQL Editor **avant publication du client**. Il remplace les migrations 4 et 5 et s’exécute en une transaction. Ne pas réappliquer l’ancien script 5 ensuite. Comptes, collections et anciens achats sont conservés. Régénération : npm run serveur:script.
+
+Aucun droit payant accordé automatiquement, aucun paiement branché. Pour les essais administratifs sur son propre compte, utiliser les champs achat_unique, abonnement = 'collectionneur' et abonnement_jusqu_au. Les deux offres sont indépendantes. Ne pas utiliser l’ancienne offre Expert.
+
+Le cadeau n’est réclamable qu’une fois : modifier le drapeau achat_unique ne le réinitialise pas. Premier paquet spécial à l’activation, puis tous les sept jours. Prolongation continue : échéancier conservé. Reprise après expiration : nouvelle période. Les droits acquis et les paquets déjà stockés restent conservés après expiration.
+
+Tests sur PostgreSQL embarqué (PGlite), pas sur le serveur distant. Migration et déploiement restent à effectuer. Les descriptions historiques ci-dessous sont remplacées par BRIEF-version-payante.md.
+
+
 *Pour Raphaël. Compter une demi-heure. Aucune ligne de commande : tout se fait dans le navigateur.*
 
 Tant que ce guide n'est pas suivi, le jeu fonctionne comme aujourd'hui (les joutes se jouent sans serveur). Une fois le serveur branché, les joutes opposent de vrais joueurs, la cote est tenue par le serveur, et deux joueurs ne peuvent plus porter le même pseudonyme.
@@ -238,3 +252,18 @@ Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, e
 ## Ce que ce classement vaut
 
 C'est un classement **« de confiance »** (voir `BRIEF-joutes.md`, §5) : le téléphone du joueur annonce le résultat de la joute, et le serveur calcule la cote. Le serveur refuse les abus les plus grossiers (plus de 40 joutes par heure, une joute de moins de 45 secondes, un résultat annoncé deux fois), mais un tricheur décidé peut gonfler sa cote. C'est suffisant entre amis et pour des testeurs ; ce ne l'est pas pour un classement avec des récompenses de valeur.
+## Mise à jour du 23 septembre 2026 — Encre réservée aux enchères
+
+Le code supprime l’achat de paquets avec toute forme d’Encre. **Migration appliquée au serveur le 23 septembre 2026.**
+
+Avant de publier le nouveau client, exécuter le fichier régénéré `serveur/1-structure.sql` dans l’éditeur SQL de Supabase. Il contient `drop function if exists public.acheter_un_paquet(text[]);`, qui retire aussi l’ancien point d’entrée sur une base existante. Masquer uniquement les boutons ne suffirait pas. Les soldes d’Encre et collections sont conservés.
+
+Vérification après application : un appel à `acheter_un_paquet` ne doit plus être disponible ; `ouvrir_un_paquet` doit toujours fonctionner avec une réserve non vide et refuser une réserve vide, même si le joueur possède de l’Encre. Un ancien onglet du jeu peut encore afficher l’ancien bouton : le serveur doit malgré tout refuser l’achat. Publier ensuite le nouveau client.
+
+Le script préparé transmet désormais aussi le booléen `maison` dans les adversaires et les lignes du classement.
+Il permet au client d’afficher « Joueur simulé » sans déduire le statut d’un pseudonyme ou d’un identifiant.
+Vérifier qu’un profil maison est marqué et qu’un vrai compte ne l’est pas. Le client reste compatible avec
+l’ancienne réponse, mais l’absence de marqueur empêche son signalement : mettre à jour le SQL avant le client.
+Les profils simulés sont conservés jusqu’à ce que la communauté soit suffisante ; ne pas les supprimer maintenant.
+
+---

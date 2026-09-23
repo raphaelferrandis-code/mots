@@ -232,7 +232,7 @@ export function Reglages() {
             Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
           </p>
           <p className="texte-doux petit">
-            Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. L’Encre sert aux enchères et aux personnalisations.
+            Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. L’Encre sert uniquement aux enchères.
           </p>
         </details>
 

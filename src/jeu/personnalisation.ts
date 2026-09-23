@@ -53,7 +53,7 @@ export const PAQUETS = [
   {"id":"ocean","nom":"Lettres océanes","clair":"#3c8385","fond":"#16484e","ombre":"#102d35","motif":"vagues","metal":"#a3e1d4"},
   {"id":"draconique","nom":"Légendes de jade","clair":"#617864","fond":"#293b36","ombre":"#172622","motif":"dragon","metal":"#d6d8a0"},
 ] as const;
-export type ProfilPersonnel = { succes: string[]; progressionSucces: Partial<Record<MesureSucces, number>>; pseudo: string; xp: number; achats: string[]; avatar: string; cadre: string; titre: string; dos: string; couleur: string; paquet: string };
+export type ProfilPersonnel = { bonusXpReste?: number; succes: string[]; progressionSucces: Partial<Record<MesureSucces, number>>; pseudo: string; xp: number; achats: string[]; avatar: string; cadre: string; titre: string; dos: string; couleur: string; paquet: string };
 export const nouveauProfil = (): ProfilPersonnel => ({ succes: [], progressionSucces: {}, pseudo: '', xp: 0, achats: [], avatar: 'plume', cadre: 'simple', titre: '', dos: 'gomme', couleur: 'cuivre', paquet: 'original' });
 export const XP = { paquet: 20, decouverte: 15, reponse: 5, duel: 30, victoire: 20 };
 export function progressionDuNiveau(xp: number) {
@@ -93,15 +93,13 @@ export function relireProfil(brut: unknown): ProfilPersonnel {
     const o = ORNEMENTS.find((o) => o.id === lu[categorie] && o.categorie === categorie);
     if (o && (o.premium || estDisponible(p, o))) p[categorie] = o.id;
   }
+  if (Number.isInteger(lu.bonusXpReste) && (lu.bonusXpReste as number) >= 0 && (lu.bonusXpReste as number) < 100) p.bonusXpReste = lu.bonusXpReste as number;
   p.paquet = PAQUETS.find((o) => o.id === lu.paquet)?.id ?? p.paquet;
   return p;
 }
-export function acheterOrnement(profil: ProfilPersonnel, encre: number, id: string): { profil: ProfilPersonnel; encre: number } {
+export function acheterOrnement(_profil: ProfilPersonnel, _encre: number, id: string): { profil: ProfilPersonnel; encre: number } {
   const o = ornement(id);
   if (!o) throw new Error('Personnalisation inconnue.');
   if (o.categorie === 'titre') throw new Error('Ce titre se gagne en accomplissant son succès.');
-  if (o.premium) throw new Error('Cette personnalisation est réservée aux formules payantes.');
-  if (estDisponible(profil, o)) return { profil, encre };
-  if (encre < o.prix) throw new Error('Pas assez d’Encre.');
-  return { profil: { ...profil, achats: [...profil.achats, id] }, encre: encre - o.prix };
+  throw new Error('L’Encre est réservée aux enchères.');
 }

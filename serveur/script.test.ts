@@ -11,8 +11,7 @@ import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { ORNEMENTS } from '../src/jeu/personnalisation.ts';
-import { joueursMaison, structure } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -24,15 +23,13 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('2-joueurs-maison.sql'), joueursMaison(edition));
     assert.equal(lire('3-cartes.sql'), cartes(edition));
     assert.equal(lire('4-personnalisation.sql'), migrationPersonnalisation());
+    assert.equal(lire('6-offres.sql'), migrationOffres());
   });
 
-  it('ne permet pas d’acheter en Encre les cosmétiques réservés aux formules', () => {
+  it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {
     const sql = migrationPersonnalisation();
-    for (const o of ORNEMENTS.filter(o => o.premium)) assert.ok(!sql.includes(`when '${o.id}' then`), o.id);
-    assert.match(sql, /else null end;/);
-    assert.match(sql, /if prix is null then raise exception/);
-    assert.match(sql, /where utilisateur = auth.uid\(\) for update;/);
-    assert.match(sql, /if p_id = any\(c.personnalisations\) then return/);
+    assert.ok(sql.includes("raise exception 'L’Encre est réservée aux enchères.'"));
+    assert.ok(!sql.includes('set encre = encre - prix'));
   });
 
   it('reprennent les chiffres des paquets, de l’Encre et des duels, et toutes les cartes de l’édition', () => {
@@ -45,13 +42,13 @@ describe('les scripts du serveur', () => {
     assert.ok(!sql.includes('create or replace function public.acheter_un_paquet'));
     assert.doesNotMatch(sql, /grant execute on function [^;]*public\.acheter_un_paquet/);
     assert.ok(sql.includes(`else ${P.minutesEntreDeuxPaquets} end`), 'la recharge gratuite');
-    assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
-    assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');
+    assert.ok(sql.includes(`when paye >= 2 then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
+    assert.ok(sql.includes(`when paye >= 2 then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');
     // Les formules : le niveau décide, l'Encre achetée ne sert qu'au marché.
     assert.ok(sql.includes("when c.abonnement = 'expert' and c.abonnement_jusqu_au > now() then 3"), 'le niveau d’un compte');
     assert.ok(sql.includes(`gain := gain * ${EQUILIBRAGE.payant.multiplicateurDEncre}`), 'l’Encre doublée');
     assert.ok(sql.includes(`encre_achetee = encre_achetee + ${EQUILIBRAGE.payant.renteQuotidienne}`), 'la rente quotidienne');
-    assert.ok(sql.includes('if public.niveau(c) < 2 then'), 'les plafonds du marché tombent au niveau 2');
+    assert.ok(!sql.includes('if public.niveau(c) < 2 then'), 'les plafonds du marché restent identiques pour les deux offres');
     assert.match(sql, /revoke execute on function [^;]*public\.niveau\(public\.comptes\)[^;]* from authenticated;/);
     assert.match(sql, /grant execute on function [^;]*public\.declarer_mon_age\(integer\)[^;]* to authenticated;/);
     assert.ok(sql.includes(`when 'Légendaire' then ${EQUILIBRAGE.encreParDoublon['Légendaire']}`));

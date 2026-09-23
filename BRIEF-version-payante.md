@@ -1,9 +1,29 @@
 # La version payante de Philamots
 
-*Mis à jour le 22 septembre 2026 au soir, après les décisions de Raphaël (décision n° 44 du brief). Les trois
-formules sont construites et vérifiées. **Rien ne permet encore de payer**, et ce document dit ce qui manque.*
+> **Migration appliquée le 23 septembre 2026 :** serveur/6-offres.sql exécuté avec succès sur le projet Supabase cgubfyxyivgufslpwlld. Contrôle avant/après : 38 comptes, 254 possessions, 77 Encre, inchangés. RPC de récompense disponible aux joueurs connectés ; tirage interne inaccessible. Aucun droit payant attribué et aucun déploiement du client dans cette intervention. Cette note remplace les indications antérieures disant que la migration reste à appliquer.
 
----
+
+## Décisions validées le 23 septembre 2026
+
+Deux offres indépendantes, implémentées localement. Prix indicatifs : 5,99 € une fois et 5 €/mois. Paiement fermé, sans prestataire branché.
+
+- **Achat unique :** tous les cosmétiques premium définitivement et une Hors-série tirée parmi toutes celles de l’édition, doublon possible. Un cadeau par compte. Un doublon suit la conversion habituelle (500 Encre pour une Hors-série).
+- **Abonnement :** paquet ordinaire toutes les **8 minutes**, réserve **15**, **+25 % d’XP** sur bonnes réponses et duels ; paquet spécial de **5 cartes tous les 7 jours**. Quatre premières cartes aux probabilités ordinaires, dernière à **89 % Épique, 10 % Légendaire, 1 % Hors-série**. Garantie « Épique ou mieux », sans protection contre les doublons.
+- Premier droit hebdomadaire à l’activation, puis tous les sept jours pendant la période active. Les droits acquis hors connexion restent récupérables après expiration. Une prolongation conserve l’échéancier ; une reprise après interruption ouvre une nouvelle période.
+- Cartes, XP et paquets déjà en réserve conservés après expiration. Retour à dix minutes et plafond gratuit de dix : la recharge attend que le stock passe sous ce plafond.
+- L’achat unique n’accélère pas les paquets ; l’abonnement ne débloque pas les cosmétiques premium. **Titres exclusivement par succès.** Cosmétiques gratuits liés aux niveaux ; anciens achats conservés.
+- **Encre uniquement pour les enchères**, aucun achat cosmétique ni paquet, aucun bonus ni rente. Plafonds du marché identiques pour tous.
+- Avantage initial en duel accepté par Raphaël. Bonus d’XP sans effet sur la cote, la maîtrise ou les succès ; pas de multiplicateur sur l’XP des paquets et découvertes. Les fractions d’XP sont conservées.
+
+### Publication et limites
+
+Appliquer **serveur/6-offres.sql avant de publier le client**. Ce script transactionnel remplace les migrations 4 et 5 pour une base existante. Aucun script distant ni déploiement effectué ici. Récompenses et droits sont gérés par le serveur, sans double attribution lors de demandes répétées.
+
+L’XP et les équipements restent locaux comme auparavant : synchronisation et protection de l’XP à traiter avant commercialisation du bonus. Prix définitifs, prestataire de paiement et formalités commerciales restent à finaliser.
+
+Domaine et HTTPS opérationnels ; contact@philamots.fr fonctionne, confirmé par Raphaël. Récupération de l’ancienne collection à confirmer séparément. Joueurs simulés signalés dans le code local, à retirer quand la communauté sera suffisante ; seuil encore à définir.
+
+## Historique — remplacé par les décisions ci-dessus
 
 ## 1. L'offre
 

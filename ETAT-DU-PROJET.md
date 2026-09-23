@@ -1,9 +1,27 @@
 # Où en est Philamots
 
+> **Migration appliquée le 23 septembre 2026 :** serveur/6-offres.sql exécuté avec succès sur le projet Supabase cgubfyxyivgufslpwlld. Contrôle avant/après : 38 comptes, 254 possessions, 77 Encre, inchangés. RPC de récompense disponible aux joueurs connectés ; tirage interne inaccessible. Aucun droit payant attribué et aucun déploiement du client dans cette intervention. Cette note remplace les indications antérieures disant que la migration reste à appliquer.
+
+
+## Décisions du 23 septembre 2026 — prioritaires sur le bilan ci-dessous
+
+- **Deux offres implémentées localement, paiement fermé.** Achat unique : cosmétiques premium permanents et une Hors-série parmi toutes, doublon possible. Abonnement : paquet toutes les 8 minutes, réserve 15, +25 % XP sur duels et bonnes réponses, paquet hebdomadaire dont la dernière carte est Épique à 89 %, Légendaire à 10 %, Hors-série à 1 %. Titres par succès uniquement. Prix indicatifs : 5,99 € et 5 €/mois. Voir BRIEF-version-payante.md. Appliquer serveur/6-offres.sql avant publication. XP encore locale, à synchroniser avant commercialisation du bonus.
+- **L’Encre sert uniquement aux enchères, quelle que soit son origine.** Achat de paquets supprimé dans le code local, les services et le script SQL. Compilation et tests à vérifier après chaque changement. Le site public et Supabase ne sont pas encore mis à jour : suivre la note du 23 septembre dans GUIDE-supabase.md.
+- **Domaine :** `philamots.fr` est actif chez OVHcloud et enregistré dans GitHub Pages. Les quatre adresses A GitHub et le CNAME de `www` sont vérifiés ; l’ancienne IPv6 est retirée. La dernière capture GitHub confirme « DNS check successful » et « Enforce HTTPS » coché. **Contact :** Raphaël confirme que `contact@philamots.fr` fonctionne après les instructions de test du webmail. Voir `GUIDE-domaine-et-contact.md`. Aucun achat du `.com` n’est confirmé.
+- **Joueurs simulés :** conserver temporairement les joueurs maison en les signalant discrètement mais lisiblement, puis les retirer lorsque la communauté sera suffisante. Mention « Joueur simulé » ajoutée au code local (choix d’adversaire, classement, duel), avec transmission du marqueur `maison` par le serveur. Déploiement SQL puis client restant à faire. Aucun retrait effectué, seuil de retrait à définir après les tests.
+- **Vente :** aucun prestataire de paiement ni structure juridique en place ; pas de validation juridique obtenue. La vente d’Encre n’a pas de tarif fixé.
+- Les rapports de simulation sont recalculés sans achats de paquets : les anciennes conclusions sur l’équilibre de l’Encre sont obsolètes. Ne pas fixer de bonus ou tarif d’Encre sur cette ancienne base.
+
+Le bilan du 22 septembre ci-dessous décrit la version précédemment publiée.
+
+**Suivi du raccordement :** terminé pour le domaine et la messagerie. HTTPS répond et HTTP redirige vers HTTPS,
+vérifiés depuis le terminal avec accès réseau. Raphaël confirme l’accès sécurisé au jeu en navigation privée
+puis normale après rechargement. La récupération de son ancienne collection reste à confirmer séparément.
+
 *Mis à jour le 22 septembre 2026. Ce document remplace la lecture de cinq briefs : il dit ce qui marche, ce qui
 attend Raphaël, et ce qui m'attend. Les détails restent dans les documents cités.*
 
-**Le jeu en ligne : https://raphaelferrandis-code.github.io/mots/**
+**Le jeu en ligne : https://philamots.fr/**
 
 ---
 
@@ -43,19 +61,18 @@ Par ordre d'importance. Rien de tout cela ne demande de savoir programmer.
 4. **Essayer le marché sur deux appareils** : vendre d'un côté, acheter de l'autre.
 5. **Remplir les blancs des conditions de vente** (`CGV-brouillon.md`) : forme juridique, adresse, numéro
    d'immatriculation. Sans cela, rien ne peut être vendu.
-6. **Décider s'il prend un nom de domaine.** `philamots.fr` et `philamots.com` étaient libres le 22 septembre.
-   Sans domaine, pas de connexion par e-mail, et le nom peut être pris par quelqu'un d'autre.
+6. **Relier le domaine actif et créer le contact.** Suivre `GUIDE-domaine-et-contact.md` pour GitHub Pages et
+   `contact@philamots.fr`. Noter le code de secours sur l’ancienne adresse avant la bascule.
 7. **Consulter un juriste** avant le premier euro encaissé. Voir `BRIEF-version-payante.md`, §4.
 
 ---
 
 ## Ce qui m'attend
 
-- **Rien de neuf tant que les testeurs n'ont pas joué.** C'est délibéré : ajouter des fonctions à un jeu que
-  personne n'a essayé, c'est empiler des paris.
-- **La connexion par e-mail**, dès qu'un nom de domaine existera. Resend l'exige ; Brevo accepterait une simple
-  adresse, mais un lien de connexion parti d'une adresse Gmail finit souvent en courrier indésirable, et un joueur
-  qui ne reçoit pas son lien reste dehors.
+- **Finaliser en parallèle des tests joueurs :** raccorder le domaine, établir le contact, signaler les joueurs
+  simulés et préparer la publication des deux offres implémentées.
+- **La connexion par e-mail :** le domaine existe désormais. Le service d’envoi et son raccordement à Supabase
+  restent à préparer ; créer une boîte de contact n’active pas les liens de connexion du jeu.
 - **Un contrôle anti-robot** avant d'ouvrir le jeu au grand public. Aujourd'hui, n'importe qui peut créer des
   comptes en série.
 - **Les avis de recherche** (étape M5 du marché) et **le troc** (M6), quand il y aura assez de joueurs pour que ces
@@ -74,8 +91,8 @@ Ce ne sont pas des pannes, mais des choses que je sais imparfaites.
 - Un duel interrompu n'est pas repris.
 - En niveau Difficile, les meilleurs joueurs gagnent encore trois fois sur quatre.
 - La population de joueurs fictifs a des cotes fixes : la cote d'un vrai joueur gonfle à leur contact.
-- Les 240 joueurs maison ne sont pas signalés comme tels. C'est un choix assumé tant que le jeu est gratuit, et un
-  problème le jour où il ne l'est plus.
+- Les 240 joueurs maison ne sont pas encore signalés dans la version publiée. La mention est préparée localement ;
+  elle nécessite la mise à jour du serveur et du client.
 
 ---
 
@@ -88,6 +105,7 @@ Ce ne sont pas des pannes, mais des choses que je sais imparfaites.
 | `BRIEF-version-payante.md` | Ce qui est construit, ce qui manque, ce qui bloque le premier euro |
 | `CGV-brouillon.md` | Le brouillon des conditions de vente, avec les blancs à remplir |
 | `GUIDE-supabase.md` | La mise en route du serveur, pas à pas, pour Raphaël |
+| `GUIDE-domaine-et-contact.md` | Le raccordement du domaine actif et la création du contact chez OVHcloud |
 | `GUIDE-testeurs.md` | Ce qu'on demande aux cinq testeurs |
 | `data/simulation-marche.md` | L'économie du marché, mesurée |
 | `README.md` | Le dépôt, les commandes, l'organisation des fichiers |

@@ -32,7 +32,7 @@ export function registresMasques(sauvegarde: Sauvegarde): Registre[] {
 // visite). « payant » : la version payante recharge plus vite et garde une réserve plus grande (décision n° 34).
 export function mettreAJour(sauvegarde: Sauvegarde, maintenant: number, equilibrage: Equilibrage, payant = false): Sauvegarde {
   const reglages = payant ? equilibrage.payant : equilibrage.paquets;
-  const plafonne = { ...sauvegarde.paquets, stock: Math.min(sauvegarde.paquets.stock, reglages.stockMaximum) };
+  const plafonne = { ...sauvegarde.paquets, stock: Math.min(sauvegarde.paquets.stock, Math.max(equilibrage.paquets.stockMaximum, equilibrage.payant.stockMaximum)) };
   return { ...sauvegarde, paquets: { ...plafonne, ...rechargerLesPaquets(plafonne, maintenant, reglages) } };
 }
 

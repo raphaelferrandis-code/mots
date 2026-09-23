@@ -26,13 +26,6 @@ function doublure(reponses: Record<string, unknown>) {
 const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: ['a-nom'], maintenant: 5000, cartes: { 'a-nom': { obtenueLe: 900, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null, formule: { niveau: 0, achatUnique: false, abonnement: 'aucun', jusquAu: null, encreAchetee: 0, anneeDeNaissance: null } };
 
 describe('le service des collections', () => {
-  it('achète un cosmétique par son identifiant, sans laisser le client fixer le prix', async () => {
-    const { service, appels } = doublure({ acheter_personnalisation: { ...ETAT, encre: 0, achatsPersonnalisation: ['boussole'] } });
-    const etat = await service.acheterPersonnalisation('boussole');
-    assert.deepEqual(appels, [{ fonction: 'acheter_personnalisation', parametres: { p_id: 'boussole' } }]);
-    assert.deepEqual(etat.achatsPersonnalisation, ['boussole']);
-    assert.equal(etat.encre, 0);
-  });
   it('distingue « pas de compte » d’un compte vide, et relit l’état du serveur', async () => {
     const { service } = doublure({ mon_compte: null });
     assert.equal(await service.monCompte(), null);

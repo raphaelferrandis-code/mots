@@ -10,7 +10,7 @@ import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants
 import { NIVEAU } from '../composants/carte/decor.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
-import { HORS_LIGNE, ouvrirUnPaquet, synchroniser } from '../services/partie.ts';
+import { HORS_LIGNE, ouvrirUnPaquet, ouvrirRecompense, synchroniser } from '../services/partie.ts';
 
 const viserTimbres = (liste: HTMLUListElement | null): void => {
   liste?.focus({ preventScroll: true });
@@ -31,6 +31,9 @@ export function OuverturePaquet() {
   const disponibles = paquets.stock > 0;
   const cartesVisibles = phase === 'cartes' && ouverture !== null;
   const toutEstRetourne = ouverture?.retournees.every(Boolean) ?? false;
+  const formule = partie.compte?.formule;
+  const hebdomadaires = formule?.paquetsHebdomadaires ?? 0;
+  const cadeau = formule?.achatUnique && formule.cadeauAchatReclame === false;
   const nouvelles = ouverture?.cartes.filter((c) => c.nouvelle).length ?? 0;
   const encreGagnee = ouverture?.cartes.reduce((s, c) => s + c.encre, 0) ?? 0;
   const rythme = {
@@ -44,14 +47,16 @@ export function OuverturePaquet() {
   const actions = (
     <div className="rangee-de-boutons atelier-paquets__actions">
       {paquets.stock > 0 && <button type="button" className="bouton" disabled={occupe} onClick={ouvrir}>{cartesVisibles ? 'Ouvrir le suivant' : 'Ouvrir ce paquet'}</button>}
+      {hebdomadaires > 0 && <button type="button" className="bouton" disabled={occupe} onClick={() => void lancer(() => ouvrirRecompense('hebdomadaire'))}>Paquet hebdomadaire · {hebdomadaires} disponible{hebdomadaires > 1 ? 's' : ''}</button>}
+      {cadeau && <button type="button" className="bouton" disabled={occupe} onClick={() => void lancer(() => ouvrirRecompense('achat'))}>Découvrir ma Hors-série</button>}
     </div>
   );
 
   return (
     <main className="ecran ecran--large atelier-paquets" style={rythme}>
-      <Entete titre={cartesVisibles ? 'Ton paquet' : 'Les paquets'}>
+      <Entete titre={cartesVisibles ? ouverture.cartes.length === 1 ? 'Ta Hors-série' : 'Ton paquet' : 'Les paquets'}>
         {cartesVisibles
-          ? toutEstRetourne ? `+${XP.paquet + nouvelles * XP.decouverte} XP · ${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : null
+          ? toutEstRetourne ? `+${(ouverture?.cartes.length === 1 ? 0 : XP.paquet) + nouvelles * XP.decouverte} XP · ${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : null
           : `${EQUILIBRAGE.paquets.emplacements.length} timbres, encore secrets.`}
       </Entete>
 

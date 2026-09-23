@@ -7,7 +7,7 @@ import type { FormEvent } from 'react';
 import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { ETAGES, nomDeLaFormule, peutPayer, prixEnClair } from '../jeu/formule.ts';
+import { ETAGES, abonnementActif, nomDeLaFormule, peutPayer, prixEnClair } from '../jeu/formule.ts';
 import type { Formule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { declarerMonAge } from '../services/partie.ts';
@@ -27,7 +27,7 @@ export function Formules() {
 
       <section className="rubrique">
         <p className="bloc bloc--a-venir">
-          <strong>Le paiement n'est pas encore ouvert.</strong>
+          <strong>Le paiement n'est pas encore ouvert.</strong> Tarifs envisagés ; aucun achat possible actuellement.
         </p>
       </section>
 
@@ -39,13 +39,12 @@ export function Formules() {
 
       <section className="rubrique" aria-label="Les formules">
         <ol className="formules__liste">
-          {ETAGES.map((etage, rang) => (
-            <li key={etage.cle} className="formule" data-en-cours={formule !== null && formule.niveau === etage.niveau}>
+          {ETAGES.map((etage) => (
+            <li key={etage.cle} className="formule" data-en-cours={formule !== null && (etage.cle === 'necessaire' ? formule.achatUnique : abonnementActif(formule))}>
               <div className="formule__entete">
                 <h2>{etage.nom}</h2>
                 <p className="formule__prix">{prixEnClair(etage)}</p>
               </div>
-              {rang > 0 && <p className="texte-doux petit">Tout ce que donne « {ETAGES[rang - 1].nom} », et&nbsp;:</p>}
               <ul className="regles">
                 {etage.avantages.map((avantage) => <li key={avantage}>{avantage}</li>)}
               </ul>
@@ -53,17 +52,22 @@ export function Formules() {
           ))}
         </ol>
         <p className="texte-doux petit">
-          L’Encre sert aux enchères et aux personnalisations. La vente d’Encre n’est pas ouverte.
+          L’Encre sert uniquement aux enchères. La vente d’Encre n’est pas ouverte.
         </p>
       </section>
 
+      <section className="rubrique">
+        <p>Les deux offres sont indépendantes et peuvent se cumuler. L’abonnement seul ne débloque pas les cosmétiques premium.</p>
+        <p>Les quatre premières cartes du paquet hebdomadaire suivent les probabilités habituelles. Sa dernière carte garantit une Épique ou mieux. Ce tirage ne modifie pas la garantie de Légendaire des paquets ordinaires.</p>
+        <p><a href={lien({ ecran: 'paquet' })}>Ouvrir mes paquets et récompenses</a></p>
+      </section>
       {surLeServeur && formule && <Age formule={formule} />}
 
       <section className="rubrique">
         <h2>Ce qui ne changera pas</h2>
         <ul className="regles">
           <li>Aucune publicité, dans aucune formule. Le jeu n'en affiche pas et n'en affichera pas.</li>
-          <li>Payer n'aide pas à retrouver une définition. Les duels et les joutes se gagnent en connaissant les mots.</li>
+          <li>Les offres accélèrent la collection et peuvent donner un avantage en duel, particulièrement au début. Répondre correctement reste nécessaire.</li>
           <li>Tout le jeu reste accessible sans payer : les 3 000 timbres, les duels, les joutes, le marché.</li>
         </ul>
         <p className="texte-doux petit">

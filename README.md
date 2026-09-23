@@ -2,7 +2,9 @@
 
 Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue française, imprimé comme un timbre-poste.
 
-*Le jeu s'est appelé « MOTS » jusqu'au 22 septembre 2026. Raphaël a choisi **Philamots** (philatélie et mots) et pris les noms de domaine correspondants. Le dépôt, lui, garde son nom `mots` : changer l'adresse d'un dépôt casserait les liens existants pour rien.*
+*Le jeu s'est appelé « MOTS » jusqu'au 22 septembre 2026. Raphaël a choisi **Philamots** (philatélie et mots). `philamots.fr` est désormais actif chez OVHcloud ; le raccordement au site et la création de `contact@philamots.fr` restent à terminer : voir [le guide](GUIDE-domaine-et-contact.md). Aucun achat du `.com` n’est confirmé. Le dépôt garde son nom `mots`.*
+
+**Décision du 23 septembre :** l’Encre sert uniquement aux enchères. L’achat de paquets a été retiré du code local et du script serveur ; mise à jour de Supabase et publication restent à effectuer (voir GUIDE-supabase.md). L’offre de lancement comprendra un achat unique et un seul abonnement, dont les avantages validés sont implémentés localement (BRIEF-version-payante.md). Appliquer serveur/6-offres.sql avant publication. Les descriptions à trois formules ci-dessous concernent la version précédente.
 
 - **Où en est le projet, et ce qui reste à faire : [ETAT-DU-PROJET.md](ETAT-DU-PROJET.md).** Commencer par là.
 - Le projet est décrit dans [BRIEF-v2.md](BRIEF-v2.md) — c'est le document de référence.

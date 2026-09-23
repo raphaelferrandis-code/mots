@@ -254,7 +254,7 @@ describe('sauvegarde', () => {
   });
   it('plafonne un stock de paquets trafiqué', () => {
     const trafiquee = relireSauvegarde({ version: 2, cartes: {}, paquets: { stock: 9999, reference: T0 } }, T0);
-    assert.equal(mettreAJour(trafiquee, T0, EQUILIBRAGE).paquets.stock, REGLAGES.stockMaximum);
+    assert.equal(mettreAJour(trafiquee, T0, EQUILIBRAGE).paquets.stock, EQUILIBRAGE.payant.stockMaximum);
   });
   it('conserve une carte inconnue de l\'édition sans broncher', () => {
     const sauvegarde = relireSauvegarde({ version: 1, cartes: { 'mot-disparu-nom': { obtenueLe: T0, doublons: 0 } } }, T0);

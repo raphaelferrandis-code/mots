@@ -420,4 +420,4 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .formule__entete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
 .formule__entete h2 { font-size: 1.15rem; }
 .formule__prix { font-family: var(--police-chiffres); font-size: 1.1rem; color: var(--accent); white-space: nowrap; }
-@media (min-width: 900px) { .formules__liste { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; } }
+@media (min-width: 900px) { .formules__liste { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }

@@ -187,7 +187,7 @@ begin
   if p_heures is null or p_heures not in (${M.dureesEnHeures.join(', ')}) then raise exception 'Durée inconnue.'; end if;
   if p_finition is null or p_finition not in (${liste(FINITIONS)}) then raise exception 'Finition inconnue.'; end if;
   -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
-  if public.niveau(c) < 2 and (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= ${M.ventesEnCoursAuPlus} then
+  if (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= ${M.ventesEnCoursAuPlus} then
     raise exception 'Tu as déjà ${M.ventesEnCoursAuPlus} ventes en cours : attends qu''elles se terminent.';
   end if;
   select k.rarete into rarete from public.cartes k where k.id = p_carte;
@@ -261,7 +261,7 @@ begin
   -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
   if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
   -- Les joueurs gratuits : ${M.achatsParJourAuPlus} achats par jour au plus (les mises en tête comptent comme des achats en cours).
-  if public.niveau(c) < 2 then
+  if true then
     select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
       or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
     if achats >= ${M.achatsParJourAuPlus} then raise exception 'Tu as déjà ${M.achatsParJourAuPlus} achats aujourd''hui : reviens demain.'; end if;

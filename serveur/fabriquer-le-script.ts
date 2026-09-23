@@ -311,6 +311,10 @@ grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIO
 `;
 }
 
+export function migrationOffres(): string {
+  return '-- Mise à jour des deux offres — remplace les migrations 4 et 5.\n-- À appliquer avant de publier le client. Aucun droit payant attribué automatiquement.\nbegin;\n' + structure() + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -335,5 +339,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '2-joueurs-maison.sql'), joueursMaison(edition));
   writeFileSync(path.join(RACINE, 'serveur', '3-cartes.sql'), cartes(edition));
   writeFileSync(path.join(RACINE, 'serveur', '4-personnalisation.sql'), migrationPersonnalisation());
+  writeFileSync(path.join(RACINE, 'serveur', '6-offres.sql'), migrationOffres());
   console.log('Écrits : serveur/1-structure.sql, serveur/2-joueurs-maison.sql, serveur/3-cartes.sql et serveur/4-personnalisation.sql');
 }

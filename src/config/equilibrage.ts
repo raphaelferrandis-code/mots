@@ -216,23 +216,21 @@ export const EQUILIBRAGE = {
   // ── La version payante (décision n° 34) ───────────────────────────────────
   // Ce qu'un compte payant reçoit de plus. Le compte porte un drapeau « payant » (serveur/collections.ts) ;
   // personne ne l'a encore, et il n'existe aucun moyen de payer : voir BRIEF-version-payante.md.
-  // ⚠️ Ces deux chiffres sont une proposition, pas une décision de Raphaël. Le prix, la durée de l'abonnement et
-  // la question de l'Encre (achetée à l'unité ou versée chaque jour ?) restent à trancher.
+  // Avantages validés le 23 septembre 2026. Prix indicatifs, paiement non branché.
   payant: {
-    // Un paquet gratuit deux fois plus vite (à partir de la formule « Le nécessaire »)…
-    minutesEntreDeuxPaquets: 5,
-    // …et une réserve deux fois plus grande.
-    stockMaximum: 20,
-    // L'Encre gagnée en jouant est multipliée par ce nombre à partir de la formule « Collectionneur ».
-    multiplicateurDEncre: 2,
-    // La formule « Expert » reçoit chaque jour cette Encre. Comme l'Encre achetée, elle ne sert qu'au marché.
-    renteQuotidienne: 300,
-    // Les trois formules, du plus petit au plus grand ; chacune contient la précédente. Le niveau 0 est la
-    // version gratuite. ⚠️ Les prix sont ceux fixés par Raphaël ; rien ne permet encore de payer.
+    // Recharge et réserve de l'abonnement uniquement.
+    minutesEntreDeuxPaquets: 8,
+    stockMaximum: 15,
+    // Compatibilité des anciens comptes : aucun bonus d'Encre ni rente.
+    multiplicateurDEncre: 1,
+    renteQuotidienne: 0,
+    bonusXpPourcent: 25,
+    joursEntrePaquetsHebdomadaires: 7,
+    dernierEmplacementHebdomadaire: { 'Épique': 89, 'Légendaire': 10, 'Hors-série': 1 } as ChancesParRarete,
+    // Deux offres indépendantes. Les niveaux servent au protocole des anciens comptes.
     formules: [
-      { cle: 'necessaire', niveau: 1, nom: 'Le nécessaire', prix: 5.99, parMois: false },
+      { cle: 'necessaire', niveau: 1, nom: 'Mon album', prix: 5.99, parMois: false },
       { cle: 'collectionneur', niveau: 2, nom: 'Collectionneur', prix: 5, parMois: true },
-      { cle: 'expert', niveau: 3, nom: 'Expert', prix: 10, parMois: true },
     ],
     // L'âge à partir duquel on peut payer (décision du 22/09/2026).
     ageMinimumPourPayer: 18,

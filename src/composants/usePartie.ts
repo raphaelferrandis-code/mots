@@ -28,7 +28,7 @@ export function useStockDePaquets(partie: Partie): { stock: number; maximum: num
   const maintenant = useMaintenant() + decalageDuServeur();
   if (partie.etat !== 'prete') return null;
   // La version payante recharge plus vite : l'affichage suit la même règle que le serveur.
-  const payant = partie.compte !== null && paquetsPlusVite(partie.compte.formule);
+  const payant = partie.compte !== null && paquetsPlusVite(partie.compte.formule, maintenant);
   const reglages = reglagesDeRecharge(payant);
   const aJour = mettreAJour(partie.sauvegarde, maintenant, EQUILIBRAGE, payant);
   return { stock: aJour.paquets.stock, maximum: reglages.stockMaximum, attente: attenteAvantLeProchain(aJour.paquets, maintenant, reglages) };

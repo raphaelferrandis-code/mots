@@ -1,7 +1,7 @@
 import { actualiserLesSucces } from '../jeu/succes.ts';
 import type { CarteIndex } from '../partage/types.ts';
-import { cosmetiquesPremium } from '../jeu/formule.ts';
-import { XP, acheterOrnement, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
+import { calculerGainXp, cosmetiquesPremium } from '../jeu/formule.ts';
+import { XP, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { examinerLePseudo } from '../jeu/pseudo.ts';
 import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
@@ -220,10 +220,10 @@ async function ouvrirSurLAppareil(action: (sauvegarde: Sauvegarde, contexte: Par
   return ouverture.cartes;
 }
 
-async function ouvrirSurLeServeur(): Promise<CarteObtenue[]> {
+async function ouvrirSurLeServeur(type?: 'achat' | 'hebdomadaire'): Promise<CarteObtenue[]> {
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
   const masques = registresMasques(partie.sauvegarde);
-  const [reponse, edition] = await Promise.all([surLeServeur(() => serveurDesCollections.ouvrirUnPaquet(masques)), chargerEdition()]);
+  const [reponse, edition] = await Promise.all([surLeServeur(() => type ? serveurDesCollections.reclamerRecompense(type, masques) : serveurDesCollections.ouvrirUnPaquet(masques)), chargerEdition()]);
   const connues = new Map(edition.cartes.map((c) => [c.id, c]));
   appliquer(reponse.etat);
   return reponse.cartes.flatMap((t) => {
@@ -237,9 +237,16 @@ export async function ouvrirUnPaquet(): Promise<CarteObtenue[]> {
   gagnerExperience(XP.paquet + cartes.filter((c) => c.nouvelle).length * XP.decouverte);
   return cartes;
 }
-function gagnerExperience(xp: number): void {
+export async function ouvrirRecompense(type: 'achat' | 'hebdomadaire'): Promise<CarteObtenue[]> {
+  const cartes = await ouvrirSurLeServeur(type);
+  gagnerExperience((type === 'hebdomadaire' ? XP.paquet : 0) + cartes.filter(c => c.nouvelle).length * XP.decouverte);
+  return cartes;
+}
+function gagnerExperience(xp: number, combat = false): void {
   if (partie.etat !== 'prete') return;
-  enregistrer({ ...partie.sauvegarde, profil: { ...partie.sauvegarde.profil, xp: partie.sauvegarde.profil.xp + xp } });
+  const profil = partie.sauvegarde.profil;
+  const bonus = combat ? calculerGainXp(xp, profil.bonusXpReste ?? 0, partie.compte?.formule ?? null, maintenant()) : { gain: xp, reste: profil.bonusXpReste ?? 0 };
+  enregistrer({ ...partie.sauvegarde, profil: { ...profil, xp: profil.xp + bonus.gain, bonusXpReste: bonus.reste } });
 }
 export function personnaliser(categorie: Categorie | 'paquet', id: string): void {
   if (partie.etat !== 'prete') return;
@@ -255,31 +262,6 @@ export function nommerMonProfil(saisie: string): void {
   if (!verdict.accepte) throw new Error(verdict.raison);
   enregistrer({ ...partie.sauvegarde, profil: { ...partie.sauvegarde.profil, pseudo: verdict.pseudo } });
 }
-let achatEnCours = false;
-export async function acheterUnePersonnalisation(id: string): Promise<void> {
-  if (partie.etat !== 'prete') throw new Error('La partie est en cours de chargement.');
-  if (achatEnCours) throw new Error('Un achat est déjà en cours.');
-  const o = ornement(id);
-  if (!o) throw new Error('Personnalisation inconnue.');
-  if (o.categorie === 'titre') throw new Error('Ce titre se gagne en accomplissant son succès.');
-  if (o.premium) throw new Error('Cette personnalisation est réservée aux formules payantes.');
-  if (estDisponible(partie.sauvegarde.profil, o)) return;
-  achatEnCours = true;
-  try {
-    if (serveurDesCollections.actif) {
-      await serveurPret();
-      const etat = await serveurDesCollections.monCompte();
-      if (!etat?.achatsPersonnalisation) throw new Error('Les achats de personnalisations seront disponibles après la mise à jour du serveur.');
-      appliquer(etat);
-      appliquer(await surLeServeur(() => serveurDesCollections.acheterPersonnalisation(id)));
-    }
-    else {
-      const achat = acheterOrnement(partie.sauvegarde.profil, partie.sauvegarde.encre, id);
-      enregistrer({ ...partie.sauvegarde, ...achat });
-    }
-  } finally { achatEnCours = false; }
-}
-
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
   if (partie.etat !== 'prete') return;
   enregistrer({ ...partie.sauvegarde, reglages: { ...partie.sauvegarde.reglages, [cle]: valeur } });
@@ -301,7 +283,7 @@ export function noterLaReponse(idCarte: string, reussi: boolean): boolean {
   if (partie.etat !== 'prete') return false;
   const reponse = noterUneReponse(partie.sauvegarde, idCarte, reussi, maintenant(), EQUILIBRAGE.duel);
   if (reponse.sauvegarde !== partie.sauvegarde) enregistrer(reponse.sauvegarde);
-  if (reussi && partie.sauvegarde.cartes[idCarte]) gagnerExperience(XP.reponse);
+  if (reussi && partie.sauvegarde.cartes[idCarte]) gagnerExperience(XP.reponse, true);
   return reponse.vientDEtreMaitrisee;
 }
 
@@ -309,7 +291,7 @@ export function noterLaReponse(idCarte: string, reussi: boolean): boolean {
 export function noterLaParade(rarete: Rarete, reussie: boolean): void {
   if (partie.etat !== 'prete') return;
   enregistrer(noterUneParade(partie.sauvegarde, rarete, reussie));
-  if (reussie) gagnerExperience(XP.reponse);
+  if (reussie) gagnerExperience(XP.reponse, true);
 }
 
 // Un duel d'entraînement commence : quand le serveur tient la collection, il donne un ticket (c'est lui qui versera l'Encre).
@@ -332,7 +314,7 @@ export async function finirLeDuel(
   recompenseDuServeur?: RecompenseDuServeur,
 ): Promise<FinDeDuel> {
   if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
-  gagnerExperience(XP.duel + (resultat === 'victoire' ? XP.victoire : 0));
+  gagnerExperience(XP.duel + (resultat === 'victoire' ? XP.victoire : 0), true);
   const avant = partie.sauvegarde.encre;
   if (adversaire.type === 'entrainement') {
     const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);

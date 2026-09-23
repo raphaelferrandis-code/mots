@@ -2,6 +2,27 @@
 -- Relançable ; conserve les collections, les soldes et les achats existants.
 begin;
 alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
+
+alter table public.comptes
+  add column if not exists cadeau_achat_reclame boolean not null default false,
+  add column if not exists reserve_hebdo integer not null default 0,
+  add column if not exists prochain_hebdo timestamptz;
+
+-- Calcule aussi les droits gagnés hors connexion, sans créditer après l'expiration.
+create or replace function public.actualiser_offres(c public.comptes) returns public.comptes
+language plpgsql set search_path = '' as $$
+declare limite timestamptz; nombre integer;
+begin
+  if c.abonnement = 'aucun' or c.abonnement_jusqu_au is null or c.prochain_hebdo is null then return c; end if;
+  limite := least(now(), c.abonnement_jusqu_au - interval '1 microsecond');
+  if c.prochain_hebdo <= limite then
+    nombre := floor(extract(epoch from (limite - c.prochain_hebdo)) / (7 * 86400))::integer + 1;
+    c.reserve_hebdo := c.reserve_hebdo + nombre;
+    c.prochain_hebdo := c.prochain_hebdo + nombre * interval '7 days';
+  end if;
+  return c;
+end $$;
+
 create or replace function public.etat_du_compte(p_utilisateur uuid) returns jsonb
 language sql security definer set search_path = ''
 as $$
@@ -17,7 +38,10 @@ as $$
       'abonnement', c.abonnement,
       'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
       'encreAchetee', c.encre_achetee,
-      'anneeDeNaissance', c.annee_de_naissance
+      'anneeDeNaissance', c.annee_de_naissance,
+      'cadeauAchatReclame', c.cadeau_achat_reclame,
+      'paquetsHebdomadaires', (public.actualiser_offres(c)).reserve_hebdo,
+      'prochainPaquetHebdomadaire', public.en_millisecondes((public.actualiser_offres(c)).prochain_hebdo)
     ),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
@@ -28,18 +52,10 @@ $$;
 create or replace function public.acheter_personnalisation(p_id text) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
-declare c public.comptes%rowtype; prix integer;
 begin
-  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  prix := case p_id when 'boussole' then 120 when 'lune' then 280 when 'renard' then 160 when 'papillon' then 240 when 'dragon' then 480 when 'postal' then 160 when 'laurier' then 400 when 'ronces' then 120 when 'vitrail' then 200 when 'maree' then 320 when 'eclipse' then 480 when 'entrelacs' then 120 when 'constellation' then 320 when 'herbier-dos' then 160 when 'vitrail-dos' then 240 when 'maree-dos' then 400 when 'jade' then 80 when 'amethyste' then 240 when 'glacier' then 120 when 'rose' then 160 when 'or' then 320 when 'perle' then 200 when 'corail' then 280 else null end;
-  if prix is null then raise exception 'Personnalisation inconnue.'; end if;
-  select * into c from public.comptes where utilisateur = auth.uid() for update;
-  if not found then raise exception 'Compte introuvable.'; end if;
-  if p_id = any(c.personnalisations) then return public.etat_du_compte(auth.uid()); end if;
-  if c.encre < prix then raise exception 'Pas assez d’Encre.'; end if;
-  update public.comptes set encre = encre - prix, personnalisations = array_append(personnalisations, p_id), maj_le = now() where utilisateur = auth.uid();
-  return public.etat_du_compte(auth.uid());
+  raise exception 'L’Encre est réservée aux enchères.';
 end $$;
+revoke execute on function public.actualiser_offres(public.comptes) from public, anon, authenticated;
 revoke execute on function public.acheter_personnalisation(text) from public, anon;
 grant execute on function public.acheter_personnalisation(text) to authenticated;
 commit;

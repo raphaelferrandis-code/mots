@@ -1,4 +1,4 @@
-import { ORNEMENTS } from '../src/jeu/personnalisation.ts';
+import { preparerOffres, fonctionsOffres } from './offres.ts';
 // La partie du script du serveur qui tient les collections (décision du 22/09/2026, BRIEF-marche.md §5a) :
 // le compte du joueur (Encre, réserve de paquets, deck), ses timbres, le tirage des paquets par le serveur,
 // les récompenses des duels et l'importation, une seule fois, de la collection qui vivait sur l'appareil.
@@ -78,7 +78,7 @@ create table if not exists public.comptes (
   abonnement text not null default 'aucun' check (abonnement in ('aucun', 'collectionneur', 'expert')),
   abonnement_jusqu_au timestamptz,
   -- L'Encre reçue contre de l'argent (achetée, ou versée par la rente de la formule Expert). Elle ne peut servir
-  -- qu'au marché, jamais à acheter un paquet : c'est ce qui empêche l'argent d'acheter un tirage au sort.
+  -- qu'au marché, jamais à acheter un paquet. Anciennes bourses conservées pour compatibilité.
   encre_achetee integer not null default 0 check (encre_achetee >= 0),
   annee_de_naissance integer, -- demandée seulement à qui veut payer, pas à tout le monde
   rente_le date, -- le jour du dernier versement de la rente quotidienne
@@ -159,6 +159,8 @@ begin
     where utilisateur = p_utilisateur;
 end $$;
 
+${preparerOffres()}
+
 -- Un moment en millisecondes, comme le jeu compte le temps.
 create or replace function public.en_millisecondes(t timestamptz) returns bigint language sql immutable set search_path = ''
 as $$ select (extract(epoch from t) * 1000)::bigint $$;
@@ -180,7 +182,10 @@ as $$
       'abonnement', c.abonnement,
       'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
       'encreAchetee', c.encre_achetee,
-      'anneeDeNaissance', c.annee_de_naissance
+      'anneeDeNaissance', c.annee_de_naissance,
+      'cadeauAchatReclame', c.cadeau_achat_reclame,
+      'paquetsHebdomadaires', (public.actualiser_offres(c)).reserve_hebdo,
+      'prochainPaquetHebdomadaire', public.en_millisecondes((public.actualiser_offres(c)).prochain_hebdo)
     ),
     'maintenant', public.en_millisecondes(now()),
     'cartes', (select coalesce(jsonb_object_agg(p.carte, jsonb_build_object('obtenueLe', public.en_millisecondes(p.obtenue_le), 'doublons', p.doublons, 'finitions', p.finitions)), '{}'::jsonb)
@@ -195,12 +200,21 @@ language plpgsql stable set search_path = ''
 as $$
 declare
   gagnes integer;
+  limite timestamptz;
   -- La version payante (décision n° 34) : un paquet plus souvent, et une réserve plus grande.
   paye integer := public.niveau(c);
-  minutes integer := case when paye >= 1 then ${PAYANT.minutesEntreDeuxPaquets} else ${P.minutesEntreDeuxPaquets} end;
-  maximum integer := case when paye >= 1 then ${PAYANT.stockMaximum} else ${P.stockMaximum} end;
+  minutes integer := case when paye >= 2 then ${PAYANT.minutesEntreDeuxPaquets} else ${P.minutesEntreDeuxPaquets} end;
+  maximum integer := case when paye >= 2 then ${PAYANT.stockMaximum} else ${P.stockMaximum} end;
 begin
-  c.stock := least(c.stock, maximum);
+  if c.abonnement <> 'aucun' and c.abonnement_jusqu_au is not null and c.reference < c.abonnement_jusqu_au and c.abonnement_jusqu_au <= now() then
+    limite := c.abonnement_jusqu_au;
+    if c.stock < ${PAYANT.stockMaximum} then
+      gagnes := floor(extract(epoch from (limite - c.reference)) / (${PAYANT.minutesEntreDeuxPaquets} * 60));
+      c.stock := least(${PAYANT.stockMaximum}, c.stock + greatest(0, gagnes));
+    end if;
+    c.reference := limite;
+  end if;
+  -- Le stock déjà acquis reste disponible après expiration.
   -- Réserve pleine : le compte à rebours est à l'arrêt. Il repart quand un paquet est ouvert.
   if c.stock >= maximum or now() < c.reference then c.reference := now(); return c; end if;
   gagnes := floor(extract(epoch from (now() - c.reference)) / (minutes * 60));
@@ -254,7 +268,7 @@ begin
   victoires := case when c.jour = aujourd_hui then c.victoires_du_jour else 0 end;
   reduite := gagne and victoires >= ${D.victoiresPleinesParJour};
   gain := case when not gagne then ${D.encreParDefaite} when reduite then greatest(1, round(p_pleine * ${D.partDeLEncreEnsuite})::integer) else p_pleine end;
-  -- « Collectionneur » et au-dessus : l'Encre gagnée en jouant est doublée.
+  -- Ancien multiplicateur neutralisé : aucune offre ne donne de bonus d'Encre.
   if public.niveau(c) >= 2 then gain := gain * ${PAYANT.multiplicateurDEncre}; end if;
   update public.comptes set encre = encre + gain, jour = aujourd_hui, victoires_du_jour = victoires + gagne::integer, maj_le = now() where utilisateur = p_utilisateur;
   return jsonb_build_object('encre', gain, 'reduite', reduite);
@@ -262,7 +276,7 @@ end $$;
 
 -- Le tirage d'un paquet (src/jeu/paquets.ts), rangé dans la collection (src/jeu/partie.ts). L'appelant a vérifié la
 -- réserve ou l'Encre, et verrouillé le compte. Rend les cartes tirées, avec ce qu'elles apportent.
-create or replace function public.tirer_un_paquet(p_utilisateur uuid, p_masques text[]) returns jsonb
+create or replace function public.tirer_les_cartes(p_utilisateur uuid, p_masques text[], p_mode text) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
@@ -290,9 +304,14 @@ declare
 begin
   select * into c from public.comptes where utilisateur = p_utilisateur;
   -- Au plus tard au ${P.paquetsAvantLegendaireGarantie}e paquet sans Légendaire, la dernière carte en est une.
-  garantie := c.sans_legendaire + 1 >= ${P.paquetsAvantLegendaireGarantie};
+  if p_mode = 'achat' then emplacements := '[{"Hors-série":100}]'::jsonb;
+  elsif p_mode = 'hebdomadaire' then
+    emplacements := jsonb_set(emplacements, array[(jsonb_array_length(emplacements)-1)::text], ${texte(JSON.stringify(PAYANT.dernierEmplacementHebdomadaire))}::jsonb);
+  elsif p_mode <> 'normal' then raise exception 'Tirage inconnu.';
+  end if;
+  garantie := p_mode = 'normal' and c.sans_legendaire + 1 >= ${P.paquetsAvantLegendaireGarantie};
   -- Les ${P.paquetsDeDepart} paquets de départ ne contiennent que des cartes nouvelles, pour composer un deck tout de suite.
-  depart := c.ouverts < ${P.paquetsDeDepart};
+  depart := p_mode = 'normal' and c.ouverts < ${P.paquetsDeDepart};
 
   for chances in select * from jsonb_array_elements(emplacements) loop
     numero := numero + 1;
@@ -306,7 +325,7 @@ begin
       if seuil < 0 then rarete := r; exit; end if;
     end loop;
     if rarete is null then rarete := 'Commune'; end if;
-    if dernier then
+    if dernier and p_mode = 'normal' then
       -- La garantie de Légendaire passe avant tout ; sinon, une toute petite chance de carte Hors-série.
       if garantie then rarete := 'Légendaire';
       elsif exists (select 1 from public.cartes k where k.rarete = 'Hors-série' and not (k.registre && masques)) and random() < ${P.chanceHorsSerie} then rarete := 'Hors-série';
@@ -315,6 +334,10 @@ begin
 
     -- La carte : de cette rareté, sinon de la plus proche ; jamais deux fois la même dans un paquet.
     ordre := case rarete ${cas(RARETES, (r) => `array[${liste(ordreDeRepli(r as Rarete))}]`)} end;
+    if p_mode = 'achat' or (p_mode = 'hebdomadaire' and dernier) then
+      -- Ne jamais dégrader la garantie en cas de catalogue ou filtre incompatible.
+      ordre := array[rarete];
+    end if;
     id_choisie := null;
     foreach r in array ordre loop
       select k.id, k.rarete into id_choisie, rarete_choisie from public.cartes k
@@ -323,7 +346,7 @@ begin
       order by random() limit 1;
       if found then exit; end if;
     end loop;
-    if id_choisie is null then continue; end if;
+    if id_choisie is null then raise exception 'Aucune carte disponible pour ce tirage.'; end if;
     pris := pris || id_choisie;
 
     -- La finition, tirée à part (une Hors-série a sa propre impression : pas de finition).
@@ -355,10 +378,16 @@ begin
   end loop;
 
   update public.comptes
-    set encre = c.encre, ouverts = ouverts + 1, sans_legendaire = case when legendaire then 0 else sans_legendaire + 1 end, maj_le = now()
+    set encre = c.encre, ouverts = ouverts + case when p_mode = 'normal' then 1 else 0 end, sans_legendaire = case when p_mode <> 'normal' then sans_legendaire when legendaire then 0 else sans_legendaire + 1 end, maj_le = now()
     where utilisateur = p_utilisateur;
   return tirees;
 end $$;
+
+-- Compatibilité de l’ouverture ordinaire : le client ne choisit jamais les probabilités.
+create or replace function public.tirer_un_paquet(p_utilisateur uuid, p_masques text[]) returns jsonb
+language sql security definer set search_path = '' as $$
+  select public.tirer_les_cartes(p_utilisateur, p_masques, 'normal')
+$$;
 
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
@@ -521,18 +550,10 @@ end $$;
 create or replace function public.acheter_personnalisation(p_id text) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
-declare c public.comptes%rowtype; prix integer;
 begin
-  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  prix := case p_id ${ORNEMENTS.filter((o) => o.categorie !== 'titre' && !o.premium && o.prix > 0).map((o) => `when '${o.id}' then ${o.prix}`).join(' ')} else null end;
-  if prix is null then raise exception 'Personnalisation inconnue.'; end if;
-  select * into c from public.comptes where utilisateur = auth.uid() for update;
-  if not found then raise exception 'Compte introuvable.'; end if;
-  if p_id = any(c.personnalisations) then return public.etat_du_compte(auth.uid()); end if;
-  if c.encre < prix then raise exception 'Pas assez d’Encre.'; end if;
-  update public.comptes set encre = encre - prix, personnalisations = array_append(personnalisations, p_id), maj_le = now() where utilisateur = auth.uid();
-  return public.etat_du_compte(auth.uid());
+  raise exception 'L’Encre est réservée aux enchères.';
 end $$;
+${fonctionsOffres()}
 `;
 }
 
@@ -546,8 +567,10 @@ export function migrationPersonnalisation(): string {
 -- Relançable ; conserve les collections, les soldes et les achats existants.
 begin;
 alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
+${preparerOffres()}
 ${etat}
 ${achat}
+revoke execute on function public.actualiser_offres(public.comptes) from public, anon, authenticated;
 revoke execute on function public.acheter_personnalisation(text) from public, anon;
 grant execute on function public.acheter_personnalisation(text) to authenticated;
 commit;
@@ -556,14 +579,14 @@ commit;
 
 // Les droits : les fonctions que le jeu appelle, et celles qui restent internes.
 export const FONCTIONS_DES_COLLECTIONS = [
-  'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
+  'public.reclamer_recompense(text, text[])', 'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
   'public.ouvrir_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
   'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)',
 ];
 export const FONCTIONS_INTERNES = [
   'public.nombre_entier(text)', 'public.en_millisecondes(timestamptz)', 'public.etat_du_compte(uuid)', 'public.recharger(public.comptes)',
   'public.deck_propre(uuid, jsonb)', 'public.finitions_propres(jsonb)', 'public.recompenser(uuid, integer, text)', 'public.tirer_un_paquet(uuid, text[])',
-  'public.niveau(public.comptes)', 'public.verser_la_rente(uuid)',
+  'public.actualiser_offres(public.comptes)', 'public.changement_offre()', 'public.tirer_les_cartes(uuid, text[], text)', 'public.niveau(public.comptes)', 'public.verser_la_rente(uuid)',
 ];
 
 // Le script des cartes de l'édition : à recoller à chaque changement de l'édition (voir le test des scripts).

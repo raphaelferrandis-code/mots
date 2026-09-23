@@ -1,4 +1,3 @@
-import { XP } from '../jeu/personnalisation.ts';
 import { GainDuDuel, useRecompensesSuspendues } from '../composants/Recompenses.tsx';
 // Le duel : à l'entraînement contre l'ordinateur, ou en joute classée contre le « double » d'un autre joueur.
 // L'écran ne contient aucune règle : il affiche l'état du duel et passe par src/services/ pour chaque action.
@@ -77,6 +76,7 @@ export function Duel() {
   const cleDuDeck = sauvegarde ? `${sauvegarde.deck.join(',')}|${sauvegarde.reglages.masquerFamiliers}|${sauvegarde.reglages.masquerInjurieux}` : 'attente';
   const deck = useChargement(deckJouable, `deck:${cleDuDeck}`);
 
+  const xpAuDebut = useRef(0);
   const [mode, setMode] = useState<Adversaire['type']>('entrainement');
   const [niveau, setNiveau] = useState<Niveau>('Normal');
   const [terrain, setTerrain] = useState<Terrain | null>(null);
@@ -108,6 +108,7 @@ export function Duel() {
       const pret = await preparerUnDuel(adversaire);
       // Le ticket de la joute, ou celui du duel d'entraînement quand le serveur tient la collection (il versera l'Encre).
       setTicket(adversaire.type === 'joute' ? await serveurDeJoutes.commencer(adversaire.profil) : await commencerUnDuel(adversaire.niveau));
+      xpAuDebut.current = sauvegarde?.profil.xp ?? 0;
       setTerrain(pret.terrain);
       setDuel(pret.duel);
       setBilan(BILAN_VIDE);
@@ -422,7 +423,7 @@ export function Duel() {
       {etape.nom === 'fin' && (
         <section className="bloc duel__fin" aria-live="polite">
           <p className="entete__surtitre">{pluriel(duel.manches.length, 'manche')}</p>
-          <GainDuDuel resultat={etape.resultat} encre={etape.encre} xp={XP.duel + (etape.resultat === 'victoire' ? XP.victoire : 0) + (bilan.attaquesReussies + bilan.paradesReussies) * XP.reponse} />
+          <GainDuDuel resultat={etape.resultat} encre={etape.encre} xp={Math.max(0, sauvegarde.profil.xp - xpAuDebut.current)} />
           <p>
             {etape.nonEnregistree && <><span className="joute__refus">Serveur indisponible : résultat non enregistré, cote inchangée.</span><br /></>}
             {etape.cote && !etape.nonEnregistree && (

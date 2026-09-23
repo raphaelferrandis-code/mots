@@ -10,15 +10,15 @@ it('réserve les objets premium aux formules, quels que soient le niveau, les ac
   const cadre = ornement('astral')!;
   assert.equal(estDisponible(profil, cadre), false);
   assert.equal(estDisponible(profil, cadre, true), true);
-  assert.throws(() => acheterOrnement(profil, 1_000_000, 'astral'), /formules payantes/);
+  assert.throws(() => acheterOrnement(profil, 1_000_000, 'astral'), /enchères/);
 });
 
-it('retire le rendu premium à expiration, tout en conservant le choix pour un renouvellement', () => {
+it('réserve le rendu premium à l’achat définitif et conserve les choix', () => {
   const profil = { ...nouveauProfil(), cadre: 'astral', avatar: 'oracle', dos: 'oracle-dos', titre: 'immortel' };
   const abonnement = { ...FORMULE_GRATUITE, niveau: 2, abonnement: 'collectionneur' as const, jusquAu: 2000 };
-  assert.equal(cosmetiquesPremium(abonnement, 1999), true);
+  assert.equal(cosmetiquesPremium(abonnement, 1999), false);
   assert.equal(cosmetiquesPremium(abonnement, 2000), false);
-  assert.equal(profilVisible(profil, abonnement, 1999).cadre, 'astral');
+  assert.equal(profilVisible(profil, { ...abonnement, achatUnique: true }, 1999).cadre, 'astral');
   assert.equal(profilVisible(profil, abonnement, 2000).cadre, 'simple');
   assert.equal(profilVisible(profil, null, 1000).avatar, 'plume');
   assert.equal(profil.cadre, 'astral');
@@ -46,15 +46,11 @@ it('franchit les niveaux exactement au palier, même après plusieurs niveaux ga
     if (n > 1) assert.equal(progressionDuNiveau(seuil - 1).niveau, n - 1);
   }
 });
-it('débite une seule fois, conserve les achats et refuse un solde insuffisant', () => {
-  const p = nouveauProfil();
-  assert.throws(() => acheterOrnement(p, 119, 'boussole'), /assez/);
-  const achat = acheterOrnement(p, 200, 'boussole');
-  assert.equal(achat.encre, 80);
-  assert.ok(estDisponible(achat.profil, ornement('boussole')!));
-  assert.equal(acheterOrnement(achat.profil, 80, 'boussole').encre, 80);
-  assert.deepEqual(p.achats, []);
-  assert.equal(acheterOrnement({ ...p, xp: 250 }, 200, 'boussole').encre, 200);
+it('refuse tout achat cosmétique en Encre, même avec un solde suffisant', () => {
+  const profil = nouveauProfil();
+  for (const id of ['boussole', 'astral']) assert.throws(() => acheterOrnement(profil, 1000000, id), /enchères/);
+  assert.deepEqual(profil.achats, []);
+  assert.equal(estDisponible({ ...profil, achats: ['boussole'] }, ornement('boussole')!), true);
 });
 it('migre les sauvegardes et répare les équipements inconnus ou verrouillés', () => {
   assert.deepEqual(relireSauvegarde({ version: 4, cartes: {} }, 0).profil, nouveauProfil());

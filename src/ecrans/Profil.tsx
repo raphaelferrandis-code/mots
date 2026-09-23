@@ -8,10 +8,10 @@ import { DosDeCarte } from '../composants/carte/Carte.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, profilVisible, progressionDuNiveau } from '../jeu/personnalisation.ts';
-import type { Categorie, Ornement } from '../jeu/personnalisation.ts';
+import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
-import { acheterUnePersonnalisation, nommerMonProfil, personnaliser } from '../services/partie.ts';
+import { nommerMonProfil, personnaliser } from '../services/partie.ts';
 
 type Section = Categorie | 'paquet';
 const CATEGORIES: { id: Section; nom: string; motif: string }[] = [
@@ -35,8 +35,6 @@ export function Profil() {
   const essayage = useRef<HTMLElement>(null);
   const [message, dire] = useState('');
   const [erreur, signaler] = useState('');
-  const [achat, confirmer] = useState<Ornement | null>(null);
-  const [occupe, patienter] = useState(false);
   useEffect(() => { if (edition) dialogue.current?.showModal(); else dialogue.current?.close(); }, [edition]);
   if (partie.etat !== 'prete') return <main className="ecran"><h1>Mon profil</h1><p role="status">{partie.etat === 'erreur' ? partie.message : 'Chargement…'}</p></main>;
   const sauvegarde = partie.sauvegarde;
@@ -53,22 +51,15 @@ export function Profil() {
   const apercu = { ...profil, [categorie]: choix };
   const catalogue = categorie === 'paquet' ? PAQUETS : ORNEMENTS.filter((o) => o.categorie === categorie);
   const visibles = catalogue.filter((o) => filtre === 'tout' || (filtre === 'premium' ? 'premium' in o && o.premium : !('premium' in o) || estDisponible(profil, o, premium)));
-  function changerSection(id: Section) { choisirCategorie(id); choisir(profil[id] || ORNEMENTS.find(o => o.categorie === id)?.id || ''); filtrer('tout'); confirmer(null); signaler(''); dire(''); }
+  function changerSection(id: Section) { choisirCategorie(id); choisir(profil[id] || ORNEMENTS.find(o => o.categorie === id)?.id || ''); filtrer('tout'); signaler(''); dire(''); }
   function selectionner(id: string) {
-    choisir(id); confirmer(null); signaler(''); dire('');
+    choisir(id); signaler(''); dire('');
     if (window.innerWidth < 768 && essayage.current && essayage.current.getBoundingClientRect().top < 0) {
       const reduire = sauvegarde.reglages.reduireAnimations || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       essayage.current.scrollIntoView({ block: 'start', behavior: reduire ? 'instant' : 'smooth' });
     }
   }
   function equiper() { personnaliser(categorie, choix); dire(`${nom} équipé.`); signaler(''); }
-  async function acheter() {
-    if (!achat || occupe) return;
-    patienter(true); signaler('');
-    try { await acheterUnePersonnalisation(achat.id); personnaliser(achat.categorie, achat.id); dire(`${achat.nom} équipé.`); confirmer(null); }
-    catch (e) { signaler(e instanceof Error ? e.message : 'Achat impossible.'); }
-    finally { patienter(false); }
-  }
   function incliner(e: PointerEvent<HTMLDivElement>) {
     if (sauvegarde.reglages.reduireAnimations || window.matchMedia('(prefers-reduced-motion: reduce)').matches || e.pointerType !== 'mouse') return;
     const b = e.currentTarget.getBoundingClientRect();
@@ -93,26 +84,25 @@ export function Profil() {
         <div className="vestiaire__fiche">
           <span className="vestiaire__famille">{selection?.famille ?? 'Correspondances'}{selection?.anime && <span> · Animé</span>}</span>
           <h2 aria-live="polite">{nom}</h2>
-          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Toutes les formules</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>Niveau {selection?.niveau} <span className="vestiaire__ou">ou</span> {selection?.prix} Encre</span>}</div>
-          {achat ? <div className="vestiaire__confirmation"><strong>{achat.prix} Encre</strong><button className="bouton vestiaire__action" disabled={occupe} onClick={() => void acheter()}>{occupe ? 'Achat en cours…' : 'Confirmer l’achat'}</button><button className="bouton vestiaire__annuler" disabled={occupe} onClick={() => confirmer(null)}>Annuler</button></div>
-            : equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
+          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
+          {equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
             : disponible ? <button className="bouton vestiaire__action" onClick={equiper}>Équiper</button>
             : succesSelectionne ? <button className="bouton vestiaire__action" onClick={() => { ciblerSucces(succesSelectionne.id); changerVue('succes'); }}>Voir le succès <span>↗</span></button>
             : selection?.premium ? <a className="bouton vestiaire__action" href={lien({ ecran: 'formules' })}>Découvrir les formules <span>↗</span></a>
-            : <button className="bouton vestiaire__action" disabled={sauvegarde.encre < (selection?.prix ?? 0)} onClick={() => confirmer(selection ?? null)}>{sauvegarde.encre < (selection?.prix ?? 0) ? 'Encre insuffisante' : `Débloquer · ${selection?.prix} Encre`}</button>}
+            : <button className="bouton vestiaire__action" disabled>À gagner au niveau {selection?.niveau}</button>}
           {categorie === 'titre' && profil.titre && <button className="bouton vestiaire__annuler" onClick={() => { personnaliser('titre', ''); dire('Titre retiré.'); }}>Retirer le titre</button>}
           <p className="vestiaire__message" role="status">{message}</p>{erreur && <p className="vestiaire__erreur" role="alert">{erreur}</p>}
         </div>
       </aside>
       <section className="vestiaire__collection" aria-label="Collection de cosmétiques">
-        <div className="vestiaire__categories" role="group" aria-label="Catégorie">{CATEGORIES.map((c) => <button type="button" key={c.id} aria-pressed={categorie === c.id} disabled={occupe} onClick={() => changerSection(c.id)}><Embleme motif={c.motif} /><span>{c.nom}</span></button>)}</div>
+        <div className="vestiaire__categories" role="group" aria-label="Catégorie">{CATEGORIES.map((c) => <button type="button" key={c.id} aria-pressed={categorie === c.id} onClick={() => changerSection(c.id)}><Embleme motif={c.motif} /><span>{c.nom}</span></button>)}</div>
         <div className="vestiaire__outils"><h2>{CATEGORIES.find((c) => c.id === categorie)?.nom} <small>{catalogue.length.toString().padStart(2,'0')}</small></h2><div role="group" aria-label="Filtrer la collection">{[['tout','Tout'],['acquis','Possédés'], ...(catalogue.some(o => 'premium' in o && o.premium) ? [['premium','Premium']] : [])].map(([id,label])=><button key={id} aria-pressed={filtre === id} onClick={() => filtrer(id)}>{label}</button>)}</div></div>
         <div className={`vestiaire__grille vestiaire__grille--${categorie}`}>
           {visibles.map((o) => {
             const item = 'categorie' in o ? o : null;
             const libre = !item || estDisponible(profil,item,premium);
             const actif = choix === o.id;
-            return <button type="button" className="cosmetique" key={o.id} data-selectionne={actif} data-equipe={profil[categorie] === o.id} data-premium={item?.premium ?? false} aria-pressed={actif} aria-label={`${o.nom}${item?.premium ? ', premium' : ''}${profil[categorie] === o.id ? ', équipé' : !libre ? ', verrouillé' : ''} — essayer`} disabled={occupe} style={{ '--objet': item?.teinte ?? ('metal' in o ? o.metal : teinte) } as CSSProperties} onClick={() => selectionner(o.id)}>
+            return <button type="button" className="cosmetique" key={o.id} data-selectionne={actif} data-equipe={profil[categorie] === o.id} data-premium={item?.premium ?? false} aria-pressed={actif} aria-label={`${o.nom}${item?.premium ? ', premium' : ''}${profil[categorie] === o.id ? ', équipé' : !libre ? ', verrouillé' : ''} — essayer`} style={{ '--objet': item?.teinte ?? ('metal' in o ? o.metal : teinte) } as CSSProperties} onClick={() => selectionner(o.id)}>
               <span className="cosmetique__badge" aria-hidden="true">{item?.premium ? '✦' : ''}</span>
               <span className="cosmetique__visuel">
                 {categorie === 'cadre' ? <Portrait avatar={profil.avatar} cadre={o.id} anime={actif} />
