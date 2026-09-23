@@ -34,8 +34,9 @@ export function noterUneReponse(sauvegarde: Sauvegarde, idCarte: string, reussi:
   const profil = reussi ? { ...sauvegarde.profil, progressionSucces: { ...sauvegarde.profil.progressionSucces, definitions: totalDefinitions + 1 } } : sauvegarde.profil;
   const reussites = carte.reussites + (reussi ? 1 : 0);
   const vientDEtreMaitrisee = reussi && carte.maitriseeLe === null && reussites >= regles.reussitesPourLaMaitrise;
+  const apprentissage = { posees: carte.posees + 1, reussites, maitriseeLe: vientDEtreMaitrisee ? maintenant : carte.maitriseeLe };
   return {
-    sauvegarde: { ...sauvegarde, profil, cartes: { ...sauvegarde.cartes, [idCarte]: { ...carte, posees: carte.posees + 1, reussites, maitriseeLe: vientDEtreMaitrisee ? maintenant : carte.maitriseeLe } } },
+    sauvegarde: { ...sauvegarde, profil, apprentissages: { ...sauvegarde.apprentissages, [idCarte]: apprentissage }, cartes: { ...sauvegarde.cartes, [idCarte]: { ...carte, ...apprentissage } } },
     vientDEtreMaitrisee,
   };
 }
@@ -50,10 +51,10 @@ export function noterUneParade(sauvegarde: Sauvegarde, rarete: Rarete, reussie: 
 export type Resultat = 'victoire' | 'defaite' | 'nul';
 export type Recompense = { sauvegarde: Sauvegarde; encre: number; reduite: boolean };
 
-// Le jour du joueur (à l'heure de son appareil), pour le plafond quotidien.
+// Le jour UTC, commun au serveur et à l'appareil, pour le plafond quotidien.
 export function jourDe(maintenant: number): string {
   const date = new Date(maintenant);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return date.toISOString().slice(0, 10);
 }
 
 // Les premières victoires de la journée rapportent toute leur Encre, les suivantes une petite part :

@@ -77,6 +77,7 @@ it('exécute les droits, tirages et migrations dans PostgreSQL, sans toucher au 
     const doublon = await reclamer('achat');
     assert.equal(doublon.cartes[0].encre, 500);
     assert.equal((await etat()).encre, 500);
+    assert.equal((await db.query<{ n: number }>("select (finitions->>'Normale')::integer n from public.possessions where utilisateur=auth.uid() and carte=$1", [doublon.cartes[0].id])).rows[0].n, 1, 'un doublon converti ne crée pas un exemplaire vendable');
     // Si le tirage échoue, le cadeau n'est pas consommé (transaction atomique).
     const troisieme = '33333333-3333-4333-8333-333333333333';
     await db.exec(`insert into auth.users values ('${troisieme}'); set request.jwt.claim.sub = '${troisieme}'; select public.ouvrir_mon_compte(); update public.comptes set achat_unique = true where utilisateur = auth.uid();

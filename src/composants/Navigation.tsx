@@ -16,7 +16,7 @@ const ONGLETS: Onglet[] = [
   { route: { ecran: 'duel' }, nom: 'Duel', actifPour: ['duel'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="m5 4 10 10" /><path d="m19 4-10 10" /><path d="m4 17 3 3" /><path d="m20 17-3 3" /><path d="m6 15 3 3" /><path d="m18 15-3 3" /></svg> },
   { route: { ecran: 'classement' }, nom: 'Classement', actifPour: ['classement'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M3 20V11h6v9M9 20V5h6v15M15 20v-6h6v6M2 20h20" /></svg> },
   { route: { ecran: 'marche' }, nom: 'Marché', actifPour: ['marche'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M4 4h7l9 9-7 7-9-9z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg> },
-  { route: { ecran: 'reglages' }, nom: 'Réglages', actifPour: ['reglages', 'confidentialite'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M4 7h10" /><path d="M18 7h2" /><circle cx="16" cy="7" r="2" /><path d="M4 17h2" /><path d="M10 17h10" /><circle cx="8" cy="17" r="2" /></svg> },
+  { route: { ecran: 'profil' }, nom: 'Profil', actifPour: ['profil'], icone: <svg viewBox="0 0 24 24" {...trait}><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg> },
 ];
 
 export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: number | null }) {
@@ -27,7 +27,7 @@ export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: num
         <ul className="navigation__liste">
           {ONGLETS.map((onglet) => (
             <li key={onglet.nom}>
-              <a className="navigation__lien" href={lien(onglet.route)} aria-label={onglet.nom} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
+              <a className={`navigation__lien${onglet.route.ecran === 'profil' ? ' lien-profil' : ''}`} href={lien(onglet.route)} aria-label={onglet.nom} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
                 <span className="navigation__icone" aria-hidden="true">{onglet.icone}</span>
                 <span className="navigation__nom-long">{onglet.nom}</span>
                 <span className="navigation__nom-court">{onglet.nom === 'Collection' ? 'Album' : onglet.nom === 'Classement' ? 'Rangs' : onglet.nom}</span>
@@ -37,7 +37,7 @@ export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: num
         </ul>
       </nav>
       <div className="navigation__personnel">
-      <a className="lien-profil" href={lien({ ecran: 'profil' })} aria-current={ecran === 'profil' ? 'page' : undefined}>Profil</a>
+      <a className="lien-reglages" href={lien({ ecran: 'reglages' })} aria-current={ecran === 'reglages' || ecran === 'confidentialite' ? 'page' : undefined}>Réglages</a>
       <a className="lien-formules" href={lien({ ecran: 'formules' })} aria-label="Les formules" title="Les formules" aria-current={ecran === 'formules' ? 'page' : undefined}>
         <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="navigation-eclat" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffe1a1" /><stop offset=".5" stopColor="#e1b7ff" /><stop offset="1" stopColor="#8ce4eb" /></linearGradient></defs><path d="m15 4 3.5 8.5L27 16l-8.5 3.5L15 28l-3.5-8.5L3 16l8.5-3.5Z" fill="url(#navigation-eclat)" /><path d="m26 2 1.3 3.7L31 7l-3.7 1.3L26 12l-1.3-3.7L21 7l3.7-1.3Z" fill="#f9e9bd" /></svg>
       </a>

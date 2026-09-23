@@ -16,8 +16,8 @@ import { RARETES } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { serveurDeJoutes, tirerUnPseudonyme } from '../services/joutes.ts';
-import type { MonProfil } from '../services/joutes.ts';
-import { changerDePseudonyme, recevoirLaCoteDuServeur } from '../services/partie.ts';
+import { publierMonIdentite, rejoindreLesJoutes } from '../services/partie.ts';
+import { pseudoDuJoueur } from '../services/identite.ts';
 
 const REGLES = EQUILIBRAGE.joute;
 const signe = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
@@ -32,18 +32,9 @@ function raretesDuDeck(deck: readonly string[], cartes: ReadonlyMap<string, Cart
     .join(', ');
 }
 
-// Ce que le joueur fait connaître aux autres : son pseudonyme, son deck, et ses résultats sur les mots de ce deck.
-function profilDe(sauvegarde: Sauvegarde, pseudo: string): MonProfil {
-  const savoirs: MonProfil['savoirs'] = {};
-  for (const id of sauvegarde.deck) {
-    const carte = sauvegarde.cartes[id];
-    if (carte) savoirs[id] = { posees: carte.posees, reussies: carte.reussites };
-  }
-  return { pseudo, deck: sauvegarde.deck, savoirs, parades: sauvegarde.parades };
-}
-
 export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauvegarde: Sauvegarde; enPreparation: boolean; onDefier: (profil: ProfilDeJoute) => void }) {
-  const { pseudo, jouees, gagnees, recents } = sauvegarde.joutes;
+  const { jouees, gagnees, recents } = sauvegarde.joutes;
+  const pseudo = pseudoDuJoueur(sauvegarde);
   const cote = sauvegarde.joutes.cote ?? REGLES.coteDeDepart;
   const ligue = ligueDe(cote, REGLES);
   // La barre de progression vers la ligue suivante. Dans la première ligue, elle part d'un peu sous la cote de départ
@@ -58,23 +49,26 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
 
   // Le joueur rejoint les joutes en validant son pseudonyme : avant cela, rien n'est enregistré ni envoyé au serveur
   // (il est prévenu de ce qui sera envoyé : voir la page Confidentialité). Un pseudonyme vide = pas encore inscrit.
-  const inscrit = pseudo !== '';
+  const inscrit = sauvegarde.joutes.pseudo !== '';
   const pseudoValable = inscrit && examinerLePseudo(pseudo, PSEUDOS_INTERDITS).accepte;
-  // Pseudonyme devenu inacceptable (la liste des mots refusés a changé) : le jeu lui en donne un autre, libre à lui d'en changer.
-  useEffect(() => { if (inscrit && !pseudoValable) void tirerUnPseudonyme().then(changerDePseudonyme); }, [inscrit, pseudoValable]);
-  // Pas encore inscrit : le jeu lui en propose un, tiré de ses mots, à garder ou à remplacer.
-  useEffect(() => { if (!inscrit && saisie === null) void tirerUnPseudonyme().then((tire) => setSaisie((actuelle) => actuelle ?? tire)); }, [inscrit, saisie]);
+  // Le profil fournit le nom proposé, y compris à la première inscription.
+  useEffect(() => {
+    let actif = true;
+    if ((!inscrit || !pseudoValable) && saisie === null) {
+      if (pseudo) setSaisie(pseudo);
+      else void tirerUnPseudonyme().then(tire => { if (actif) setSaisie(actuelle => actuelle ?? tire); });
+    }
+    return () => { actif = false; };
+  }, [inscrit, pseudoValable, pseudo, saisie]);
 
   // Le profil est publié à chaque visite et à chaque changement de pseudonyme ou de deck ; le service rend la cote s'il la tient.
   const cleDuProfil = `${pseudo}|${sauvegarde.deck.join(',')}`;
   const publication = useChargement(async () => {
     if (!pseudoValable) return null;
-    const reponse = await serveurDeJoutes.publier(profilDe(sauvegarde, pseudo));
-    if (reponse.accepte && reponse.cote !== null) recevoirLaCoteDuServeur(reponse.cote);
-    return reponse;
+    await publierMonIdentite();
+    return true;
   }, `publication:${cleDuProfil}:${pseudoValable}`);
-  const publie = publication.etat === 'pret' && publication.donnees?.accepte === true;
-  const refusDuService = publication.etat === 'pret' && publication.donnees?.accepte === false ? publication.donnees.raison : null;
+  const publie = publication.etat === 'pret' && publication.donnees === true;
 
   const validerLePseudo = async (evenement: FormEvent): Promise<void> => {
     evenement.preventDefault();
@@ -82,9 +76,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
     if (!verdict.accepte) { setRefus(verdict.raison); return; }
     setEnvoi(true);
     try {
-      const reponse = await serveurDeJoutes.publier(profilDe(sauvegarde, verdict.pseudo));
-      if (!reponse.accepte) { setRefus(reponse.raison); return; }
-      changerDePseudonyme(verdict.pseudo);
+      await rejoindreLesJoutes(verdict.pseudo);
       setSaisie(null);
       setRefus(null);
     } catch (erreur) { setRefus(messageDe(erreur)); } finally { setEnvoi(false); }
@@ -99,6 +91,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const formulaire = (
     <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
       <label htmlFor="pseudo"><strong>Pseudo public</strong><span className="texte-doux petit">{LONGUEUR_DU_PSEUDO.minimum}–{LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces ou tirets.</span></label>
+      <p className="texte-doux petit">Le même pseudo est utilisé sur ton profil et dans les joutes.</p>
       <input id="pseudo" type="text" value={saisie ?? ''} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
       {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
       <div className="rangee-de-boutons">
@@ -140,7 +133,6 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             {ligue.suivante && (
               <span className="progression__barre" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, ((cote - bas) / (ligue.suivante.aPartirDe - bas)) * 100))}%` }} /></span>
             )}
-            {refusDuService && <p className="joute__refus" role="alert">{refusDuService} Choisis un autre pseudonyme.</p>}
             {publication.etat === 'erreur' && <p className="joute__refus" role="alert">{publication.message}</p>}
             <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Modifier le pseudo</button>
           </>

@@ -1,0 +1,316 @@
+// @ts-nocheck
+// Généré par node serveur/preparer-paiements.mjs — coller dans index.ts de Supabase.
+//#region supabase/functions/_shared/configuration.ts
+function configuration() {
+	const lire = (nom) => {
+		const valeur = Deno.env.get(nom);
+		if (!valeur) throw new Error(`Configuration manquante : ${nom}`);
+		return valeur;
+	};
+	return {
+		supabase: lire("SUPABASE_URL"),
+		service: lire("SUPABASE_SERVICE_ROLE_KEY"),
+		stripe: lire("STRIPE_SECRET_KEY"),
+		signature: lire("STRIPE_WEBHOOK_SECRET"),
+		site: lire("SITE_URL"),
+		testeurs: lire("STRIPE_TEST_USER_IDS").split(",").map((s) => s.trim()).filter(Boolean)
+	};
+}
+//#endregion
+//#region supabase/functions/_shared/stripe.ts
+var VERSION_STRIPE = "2025-02-24.acacia";
+var PRIX = {
+	necessaire: {
+		id: "price_1UIqsGKBKL3aSktUL2DDagCC",
+		centimes: 599
+	},
+	collectionneur: {
+		id: "price_1UIquSKBKL3aSktUxN8o68C5",
+		centimes: 499
+	}
+};
+function creerStripe(secret, requete = fetch) {
+	if (!secret.startsWith("sk_test_")) throw new Error("Seule une clé Stripe de test est acceptée.");
+	return async (path, body, key) => {
+		const r = await requete(`https://api.stripe.com/v1/${path}`, {
+			method: body ? "POST" : "GET",
+			signal: AbortSignal.timeout(15e3),
+			headers: {
+				Authorization: `Bearer ${secret}`,
+				"Stripe-Version": VERSION_STRIPE,
+				...body ? { "Content-Type": "application/x-www-form-urlencoded" } : {},
+				...key ? { "Idempotency-Key": key } : {}
+			},
+			...body ? { body: new URLSearchParams(body) } : {}
+		});
+		if (!r.ok) throw new Error(`Stripe indisponible (${r.status}).`);
+		const data = await r.json();
+		if (data.livemode === true) throw new Error("Objet Stripe réel interdit.");
+		return data;
+	};
+}
+async function verifierSignature(corps, signature, secret, maintenant = Date.now()) {
+	const champs = signature.split(",").map((s) => s.split("="));
+	const t = champs.find(([k]) => k === "t")?.[1];
+	if (!t || !/^\d+$/.test(t) || Math.abs(maintenant / 1e3 - Number(t)) > 300) return false;
+	const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), {
+		name: "HMAC",
+		hash: "SHA-256"
+	}, false, ["verify"]);
+	for (const [, v] of champs.filter(([k]) => k === "v1")) {
+		if (!/^[a-f0-9]{64}$/.test(v ?? "")) continue;
+		const bytes = Uint8Array.from(v.match(/../g), (n) => parseInt(n, 16));
+		if (await crypto.subtle.verify("HMAC", key, bytes, new TextEncoder().encode(`${t}.${corps}`))) return true;
+	}
+	return false;
+}
+async function liste(stripe, path) {
+	const objets = [];
+	let curseur = "";
+	for (let page = 0; page < 20; page++) {
+		const r = await stripe(`${path}${path.includes("?") ? "&" : "?"}limit=100${curseur ? `&starting_after=${encodeURIComponent(curseur)}` : ""}`);
+		if (!Array.isArray(r.data)) throw new Error("Réponse Stripe invalide.");
+		objets.push(...r.data);
+		if (!r.has_more) return objets;
+		if (!r.data.length) break;
+		curseur = r.data.at(-1).id;
+	}
+	throw new Error("Historique Stripe trop long pour ce mode test.");
+}
+function verifierPrix(prix, offre) {
+	const attendu = PRIX[offre];
+	if (prix.livemode !== false || prix.id !== attendu.id || prix.active !== true || prix.unit_amount !== attendu.centimes || prix.currency !== "eur" || (offre === "necessaire" ? prix.type !== "one_time" : prix.type !== "recurring" || prix.recurring?.interval !== "month" || prix.recurring?.interval_count !== 1)) throw new Error("Le tarif Stripe ne correspond pas à l’offre prévue.");
+}
+async function lireDroits(stripe, client, compte) {
+	const query = `customer=${encodeURIComponent(client)}`;
+	const sessions = await liste(stripe, `checkout/sessions?${query}`);
+	let album = false;
+	const paiementValide = async (pi) => {
+		if (typeof pi !== "string" || !pi.startsWith("pi_")) return false;
+		return (await liste(stripe, `charges?payment_intent=${encodeURIComponent(pi)}`)).some((c) => c.livemode === false && c.customer === client && c.paid === true && c.status === "succeeded" && c.disputed !== true && c.amount > 0 && c.amount_refunded < c.amount);
+	};
+	for (const s of sessions) {
+		if (s.livemode !== false || s.metadata?.compte !== compte || s.metadata?.offre !== "necessaire" || s.mode !== "payment" || s.status !== "complete" || s.payment_status !== "paid") continue;
+		const lignes = await liste(stripe, `checkout/sessions/${s.id}/line_items`);
+		if (lignes.length === 1 && lignes[0].price?.id === PRIX.necessaire.id && lignes[0].quantity === 1 && await paiementValide(s.payment_intent)) album = true;
+	}
+	const abonnements = (await liste(stripe, `subscriptions?${query}&status=all`)).filter((s) => s.livemode === false && s.metadata?.compte === compte && s.metadata?.offre === "collectionneur");
+	const ouverts = abonnements.filter((s) => !["canceled", "incomplete_expired"].includes(s.status));
+	let fin = 0;
+	for (const s of abonnements) {
+		const factures = await liste(stripe, `invoices?subscription=${s.id}&status=paid`);
+		for (const f of factures) {
+			if (f.livemode !== false || f.customer !== client || f.paid !== true || f.amount_paid <= 0 || !await paiementValide(f.payment_intent)) continue;
+			const lignes = await liste(stripe, `invoices/${f.id}/lines`);
+			for (const l of lignes) {
+				if (l.price?.id !== PRIX.collectionneur.id || l.proration === true || l.quantity !== 1 || !Number.isFinite(l.period?.end)) continue;
+				fin = Math.max(fin, Math.min(l.period.end, s.ended_at ?? Infinity));
+			}
+		}
+	}
+	return {
+		album,
+		fin: fin ? (/* @__PURE__ */ new Date(fin * 1e3)).toISOString() : null,
+		ouvert: ouverts.length > 0
+	};
+}
+//#endregion
+//#region supabase/functions/_shared/paiements.ts
+function creerPaiements(config, requete = fetch) {
+	const stripe = creerStripe(config.stripe, requete);
+	const site = new URL(config.site);
+	if (site.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(site.hostname)) throw new Error("Adresse du site invalide.");
+	const retour = `${site.origin}${site.pathname.replace(/\/$/, "")}/`;
+	const cors = {
+		"Access-Control-Allow-Origin": site.origin,
+		"Access-Control-Allow-Headers": "authorization, apikey, content-type",
+		"Access-Control-Allow-Methods": "POST, OPTIONS",
+		Vary: "Origin"
+	};
+	const json = (data, status = 200) => new Response(JSON.stringify(data), {
+		status,
+		headers: {
+			...cors,
+			"Content-Type": "application/json",
+			"Cache-Control": "no-store"
+		}
+	});
+	async function db(path, body) {
+		const r = await requete(`${config.supabase}/rest/v1/${path}`, {
+			method: body === void 0 ? "GET" : "POST",
+			signal: AbortSignal.timeout(15e3),
+			headers: {
+				apikey: config.service,
+				Authorization: `Bearer ${config.service}`,
+				"Content-Type": "application/json"
+			},
+			...body === void 0 ? {} : { body: JSON.stringify(body) }
+		});
+		if (!r.ok) throw new Error("Synchronisation du paiement indisponible. Réessaie dans un instant.");
+		const texte = await r.text();
+		return texte ? JSON.parse(texte) : null;
+	}
+	const rpc = (nom, body) => db(`rpc/${nom}`, body);
+	async function sousVerrou(id, action) {
+		const l = await rpc("verrouiller_paiement_test", { p_id: id });
+		try {
+			return await action(l);
+		} finally {
+			await rpc("liberer_paiement_test", {
+				p_id: id,
+				p_verrou: l.verrou
+			}).catch(() => void 0);
+		}
+	}
+	const enregistrer = (l) => rpc("enregistrer_paiement_test", {
+		p_id: l.id,
+		p_verrou: l.verrou,
+		p_client: l.client_stripe,
+		p_sessions: l.sessions
+	});
+	async function synchroniser(l) {
+		if (!l.client_stripe) return {
+			album: false,
+			fin: null,
+			ouvert: false
+		};
+		const droits = await lireDroits(stripe, l.client_stripe, l.id);
+		await rpc("appliquer_paiement_test", {
+			p_id: l.id,
+			p_verrou: l.verrou,
+			p_album: droits.album,
+			p_fin: droits.fin,
+			p_ouvert: droits.ouvert
+		});
+		return droits;
+	}
+	async function paiement(req) {
+		if (req.headers.get("origin") !== site.origin) return json({ erreur: "Origine non autorisée." }, 403);
+		if (req.method === "OPTIONS") return new Response(null, {
+			headers: cors,
+			status: 204
+		});
+		if (req.method !== "POST") return json({ erreur: "Méthode non autorisée." }, 405);
+		const authorization = req.headers.get("authorization");
+		if (!authorization?.startsWith("Bearer ")) return json({ erreur: "Connexion requise." }, 401);
+		try {
+			const auth = await requete(`${config.supabase}/auth/v1/user`, {
+				headers: {
+					apikey: config.service,
+					Authorization: authorization
+				},
+				signal: AbortSignal.timeout(15e3)
+			});
+			if (!auth.ok) return json({ erreur: "Session expirée. Retrouve ton compte avant de payer." }, 401);
+			const user = await auth.json();
+			if (!config.testeurs.includes(user.id)) return json({ erreur: "Les paiements sont réservés aux comptes de test autorisés." }, 403);
+			const body = await req.json();
+			if (![
+				"achat",
+				"portail",
+				"synchroniser"
+			].includes(body.action)) return json({ erreur: "Action inconnue." }, 400);
+			if (body.action === "achat" && !Object.hasOwn(PRIX, body.offre)) return json({ erreur: "Offre inconnue." }, 400);
+			const comptes = await db(`comptes?utilisateur=eq.${encodeURIComponent(user.id)}&select=annee_de_naissance,code_defini_le`);
+			if (comptes.length !== 1) return json({ erreur: "Ouvre ta collection avant de continuer." }, 409);
+			if (body.action === "achat" && (!comptes[0].code_defini_le || !comptes[0].annee_de_naissance || (/* @__PURE__ */ new Date()).getUTCFullYear() - comptes[0].annee_de_naissance < 18)) return json({ erreur: "Déclare ton âge et crée ton code de secours dans les Réglages avant le test." }, 403);
+			return await sousVerrou((await rpc("preparer_paiement_test", { p_utilisateur: user.id })).id, async (l) => {
+				if (!l.client_stripe) {
+					if (Date.now() - Date.parse(l.cree_le) > 828e5) throw new Error("Création Stripe à vérifier avant de poursuivre. Contacte contact@philamots.fr.");
+					l.client_stripe = (await stripe("customers", {
+						"metadata[compte]": l.id,
+						"metadata[application]": "philamots-test"
+					}, `client-${l.id}`)).id;
+					await enregistrer(l);
+				}
+				if (body.action === "synchroniser") return json(await synchroniser(l));
+				if (body.action === "portail") {
+					const configuration = await stripe("billing_portal/configurations", {
+						"business_profile[headline]": "Philamots — environnement de test",
+						"features[subscription_cancel][enabled]": "true",
+						"features[subscription_cancel][mode]": "at_period_end",
+						"features[payment_method_update][enabled]": "true",
+						"features[invoice_history][enabled]": "true"
+					}, "philamots-portail-test-v1");
+					const portal = await stripe("billing_portal/sessions", {
+						customer: l.client_stripe,
+						configuration: configuration.id,
+						return_url: `${retour}#/formules`
+					});
+					return json({ url: portal.url });
+				}
+				const offre = body.offre;
+				const droits = await synchroniser(l);
+				if (offre === "necessaire" ? droits.album : droits.ouvert) return json({ erreur: "Cette offre est déjà souscrite. Utilise « Gérer mon abonnement »." }, 409);
+				verifierPrix(await stripe(`prices/${PRIX[offre].id}`), offre);
+				const ancienne = l.sessions[offre];
+				if (ancienne?.id) {
+					const s = await stripe(`checkout/sessions/${ancienne.id}`);
+					if (s.status === "open") return json({ url: s.url });
+					delete l.sessions[offre];
+				}
+				if (!l.sessions[offre]) {
+					l.sessions[offre] = {
+						cle: crypto.randomUUID(),
+						cree: Date.now()
+					};
+					await enregistrer(l);
+				}
+				const tentative = l.sessions[offre];
+				if (Date.now() - tentative.cree > 828e5) throw new Error("Un ancien paiement doit être vérifié avant de réessayer.");
+				const mode = offre === "necessaire" ? "payment" : "subscription";
+				const prefixe = mode === "payment" ? "payment_intent_data" : "subscription_data";
+				const session = await stripe("checkout/sessions", {
+					mode,
+					customer: l.client_stripe,
+					client_reference_id: l.id,
+					"line_items[0][price]": PRIX[offre].id,
+					"line_items[0][quantity]": "1",
+					"payment_method_types[0]": "card",
+					locale: "fr",
+					success_url: `${retour}?paiement=retour#/formules`,
+					cancel_url: `${retour}?paiement=annule#/formules`,
+					"metadata[compte]": l.id,
+					"metadata[offre]": offre,
+					[`${prefixe}[metadata][compte]`]: l.id,
+					[`${prefixe}[metadata][offre]`]: offre
+				}, `achat-${tentative.cle}`);
+				tentative.id = session.id;
+				await enregistrer(l);
+				return json({ url: session.url });
+			});
+		} catch (erreur) {
+			return json({ erreur: erreur instanceof Error ? erreur.message : "Paiement indisponible." }, 503);
+		}
+	}
+	async function webhook(req) {
+		if (req.method !== "POST") return json({ erreur: "Méthode non autorisée." }, 405);
+		const corps = await req.text();
+		if (!await verifierSignature(corps, req.headers.get("stripe-signature") ?? "", config.signature)) return json({ erreur: "Signature invalide." }, 400);
+		try {
+			const evt = JSON.parse(corps);
+			if (evt.livemode !== false) return json({ erreur: "Événement réel interdit." }, 400);
+			if (!/^(checkout\.session\.|invoice\.|customer\.subscription\.|charge\.)/.test(evt.type)) return json({ ignore: true });
+			let objet = evt.data.object;
+			if (evt.type.startsWith("charge.dispute.")) objet = await stripe(`charges/${typeof objet.charge === "string" ? objet.charge : objet.charge.id}`);
+			const client = typeof objet.customer === "string" ? objet.customer : objet.customer?.id;
+			if (!client) return json({ ignore: true });
+			const customer = await stripe(`customers/${encodeURIComponent(client)}`);
+			if (customer.metadata?.application !== "philamots-test") return json({ ignore: true });
+			const liens = await db(`paiements_test?id=eq.${encodeURIComponent(customer.metadata.compte)}&select=*`);
+			if (liens.length !== 1 || liens[0].client_stripe !== client) throw new Error("Liaison Stripe pas encore enregistrée.");
+			await sousVerrou(liens[0].id, synchroniser);
+			return json({ recu: true });
+		} catch {
+			return json({ erreur: "Synchronisation à réessayer." }, 503);
+		}
+	}
+	return {
+		paiement,
+		webhook
+	};
+}
+//#endregion
+//#region supabase/functions/stripe-webhook/index.ts
+Deno.serve((req) => creerPaiements(configuration()).webhook(req));
+//#endregion

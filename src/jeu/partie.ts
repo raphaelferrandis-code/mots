@@ -59,7 +59,7 @@ function ouvrir(sauvegarde: Sauvegarde, contexte: Contexte): Ouverture {
   const obtenues: CarteObtenue[] = tirees.map(({ carte, finition }) => {
     const possedee = cartes[carte.id];
     if (!possedee) {
-      cartes[carte.id] = { obtenueLe: maintenant, doublons: 0, finitions: { [finition]: 1 }, posees: 0, reussites: 0, maitriseeLe: null };
+      cartes[carte.id] = { obtenueLe: maintenant, doublons: 0, finitions: { [finition]: 1 }, posees: 0, reussites: 0, maitriseeLe: null, ...sauvegarde.apprentissages?.[carte.id] };
       return { carte, finition, nouvelle: true, nouvelleFinition: true, encre: 0 };
     }
     const dejaDansCetteFinition = (possedee.finitions[finition] ?? 0) > 0;
@@ -70,7 +70,7 @@ function ouvrir(sauvegarde: Sauvegarde, contexte: Contexte): Ouverture {
       return { carte, finition, nouvelle: false, nouvelleFinition: true, encre: 0 };
     }
     const gain = equilibrage.encreParDoublon[carte.rarete] * equilibrage.finitions.encre[finition];
-    cartes[carte.id] = { ...possedee, doublons: possedee.doublons + 1, finitions };
+    cartes[carte.id] = { ...possedee, doublons: possedee.doublons + 1 };
     encre += gain;
     return { carte, finition, nouvelle: false, nouvelleFinition: false, encre: gain };
   });

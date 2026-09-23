@@ -103,17 +103,17 @@ export function chancesDeLOrdinateur(niveau: Niveau, carteDuJoueur: CarteIndex, 
   return { reussir: regles.reussiteDeLOrdinateur[niveau], parer: regles.paradeDeLOrdinateur.selonLaRarete[carteDuJoueur.rarete] * regles.paradeDeLOrdinateur.selonLeNiveau[niveau] };
 }
 
-function apresLaManche(camp: Camp, jouee: CarteIndex, subis: number, hasard: Hasard): Camp {
-  // La carte jouée part à la défausse ; on pioche (la défausse reforme la pioche au besoin).
-  let pioche = camp.pioche;
-  let defausse = [...camp.defausse, jouee];
-  if (pioche.length === 0) { pioche = melanger(defausse, hasard); defausse = []; }
+function apresLaManche(camp: Camp, jouee: CarteIndex, subis: number): Camp {
+  // Une carte jouée est épuisée pour ce duel, même si l'attaque échoue.
+  // Quand la pioche est vide, on termine avec les cartes encore en main.
+  const pioche = camp.pioche;
+  const defausse = [...camp.defausse, jouee];
   return { pv: camp.pv - subis, main: [...camp.main.filter((c) => c.id !== jouee.id), ...pioche.slice(0, 1)], pioche: pioche.slice(1), defausse, derniere: jouee };
 }
 
 // Règle une manche : les deux cartes s'affrontent. L'attaque du joueur part la première : si elle met l'ordinateur
 // à zéro, le duel s'arrête là et l'attaque adverse ne porte pas (les deux camps ne tombent donc jamais ensemble).
-export function jouerLaManche(duel: Duel, idDuJoueur: string, idAdverse: string, savoirs: Savoirs, hasard: Hasard, tailles: TaillesDesFactions, regles: ReglesDuDuel): Duel {
+export function jouerLaManche(duel: Duel, idDuJoueur: string, idAdverse: string, savoirs: Savoirs, _hasard: Hasard, tailles: TaillesDesFactions, regles: ReglesDuDuel): Duel {
   if (duel.vainqueur !== null) throw new Error('Le duel est terminé');
   const carteDuJoueur = duel.camps.joueur.main.find((c) => c.id === idDuJoueur);
   const carteAdverse = duel.camps.adversaire.main.find((c) => c.id === idAdverse);
@@ -128,13 +128,15 @@ export function jouerLaManche(duel: Duel, idDuJoueur: string, idAdverse: string,
   const adverse = attaque('adversaire', carteAdverse, carteDuJoueur, savoirs.adversaireReussit && !terrasse, savoirs.joueurPare);
 
   const camps: Record<Cote, Camp> = {
-    joueur: apresLaManche(duel.camps.joueur, carteDuJoueur, adverse.infliges, hasard),
-    adversaire: apresLaManche(duel.camps.adversaire, carteAdverse, duJoueur.infliges, hasard),
+    joueur: apresLaManche(duel.camps.joueur, carteDuJoueur, adverse.infliges),
+    adversaire: apresLaManche(duel.camps.adversaire, carteAdverse, duJoueur.infliges),
   };
 
-  // Un camp à zéro a perdu. À la limite de manches, le mieux portant l'emporte (égalité : match nul).
+  // Un camp à zéro a perdu. À la limite de manches ou à épuisement d'une main,
+  // le mieux portant l'emporte (égalité : match nul).
   for (const cote of ['joueur', 'adversaire'] as const) camps[cote] = { ...camps[cote], pv: Math.max(0, camps[cote].pv) };
-  const fini = camps.joueur.pv === 0 || camps.adversaire.pv === 0 || duel.manche >= regles.manchesMaximum;
+  const fini = camps.joueur.pv === 0 || camps.adversaire.pv === 0 || duel.manche >= regles.manchesMaximum
+    || camps.joueur.main.length === 0 || camps.adversaire.main.length === 0;
   const vainqueur: Duel['vainqueur'] = !fini ? null : camps.joueur.pv === camps.adversaire.pv ? 'nul' : camps.joueur.pv > camps.adversaire.pv ? 'joueur' : 'adversaire';
 
   return { manche: fini ? duel.manche : duel.manche + 1, camps, vainqueur, manches: [...duel.manches, { numero: duel.manche, joueur: duJoueur, adversaire: adverse }] };

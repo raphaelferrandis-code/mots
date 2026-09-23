@@ -180,6 +180,7 @@ describe('une partie', () => {
     // Le même paquet une seconde fois : cette fois ce sont de vrais doublons.
     const encore = ouvrirUnPaquetGratuit(sauvegarde, { ...contexte(T0, 7), equilibrage: toutBrillant });
     assert.ok(encore.cartes.every((c) => !c.nouvelleFinition && c.encre > 0));
+    assert.deepEqual(encore.sauvegarde.cartes[cartes[0].carte.id].finitions, { Normale: 1, Brillante: 1 }, 'le doublon converti ne reste pas revendable');
   });
   it("refuse une ouverture sans stock, même avec beaucoup d’Encre", () => {
     const riche = { ...nouvelleSauvegarde(T0, 0), encre: 1000000 };

@@ -14,6 +14,8 @@ import { fabriquerLesJoueursMaison, pseudonymeAuHasard } from '../jeu/joueursMai
 import { proposerDesAdversaires, rangDansLeClassement } from '../jeu/joute.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import type { Resultat } from '../jeu/progression.ts';
+import { lireEtat } from '../jeu/synchronisation.ts';
+import type { EtatDuCompte } from '../jeu/synchronisation.ts';
 import { cleDuPseudo, examinerLePseudo } from '../jeu/pseudo.ts';
 import { chargerEdition } from './cartes.ts';
 import { chacunSonTour, clientDuServeur, serveurUtilise } from './compte.ts';
@@ -26,7 +28,7 @@ export type LigneDeClassement = { rang: number; pseudo: string; cote: number; mo
 export type Classement = { joueurs: number; rang: number; tete: LigneDeClassement[]; voisins: LigneDeClassement[] };
 export type Publication = { accepte: true; cote: number | null } | { accepte: false; raison: string };
 // La fin d'une joute vue par le serveur : la cote avant et après ; et l'Encre versée, quand il tient aussi la collection.
-export type FinDeJouteDuServeur = { avant: number; apres: number; encre?: number; reduite?: boolean };
+export type FinDeJouteDuServeur = { avant: number; apres: number; encre?: number; reduite?: boolean; etat?: EtatDuCompte };
 
 export type ServeurDeJoutes = {
   enLigne: boolean;
@@ -35,12 +37,12 @@ export type ServeurDeJoutes = {
   adversaires(cote: number, recents: readonly string[]): Promise<ProfilDeJoute[]>;
   // Début et fin d'une joute. Sans serveur, il n'y a ni ticket ni cote imposée : le jeu calcule lui-même.
   commencer(adversaire: ProfilDeJoute): Promise<number | null>;
-  terminer(ticket: number | null, resultat: Resultat): Promise<FinDeJouteDuServeur | null>;
+  terminer(ticket: number | null, resultat: Resultat | 'abandon'): Promise<FinDeJouteDuServeur | null>;
   classement(pseudo: string, cote: number): Promise<Classement>;
   // Cet appareil a-t-il un compte sur le serveur ? (Il peut en rester un alors que la partie a été effacée.)
   aUnCompte(): boolean;
   // Le droit à l'effacement : retire du serveur le profil du joueur, ses joutes, sa collection et son compte anonyme.
-  supprimer(): Promise<void>;
+  supprimer(compteEntier?: boolean): Promise<void>;
 };
 
 export async function tirerUnPseudonyme(): Promise<string> {
@@ -98,15 +100,18 @@ function serveurSupabase(): ServeurDeJoutes {
 
     adversaires: () => client.appeler<ProfilDeJoute[]>('adversaires'),
     commencer: (adversaire) => client.appeler<number>('commencer_une_joute', { p_adversaire: adversaire.id }),
-    terminer: (ticket, resultat) => chacunSonTour(() => client.appeler<FinDeJouteDuServeur>('terminer_une_joute', { p_ticket: ticket, p_resultat: resultat })),
+    terminer: (ticket, resultat) => chacunSonTour(async () => {
+      const reponse = await client.appeler<FinDeJouteDuServeur>('terminer_une_joute', { p_ticket: ticket, p_resultat: resultat });
+      return { ...reponse, ...(reponse.etat ? { etat: lireEtat(reponse.etat) } : {}) };
+    }),
     classement: () => client.appeler<Classement>('classement'),
     aUnCompte: () => client.aUneSession(),
 
     // Un appareil sans compte n'a jamais rien envoyé : on n'en ouvre pas un pour le supprimer aussitôt.
-    async supprimer() {
+    async supprimer(compteEntier = false) {
       if (!client.aUneSession()) return;
-      await chacunSonTour(() => client.appeler<null>('supprimer_mon_profil'));
-      client.oublierLaSession();
+      await chacunSonTour(() => client.appeler<null>(compteEntier ? 'supprimer_mon_compte' : 'supprimer_mon_profil'));
+      if (compteEntier) client.oublierLaSession();
     },
   };
 }
@@ -121,6 +126,6 @@ export async function supprimerMonProfilDeJoute(): Promise<void> {
 }
 
 export async function effacerLaPartieEtLeProfil(): Promise<void> {
-  await serveurDeJoutes.supprimer();
+  await serveurDeJoutes.supprimer(true);
   await toutEffacer();
 }

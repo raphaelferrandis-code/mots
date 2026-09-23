@@ -36,6 +36,9 @@ create table if not exists public.joutes (
   cote_apres integer
 );
 create index if not exists joutes_par_attaquant on public.joutes (attaquant, commencee_le desc);
+alter table public.joutes add column if not exists recompense jsonb,
+  add column if not exists abandonnee boolean not null default false,
+  add column if not exists cote_adverse integer;
 
 create table if not exists public.mots_interdits (mot text primary key, entier boolean not null);
 
@@ -120,15 +123,34 @@ begin
   -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
   -- (constaté à la première mise en route : le second revenait en erreur).
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 0));
+  perform 1 from public.comptes where utilisateur = moi for update;
   refus := public.pseudo_refuse(propre);
   if refus is not null then return jsonb_build_object('accepte', false, 'raison', refus); end if;
   if exists (select 1 from public.profils where pseudo_cle = public.cle_du_pseudo(propre) and utilisateur is distinct from moi) then
     return jsonb_build_object('accepte', false, 'raison', 'Ce pseudonyme est déjà pris.');
   end if;
-  if jsonb_typeof(p_deck) <> 'array' or jsonb_array_length(p_deck) > 10 or jsonb_typeof(p_savoirs) <> 'object' or jsonb_typeof(p_parades) <> 'object'
+  if p_deck is null or p_savoirs is null or p_parades is null or jsonb_typeof(p_deck) <> 'array' or jsonb_array_length(p_deck) > 10 or jsonb_typeof(p_savoirs) <> 'object' or jsonb_typeof(p_parades) <> 'object'
      or pg_column_size(p_deck) > 2000 or pg_column_size(p_savoirs) > 4000 or pg_column_size(p_parades) > 2000 then
     raise exception 'Ce profil ne peut pas être enregistré.';
   end if;
+  if p_deck <> public.deck_propre(moi, p_deck) then
+    raise exception 'Le deck doit contenir des cartes distinctes de ta collection.';
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where jsonb_typeof(value) <> 'object'
+       or coalesce(value->>'posees', '') !~ '^[0-9]{1,8}$'
+       or coalesce(value->>'reussies', '') !~ '^[0-9]{1,8}$'
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
+
+  if exists(select 1 from public.comptes where utilisateur=moi and progression_active) then
+    p_savoirs := public.savoirs_verifies(moi,p_deck);
+    select parades_verifiees into p_parades from public.comptes where utilisateur=moi;
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where (value->>'reussies')::integer > (value->>'posees')::integer
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
 
   begin
     insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
@@ -157,6 +179,15 @@ begin
   select * into moi from public.profils where utilisateur = auth.uid();
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
   select coalesce(array_agg(defenseur), '{}') into recents from (select defenseur from public.joutes where attaquant = moi.id order by commencee_le desc limit 6) r;
+  if to_regclass('public.combats') is not null then
+    execute 'select coalesce(array_agg(defenseur), ''{}''::uuid[]) from (
+      select defenseur from (
+        select (etat->''adversaire''->''profil''->>''id'')::uuid defenseur, cree_le commencee_le
+          from public.combats where utilisateur=$1 and etat->''adversaire''->>''type''=''joute''
+        union all select defenseur, commencee_le from public.joutes where attaquant=$2
+      ) historique order by commencee_le desc limit 6
+    ) derniers' into recents using auth.uid(), moi.id;
+  end if;
 
   foreach ecart in array array[-120, 0, 120] loop
     select p.* into choisi from (
@@ -187,13 +218,23 @@ declare
   moi public.profils%rowtype;
   ticket bigint;
 begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
   select * into moi from public.profils where utilisateur = auth.uid();
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
   if p_adversaire = moi.id or not exists (select 1 from public.profils where id = p_adversaire) then raise exception 'Cet adversaire n''est plus disponible.'; end if;
+  if jsonb_array_length(public.deck_propre(auth.uid(), moi.deck)) <> 10
+     or not exists (select 1 from public.profils where id=p_adversaire and jsonb_array_length(deck)=10)
+  then raise exception 'Les deux decks doivent être complets.'; end if;
+  perform public.autoriser_joute(auth.uid());
   if (select count(*) from public.joutes where attaquant = moi.id and commencee_le > now() - interval '1 hour') >= 40 then
     raise exception 'Trop de joutes en peu de temps : fais une pause.';
   end if;
-  insert into public.joutes (attaquant, defenseur, cote_avant) values (moi.id, p_adversaire, moi.cote) returning id into ticket;
+  -- Recommencer après avoir fermé l'onglet compte comme un abandon de la joute précédente.
+  perform public.terminer_une_joute(id, 'abandon') from public.joutes where attaquant=moi.id and terminee_le is null order by id;
+  insert into public.joutes (attaquant, defenseur, cote_avant, cote_adverse)
+    select moi.id, p.id, moi.cote, p.cote from public.profils p where p.id=p_adversaire returning id into ticket;
   return ticket;
 end $$;
 
@@ -207,24 +248,39 @@ declare
   cote_adverse integer;
   obtenu numeric;
   nouvelle integer;
-  recompense jsonb;
+  gain_enregistre jsonb;
+  abandon boolean := p_resultat = 'abandon';
 begin
-  if p_resultat not in ('victoire', 'defaite', 'nul') then raise exception 'Résultat inconnu.'; end if;
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_resultat is null or p_resultat not in ('victoire', 'defaite', 'nul', 'abandon') then raise exception 'Résultat inconnu.'; end if;
+  if abandon then p_resultat := 'defaite'; end if;
+  perform 1 from public.comptes where utilisateur = auth.uid() for update;
   select * into moi from public.profils where utilisateur = auth.uid() for update;
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
-  select * into joute from public.joutes where id = p_ticket and attaquant = moi.id and terminee_le is null and commencee_le > now() - interval '2 hours' for update;
+  select * into joute from public.joutes where id = p_ticket and attaquant = moi.id for update;
   if not found then raise exception 'Cette joute ne peut plus être enregistrée.'; end if;
-  if now() - joute.commencee_le < interval '45 seconds' then raise exception 'Cette joute est trop courte pour être comptée.'; end if;
+  if joute.terminee_le is not null then
+    if joute.resultat is distinct from p_resultat or joute.abandonnee <> abandon or joute.recompense is null
+    then raise exception 'Cette joute est déjà enregistrée avec un autre résultat.'; end if;
+    return joute.recompense || jsonb_build_object('etat', public.etat_du_compte(moi.utilisateur));
+  end if;
+  if not abandon and joute.commencee_le <= now() - interval '2 hours' then raise exception 'Cette joute a expiré : abandonne-la pour continuer.'; end if;
 
   select cote into cote_adverse from public.profils where id = joute.defenseur;
+  cote_adverse := coalesce(joute.cote_adverse, cote_adverse);
   obtenu := case p_resultat when 'victoire' then 1 when 'nul' then 0.5 else 0 end;
   nouvelle := greatest(100, round(moi.cote + 32 * (obtenu - 1 / (1 + power(10::numeric, (cote_adverse - moi.cote)::numeric / 400)))));
 
   update public.profils set cote = nouvelle, jouees = jouees + 1, gagnees = gagnees + (p_resultat = 'victoire')::integer, maj_le = now() where id = moi.id;
-  update public.joutes set terminee_le = now(), resultat = p_resultat, cote_avant = moi.cote, cote_apres = nouvelle where id = joute.id;
   -- L'Encre de la joute, si le serveur tient la collection du joueur (même plafond quotidien que les duels d'entraînement).
-  recompense := public.recompenser(moi.utilisateur, 35, p_resultat);
-  return jsonb_build_object('avant', moi.cote, 'apres', nouvelle) || coalesce(recompense, '{}'::jsonb);
+  gain_enregistre := jsonb_build_object('avant', moi.cote, 'apres', nouvelle) || case when abandon
+    then jsonb_build_object('encre', 0, 'reduite', false)
+    else coalesce(public.recompenser(moi.utilisateur, 35, p_resultat), '{}'::jsonb) end;
+  update public.joutes set terminee_le = now(), resultat = p_resultat, cote_avant = moi.cote, cote_apres = nouvelle,
+    recompense = gain_enregistre, abandonnee = abandon where id = joute.id;
+  return gain_enregistre || jsonb_build_object('etat', public.etat_du_compte(moi.utilisateur));
 end $$;
 
 -- Le classement : les dix premiers, et les voisins du joueur.
@@ -255,9 +311,25 @@ end $$;
 create or replace function public.supprimer_mon_profil() returns void
 language plpgsql security definer set search_path = ''
 as $$
+declare en_cours boolean;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  perform 1 from public.comptes where utilisateur=auth.uid() for update;
+  if to_regclass('public.combats') is not null then
+    execute 'select exists(select 1 from public.combats where utilisateur=$1 and not termine)' into en_cours using auth.uid();
+    if en_cours then raise exception 'Termine ou abandonne ton combat avant de retirer ton profil.'; end if;
+  end if;
   delete from public.profils where utilisateur = auth.uid();
+end $$;
+
+-- Effacement complet, distinct du retrait des joutes. Le trigger du marché
+-- rembourse les tiers avant la suppression en cascade des possessions.
+create or replace function public.supprimer_mon_compte() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923);
   delete from auth.users where id = auth.uid();
 end $$;
 
@@ -314,7 +386,19 @@ alter table public.comptes
   add column if not exists annee_de_naissance integer,
   add column if not exists rente_le date;
 alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
+-- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
+alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 create index if not exists comptes_par_code on public.comptes (code_hache);
+
+-- Une ancienne sauvegarde doit être validée par l'administrateur : le client ne
+-- peut pas prouver l'ancienneté ou les ressources d'un fichier local non signé.
+create table if not exists public.importations_validees (
+  utilisateur uuid primary key references auth.users(id) on delete cascade,
+  sauvegarde jsonb not null,
+  validee_le timestamptz not null default now()
+);
+alter table public.importations_validees enable row level security;
+revoke all on public.importations_validees from public, anon, authenticated;
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
 create table if not exists public.possessions (
@@ -335,6 +419,8 @@ create table if not exists public.duels (
   termine_le timestamptz
 );
 create index if not exists duels_par_joueur on public.duels (utilisateur, commence_le desc);
+alter table public.duels add column if not exists resultat text, add column if not exists recompense jsonb,
+  add column if not exists abandonne boolean not null default false;
 
 -- La récupération par code transfère un compte à un autre joueur : ses timbres et ses duels doivent le suivre.
 alter table public.possessions drop constraint if exists possessions_utilisateur_fkey,
@@ -349,6 +435,134 @@ alter table public.duels enable row level security;
 revoke all on public.cartes, public.comptes, public.possessions, public.duels from anon, authenticated;
 
 -- ── Les aides internes (jamais appelées par le jeu) ─────────────────────────
+
+alter table public.comptes
+  add column if not exists progression_active boolean not null default false,
+  add column if not exists progression_id uuid not null default gen_random_uuid(),
+  add column if not exists xp bigint not null default 0,
+  add column if not exists bonus_xp_reste integer not null default 0,
+  add column if not exists combats_joues integer not null default 0,
+  add column if not exists combats_gagnes integer not null default 0,
+  add column if not exists parades_verifiees jsonb not null default '{}',
+  add column if not exists heritage_progression jsonb not null default '{}',
+  add column if not exists heritage_importe boolean not null default false;
+
+create table if not exists public.apprentissages (
+  utilisateur uuid not null references public.comptes(utilisateur) on update cascade on delete cascade,
+  carte text not null references public.cartes(id),
+  posees integer not null default 0 check (posees >= 0),
+  reussites integer not null default 0 check (reussites between 0 and posees),
+  maitrisee_le timestamptz,
+  primary key(utilisateur, carte)
+);
+create table if not exists public.progressions_validees (
+  utilisateur uuid primary key references public.comptes(utilisateur) on update cascade on delete cascade,
+  sauvegarde jsonb not null
+);
+alter table public.apprentissages enable row level security;
+alter table public.progressions_validees enable row level security;
+revoke all on public.apprentissages, public.progressions_validees from public, anon, authenticated;
+
+create or replace function public.savoirs_verifies(p_utilisateur uuid, p_deck jsonb) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_object_agg(carte, jsonb_build_object('posees', posees, 'reussies', reussites)), '{}')
+  from public.apprentissages where utilisateur=p_utilisateur and p_deck ? carte
+$$;
+
+create or replace function public.progression_du_compte(p_utilisateur uuid) returns jsonb
+language sql security definer set search_path = '' as $$
+  select case when c.progression_active then jsonb_build_object(
+    'version', 1, 'id', c.progression_id,
+    'xp', c.xp + coalesce((c.heritage_progression->>'xp')::bigint, 0), 'bonusXpReste', c.bonus_xp_reste,
+    'duels', jsonb_build_object('joues', c.combats_joues, 'gagnes', c.combats_gagnes),
+    'parades', c.parades_verifiees, 'heritageImporte', c.heritage_importe,
+    'apprentissages', (
+      select coalesce(jsonb_object_agg(k.id, jsonb_build_object(
+        'posees', coalesce(a.posees,0) + coalesce((h.v->>'posees')::integer,0),
+        'reussites', coalesce(a.reussites,0) + coalesce((h.v->>'reussites')::integer,0),
+        'maitriseeLe', coalesce((h.v->>'maitriseeLe')::bigint, (extract(epoch from a.maitrisee_le)*1000)::bigint)
+      )), '{}')
+      from (select carte id from public.apprentissages where utilisateur=c.utilisateur
+            union select jsonb_object_keys(coalesce(c.heritage_progression->'apprentissages','{}'))) k
+      left join public.apprentissages a on a.utilisateur=c.utilisateur and a.carte=k.id
+      left join lateral (select c.heritage_progression->'apprentissages'->k.id v) h on true
+    )
+  ) else null end from public.comptes c where c.utilisateur=p_utilisateur
+$$;
+
+create or replace function public.gagner_xp(p_utilisateur uuid, p_base integer, p_combat boolean) returns integer
+language plpgsql security definer set search_path = '' as $$
+declare c public.comptes%rowtype; gain integer := p_base; centiemes integer;
+begin
+  select * into c from public.comptes where utilisateur=p_utilisateur for update;
+  if not found or not c.progression_active then return 0; end if;
+  if p_base is null or p_base < 0 then raise exception 'Gain d’expérience invalide.'; end if;
+  centiemes := c.bonus_xp_reste;
+  if p_combat and public.niveau(c) >= 2 then
+    centiemes := centiemes + p_base * 25;
+    gain := gain + centiemes / 100;
+    centiemes := centiemes % 100;
+  end if;
+  update public.comptes set xp=xp+gain, bonus_xp_reste=centiemes where utilisateur=p_utilisateur;
+  return gain;
+end $$;
+
+create or replace function public.noter_reponse_verifiee(p_utilisateur uuid, p_reponse jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+declare c public.comptes%rowtype; cle text := p_reponse->>'carte'; juste boolean := (p_reponse->>'reussie')::boolean;
+  rarete text := p_reponse->>'rarete'; avant jsonb; ancienne integer;
+begin
+  select * into c from public.comptes where utilisateur=p_utilisateur for update;
+  if (p_reponse->>'apprentissage')::boolean then
+    ancienne := coalesce((c.heritage_progression->'apprentissages'->cle->>'reussites')::integer,0);
+    insert into public.apprentissages(utilisateur, carte, posees, reussites, maitrisee_le)
+      values(p_utilisateur, cle, 1, juste::integer, case when juste and ancienne+1 >= 5 then now() end)
+    on conflict (utilisateur,carte) do update set posees=public.apprentissages.posees+1,
+      reussites=public.apprentissages.reussites+juste::integer,
+      maitrisee_le=coalesce(public.apprentissages.maitrisee_le, case when juste and public.apprentissages.reussites+ancienne+1 >= 5 then now() end);
+  end if;
+  if (p_reponse->>'parade')::boolean then
+    avant := coalesce(c.parades_verifiees->rarete,'{"posees":0,"reussies":0}');
+    update public.comptes set parades_verifiees=jsonb_set(parades_verifiees,array[rarete],jsonb_build_object(
+      'posees',(avant->>'posees')::integer+1,'reussies',(avant->>'reussies')::integer+juste::integer)) where utilisateur=p_utilisateur;
+  end if;
+  update public.profils p set savoirs=public.savoirs_verifies(p_utilisateur,p.deck),
+    parades=(select parades_verifiees from public.comptes where utilisateur=p_utilisateur), maj_le=now() where p.utilisateur=p_utilisateur;
+end $$;
+
+-- Seul l'administrateur peut approuver des progrès issus de l'ancien client.
+-- Ils sont conservés pour le profil personnel ; le double classé n'utilise que les réponses vérifiées.
+create or replace function public.importer_progression_validee(p_utilisateur uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+declare archive jsonb; c public.comptes%rowtype; a record;
+begin
+  select * into c from public.comptes where utilisateur=p_utilisateur for update;
+  if not found or c.heritage_importe then raise exception 'Progression déjà importée ou compte absent.'; end if;
+  select sauvegarde into archive from public.progressions_validees where utilisateur=p_utilisateur for update;
+  if not found then raise exception 'La progression doit être approuvée.'; end if;
+  if coalesce(archive->>'xp','') !~ '^[0-9]{1,9}$' or jsonb_typeof(archive->'apprentissages') is distinct from 'object' then raise exception 'Archive de progression invalide.'; end if;
+  for a in select key,value from jsonb_each(archive->'apprentissages') loop
+    if not exists(select 1 from public.cartes where id=a.key)
+      or coalesce(a.value->>'posees','') !~ '^[0-9]{1,8}$' or coalesce(a.value->>'reussites','') !~ '^[0-9]{1,8}$'
+    then raise exception 'Apprentissage invalide.'; end if;
+    if (a.value->>'reussites')::integer > (a.value->>'posees')::integer
+      or (a.value->>'maitriseeLe' is not null and (a.value->>'maitriseeLe') !~ '^[0-9]{1,15}$') then raise exception 'Apprentissage invalide.'; end if;
+  end loop;
+  update public.comptes set heritage_progression=jsonb_build_object('xp',(archive->>'xp')::bigint,'apprentissages',archive->'apprentissages'), heritage_importe=true where utilisateur=p_utilisateur;
+  delete from public.progressions_validees where utilisateur=p_utilisateur;
+end $$;
+
+create or replace function public.autoriser_joute(p_utilisateur uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+declare debuts timestamptz[];
+begin
+  select debuts_joutes into debuts from public.comptes where utilisateur=p_utilisateur for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  select coalesce(array_agg(d), '{}') into debuts from unnest(debuts) d where d > now() - interval '1 hour';
+  if cardinality(debuts) >= 40 then raise exception 'Trop de joutes en peu de temps : fais une pause.'; end if;
+  update public.comptes set debuts_joutes = array_append(debuts, now()) where utilisateur=p_utilisateur;
+end $$;
+
 create or replace function public.nombre_entier(t text) returns bigint language sql immutable set search_path = ''
 as $$ select case when t ~ '^[0-9]{1,15}$' then t::bigint end $$;
 
@@ -412,6 +626,9 @@ as $$
     'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'progression', public.progression_du_compte(p_utilisateur),
+    'plafondDuJour', jsonb_build_object('jour', coalesce(c.jour::text, ''), 'victoires', c.victoires_du_jour),
+    'classementPersonnel', (select jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) from public.profils p where p.utilisateur = c.utilisateur),
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
     'formule', jsonb_build_object(
       'niveau', public.niveau(c),
@@ -477,6 +694,21 @@ as $$
     limit 10
   ) i
 $$;
+
+-- Le double suit le deck du compte, notamment après la mise en vente du dernier exemplaire.
+create or replace function public.actualiser_deck_public() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.profils set deck = new.deck, maj_le = now() where utilisateur = new.utilisateur;
+  if new.progression_active then
+    update public.profils set savoirs=public.savoirs_verifies(new.utilisateur,new.deck),parades=new.parades_verifiees where utilisateur=new.utilisateur;
+  end if;
+  return new;
+end $$;
+drop trigger if exists deck_public_a_jour on public.comptes;
+create trigger deck_public_a_jour after update of deck on public.comptes
+  for each row execute function public.actualiser_deck_public();
+update public.profils p set deck = public.deck_propre(p.utilisateur, p.deck) where p.utilisateur is not null;
 
 -- Des finitions propres : seulement les finitions du jeu, avec des nombres entiers positifs ; à défaut, une Normale.
 create or replace function public.finitions_propres(j jsonb) returns jsonb language sql immutable set search_path = ''
@@ -607,7 +839,7 @@ begin
             * (case finition when 'Normale' then 1 when 'Brillante' then 3 when 'Holographique' then 10 else 1 end)
             * (case when public.niveau(c) >= 2 then 1 else 1 end);
       update public.possessions
-        set finitions = jsonb_set(finitions, array[finition], to_jsonb((possession.finitions ->> finition)::integer + 1)), doublons = doublons + 1
+        set doublons = doublons + 1
         where utilisateur = p_utilisateur and carte = id_choisie;
       c.encre := c.encre + gain;
       tirees := tirees || jsonb_build_object('id', id_choisie, 'finition', finition, 'nouvelle', false, 'nouvelleFinition', false, 'encre', gain);
@@ -617,6 +849,8 @@ begin
   update public.comptes
     set encre = c.encre, ouverts = ouverts + case when p_mode = 'normal' then 1 else 0 end, sans_legendaire = case when p_mode <> 'normal' then sans_legendaire when legendaire then 0 else sans_legendaire + 1 end, maj_le = now()
     where utilisateur = p_utilisateur;
+  perform public.gagner_xp(p_utilisateur, case when p_mode='achat' then 0 else 20 end
+    + 15 * (select count(*)::integer from jsonb_array_elements(tirees) t where (t->>'nouvelle')::boolean), false);
   return tirees;
 end $$;
 
@@ -661,10 +895,19 @@ declare
   jours integer;
   ouverts integer;
   carte record;
+  validee jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 1));
   if exists (select 1 from public.comptes where utilisateur = moi) then raise exception 'Ce compte a déjà une collection.'; end if;
+  select sauvegarde into validee from public.importations_validees where utilisateur = moi for update;
+  if not found then raise exception 'Cette ancienne collection doit être validée avant son transfert. Conserve son export et contacte le support.'; end if;
+  -- Seule la copie approuvée fait foi ; les paramètres du navigateur sont ignorés.
+  p_cree_le := (validee ->> 'creeLe')::bigint;
+  p_encre := (validee ->> 'encre')::integer;
+  p_paquets := validee -> 'paquets';
+  p_cartes := validee -> 'cartes';
+  p_deck := validee -> 'deck';
   if jsonb_typeof(p_paquets) <> 'object' or jsonb_typeof(p_cartes) <> 'object' or jsonb_typeof(p_deck) <> 'array' or pg_column_size(p_cartes) > 3000000 then
     raise exception 'Cette sauvegarde ne peut pas être importée.';
   end if;
@@ -695,6 +938,7 @@ begin
       least(to_timestamp(coalesce(public.nombre_entier(carte.v ->> 'obtenueLe'), 0) / 1000.0), now()));
   end loop;
   update public.comptes set deck = public.deck_propre(moi, p_deck) where utilisateur = moi;
+  delete from public.importations_validees where utilisateur = moi;
   return public.etat_du_compte(moi);
 end $$;
 
@@ -757,11 +1001,14 @@ declare
   ticket bigint;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if p_niveau not in ('Facile', 'Normal', 'Difficile') then raise exception 'Niveau inconnu.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_niveau is null or p_niveau not in ('Facile', 'Normal', 'Difficile') then raise exception 'Niveau inconnu.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
   if not exists (select 1 from public.comptes where utilisateur = auth.uid()) then raise exception 'Ouvre d''abord ton compte.'; end if;
   if (select count(*) from public.duels where utilisateur = auth.uid() and commence_le > now() - interval '1 hour') >= 40 then
     raise exception 'Trop de duels en peu de temps : fais une pause.';
   end if;
+  perform public.terminer_un_duel(id, 'abandon') from public.duels where utilisateur=auth.uid() and termine_le is null order by id;
   insert into public.duels (utilisateur, niveau) values (auth.uid(), p_niveau) returning id into ticket;
   return ticket;
 end $$;
@@ -772,16 +1019,26 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   duel public.duels%rowtype;
-  recompense jsonb;
+  gain_enregistre jsonb;
+  abandon boolean := p_resultat = 'abandon';
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if p_resultat not in ('victoire', 'defaite', 'nul') then raise exception 'Résultat inconnu.'; end if;
-  select * into duel from public.duels where id = p_ticket and utilisateur = auth.uid() and termine_le is null and commence_le > now() - interval '2 hours' for update;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_resultat is null or p_resultat not in ('victoire', 'defaite', 'nul', 'abandon') then raise exception 'Résultat inconnu.'; end if;
+  if abandon then p_resultat := 'defaite'; end if;
+  select * into duel from public.duels where id = p_ticket and utilisateur = auth.uid() for update;
   if not found then raise exception 'Ce duel ne peut plus être enregistré.'; end if;
-  if now() - duel.commence_le < interval '45 seconds' then raise exception 'Ce duel est trop court pour être compté.'; end if;
-  update public.duels set termine_le = now() where id = duel.id;
-  recompense := public.recompenser(auth.uid(), case duel.niveau when 'Facile' then 20 when 'Normal' then 30 when 'Difficile' then 45 else 0 end, p_resultat);
-  return coalesce(recompense, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
+  if duel.termine_le is not null then
+    if duel.resultat is distinct from p_resultat or duel.abandonne <> abandon or duel.recompense is null
+    then raise exception 'Ce duel est déjà enregistré avec un autre résultat.'; end if;
+    return duel.recompense || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
+  end if;
+  if not abandon and duel.commence_le <= now() - interval '2 hours' then raise exception 'Ce duel a expiré : abandonne-le pour continuer.'; end if;
+  gain_enregistre := case when abandon then jsonb_build_object('encre', 0, 'reduite', false)
+    else public.recompenser(auth.uid(), case duel.niveau when 'Facile' then 20 when 'Normal' then 30 when 'Difficile' then 45 else 0 end, p_resultat) end;
+  update public.duels set termine_le = now(), resultat = p_resultat, recompense = gain_enregistre, abandonne = abandon where id = duel.id;
+  return coalesce(gain_enregistre, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
 end $$;
 
 create or replace function public.acheter_personnalisation(p_id text) returns jsonb
@@ -898,6 +1155,7 @@ begin
   select utilisateur into ancien from public.comptes where code_hache is not null and code_hache = public.empreinte_du_code(p_code);
   if not found then return jsonb_build_object('refus', 'Ce code ne correspond à aucune collection.'); end if;
   if ancien <> moi then
+    perform pg_advisory_xact_lock(20260923);
     perform 1 from public.comptes where utilisateur = ancien for update;
     delete from public.comptes where utilisateur = moi;
     delete from public.profils where utilisateur = moi;
@@ -993,6 +1251,35 @@ begin
         provenance = coalesce(excluded.provenance, public.possessions.provenance);
 end $$;
 
+-- Toute suppression (y compris auth.users et récupération) solde les engagements
+-- avant les cascades. La mise reste dans sa bourse d'origine lors du remboursement.
+create or replace function public.solder_compte_supprime() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare e public.encheres%rowtype; achetee integer;
+begin
+  perform pg_advisory_xact_lock(20260923);
+  for e in select * from public.encheres
+    where etat = 'ouverte' and (vendeur = old.utilisateur or meilleur_encherisseur = old.utilisateur)
+    order by id for update loop
+    if e.vendeur = old.utilisateur then
+      if e.meilleur_encherisseur is not null and e.meilleur_encherisseur <> old.utilisateur then
+        select part_achetee into achetee from public.mises
+          where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
+        update public.comptes set encre_achetee = encre_achetee + coalesce(achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(achetee, 0) where utilisateur = e.meilleur_encherisseur;
+      end if;
+    else
+      perform public.rendre_un_timbre(e.vendeur, e.carte, e.finition, e.obtenue_le, null);
+    end if;
+    update public.encheres set etat = 'invendue', cloturee_le = now(),
+      meilleure_mise = null, meilleur_encherisseur = null where id = e.id;
+  end loop;
+  return old;
+end $$;
+drop trigger if exists solder_compte_supprime on public.comptes;
+create trigger solder_compte_supprime before delete on public.comptes
+  for each row execute function public.solder_compte_supprime();
+
 -- Relève les cotes du jour si ce n'est pas encore fait : une seule fois par jour, quel que soit le joueur qui passe.
 create or replace function public.calculer_les_cotes() returns void
 language plpgsql set search_path = ''
@@ -1034,15 +1321,17 @@ $$;
 
 -- Clôt les enchères échues (50 au plus par appel) : le timbre à l'acheteur, l'Encre au vendeur moins la commission,
 -- ou le timbre rendu au vendeur s'il n'y a pas eu de mise. Appelée par toutes les fonctions du marché et par mon_compte.
-create or replace function public.cloturer_les_encheres() returns void
+create or replace function public.cloturer_une_enchere(p_id bigint) returns void
 language plpgsql set search_path = ''
 as $$
 declare
   e public.encheres%rowtype;
   vendeur_recoit integer;
 begin
-  for e in select * from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le limit 50 for update skip locked loop
-    if e.meilleure_mise is null then
+  perform pg_advisory_xact_lock(20260923);
+  select * into e from public.encheres where id = p_id and etat = 'ouverte' and ferme_le <= now() for update;
+  if not found then return; end if;
+    if e.meilleure_mise is null or e.meilleur_encherisseur is null then
       perform public.rendre_un_timbre(e.vendeur, e.carte, e.finition, e.obtenue_le, null);
       update public.encheres set etat = 'invendue', cloturee_le = now() where id = e.id;
     else
@@ -1052,6 +1341,15 @@ begin
       update public.comptes set encre = encre + vendeur_recoit, maj_le = now() where utilisateur = e.vendeur;
       update public.encheres set etat = 'vendue', cloturee_le = now(), prix_final = e.meilleure_mise, acheteur = e.meilleur_encherisseur where id = e.id;
     end if;
+end $$;
+
+create or replace function public.cloturer_les_encheres() returns void
+language plpgsql set search_path = '' as $$
+declare e record;
+begin
+  perform pg_advisory_xact_lock(20260923);
+  for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit 50 for update skip locked loop
+    perform public.cloturer_une_enchere(e.id);
   end loop;
   -- Au passage, les cotes du jour (une fois par jour).
   perform public.calculer_les_cotes();
@@ -1160,22 +1458,26 @@ begin
     if achats >= 10 then raise exception 'Tu as déjà 10 achats aujourd''hui : reviens demain.'; end if;
   end if;
   minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * 0.05)::integer) end;
-  if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
-  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat; end if;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat;
+  elsif montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum;
+  end if;
   -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
-  if c.encre + c.encre_achetee < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
+  if c.encre + c.encre_achetee + (case when e.meilleur_encherisseur = moi then e.meilleure_mise else 0 end) < montant then
+    raise exception 'Pas assez d''Encre : il te faut % Encre.', montant;
+  end if;
 
   -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
-  pris_achetee := least(c.encre_achetee, montant);
-  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
-    where utilisateur = moi;
   if e.meilleur_encherisseur is not null then
-    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by quand desc limit 1;
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
     update public.comptes
       set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
           encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
       where utilisateur = e.meilleur_encherisseur;
   end if;
+  select * into c from public.comptes where utilisateur = moi;
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
   insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
   update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
     -- Une mise dans les 5 dernières minutes prolonge l'enchère d'autant.
@@ -1184,7 +1486,7 @@ begin
                     else e.ferme_le end
     where id = e.id;
   -- Un achat immédiat se règle sur-le-champ.
-  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_les_encheres(); end if;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_une_enchere(e.id); end if;
   select * into e from public.encheres where id = p_enchere;
   return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
 end $$;
@@ -1271,6 +1573,147 @@ end $$;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
-revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.pseudo_refuse(text), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+
+-- Les RPC privées ci-dessous ne sont appelées que par la fonction serveur authentifiée.
+create table if not exists public.combats (
+  id uuid primary key,
+  utilisateur uuid not null references public.comptes(utilisateur) on update cascade on delete cascade,
+  revision integer not null default 0,
+  etat jsonb not null, vue jsonb not null,
+  commandes jsonb not null default '{}',
+  termine boolean not null default false,
+  archive boolean not null default false,
+  recompense jsonb,
+  xp integer not null default 0,
+  cree_le timestamptz not null default now(), maj_le timestamptz not null default now()
+);
+create unique index if not exists un_combat_ouvert_par_compte on public.combats(utilisateur) where not archive;
+create index if not exists combats_par_date on public.combats(maj_le);
+alter table public.combats enable row level security;
+revoke all on public.combats from public, anon, authenticated;
+
+-- Activer une seule fois : pas de remise à zéro des apprentissages aux déploiements suivants.
+update public.comptes set progression_active=true where not progression_active;
+alter table public.comptes alter column progression_active set default true;
+update public.profils p set savoirs=public.savoirs_verifies(p.utilisateur,p.deck),
+  parades=c.parades_verifiees from public.comptes c where c.utilisateur=p.utilisateur;
+
+create or replace function public.combat_reponse(p_utilisateur uuid, p_id uuid) returns jsonb
+language sql security definer set search_path = '' as $$
+  select jsonb_build_object('etat',public.etat_du_compte(p_utilisateur),'combat',(
+    select jsonb_build_object('id',id,'revision',revision,'vue',vue,'xp',xp,'recompense',recompense)
+    from public.combats where id=p_id and utilisateur=p_utilisateur and not archive))
+$$;
+
+create or replace function public.combat_contexte(p_utilisateur uuid, p_id uuid, p_adversaire uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare ligne public.combats%rowtype; compte jsonb; profil jsonb;
+begin
+  -- Le compte et la révision doivent appartenir au même instantané logique.
+  perform 1 from public.comptes where utilisateur=p_utilisateur for update;
+  compte := public.etat_du_compte(p_utilisateur);
+  if compte is null then raise exception 'Ouvre d''abord ton compte.'; end if;
+  select * into ligne from public.combats where utilisateur=p_utilisateur and
+    ((p_id is not null and id=p_id) or (p_id is null and not archive)) order by cree_le desc limit 1;
+  if p_id is not null and ligne.id is null then raise exception 'Ce combat est introuvable pour ton compte.'; end if;
+  select jsonb_build_object('id',p.id,'pseudo',p.pseudo,'cote',p.cote,'deck',p.deck,'maison',p.maison,
+    'savoirs',case when p.maison then p.savoirs else public.savoirs_verifies(p.utilisateur,p.deck) end,
+    'parades',case when p.maison then p.parades else coalesce(c.parades_verifiees,'{}') end)
+    into profil from public.profils p left join public.comptes c on c.utilisateur=p.utilisateur
+    where p.id=p_adversaire and p.utilisateur is distinct from p_utilisateur;
+  return jsonb_build_object('ligne',case when ligne.id is not null then to_jsonb(ligne) else null end,'compte',compte,'profil',profil);
+end $$;
+
+create or replace function public.combat_creer(p_utilisateur uuid, p_requete uuid, p_action jsonb, p_etat jsonb, p_vue jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare c public.comptes%rowtype; ancien public.combats%rowtype;
+begin
+  select * into c from public.comptes where utilisateur=p_utilisateur for update;
+  if not found or not c.progression_active then raise exception 'Le serveur des combats n''est pas disponible.'; end if;
+  select * into ancien from public.combats where id=p_requete;
+  if found then
+    if ancien.utilisateur <> p_utilisateur or (ancien.commandes->p_requete::text) is distinct from p_action then raise exception 'Identifiant de commande déjà utilisé.'; end if;
+    return public.combat_reponse(p_utilisateur,ancien.id);
+  end if;
+  select * into ancien from public.combats where utilisateur=p_utilisateur and not archive for update;
+  if found and not ancien.termine then return public.combat_reponse(p_utilisateur,ancien.id); end if;
+  if p_etat->'deckDepart' is distinct from c.deck or jsonb_array_length(c.deck) <> 10 or public.deck_propre(p_utilisateur,c.deck) <> c.deck
+    then raise exception 'Ton deck a changé pendant la préparation. Réessaie.'; end if;
+  if p_etat->'adversaire'->>'type' = 'joute' then
+    if not exists(select 1 from public.profils where utilisateur=p_utilisateur) then raise exception 'Publie d''abord ton profil.'; end if;
+    if not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and utilisateur is distinct from p_utilisateur)
+      then raise exception 'Cet adversaire n''est plus disponible.'; end if;
+  end if;
+  perform public.autoriser_joute(p_utilisateur); -- quota commun, conservé après retrait du profil
+  update public.combats set archive=true where utilisateur=p_utilisateur and not archive and termine;
+  insert into public.combats(id,utilisateur,etat,vue,commandes) values(p_requete,p_utilisateur,p_etat,p_vue,jsonb_build_object(p_requete::text,p_action));
+  -- Le détail des parties n'est utile qu'aux reprises et aux litiges récents. Les totaux restent dans le compte.
+  delete from public.combats where utilisateur=p_utilisateur and archive and maj_le < now()-interval '30 days';
+  return public.combat_reponse(p_utilisateur,p_requete);
+end $$;
+
+create or replace function public.combat_appliquer(p_utilisateur uuid, p_id uuid, p_revision integer, p_requete uuid, p_action jsonb, p_etat jsonb, p_vue jsonb, p_reponse jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare b public.combats%rowtype; gain_enregistre jsonb; gain_xp integer := 0; base integer; resultat text;
+  moi public.profils%rowtype; nouvelle integer; cote_adverse integer; obtenu numeric;
+begin
+  perform 1 from public.comptes where utilisateur=p_utilisateur for update;
+  select * into b from public.combats where id=p_id and utilisateur=p_utilisateur for update;
+  if not found then raise exception 'Ce combat est introuvable pour ton compte.'; end if;
+  if b.commandes ? p_requete::text then
+    if b.commandes->p_requete::text <> p_action then raise exception 'Identifiant de commande déjà utilisé.'; end if;
+    return public.combat_reponse(p_utilisateur,p_id);
+  end if;
+  if b.revision <> p_revision or b.archive then raise exception 'La partie a avancé sur un autre écran. Reprends-la.'; end if;
+  if b.termine and (p_etat->>'resultat' is distinct from b.etat->>'resultat' or not (p_etat->>'termine')::boolean or p_reponse is not null)
+    then raise exception 'Le résultat de ce combat est définitif.'; end if;
+  gain_enregistre := b.recompense;
+  if p_reponse is not null then
+    if b.termine or b.etat->'etape'->>'nom' not in ('attaque','parade')
+      or p_reponse->>'carte' is distinct from b.etat->'etape'->'epreuve'->>'idCarte' then raise exception 'Réponse hors séquence.'; end if;
+    perform public.noter_reponse_verifiee(p_utilisateur,p_reponse);
+    if (p_reponse->>'reussie')::boolean then gain_xp := public.gagner_xp(p_utilisateur,5,true); end if;
+  end if;
+  if not b.termine and (p_etat->>'termine')::boolean then
+    resultat := p_etat->>'resultat';
+    if resultat is null or resultat not in ('victoire','defaite','nul') then raise exception 'Résultat serveur invalide.'; end if;
+    if (p_etat->>'abandonne')::boolean then gain_enregistre := jsonb_build_object('encre',0,'reduite',false,'cote',null);
+    else
+      base := case when b.etat->'adversaire'->>'type'='joute' then 35
+        else case b.etat->'adversaire'->>'niveau' when 'Facile' then 20 when 'Normal' then 30 when 'Difficile' then 45 end end;
+      gain_enregistre := public.recompenser(p_utilisateur,base,resultat) || jsonb_build_object('cote',null);
+      gain_xp := gain_xp + public.gagner_xp(p_utilisateur,30 + case when resultat='victoire' then 20 else 0 end,true);
+    end if;
+    update public.comptes set combats_joues=combats_joues+1, combats_gagnes=combats_gagnes+(resultat='victoire')::integer where utilisateur=p_utilisateur;
+    if b.etat->'adversaire'->>'type'='joute' then
+      select * into moi from public.profils where utilisateur=p_utilisateur for update;
+      if not found then raise exception 'Le profil du joueur a disparu.'; end if;
+      cote_adverse := (b.etat->'adversaire'->'profil'->>'cote')::integer;
+      obtenu := case resultat when 'victoire' then 1 when 'nul' then 0.5 else 0 end;
+      nouvelle := greatest(100,round(moi.cote+32*(obtenu-1/(1+power(10::numeric,(cote_adverse-moi.cote)::numeric/400)))));
+      update public.profils set cote=nouvelle,jouees=jouees+1,gagnees=gagnees+(resultat='victoire')::integer,maj_le=now() where id=moi.id;
+      gain_enregistre := gain_enregistre || jsonb_build_object('cote',jsonb_build_object('avant',moi.cote,'apres',nouvelle));
+    end if;
+  end if;
+  update public.combats set revision=revision+1, etat=p_etat, vue=p_vue,
+    termine=(p_etat->>'termine')::boolean, archive=(p_etat->>'archive')::boolean,
+    commandes=commandes||jsonb_build_object(p_requete::text,p_action), recompense=gain_enregistre, xp=xp+gain_xp, maj_le=now() where id=p_id;
+  return public.combat_reponse(p_utilisateur,p_id);
+end $$;
+
+revoke execute on function public.combat_reponse(uuid,uuid), public.combat_contexte(uuid,uuid,uuid),
+  public.combat_creer(uuid,uuid,jsonb,jsonb,jsonb), public.combat_appliquer(uuid,uuid,integer,uuid,jsonb,jsonb,jsonb,jsonb)
+  from public,anon,authenticated;
+do $$ begin
+  if exists(select 1 from pg_roles where rolname='service_role') then
+    grant execute on function public.combat_contexte(uuid,uuid,uuid),public.combat_creer(uuid,uuid,jsonb,jsonb,jsonb),
+      public.combat_appliquer(uuid,uuid,integer,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
+  end if;
+end $$;
+
+-- Fermer toutes les anciennes entrées déclaratives. Les fonctions restent seulement pour l'historique SQL.
+revoke execute on function public.commencer_un_duel(text),public.terminer_un_duel(bigint,text),
+  public.commencer_une_joute(uuid),public.terminer_une_joute(bigint,text) from authenticated,anon,public;

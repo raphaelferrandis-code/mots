@@ -10,6 +10,7 @@ import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, profilVisible, progressionDuNiveau } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
+import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 
 import { nommerMonProfil, personnaliser } from '../services/partie.ts';
 
@@ -31,6 +32,7 @@ export function Profil() {
   const [filtre, filtrer] = useState('tout');
   const [pseudo, saisirPseudo] = useState('');
   const [edition, editer] = useState(false);
+  const [enregistrementPseudo, setEnregistrementPseudo] = useState(false);
   const dialogue = useRef<HTMLDialogElement>(null);
   const essayage = useRef<HTMLElement>(null);
   const [message, dire] = useState('');
@@ -121,7 +123,14 @@ export function Profil() {
         <footer className="vestiaire__pied"><span>✧ {ORNEMENTS.filter(o=>estDisponible(profil,o,premium)).length + PAQUETS.length} / {ORNEMENTS.length + PAQUETS.length} dans votre collection</span><details><summary>Gains d’XP</summary><p>Paquet {XP.paquet} · Nouveau mot {XP.decouverte} · Définition {XP.reponse} · Duel {XP.duel} · Victoire +{XP.victoire}</p></details></footer>
       </section>
     </div>}
-    <dialog aria-labelledby="titre-signature" className="vestiaire__dialogue" ref={dialogue} onCancel={() => editer(false)}><form onSubmit={(e) => { e.preventDefault(); try { nommerMonProfil(pseudo); editer(false); dire('Pseudo enregistré.'); signaler(''); } catch(e) { signaler((e as Error).message); } }}><h2 id="titre-signature">Votre signature</h2><label htmlFor="pseudo-personnel">Pseudo du profil</label><input id="pseudo-personnel" value={pseudo} onChange={e=>saisirPseudo(e.target.value)} maxLength={24} autoFocus />{erreur && <p role="alert">{erreur}</p>}<button className="bouton vestiaire__action">Enregistrer</button><button className="bouton vestiaire__annuler" type="button" onClick={() => { editer(false); signaler(''); }}>Annuler</button></form></dialog>
+    <dialog aria-labelledby="titre-signature" className="vestiaire__dialogue" ref={dialogue} onCancel={(e) => { if (enregistrementPseudo) e.preventDefault(); else editer(false); }}><form onSubmit={async (e) => {
+      e.preventDefault();
+      if (enregistrementPseudo) return;
+      setEnregistrementPseudo(true); signaler('');
+      try { await nommerMonProfil(pseudo); editer(false); dire('Pseudo enregistré pour ton profil et tes joutes.'); }
+      catch (erreur) { signaler(erreur instanceof Error ? erreur.message : String(erreur)); }
+      finally { setEnregistrementPseudo(false); }
+    }}><h2 id="titre-signature">Votre signature</h2><label htmlFor="pseudo-personnel">Ton pseudo</label><p>Le même pseudo est utilisé sur ton profil et dans les joutes.</p><input id="pseudo-personnel" value={pseudo} onChange={e=>saisirPseudo(e.target.value)} maxLength={LONGUEUR_DU_PSEUDO.maximum} disabled={enregistrementPseudo} autoFocus />{erreur && <p role="alert">{erreur}</p>}<button className="bouton vestiaire__action" disabled={enregistrementPseudo}>{enregistrementPseudo ? 'Vérification…' : 'Enregistrer'}</button><button className="bouton vestiaire__annuler" type="button" disabled={enregistrementPseudo} onClick={() => { editer(false); signaler(''); }}>Annuler</button></form></dialog>
   </main>;
 }
 

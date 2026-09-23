@@ -2,6 +2,10 @@
 node_modules/
 dist/
 *.log
+.env
+.env.*
+!.env.example
+supabase/.temp/
 
 # Fichiers de données bruts : trop gros pour Git, retéléchargeables avec « npm run sources »
 data/brut/

@@ -30,6 +30,46 @@ function fauxMonde(reponses: (appel: Appel) => { statut: number; corps?: unknown
 const JETONS = { access_token: 'acces-1', refresh_token: 'renouvellement-1', expires_in: 3600 };
 
 describe('le client Supabase', () => {
+  it('renouvelle un combat avec exactement la même commande et conserve les conflits explicites', async () => {
+    const corps={type:'agir',requete:'commande-unique',revision:2,action:{type:'repondre',choisie:1}};
+    const monde=fauxMonde(a => a.adresse.includes('/auth/') ? {statut:200,corps:JETONS}
+      : a.enTetes.Authorization==='Bearer perime' ? {statut:401} : {statut:409,corps:{erreur:'La partie a avancé.'}},
+      {acces:'perime',renouvellement:'ancien',expireLe:9_999_999_999});
+    await assert.rejects(monde.client.appelerCombat(corps),e => e instanceof ErreurDuServeur && e.statut===409 && e.refus);
+    const combats=monde.appels.filter(a=>a.adresse.endsWith('/functions/v1/combats'));
+    assert.equal(combats.length,2); assert.deepEqual(combats.map(a=>a.corps),[corps,corps]);
+    assert.equal(combats[1].enTetes.Authorization,'Bearer acces-1');
+  });
+  it('ne remplace jamais un compte pendant la reprise d’un combat si son renouvellement est refusé', async () => {
+    const monde=fauxMonde(()=>({statut:401}),{acces:'ancien',renouvellement:'refuse',expireLe:0});
+    await assert.rejects(monde.client.appelerCombat({type:'lire'}),/Session expirée/);
+    assert.equal(monde.appels.length,1); assert.ok(!monde.appels[0].adresse.includes('/signup'));
+    assert.equal(monde.session()!.acces,'ancien');
+  });
+  it('conserve aussi le compte lors d’une synchronisation refusée, puis permet une récupération explicitement demandée', async () => {
+    const monde=fauxMonde(a=>a.adresse.includes('refresh_token')?{statut:401}:a.adresse.includes('/signup')?{statut:200,corps:JETONS}:{statut:200,corps:{retrouve:true}},
+      {acces:'ancien',renouvellement:'refuse',expireLe:0});
+    await assert.rejects(monde.client.appeler('mon_compte'),/Session expirée/);
+    assert.equal(monde.appels.length,1);
+    assert.deepEqual(await monde.client.appeler('recuperer_par_code',{p_code:'code-explicite'}),{retrouve:true});
+    assert.equal(monde.appels.filter(a=>a.adresse.includes('/signup')).length,1);
+  });
+  it('conserve sa session en mémoire quand le stockage est indisponible', async () => {
+    let inscriptions = 0;
+    const client = creerLeClient('https://test.invalid', 'publique', {
+      maintenant: () => 1000,
+      lireLaSession: () => null,
+      ecrireLaSession: () => {},
+      requete: async (url) => {
+        if (String(url).includes('/signup')) { inscriptions++; return new Response(JSON.stringify(JETONS)); }
+        return new Response('{}');
+      },
+    });
+    await client.appeler('mon_compte'); await client.appeler('mon_compte');
+    assert.equal(inscriptions, 1);
+    assert.equal(client.aUneSession(), true);
+    client.oublierLaSession(); assert.equal(client.aUneSession(), false);
+  });
   it('ouvre un compte anonyme à la première visite, puis appelle la fonction avec la session', async () => {
     const monde = fauxMonde((appel) => (appel.adresse.includes('/auth/v1/signup') ? { statut: 200, corps: JETONS } : { statut: 200, corps: { accepte: true, cote: 1000 } }));
     const reponse = await monde.client.appeler<{ cote: number }>('publier_mon_profil', { p_pseudo: 'Zeugma' });

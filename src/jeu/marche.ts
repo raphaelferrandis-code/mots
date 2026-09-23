@@ -67,7 +67,7 @@ export const prixActuel = (enchere: Enchere): number => enchere.meilleureMise ??
 // La mise qu'il faut au moins proposer (même règle que le serveur).
 export function miseMinimale(enchere: Enchere, regles: ReglesDuMarche): number {
   if (enchere.meilleureMise === null) return enchere.miseDeDepart;
-  return enchere.meilleureMise + Math.max(1, Math.ceil(enchere.meilleureMise * regles.surencherMinimale));
+  return Math.min(enchere.achatImmediat ?? Infinity, enchere.meilleureMise + Math.max(1, Math.ceil(enchere.meilleureMise * regles.surencherMinimale)));
 }
 
 // Ce que le vendeur reçoit : le prix moins la commission, qui disparaît.

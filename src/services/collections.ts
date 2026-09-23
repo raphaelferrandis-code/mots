@@ -29,7 +29,7 @@ export type ServeurDesCollections = {
   // Rend le deck tel que le serveur l'a enregistré (cartes possédées seulement).
   changerDeDeck(deck: readonly string[]): Promise<string[]>;
   commencerUnDuel(niveau: Niveau): Promise<number>;
-  terminerUnDuel(ticket: number, resultat: Resultat): Promise<Recompense>;
+  terminerUnDuel(ticket: number, resultat: Resultat | 'abandon'): Promise<Recompense>;
   // Le code de secours (décision n° 36) : le définir, ou retrouver une collection avec.
   definirUnCode(code: string): Promise<EtatDuCompte>;
   declarerMonAge(annee: number): Promise<EtatDuCompte>;

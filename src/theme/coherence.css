@@ -37,7 +37,7 @@
   .reserve-encre { gap: 5px; font-size: .8rem; }
   .reserve-encre svg { width: 24px; height: 24px; }
   .reserve-encre strong { font-size: 1rem; }
-  .lien-profil { min-height: 44px; display: inline-flex; align-items: center; }
+  .lien-reglages { min-height: 44px; display: inline-flex; align-items: center; }
   .album > .entete { grid-template-columns: minmax(0, 1fr); }
   .enchere { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; }
   .enchere .rangee-de-boutons > .bouton { width: 100%; padding-inline: 12px; }

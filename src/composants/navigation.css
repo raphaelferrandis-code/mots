@@ -47,6 +47,8 @@
 }
 
 .navigation__personnel { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.lien-profil[aria-current='page']::after { display: none; }
+.lien-reglages { color:var(--encre-douce); white-space:nowrap; text-decoration:none; }
 .lien-formules { display:grid; place-items:center; width:44px; height:44px; border-radius:8px; text-decoration:none; }
 .lien-formules svg { width:27px; height:27px; filter:drop-shadow(0 0 5px #cba6eb66); animation:navigation-scintille 4s ease-in-out infinite; }
 .lien-formules:hover,.lien-formules[aria-current=page] { background:#caa6ef14; }

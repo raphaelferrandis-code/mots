@@ -30,7 +30,7 @@ function definitionsDeDuel(mot: string, definitions: readonly Definition[] | und
   const visibles = utilisables.filter((d) => estVisible(d, masques));
   // Certaines définitions du Wiktionnaire se terminent par un renvoi (« → voir solécisme ») : il n'apprend rien,
   // et ferait reconnaître la définition à sa seule forme.
-  const textes = (visibles.length > 0 ? visibles : utilisables).map((d) => d.texte.replace(/\s*→\s*voir\b.*$/i, '').trim());
+  const textes = visibles.map((d) => d.texte.replace(/\s*→\s*voir\b.*$/i, '').trim());
   // Un simple renvoi (« Synonyme de sériole couronnée. ») ne définit rien : on l'évite tant que le mot a autre chose.
   const vraies = textes.filter((texte) => !/^(?:synonyme|antonyme) d/i.test(texte));
   const discretes = (vraies.length > 0 ? vraies : textes).filter((texte) => !trahitLeMot(texte, mot));
@@ -52,7 +52,9 @@ export function composerLEpreuve(carte: CarteIndex, definitions: Definitions, ed
   // La bonne définition : une de celles du mot, tirée au sort, pour que la question change d'une fois sur l'autre.
   // Les rares cartes sans définition utilisable sont posées quand même, avec le mot masqué dans le texte.
   const possibles = definitionsDeDuel(carte.mot, definitions.get(carte.id), masques);
-  const bonne = possibles.length > 0 ? possibles[Math.floor(hasard() * possibles.length)] : masquerLeMot(definitions.get(carte.id)?.[0]?.texte ?? carte.definition, carte.mot);
+  const repli = definitions.get(carte.id)?.find(d => estVisible(d, masques));
+  if (possibles.length === 0 && !repli && definitions.has(carte.id)) throw new Error('Aucune définition autorisée pour ce mot.');
+  const bonne = possibles.length > 0 ? possibles[Math.floor(hasard() * possibles.length)] : masquerLeMot(repli?.texte ?? carte.definition, carte.mot);
 
   // Les leurres : des mots de même nature et de rareté voisine, en élargissant la recherche s'il en manque.
   const rang = RARETES.indexOf(carte.rarete);

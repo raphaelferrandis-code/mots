@@ -12,7 +12,9 @@ import type { EtatDesPaquets } from './recharge.ts';
 // Version 4 : les joutes — questions posées sur chaque carte, parades par rareté, pseudonyme et cote du joueur.
 // Version 5 : expérience et personnalisations du profil, des dos et des paquets.
 // Version 6 : succès permanents et titres gagnés.
-export const VERSION_DE_SAUVEGARDE = 6;
+// Version 7 : les apprentissages survivent à la vente du dernier exemplaire.
+// Version 8 : progression serveur et archive de l'ancienne progression locale.
+export const VERSION_DE_SAUVEGARDE = 8;
 
 // Des réponses données à une épreuve : combien de fois la question a été posée, combien de fois la définition a été retrouvée.
 export type Savoir = { posees: number; reussies: number };
@@ -25,6 +27,7 @@ export type CartePossedee = {
   reussites: number; // bonnes réponses données en duel pour ce mot
   maitriseeLe: number | null; // date à laquelle le mot a été maîtrisé (assez de bonnes réponses), sinon null
 };
+export type Apprentissage = Pick<CartePossedee, 'posees' | 'reussites' | 'maitriseeLe'>;
 
 // Temps accordé pour l'épreuve de maîtrise : celui du jeu, le double, ou sans limite (accessibilité).
 export const TEMPS_DE_REPONSE = ['normal', 'double', 'illimite'] as const;
@@ -65,6 +68,9 @@ export type Sauvegarde = {
   };
   // Clé : identifiant de carte. Une carte qui n'existe plus dans l'édition est conservée mais ignorée par le jeu.
   cartes: Record<string, CartePossedee>;
+  apprentissages?: Record<string, Apprentissage>;
+  progressionServeur?: { id: string; version: 1 };
+  ancienneProgression?: { le: number; xp: number; apprentissages: Record<string, Apprentissage> };
   deck: string[]; // identifiants des cartes du deck ; il peut être incomplet pendant qu'on le compose
   duels: BilanDesDuels;
   parades: Partial<Record<Rarete, Savoir>>; // les mots adverses reconnus en duel, par rareté
@@ -81,6 +87,7 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     encre: 0,
     paquets: { stock: paquetsDeDepart, reference: maintenant, ouverts: 0, sansLegendaire: 0 },
     cartes: {},
+    apprentissages: {},
     deck: [],
     duels: { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 },
     parades: {},
@@ -97,6 +104,17 @@ export function meilleureFinition(carte: CartePossedee): Finition {
 
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const entierPositif = (v: unknown, defaut: number): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : defaut);
+
+export function relireApprentissages(brut: unknown): Record<string, Apprentissage> {
+  const apprentissages: Record<string, Apprentissage> = {};
+  for (const [id, valeur] of Object.entries(estUnObjet(brut) ? brut : {})) {
+    if (!estUnObjet(valeur)) continue;
+    const reussites = entierPositif(valeur.reussites, 0);
+    apprentissages[id] = { posees: Math.max(reussites, entierPositif(valeur.posees, 0)), reussites,
+      maitriseeLe: typeof valeur.maitriseeLe === 'number' && Number.isFinite(valeur.maitriseeLe) ? valeur.maitriseeLe : null };
+  }
+  return apprentissages;
+}
 
 function relireFinitions(brut: unknown, doublons: number): CartePossedee['finitions'] {
   const finitions: CartePossedee['finitions'] = {};
@@ -147,10 +165,21 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
     }
   }
   const exporte = estUnObjet(brut.dernierExport) ? brut.dernierExport : null;
+  const apprentissages: Record<string, Apprentissage> = {};
+  for (const [id, valeur] of Object.entries(estUnObjet(brut.apprentissages) ? brut.apprentissages : {})) {
+    if (!estUnObjet(valeur)) continue;
+    const reussites = entierPositif(valeur.reussites, 0);
+    apprentissages[id] = { posees: Math.max(reussites, entierPositif(valeur.posees, 0)), reussites,
+      maitriseeLe: typeof valeur.maitriseeLe === 'number' && Number.isFinite(valeur.maitriseeLe) ? valeur.maitriseeLe : null };
+  }
 
   return {
     version: VERSION_DE_SAUVEGARDE,
     profil: relireProfil(brut.profil),
+    ...(estUnObjet(brut.progressionServeur) && brut.progressionServeur.version === 1 && typeof brut.progressionServeur.id === 'string'
+      ? { progressionServeur: { id: brut.progressionServeur.id, version: 1 as const } } : {}),
+    ...(estUnObjet(brut.ancienneProgression) ? { ancienneProgression: { le: entierPositif(brut.ancienneProgression.le, maintenant),
+      xp: entierPositif(brut.ancienneProgression.xp, 0), apprentissages: relireApprentissages(brut.ancienneProgression.apprentissages) } } : {}),
     creeLe: entierPositif(brut.creeLe, maintenant),
     encre: entierPositif(brut.encre, 0),
     paquets: {
@@ -161,6 +190,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       sansLegendaire: entierPositif(paquets.sansLegendaire, 0),
     },
     cartes,
+    apprentissages,
     deck,
     duels: {
       joues: entierPositif(duels.joues, 0),

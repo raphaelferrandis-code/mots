@@ -44,6 +44,19 @@ describe('le double d\'un joueur absent', () => {
   });
 });
 
+describe('la connaissance prime sur la rareté en joute', () => {
+  it('estime les Hors-série familières, puis respecte les résultats réels du joueur', () => {
+    const hs = carte('amour', 'Hors-série');
+    const sansHistorique = chancesDuDouble(profil('a', 1000), hs, hs, REGLES);
+    assert.equal(sansHistorique.reussir, REGLES.savoirParDefaut.Commune);
+    assert.equal(sansHistorique.parer, REGLES.paradeParDefaut.Commune);
+    const savant = profil('b', 1000, { parades: { 'Légendaire': { posees: 100, reussies: 100 } } });
+    assert.ok(chancesDuDouble(savant, hs, carte('rare', 'Légendaire'), REGLES).parer > .95, 'un mot rare reconnu doit être paré');
+    const hesite = profil('c', 1000, { parades: { 'Hors-série': { posees: 100, reussies: 0 } } });
+    assert.ok(chancesDuDouble(hesite, hs, hs, REGLES).parer < .05, 'une Hors-série ne force pas une parade si le joueur ne la connaît pas');
+  });
+});
+
 describe('le classement', () => {
   it('à cotes égales, une victoire rapporte la moitié du facteur K, et une défaite la coûte', () => {
     assert.equal(victoireAttendue(1200, 1200, REGLES), 0.5);

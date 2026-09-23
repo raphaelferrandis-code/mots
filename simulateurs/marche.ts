@@ -40,31 +40,29 @@ const PROFILS: Profil[] = [
 ];
 const CHANCE_DE_VICTOIRE = 0.7; // un joueur moyen en Normal (mesuré : 88 % pour un bon lecteur, 57 % pour un hésitant)
 
-// Ce qu'un joueur payant achète d'Encre par jour (décision n° 34). Sert à voir si cette Encre fait monter les prix.
-const ENCRE_ACHETEE_PAR_JOUR = 300;
+// Scénarios gratuits uniquement : l'ancienne rente de 300 Encre/jour et le
+// marché payant illimité n'existent plus. Les offres exigent un modèle de visites et de recharge.
 
 type Reglages = {
   nom: string;
   desir: number; // un timbre qui manque vaut « désir » fois son Encre de doublon
   commission: number;
   planchers: Record<Rarete, number>;
-  partDePayants: number;
   // Les plafonds d'un joueur gratuit : ventes en cours et achats par jour. « null » = aucun plafond pour personne.
   plafonds: { ventes: number; achats: number } | null;
 };
 
 const PLAFONDS_ACTUELS = { ventes: M.ventesEnCoursAuPlus, achats: M.achatsParJourAuPlus };
-const REGLAGES_ACTUELS = { commission: M.commission, planchers: M.planchers, partDePayants: 0, plafonds: PLAFONDS_ACTUELS };
+const REGLAGES_ACTUELS = { commission: M.commission, planchers: M.planchers, plafonds: PLAFONDS_ACTUELS };
 
 // ── Un joueur ────────────────────────────────────────────────────────────────
 type Timbre = { carte: string; finition: Finition };
 
 type Joueur = {
   profil: Profil;
-  payant: boolean;
   encre: number;
-  // Pour chaque carte, les finitions possédées (une seule de chaque : un vrai doublon devient de l'Encre).
-  possedees: Map<string, Set<Finition>>;
+  // Les tirages convertissent les doublons ; les retours d'enchère conservent leurs exemplaires.
+  possedees: Map<string, Map<Finition, number>>;
   sansLegendaire: number;
   ouverts: number;
   ventesEnCours: number;
@@ -103,8 +101,8 @@ const valeurDeFerraille = (rarete: Rarete, finition: Finition): number => EQUILI
 const valeurDAchat = (rarete: Rarete, finition: Finition, desir: number, hasard: Hasard): number =>
   Math.round(valeurDeFerraille(rarete, finition) * desir * (0.6 + 1.2 * hasard()));
 
-function nouveauJoueur(profil: Profil, payant: boolean): Joueur {
-  return { profil, payant, encre: 0, possedees: new Map(), sansLegendaire: 0, ouverts: 0, ventesEnCours: 0, achatsDuJour: 0, butoirDeVentes: 0, butoirDAchats: 0 };
+function nouveauJoueur(profil: Profil): Joueur {
+  return { profil, encre: 0, possedees: new Map(), sansLegendaire: 0, ouverts: 0, ventesEnCours: 0, achatsDuJour: 0, butoirDeVentes: 0, butoirDAchats: 0 };
 }
 
 const possede = (j: Joueur, t: Timbre): boolean => j.possedees.get(t.carte)?.has(t.finition) === true;
@@ -112,15 +110,16 @@ const possede = (j: Joueur, t: Timbre): boolean => j.possedees.get(t.carte)?.has
 function retirer(j: Joueur, t: Timbre): void {
   const finitions = j.possedees.get(t.carte);
   if (!finitions) return;
-  finitions.delete(t.finition);
+  const restant = (finitions.get(t.finition) ?? 0) - 1;
+  if (restant > 0) finitions.set(t.finition, restant); else finitions.delete(t.finition);
   if (finitions.size === 0) j.possedees.delete(t.carte);
 }
 
-function ajouter(j: Joueur, t: Timbre, rarete: Rarete): void {
+function ajouter(j: Joueur, t: Timbre, rarete: Rarete, tirage = false): void {
   const finitions = j.possedees.get(t.carte);
-  if (!finitions) { j.possedees.set(t.carte, new Set([t.finition])); return; }
-  if (finitions.has(t.finition)) j.encre += valeurDeFerraille(rarete, t.finition); // vrai doublon : de l'Encre
-  else finitions.add(t.finition);
+  if (!finitions) { j.possedees.set(t.carte, new Map([[t.finition, 1]])); return; }
+  if (tirage && finitions.has(t.finition)) j.encre += valeurDeFerraille(rarete, t.finition);
+  else finitions.set(t.finition, (finitions.get(t.finition) ?? 0) + 1); // transfert ou retour de vente : conserver l'exemplaire
 }
 
 // ── Une simulation complète ──────────────────────────────────────────────────
@@ -128,7 +127,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
   const hasard = hasardReproductible(graine);
   const joueurs: Joueur[] = [];
   for (const profil of PROFILS) {
-    for (let i = 0; i < profil.combien; i++) joueurs.push(nouveauJoueur(profil, hasard() < reglages.partDePayants));
+    for (let i = 0; i < profil.combien; i++) joueurs.push(nouveauJoueur(profil));
   }
 
   const bilan: Bilan = {
@@ -143,7 +142,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
     const tirees = ouvrirPaquet(RESERVE, { hasard, paquetsSansLegendaire: j.sansLegendaire, exclure: j.ouverts < P.paquetsDeDepart ? new Set(j.possedees.keys()) : undefined }, P, EQUILIBRAGE.finitions);
     j.ouverts++;
     j.sansLegendaire = contientUneLegendaire(tirees) ? 0 : j.sansLegendaire + 1;
-    for (const { carte, finition } of tirees) ajouter(j, { carte: carte.id, finition }, carte.rarete);
+    for (const { carte, finition } of tirees) ajouter(j, { carte: carte.id, finition }, carte.rarete, true);
     const gagnee = j.encre - avant;
     bilan.encreCreee += gagnee;
     bilan.encreDesDoublons += gagnee;
@@ -158,7 +157,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
     for (const e of aDenouer) {
       // Qui veut ce timbre : celui qui ne l'a pas, qui peut payer, et qui n'a pas atteint son plafond d'achats.
       const candidats = joueurs
-        .filter((j) => j !== e.vendeur && !possede(j, e.timbre) && (j.payant || reglages.plafonds === null || j.achatsDuJour < reglages.plafonds.achats))
+        .filter((j) => j !== e.vendeur && !possede(j, e.timbre) && (reglages.plafonds === null || j.achatsDuJour < reglages.plafonds.achats))
         .map((j) => ({ j, valeur: Math.min(valeurDAchat(e.rarete, e.timbre.finition, reglages.desir, hasard), j.encre) }))
         .filter((c) => c.valeur >= e.mise)
         .sort((a, b) => b.valeur - a.valeur);
@@ -187,7 +186,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
 
     // Qui a épuisé son droit d'acheter pour la journée ?
     if (reglages.plafonds) {
-      for (const j of joueurs) if (!j.payant && j.achatsDuJour >= reglages.plafonds.achats) j.butoirDAchats++;
+      for (const j of joueurs) if (j.achatsDuJour >= reglages.plafonds.achats) j.butoirDAchats++;
     }
 
     // ── La journée de chaque joueur ──
@@ -210,23 +209,20 @@ function simuler(reglages: Reglages, graine: number): Bilan {
         bilan.encreDesDuels += gain;
       }
 
-      // 3. Le joueur payant achète de l'Encre en argent réel (décision n° 34).
-      if (j.payant) { j.encre += ENCRE_ACHETEE_PAR_JOUR; bilan.encreCreee += ENCRE_ACHETEE_PAR_JOUR; bilan.encreDesAchats += ENCRE_ACHETEE_PAR_JOUR; }
-
       // 4. Les ventes : on vend d'abord ce dont on a un autre exemplaire dans une autre finition (la collection
       //    reste entière) ; le prix demandé est le plancher de la rareté, un peu au-dessus si le timbre est beau.
       const aVendre: Timbre[] = [];
       for (const [carte, finitions] of j.possedees) {
-        if (finitions.size < 2) continue;
+        if ([...finitions.values()].reduce((n, v) => n + v, 0) < 2) continue;
         const rarete = RARETE_DE.get(carte);
         if (!rarete) continue;
         // Il garde la meilleure finition et propose l'autre.
-        const rangees = [...finitions].sort((a, b) => EQUILIBRAGE.finitions.encre[a] - EQUILIBRAGE.finitions.encre[b]);
+        const rangees = [...finitions.keys()].sort((a, b) => EQUILIBRAGE.finitions.encre[a] - EQUILIBRAGE.finitions.encre[b]);
         aVendre.push({ carte, finition: rangees[0] });
         if (aVendre.length >= 12) break;
       }
       for (const timbre of aVendre) {
-        const plafond = reglages.plafonds && !j.payant ? reglages.plafonds.ventes : Number.POSITIVE_INFINITY;
+        const plafond = reglages.plafonds ? reglages.plafonds.ventes : Number.POSITIVE_INFINITY;
         if (j.ventesEnCours >= plafond) { j.butoirDeVentes++; break; }
         const rarete = RARETE_DE.get(timbre.carte)!;
         const plancher = reglages.planchers[rarete];
@@ -245,6 +241,7 @@ function simuler(reglages: Reglages, graine: number): Bilan {
   for (const e of encheres) { ajouter(e.vendeur, e.timbre, e.rarete); bilan.misesEnVenteParRarete[e.rarete]--; }
 
   bilan.encreFinale = joueurs.map((j) => j.encre);
+  if (bilan.encreFinale.reduce((n, v) => n + v, 0) !== bilan.encreCreee - bilan.encreDetruite) throw new Error('Le bilan du marché ne conserve pas l’Encre.');
   bilan.butoirsDeVentes = joueurs.reduce((s, j) => s + j.butoirDeVentes, 0);
   bilan.butoirsDAchats = joueurs.reduce((s, j) => s + j.butoirDAchats, 0);
   bilan.joueursAuButoir = joueurs.filter((j) => j.butoirDeVentes > 0).length;
@@ -307,7 +304,6 @@ for (const desir of DESIRS) {
 for (const commission of [0, 0.2]) {
   economie.push(ligneDEconomie(`Désir ×5 — commission ${pourcent(commission)}`, simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, commission }, 55)));
 }
-economie.push(ligneDEconomie('Désir ×5 — un joueur sur dix est payant', simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, partDePayants: 0.1 }, 56)));
 economie.push(ligneDEconomie('Désir ×5 — sans plafond pour personne', simuler({ nom: '', desir: 5, ...REGLAGES_ACTUELS, plafonds: null }, 57)));
 
 const parDesir = DESIRS.map((desir) => ({ desir, bilan: simuler({ nom: '', desir, ...REGLAGES_ACTUELS }, 100 + desir) }));
@@ -339,7 +335,7 @@ const rapport = [
   '',
   '## Ce que ce simulateur prouve, et ce qu’il suppose',
   '',
-  "Les entrées et les sorties d'Encre sont **exactes** : elles ne dépendent que des règles du jeu (doublons, duels, commission). Ce que les joueurs sont prêts à payer, en revanche, est une **hypothèse**, réglée ici par le « désir » : un timbre qui manque vaut son Encre de doublon multipliée par le désir. Chaque tableau est donc donné pour trois désirs. Ce qui reste vrai dans les trois colonnes est solide ; le reste demande de vrais joueurs.",
+  "Scénarios **gratuits uniquement** : l’ancienne rente payante de 300 Encre/jour et les plafonds supprimés pour les abonnés ont été retirés. Les nombres de paquets ouverts, de duels et le taux de victoire restent des hypothèses. Les règles de gain et de commission utilisent la configuration du jeu ; chaque scénario vérifie la conservation de l’Encre. Les retours d’enchères conservent leurs exemplaires, les doublons tirés dans les paquets sont convertis. Le « désir » représente une disposition à payer supposée : ces résultats ne remplacent pas des observations de joueurs.",
   '',
   "## 1. L'Encre du jeu : ce qui entre, ce qui sort",
   '',

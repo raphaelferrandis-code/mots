@@ -1,4 +1,6 @@
 import { preparerOffres, fonctionsOffres } from './offres.ts';
+import { schemaProgression, INTERNES_PROGRESSION } from './progression-serveur.ts';
+import { XP } from '../src/jeu/personnalisation.ts';
 // La partie du script du serveur qui tient les collections (décision du 22/09/2026, BRIEF-marche.md §5a) :
 // le compte du joueur (Encre, réserve de paquets, deck), ses timbres, le tirage des paquets par le serveur,
 // les récompenses des duels et l'importation, une seule fois, de la collection qui vivait sur l'appareil.
@@ -25,7 +27,6 @@ export const IMPORTATION = {
 
 // Garde-fous des duels d'entraînement (les mêmes que pour les joutes).
 export const DUELS_PAR_HEURE = 40;
-export const SECONDES_MINIMUM_PAR_DUEL = 45;
 export const HEURES_DE_VALIDITE_DU_TICKET = 2;
 
 const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
@@ -97,7 +98,19 @@ alter table public.comptes
   add column if not exists annee_de_naissance integer,
   add column if not exists rente_le date;
 alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
+-- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
+alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 create index if not exists comptes_par_code on public.comptes (code_hache);
+
+-- Une ancienne sauvegarde doit être validée par l'administrateur : le client ne
+-- peut pas prouver l'ancienneté ou les ressources d'un fichier local non signé.
+create table if not exists public.importations_validees (
+  utilisateur uuid primary key references auth.users(id) on delete cascade,
+  sauvegarde jsonb not null,
+  validee_le timestamptz not null default now()
+);
+alter table public.importations_validees enable row level security;
+revoke all on public.importations_validees from public, anon, authenticated;
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
 create table if not exists public.possessions (
@@ -118,6 +131,8 @@ create table if not exists public.duels (
   termine_le timestamptz
 );
 create index if not exists duels_par_joueur on public.duels (utilisateur, commence_le desc);
+alter table public.duels add column if not exists resultat text, add column if not exists recompense jsonb,
+  add column if not exists abandonne boolean not null default false;
 
 -- La récupération par code transfère un compte à un autre joueur : ses timbres et ses duels doivent le suivre.
 alter table public.possessions drop constraint if exists possessions_utilisateur_fkey,
@@ -132,6 +147,18 @@ alter table public.duels enable row level security;
 revoke all on public.cartes, public.comptes, public.possessions, public.duels from anon, authenticated;
 
 -- ── Les aides internes (jamais appelées par le jeu) ─────────────────────────
+${schemaProgression()}
+create or replace function public.autoriser_joute(p_utilisateur uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+declare debuts timestamptz[];
+begin
+  select debuts_joutes into debuts from public.comptes where utilisateur=p_utilisateur for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  select coalesce(array_agg(d), '{}') into debuts from unnest(debuts) d where d > now() - interval '1 hour';
+  if cardinality(debuts) >= ${DUELS_PAR_HEURE} then raise exception 'Trop de joutes en peu de temps : fais une pause.'; end if;
+  update public.comptes set debuts_joutes = array_append(debuts, now()) where utilisateur=p_utilisateur;
+end $$;
+
 create or replace function public.nombre_entier(t text) returns bigint language sql immutable set search_path = ''
 as $$ select case when t ~ '^[0-9]{1,15}$' then t::bigint end $$;
 
@@ -175,6 +202,9 @@ as $$
     'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'progression', public.progression_du_compte(p_utilisateur),
+    'plafondDuJour', jsonb_build_object('jour', coalesce(c.jour::text, ''), 'victoires', c.victoires_du_jour),
+    'classementPersonnel', (select jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) from public.profils p where p.utilisateur = c.utilisateur),
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
     'formule', jsonb_build_object(
       'niveau', public.niveau(c),
@@ -240,6 +270,21 @@ as $$
     limit ${D.tailleDuDeck}
   ) i
 $$;
+
+-- Le double suit le deck du compte, notamment après la mise en vente du dernier exemplaire.
+create or replace function public.actualiser_deck_public() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.profils set deck = new.deck, maj_le = now() where utilisateur = new.utilisateur;
+  if new.progression_active then
+    update public.profils set savoirs=public.savoirs_verifies(new.utilisateur,new.deck),parades=new.parades_verifiees where utilisateur=new.utilisateur;
+  end if;
+  return new;
+end $$;
+drop trigger if exists deck_public_a_jour on public.comptes;
+create trigger deck_public_a_jour after update of deck on public.comptes
+  for each row execute function public.actualiser_deck_public();
+update public.profils p set deck = public.deck_propre(p.utilisateur, p.deck) where p.utilisateur is not null;
 
 -- Des finitions propres : seulement les finitions du jeu, avec des nombres entiers positifs ; à défaut, une Normale.
 create or replace function public.finitions_propres(j jsonb) returns jsonb language sql immutable set search_path = ''
@@ -370,7 +415,7 @@ begin
             * (case finition ${cas(FINITIONS, (f) => F.encre[f as keyof typeof F.encre])} else 1 end)
             * (case when public.niveau(c) >= 2 then ${PAYANT.multiplicateurDEncre} else 1 end);
       update public.possessions
-        set finitions = jsonb_set(finitions, array[finition], to_jsonb((possession.finitions ->> finition)::integer + 1)), doublons = doublons + 1
+        set doublons = doublons + 1
         where utilisateur = p_utilisateur and carte = id_choisie;
       c.encre := c.encre + gain;
       tirees := tirees || jsonb_build_object('id', id_choisie, 'finition', finition, 'nouvelle', false, 'nouvelleFinition', false, 'encre', gain);
@@ -380,6 +425,8 @@ begin
   update public.comptes
     set encre = c.encre, ouverts = ouverts + case when p_mode = 'normal' then 1 else 0 end, sans_legendaire = case when p_mode <> 'normal' then sans_legendaire when legendaire then 0 else sans_legendaire + 1 end, maj_le = now()
     where utilisateur = p_utilisateur;
+  perform public.gagner_xp(p_utilisateur, case when p_mode='achat' then 0 else ${XP.paquet} end
+    + ${XP.decouverte} * (select count(*)::integer from jsonb_array_elements(tirees) t where (t->>'nouvelle')::boolean), false);
   return tirees;
 end $$;
 
@@ -424,10 +471,19 @@ declare
   jours integer;
   ouverts integer;
   carte record;
+  validee jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 1));
   if exists (select 1 from public.comptes where utilisateur = moi) then raise exception 'Ce compte a déjà une collection.'; end if;
+  select sauvegarde into validee from public.importations_validees where utilisateur = moi for update;
+  if not found then raise exception 'Cette ancienne collection doit être validée avant son transfert. Conserve son export et contacte le support.'; end if;
+  -- Seule la copie approuvée fait foi ; les paramètres du navigateur sont ignorés.
+  p_cree_le := (validee ->> 'creeLe')::bigint;
+  p_encre := (validee ->> 'encre')::integer;
+  p_paquets := validee -> 'paquets';
+  p_cartes := validee -> 'cartes';
+  p_deck := validee -> 'deck';
   if jsonb_typeof(p_paquets) <> 'object' or jsonb_typeof(p_cartes) <> 'object' or jsonb_typeof(p_deck) <> 'array' or pg_column_size(p_cartes) > 3000000 then
     raise exception 'Cette sauvegarde ne peut pas être importée.';
   end if;
@@ -458,6 +514,7 @@ begin
       least(to_timestamp(coalesce(public.nombre_entier(carte.v ->> 'obtenueLe'), 0) / 1000.0), now()));
   end loop;
   update public.comptes set deck = public.deck_propre(moi, p_deck) where utilisateur = moi;
+  delete from public.importations_validees where utilisateur = moi;
   return public.etat_du_compte(moi);
 end $$;
 
@@ -520,11 +577,14 @@ declare
   ticket bigint;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if p_niveau not in (${liste(NIVEAUX)}) then raise exception 'Niveau inconnu.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_niveau is null or p_niveau not in (${liste(NIVEAUX)}) then raise exception 'Niveau inconnu.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
   if not exists (select 1 from public.comptes where utilisateur = auth.uid()) then raise exception 'Ouvre d''abord ton compte.'; end if;
   if (select count(*) from public.duels where utilisateur = auth.uid() and commence_le > now() - interval '1 hour') >= ${DUELS_PAR_HEURE} then
     raise exception 'Trop de duels en peu de temps : fais une pause.';
   end if;
+  perform public.terminer_un_duel(id, 'abandon') from public.duels where utilisateur=auth.uid() and termine_le is null order by id;
   insert into public.duels (utilisateur, niveau) values (auth.uid(), p_niveau) returning id into ticket;
   return ticket;
 end $$;
@@ -535,16 +595,26 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   duel public.duels%rowtype;
-  recompense jsonb;
+  gain_enregistre jsonb;
+  abandon boolean := p_resultat = 'abandon';
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if p_resultat not in ('victoire', 'defaite', 'nul') then raise exception 'Résultat inconnu.'; end if;
-  select * into duel from public.duels where id = p_ticket and utilisateur = auth.uid() and termine_le is null and commence_le > now() - interval '${HEURES_DE_VALIDITE_DU_TICKET} hours' for update;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_resultat is null or p_resultat not in ('victoire', 'defaite', 'nul', 'abandon') then raise exception 'Résultat inconnu.'; end if;
+  if abandon then p_resultat := 'defaite'; end if;
+  select * into duel from public.duels where id = p_ticket and utilisateur = auth.uid() for update;
   if not found then raise exception 'Ce duel ne peut plus être enregistré.'; end if;
-  if now() - duel.commence_le < interval '${SECONDES_MINIMUM_PAR_DUEL} seconds' then raise exception 'Ce duel est trop court pour être compté.'; end if;
-  update public.duels set termine_le = now() where id = duel.id;
-  recompense := public.recompenser(auth.uid(), case duel.niveau ${cas(NIVEAUX, (n) => D.encreParVictoire[n as keyof typeof D.encreParVictoire])} else 0 end, p_resultat);
-  return coalesce(recompense, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
+  if duel.termine_le is not null then
+    if duel.resultat is distinct from p_resultat or duel.abandonne <> abandon or duel.recompense is null
+    then raise exception 'Ce duel est déjà enregistré avec un autre résultat.'; end if;
+    return duel.recompense || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
+  end if;
+  if not abandon and duel.commence_le <= now() - interval '${HEURES_DE_VALIDITE_DU_TICKET} hours' then raise exception 'Ce duel a expiré : abandonne-le pour continuer.'; end if;
+  gain_enregistre := case when abandon then jsonb_build_object('encre', 0, 'reduite', false)
+    else public.recompenser(auth.uid(), case duel.niveau ${cas(NIVEAUX, (n) => D.encreParVictoire[n as keyof typeof D.encreParVictoire])} else 0 end, p_resultat) end;
+  update public.duels set termine_le = now(), resultat = p_resultat, recompense = gain_enregistre, abandonne = abandon where id = duel.id;
+  return coalesce(gain_enregistre, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
 end $$;
 
 create or replace function public.acheter_personnalisation(p_id text) returns jsonb
@@ -584,6 +654,9 @@ export const FONCTIONS_DES_COLLECTIONS = [
   'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)',
 ];
 export const FONCTIONS_INTERNES = [
+  ...INTERNES_PROGRESSION,
+  'public.autoriser_joute(uuid)',
+  'public.actualiser_deck_public()',
   'public.nombre_entier(text)', 'public.en_millisecondes(timestamptz)', 'public.etat_du_compte(uuid)', 'public.recharger(public.comptes)',
   'public.deck_propre(uuid, jsonb)', 'public.finitions_propres(jsonb)', 'public.recompenser(uuid, integer, text)', 'public.tirer_un_paquet(uuid, text[])',
   'public.actualiser_offres(public.comptes)', 'public.changement_offre()', 'public.tirer_les_cartes(uuid, text[], text)', 'public.niveau(public.comptes)', 'public.verser_la_rente(uuid)',

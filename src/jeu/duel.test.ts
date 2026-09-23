@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { EQUILIBRAGE, attaqueEnJeu } from '../config/equilibrage.ts';
+import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import { nomDuLot } from '../partage/lots.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition, Nature, Rarete } from '../partage/types.ts';
 import { contientLeMot, masquerLeMot, trahitLeMot } from '../partage/famille.ts';
@@ -54,10 +54,40 @@ describe("chiffres d'équilibrage du duel", () => {
     const raretes = [...RARETES_DE_TEST, 'Hors-série' as const];
     for (let i = 1; i < raretes.length; i++) {
       assert.ok(attaqueEnJeu(5, raretes[i]) >= attaqueEnJeu(5, raretes[i - 1]));
-      assert.ok(chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i] }), REGLES).parer <= chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i - 1] }), REGLES).parer);
+      if (raretes[i] !== 'Hors-série') assert.ok(chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i] }), REGLES).parer <= chancesDeLOrdinateur('Difficile', carte('a', { rarete: raretes[i - 1] }), REGLES).parer);
     }
     assert.ok(attaqueEnJeu(5, 'Légendaire') > attaqueEnJeu(5, 'Commune'));
     assert.ok(attaqueEnJeu(10, 'Légendaire') > EQUILIBRAGE.statMaximale, "le bonus d'attaque n'est pas plafonné");
+  });
+});
+
+describe('Hors-série : puissance et parade', () => {
+  it('garantit des statistiques élevées à toutes les Hors-série de l’édition, même aux mots courts', () => {
+    const edition: IndexEdition = JSON.parse(readFileSync(path.join(import.meta.dirname, '../../public/data/edition-1.index.json'), 'utf8'));
+    const horsSerie = edition.cartes.filter(c => c.rarete === 'Hors-série');
+    assert.ok(horsSerie.length > 0);
+    const mur = carte('mur', { defense: 10, type: 'Adverbe' });
+    for (const c of horsSerie) {
+      assert.ok(attaqueEnJeu(c.attaque, c.rarete) >= EQUILIBRAGE.minimumHorsSerie.attaque, c.mot);
+      assert.ok(defenseEnJeu(c.defense, c.rarete) >= EQUILIBRAGE.minimumHorsSerie.defense, c.mot);
+      assert.ok(defenseEnJeu(c.defense, c.rarete) <= EQUILIBRAGE.statMaximale);
+      const prevision = prevoirLAttaque(situation([c], [mur]), 'joueur', c, mur, TAILLES, REGLES);
+      assert.ok(prevision.degatsSiParee >= 3, c.mot + ' reste menaçant face à une défense maximale et une parade');
+      assert.ok(prevision.degatsSiParee < prevision.degats, 'la parade reste utile');
+    }
+    assert.equal(attaqueEnJeu(5, 'Commune'), 5);
+    assert.equal(defenseEnJeu(4, 'Commune'), 4);
+  });
+  it('les fait parer comme des communes, sans empêcher une parade réussie du joueur', () => {
+    const hs = carte('amour', { rarete: 'Hors-série', attaque: 1 });
+    const commune = carte('mur');
+    for (const niveau of NIVEAUX) {
+      assert.equal(chancesDeLOrdinateur(niveau, hs, REGLES).parer, chancesDeLOrdinateur(niveau, commune, REGLES).parer);
+      assert.ok(chancesDeLOrdinateur(niveau, hs, REGLES).parer > chancesDeLOrdinateur(niveau, carte('rare', { rarete: 'Légendaire' }), REGLES).parer);
+    }
+    const fin = jouerLaManche(situation([commune], [hs]), commune.id, hs.id, { ...TOUT_REUSSI, joueurReussit: false, joueurPare: true }, hasardReproductible(1), TAILLES, REGLES);
+    assert.equal(fin.manches[0].adversaire.paree, true);
+    assert.equal(fin.manches[0].adversaire.infliges, fin.manches[0].adversaire.degatsSiParee);
   });
 });
 
@@ -156,7 +186,7 @@ describe('déroulement du duel', () => {
     assert.throws(() => jouerLaManche(depart, mien.id, 'carte-inconnue', TOUT_REUSSI, hasardReproductible(1), TAILLES, REGLES));
   });
 
-  it('ne perd aucune carte en route, même quand la défausse reforme la pioche', () => {
+  it('ne rejoue aucune carte et termine quand les mains sont épuisées', () => {
     const regles = { ...REGLES, pointsDeVie: 100_000, manchesMaximum: 40 };
     let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(8), regles);
     const hasard = hasardReproductible(9);
@@ -165,10 +195,43 @@ describe('déroulement du duel', () => {
       for (const [camp, deck] of [[duel.camps.joueur, DECK], [duel.camps.adversaire, AUTRE_DECK]] as const) {
         const toutes = [...camp.main, ...camp.pioche, ...camp.defausse].map((c) => c.id).sort();
         assert.deepEqual(toutes, deck.map((c) => c.id).sort());
-        assert.equal(camp.main.length, REGLES.cartesEnMain);
+        assert.equal(camp.main.length, Math.min(REGLES.cartesEnMain, deck.length - i - 1));
+        assert.equal(camp.defausse.length, i + 1);
+        assert.equal(new Set(camp.defausse.map((c) => c.id)).size, i + 1);
       }
     }
-    assert.equal(duel.manche, 39);
+    assert.equal(duel.manche, DECK.length);
+    assert.notEqual(duel.vainqueur, null);
+    assert.equal(duel.camps.joueur.main.length, 0);
+    assert.equal(duel.camps.adversaire.main.length, 0);
+  });
+
+  it('épuise aussi les attaques manquées et interdit de rejouer une carte', () => {
+    const hasard = hasardReproductible(12);
+    const depart = commencerLeDuel(DECK, AUTRE_DECK, hasard, REGLES);
+    const mien = depart.camps.joueur.main[0].id;
+    const sien = depart.camps.adversaire.main[0].id;
+    const apres = jouerLaManche(depart, mien, sien, { ...TOUT_REUSSI, joueurReussit: false, adversaireReussit: false }, hasard, TAILLES, REGLES);
+    assert.equal(apres.camps.joueur.defausse[0].id, mien);
+    assert.equal(apres.camps.adversaire.defausse[0].id, sien);
+    assert.throws(() => jouerLaManche(apres, mien, apres.camps.adversaire.main[0].id, TOUT_REUSSI, hasard, TAILLES, REGLES), /pas dans la main/);
+    assert.equal(depart.camps.joueur.defausse.length, 0, 'la résolution ne modifie pas le duel de départ');
+  });
+
+  it('départage aux PV quand un seul camp épuise ses cartes, avec égalité possible', () => {
+    const rien = { joueurReussit: false, joueurPare: false, adversaireReussit: false, adversairePare: false };
+    for (const cote of ['joueur', 'adversaire'] as const) {
+      for (const avance of [-1, 0, 1]) {
+        const depart = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(1), REGLES);
+        depart.camps[cote].main = [depart.camps[cote].main[0]];
+        depart.camps[cote].pioche = [];
+        depart.camps.joueur.pv += avance;
+        const fin = jouerLaManche(depart, depart.camps.joueur.main[0].id, depart.camps.adversaire.main[0].id, rien, hasardReproductible(2), TAILLES, REGLES);
+        assert.equal(fin.vainqueur, avance === 0 ? 'nul' : avance > 0 ? 'joueur' : 'adversaire');
+        assert.equal(fin.manche, 1);
+        assert.throws(() => jouerLaManche(fin, '', '', rien, hasardReproductible(2), TAILLES, REGLES), /terminé/);
+      }
+    }
   });
 
   it("l'attaque du joueur part la première : s'il terrasse l'ordinateur, l'attaque adverse ne porte pas", () => {
@@ -256,6 +319,16 @@ describe('épreuve de maîtrise', () => {
   const invente = (n: number): string => [...String(n).padStart(3, '0')].map((chiffre) => SYLLABES[Number(chiffre)]).join('');
   const texte = (i: number): string => `Le ${invente(i)} du ${invente(i + 300)} au ${invente(i + 600)}.`;
   const DEFINITIONS = new Map<string, Definition[]>(EDITION.map((c, i) => [c.id, [{ texte: texte(i), quiz: true }]]));
+
+  it('ne réintroduit pas un sens masqué lorsque tous les sens utilisables en quiz le sont', () => {
+    const definitions = new Map(DEFINITIONS);
+    definitions.set(EDITION[0].id, [
+      { texte: 'Un sens familier interdit dans cette partie.', quiz: true, registre: ['Familier'] },
+      { texte: 'Un sens neutre suffisamment explicite.', quiz: false },
+    ]);
+    const e = composerLEpreuve(EDITION[0], definitions, EDITION, ['Familier'], hasardReproductible(3));
+    assert.equal(e.propositions[e.bonne], 'Un sens neutre suffisamment explicite.');
+  });
 
   it('propose quatre définitions différentes, dont la bonne, avec des leurres de même nature et de rareté voisine', () => {
     for (let graine = 0; graine < 40; graine++) {
@@ -460,9 +533,13 @@ describe("l'épreuve sur la vraie édition", () => {
   it('reste possible quand le joueur masque les mots familiers et injurieux', () => {
     const hasard = hasardReproductible(7);
     const visibles = edition.cartes.filter((c) => !c.registre.some((r) => r === 'Familier' || r === 'Injurieux'));
-    for (const demandee of visibles.filter((_, i) => i % 9 === 0)) {
+    const interdites = new Set([...definitions.values()].flat().filter(d => d.registre?.some(r => r === 'Familier' || r === 'Injurieux')).map(d => d.texte));
+    // Certains textes identiques appartiennent aussi à un sens non masqué.
+    for (const d of [...definitions.values()].flat()) if (!d.registre?.some(r => r === 'Familier' || r === 'Injurieux')) interdites.delete(d.texte);
+    for (const demandee of visibles) {
       const epreuve = composerLEpreuve(demandee, definitions, edition.cartes, ['Familier', 'Injurieux'], hasard);
       assert.equal(new Set(epreuve.propositions).size, 4, demandee.id);
+      for (const proposition of epreuve.propositions) assert.ok(!interdites.has(proposition), `${demandee.id} expose un sens masqué : ${proposition}`);
     }
   });
 });

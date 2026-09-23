@@ -21,7 +21,7 @@
 .duel__mot-pose > .tim, .duel__mot-pose > .deck__vide { max-width: 260px; }
 .duel__main { width: 100%; max-width: 660px; margin-inline: auto; }
 .duel__action { grid-template-columns: minmax(0, 1fr) auto; }
-.duel__prevision { overflow-wrap: anywhere; }
+.duel__engagement { overflow-wrap: anywhere; }
 .epreuve__propositions { min-width: 0; }
 .proposition { overflow-wrap: anywhere; }
 

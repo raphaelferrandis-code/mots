@@ -18,7 +18,6 @@
 [data-titre=enchanteur] { color:#d1b2f5; text-shadow:0 0 12px #a678e977; }
 [data-titre=immortel] { color:#f1cea0; letter-spacing:.1em; font-variant:small-caps; }
 .accueil-profil { display:block; text-decoration:none; padding:0 0 16px; }
-.lien-profil { color:var(--encre-douce); white-space:nowrap; text-underline-offset:6px; }
 
 .ecran.vestiaire { max-width:1380px; padding:40px 32px 60px; gap:0; --selection:#b8a1ff; }
 .vestiaire button,.vestiaire a { -webkit-tap-highlight-color:transparent; }
@@ -164,7 +163,7 @@
 .dos-grave[data-anime=true] > svg { animation:eclat-grave 5s ease-in-out infinite alternate; }
 @media(max-width:1100px) { .vestiaire__atelier { gap:24px; grid-template-columns:minmax(270px,.85fr) minmax(0,1.5fr); } .vestiaire__grille { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:767px) {
-  .entete-application { gap:12px; flex-wrap:wrap; padding-block:10px; } .lien-profil { font-size:.85rem; }
+  .entete-application { gap:12px; flex-wrap:wrap; padding-block:10px; } .lien-reglages { font-size:.85rem; }
   .ecran.vestiaire { padding:24px 16px 32px; } .vestiaire__entete { align-items:start; flex-direction:column; gap:14px; margin-bottom:24px; }
   .vestiaire__compte { text-align:left; } .vestiaire__surtitre { font-size:.58rem; }
   .vestiaire__atelier { grid-template-columns:1fr; gap:20px; }

@@ -1,0 +1,10 @@
+# Les fonctions vérifient elles-mêmes le JWT utilisateur ou la signature Stripe.
+[functions.paiement]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Chaque requête est authentifiée par /auth/v1/user avant toute lecture du combat.
+[functions.combats]
+verify_jwt = false

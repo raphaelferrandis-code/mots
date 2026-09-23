@@ -17,21 +17,21 @@ import type { IndexEdition } from '../src/partage/types.ts';
 import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections, migrationPersonnalisation } from './collections.ts';
 import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
+import { combats } from './combats.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
 const TAILLE_DU_DECK = EQUILIBRAGE.duel.tailleDuDeck;
 
-// Garde-fous du serveur contre les résultats fabriqués (voir BRIEF-joutes.md, §5 : classement « de confiance »).
+// Limites de fréquence et de validité. Elles ne prouvent pas le résultat : le moteur reste côté navigateur.
 const JOUTES_PAR_HEURE = 40;
-const SECONDES_MINIMUM_PAR_JOUTE = 45;
 const HEURES_DE_VALIDITE_DU_TICKET = 2;
 
 const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
 
-const FONCTIONS_DES_JOUTES = ['public.publier_mon_profil(text, jsonb, jsonb, jsonb)', 'public.adversaires()', 'public.commencer_une_joute(uuid)', 'public.terminer_une_joute(bigint, text)', 'public.classement()', 'public.supprimer_mon_profil()'];
+const FONCTIONS_DES_JOUTES = ['public.publier_mon_profil(text, jsonb, jsonb, jsonb)', 'public.adversaires()', 'public.commencer_une_joute(uuid)', 'public.terminer_une_joute(bigint, text)', 'public.classement()', 'public.supprimer_mon_profil()', 'public.supprimer_mon_compte()'];
 
-export function structure(): string {
+export function structure(options: { combats: boolean } = { combats: true }): string {
   const interdits = [
     ...PSEUDOS_INTERDITS.motsEntiers.map((mot) => `(${texte(mot)}, true)`),
     ...PSEUDOS_INTERDITS.fragments.map((mot) => `(${texte(mot)}, false)`),
@@ -75,6 +75,9 @@ create table if not exists public.joutes (
   cote_apres integer
 );
 create index if not exists joutes_par_attaquant on public.joutes (attaquant, commencee_le desc);
+alter table public.joutes add column if not exists recompense jsonb,
+  add column if not exists abandonnee boolean not null default false,
+  add column if not exists cote_adverse integer;
 
 create table if not exists public.mots_interdits (mot text primary key, entier boolean not null);
 
@@ -159,15 +162,34 @@ begin
   -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
   -- (constaté à la première mise en route : le second revenait en erreur).
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 0));
+  perform 1 from public.comptes where utilisateur = moi for update;
   refus := public.pseudo_refuse(propre);
   if refus is not null then return jsonb_build_object('accepte', false, 'raison', refus); end if;
   if exists (select 1 from public.profils where pseudo_cle = public.cle_du_pseudo(propre) and utilisateur is distinct from moi) then
     return jsonb_build_object('accepte', false, 'raison', 'Ce pseudonyme est déjà pris.');
   end if;
-  if jsonb_typeof(p_deck) <> 'array' or jsonb_array_length(p_deck) > ${TAILLE_DU_DECK} or jsonb_typeof(p_savoirs) <> 'object' or jsonb_typeof(p_parades) <> 'object'
+  if p_deck is null or p_savoirs is null or p_parades is null or jsonb_typeof(p_deck) <> 'array' or jsonb_array_length(p_deck) > ${TAILLE_DU_DECK} or jsonb_typeof(p_savoirs) <> 'object' or jsonb_typeof(p_parades) <> 'object'
      or pg_column_size(p_deck) > 2000 or pg_column_size(p_savoirs) > 4000 or pg_column_size(p_parades) > 2000 then
     raise exception 'Ce profil ne peut pas être enregistré.';
   end if;
+  if p_deck <> public.deck_propre(moi, p_deck) then
+    raise exception 'Le deck doit contenir des cartes distinctes de ta collection.';
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where jsonb_typeof(value) <> 'object'
+       or coalesce(value->>'posees', '') !~ '^[0-9]{1,8}$'
+       or coalesce(value->>'reussies', '') !~ '^[0-9]{1,8}$'
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
+
+  if exists(select 1 from public.comptes where utilisateur=moi and progression_active) then
+    p_savoirs := public.savoirs_verifies(moi,p_deck);
+    select parades_verifiees into p_parades from public.comptes where utilisateur=moi;
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where (value->>'reussies')::integer > (value->>'posees')::integer
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
 
   begin
     insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
@@ -196,6 +218,15 @@ begin
   select * into moi from public.profils where utilisateur = auth.uid();
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
   select coalesce(array_agg(defenseur), '{}') into recents from (select defenseur from public.joutes where attaquant = moi.id order by commencee_le desc limit ${J.adversairesRecentsEvites}) r;
+  if to_regclass('public.combats') is not null then
+    execute 'select coalesce(array_agg(defenseur), ''{}''::uuid[]) from (
+      select defenseur from (
+        select (etat->''adversaire''->''profil''->>''id'')::uuid defenseur, cree_le commencee_le
+          from public.combats where utilisateur=$1 and etat->''adversaire''->>''type''=''joute''
+        union all select defenseur, commencee_le from public.joutes where attaquant=$2
+      ) historique order by commencee_le desc limit ${J.adversairesRecentsEvites}
+    ) derniers' into recents using auth.uid(), moi.id;
+  end if;
 
   foreach ecart in array array[${J.ecartsDeCoteProposes.join(', ')}] loop
     select p.* into choisi from (
@@ -226,13 +257,23 @@ declare
   moi public.profils%rowtype;
   ticket bigint;
 begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
   select * into moi from public.profils where utilisateur = auth.uid();
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
   if p_adversaire = moi.id or not exists (select 1 from public.profils where id = p_adversaire) then raise exception 'Cet adversaire n''est plus disponible.'; end if;
+  if jsonb_array_length(public.deck_propre(auth.uid(), moi.deck)) <> ${TAILLE_DU_DECK}
+     or not exists (select 1 from public.profils where id=p_adversaire and jsonb_array_length(deck)=${TAILLE_DU_DECK})
+  then raise exception 'Les deux decks doivent être complets.'; end if;
+  perform public.autoriser_joute(auth.uid());
   if (select count(*) from public.joutes where attaquant = moi.id and commencee_le > now() - interval '1 hour') >= ${JOUTES_PAR_HEURE} then
     raise exception 'Trop de joutes en peu de temps : fais une pause.';
   end if;
-  insert into public.joutes (attaquant, defenseur, cote_avant) values (moi.id, p_adversaire, moi.cote) returning id into ticket;
+  -- Recommencer après avoir fermé l'onglet compte comme un abandon de la joute précédente.
+  perform public.terminer_une_joute(id, 'abandon') from public.joutes where attaquant=moi.id and terminee_le is null order by id;
+  insert into public.joutes (attaquant, defenseur, cote_avant, cote_adverse)
+    select moi.id, p.id, moi.cote, p.cote from public.profils p where p.id=p_adversaire returning id into ticket;
   return ticket;
 end $$;
 
@@ -246,24 +287,39 @@ declare
   cote_adverse integer;
   obtenu numeric;
   nouvelle integer;
-  recompense jsonb;
+  gain_enregistre jsonb;
+  abandon boolean := p_resultat = 'abandon';
 begin
-  if p_resultat not in ('victoire', 'defaite', 'nul') then raise exception 'Résultat inconnu.'; end if;
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if exists(select 1 from public.comptes where utilisateur=auth.uid() and progression_active) then raise exception 'Utilise le serveur des combats vérifiés.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  if p_resultat is null or p_resultat not in ('victoire', 'defaite', 'nul', 'abandon') then raise exception 'Résultat inconnu.'; end if;
+  if abandon then p_resultat := 'defaite'; end if;
+  perform 1 from public.comptes where utilisateur = auth.uid() for update;
   select * into moi from public.profils where utilisateur = auth.uid() for update;
   if not found then raise exception 'Publie d''abord ton profil.'; end if;
-  select * into joute from public.joutes where id = p_ticket and attaquant = moi.id and terminee_le is null and commencee_le > now() - interval '${HEURES_DE_VALIDITE_DU_TICKET} hours' for update;
+  select * into joute from public.joutes where id = p_ticket and attaquant = moi.id for update;
   if not found then raise exception 'Cette joute ne peut plus être enregistrée.'; end if;
-  if now() - joute.commencee_le < interval '${SECONDES_MINIMUM_PAR_JOUTE} seconds' then raise exception 'Cette joute est trop courte pour être comptée.'; end if;
+  if joute.terminee_le is not null then
+    if joute.resultat is distinct from p_resultat or joute.abandonnee <> abandon or joute.recompense is null
+    then raise exception 'Cette joute est déjà enregistrée avec un autre résultat.'; end if;
+    return joute.recompense || jsonb_build_object('etat', public.etat_du_compte(moi.utilisateur));
+  end if;
+  if not abandon and joute.commencee_le <= now() - interval '${HEURES_DE_VALIDITE_DU_TICKET} hours' then raise exception 'Cette joute a expiré : abandonne-la pour continuer.'; end if;
 
   select cote into cote_adverse from public.profils where id = joute.defenseur;
+  cote_adverse := coalesce(joute.cote_adverse, cote_adverse);
   obtenu := case p_resultat when 'victoire' then 1 when 'nul' then 0.5 else 0 end;
   nouvelle := greatest(${J.coteMinimale}, round(moi.cote + ${J.facteurK} * (obtenu - 1 / (1 + power(10::numeric, (cote_adverse - moi.cote)::numeric / ${J.echelle})))));
 
   update public.profils set cote = nouvelle, jouees = jouees + 1, gagnees = gagnees + (p_resultat = 'victoire')::integer, maj_le = now() where id = moi.id;
-  update public.joutes set terminee_le = now(), resultat = p_resultat, cote_avant = moi.cote, cote_apres = nouvelle where id = joute.id;
   -- L'Encre de la joute, si le serveur tient la collection du joueur (même plafond quotidien que les duels d'entraînement).
-  recompense := public.recompenser(moi.utilisateur, ${J.encreParVictoire}, p_resultat);
-  return jsonb_build_object('avant', moi.cote, 'apres', nouvelle) || coalesce(recompense, '{}'::jsonb);
+  gain_enregistre := jsonb_build_object('avant', moi.cote, 'apres', nouvelle) || case when abandon
+    then jsonb_build_object('encre', 0, 'reduite', false)
+    else coalesce(public.recompenser(moi.utilisateur, ${J.encreParVictoire}, p_resultat), '{}'::jsonb) end;
+  update public.joutes set terminee_le = now(), resultat = p_resultat, cote_avant = moi.cote, cote_apres = nouvelle,
+    recompense = gain_enregistre, abandonnee = abandon where id = joute.id;
+  return gain_enregistre || jsonb_build_object('etat', public.etat_du_compte(moi.utilisateur));
 end $$;
 
 -- Le classement : les dix premiers, et les voisins du joueur.
@@ -294,9 +350,25 @@ end $$;
 create or replace function public.supprimer_mon_profil() returns void
 language plpgsql security definer set search_path = ''
 as $$
+declare en_cours boolean;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  perform 1 from public.comptes where utilisateur=auth.uid() for update;
+  if to_regclass('public.combats') is not null then
+    execute 'select exists(select 1 from public.combats where utilisateur=$1 and not termine)' into en_cours using auth.uid();
+    if en_cours then raise exception 'Termine ou abandonne ton combat avant de retirer ton profil.'; end if;
+  end if;
   delete from public.profils where utilisateur = auth.uid();
+end $$;
+
+-- Effacement complet, distinct du retrait des joutes. Le trigger du marché
+-- rembourse les tiers avant la suppression en cascade des possessions.
+create or replace function public.supprimer_mon_compte() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923);
   delete from auth.users where id = auth.uid();
 end $$;
 
@@ -308,11 +380,20 @@ ${marche()}
 revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
 revoke execute on function ${['public.pseudo_refuse(text)', ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
 grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE].join(', ')} to authenticated;
+${options.combats ? combats().trimEnd() : ''}
 `;
 }
 
 export function migrationOffres(): string {
-  return '-- Mise à jour des deux offres — remplace les migrations 4 et 5.\n-- À appliquer avant de publier le client. Aucun droit payant attribué automatiquement.\nbegin;\n' + structure() + '\ncommit;\n';
+  return '-- Mise à jour des deux offres — remplace les migrations 4 et 5.\n-- À appliquer avant de publier le client. Aucun droit payant attribué automatiquement.\nbegin;\n' + structure({ combats: false }) + '\ncommit;\n';
+}
+
+export function migrationIntegrite(): string {
+  return '-- Intégrité des comptes, du marché et de l’enregistrement des résultats.\n-- Étape historique : compléter par 9-combats.sql et la fonction combats pour le client actuel.\nbegin;\n' + structure({ combats: false }) + '\ncommit;\n';
+}
+
+export function migrationCombats(): string {
+  return '-- Combats vérifiés et progression serveur. Installer aussi la fonction combats avant le client.\nbegin;\n' + structure() + '\ncommit;\n';
 }
 
 export function joueursMaison(edition: IndexEdition): string {
@@ -340,5 +421,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '3-cartes.sql'), cartes(edition));
   writeFileSync(path.join(RACINE, 'serveur', '4-personnalisation.sql'), migrationPersonnalisation());
   writeFileSync(path.join(RACINE, 'serveur', '6-offres.sql'), migrationOffres());
-  console.log('Écrits : serveur/1-structure.sql, serveur/2-joueurs-maison.sql, serveur/3-cartes.sql et serveur/4-personnalisation.sql');
+  writeFileSync(path.join(RACINE, 'serveur', '8-integrite.sql'), migrationIntegrite());
+  writeFileSync(path.join(RACINE, 'serveur', '9-combats.sql'), migrationCombats());
+  console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

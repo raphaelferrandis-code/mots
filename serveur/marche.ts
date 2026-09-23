@@ -100,6 +100,35 @@ begin
         provenance = coalesce(excluded.provenance, public.possessions.provenance);
 end $$;
 
+-- Toute suppression (y compris auth.users et récupération) solde les engagements
+-- avant les cascades. La mise reste dans sa bourse d'origine lors du remboursement.
+create or replace function public.solder_compte_supprime() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare e public.encheres%rowtype; achetee integer;
+begin
+  perform pg_advisory_xact_lock(20260923);
+  for e in select * from public.encheres
+    where etat = 'ouverte' and (vendeur = old.utilisateur or meilleur_encherisseur = old.utilisateur)
+    order by id for update loop
+    if e.vendeur = old.utilisateur then
+      if e.meilleur_encherisseur is not null and e.meilleur_encherisseur <> old.utilisateur then
+        select part_achetee into achetee from public.mises
+          where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
+        update public.comptes set encre_achetee = encre_achetee + coalesce(achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(achetee, 0) where utilisateur = e.meilleur_encherisseur;
+      end if;
+    else
+      perform public.rendre_un_timbre(e.vendeur, e.carte, e.finition, e.obtenue_le, null);
+    end if;
+    update public.encheres set etat = 'invendue', cloturee_le = now(),
+      meilleure_mise = null, meilleur_encherisseur = null where id = e.id;
+  end loop;
+  return old;
+end $$;
+drop trigger if exists solder_compte_supprime on public.comptes;
+create trigger solder_compte_supprime before delete on public.comptes
+  for each row execute function public.solder_compte_supprime();
+
 -- Relève les cotes du jour si ce n'est pas encore fait : une seule fois par jour, quel que soit le joueur qui passe.
 create or replace function public.calculer_les_cotes() returns void
 language plpgsql set search_path = ''
@@ -141,15 +170,17 @@ $$;
 
 -- Clôt les enchères échues (${M.cloturesParAppel} au plus par appel) : le timbre à l'acheteur, l'Encre au vendeur moins la commission,
 -- ou le timbre rendu au vendeur s'il n'y a pas eu de mise. Appelée par toutes les fonctions du marché et par mon_compte.
-create or replace function public.cloturer_les_encheres() returns void
+create or replace function public.cloturer_une_enchere(p_id bigint) returns void
 language plpgsql set search_path = ''
 as $$
 declare
   e public.encheres%rowtype;
   vendeur_recoit integer;
 begin
-  for e in select * from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le limit ${M.cloturesParAppel} for update skip locked loop
-    if e.meilleure_mise is null then
+  perform pg_advisory_xact_lock(20260923);
+  select * into e from public.encheres where id = p_id and etat = 'ouverte' and ferme_le <= now() for update;
+  if not found then return; end if;
+    if e.meilleure_mise is null or e.meilleur_encherisseur is null then
       perform public.rendre_un_timbre(e.vendeur, e.carte, e.finition, e.obtenue_le, null);
       update public.encheres set etat = 'invendue', cloturee_le = now() where id = e.id;
     else
@@ -159,6 +190,15 @@ begin
       update public.comptes set encre = encre + vendeur_recoit, maj_le = now() where utilisateur = e.vendeur;
       update public.encheres set etat = 'vendue', cloturee_le = now(), prix_final = e.meilleure_mise, acheteur = e.meilleur_encherisseur where id = e.id;
     end if;
+end $$;
+
+create or replace function public.cloturer_les_encheres() returns void
+language plpgsql set search_path = '' as $$
+declare e record;
+begin
+  perform pg_advisory_xact_lock(20260923);
+  for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit ${M.cloturesParAppel} for update skip locked loop
+    perform public.cloturer_une_enchere(e.id);
   end loop;
   -- Au passage, les cotes du jour (une fois par jour).
   perform public.calculer_les_cotes();
@@ -267,22 +307,26 @@ begin
     if achats >= ${M.achatsParJourAuPlus} then raise exception 'Tu as déjà ${M.achatsParJourAuPlus} achats aujourd''hui : reviens demain.'; end if;
   end if;
   minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * ${M.surencherMinimale})::integer) end;
-  if montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum; end if;
-  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat; end if;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat;
+  elsif montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum;
+  end if;
   -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
-  if c.encre + c.encre_achetee < montant then raise exception 'Pas assez d''Encre : il te faut % Encre.', montant; end if;
+  if c.encre + c.encre_achetee + (case when e.meilleur_encherisseur = moi then e.meilleure_mise else 0 end) < montant then
+    raise exception 'Pas assez d''Encre : il te faut % Encre.', montant;
+  end if;
 
   -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
-  pris_achetee := least(c.encre_achetee, montant);
-  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
-    where utilisateur = moi;
   if e.meilleur_encherisseur is not null then
-    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by quand desc limit 1;
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
     update public.comptes
       set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
           encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
       where utilisateur = e.meilleur_encherisseur;
   end if;
+  select * into c from public.comptes where utilisateur = moi;
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
   insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
   update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
     -- Une mise dans les ${M.prolongationEnMinutes} dernières minutes prolonge l'enchère d'autant.
@@ -291,7 +335,7 @@ begin
                     else e.ferme_le end
     where id = e.id;
   -- Un achat immédiat se règle sur-le-champ.
-  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_les_encheres(); end if;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_une_enchere(e.id); end if;
   select * into e from public.encheres where id = p_enchere;
   return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
 end $$;
@@ -379,4 +423,4 @@ end $$;
 }
 
 export const FONCTIONS_DU_MARCHE = ['public.mettre_en_vente(text, text, integer, integer, integer)', 'public.retirer_de_la_vente(bigint)', 'public.encherir(bigint, integer)', 'public.marche(text, integer)', 'public.mes_encheres()', 'public.cotes(text)', 'public.historique_de_la_cote(text)'];
-export const FONCTIONS_INTERNES_DU_MARCHE = ['public.pseudonyme_de(uuid)', 'public.rendre_un_timbre(uuid, text, text, timestamptz, text)', 'public.enchere_en_json(public.encheres)', 'public.cloturer_les_encheres()', 'public.calculer_les_cotes()', 'public.cote_du_jour(text, text)'];
+export const FONCTIONS_INTERNES_DU_MARCHE = ['public.cloturer_une_enchere(bigint)', 'public.solder_compte_supprime()', 'public.pseudonyme_de(uuid)', 'public.rendre_un_timbre(uuid, text, text, timestamptz, text)', 'public.enchere_en_json(public.encheres)', 'public.cloturer_les_encheres()', 'public.calculer_les_cotes()', 'public.cote_du_jour(text, text)'];

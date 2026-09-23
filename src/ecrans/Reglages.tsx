@@ -135,6 +135,8 @@ export function Reglages() {
       <div className="reglages__gestion">
         <section className="rubrique">
           <h2>Ta sauvegarde</h2>
+          {sauvegarde.progressionServeur && <p className="petit">Ton expérience et ta maîtrise des mots sont synchronisées avec ton compte.</p>}
+          {sauvegarde.ancienneProgression && <p className="bloc petit">Ton ancienne progression locale ({sauvegarde.ancienneProgression.xp} XP) est conservée dans le fichier exporté, dans « ancienneProgression ». Elle reste disponible pour une reprise après validation.</p>}
           <p className="petit">
             {partie.serveur.etat !== 'appareil'
               ? 'Ta collection est gardée par le serveur du jeu, sous le compte anonyme de ce navigateur. Le fichier exporté n’en est qu’une copie : il ne peut plus être importé.'

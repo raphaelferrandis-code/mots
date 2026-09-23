@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "skipLibCheck": true
@@ -28,6 +29,7 @@
     "pipeline",
     "simulateurs",
     "serveur",
+    "supabase/functions",
     "vite.config.ts"
   ]
 }

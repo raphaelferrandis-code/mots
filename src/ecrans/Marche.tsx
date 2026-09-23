@@ -62,7 +62,7 @@ export function Marche() {
               {marche.donnees.total === 0 ? <div className="etat-vide"><h2>{recherche.trim() ? 'Aucun timbre trouvé' : 'Aucune enchère en cours'}</h2>{recherche.trim() && <button className="bouton" onClick={() => { setRecherche(''); setPage(0); }}>Effacer la recherche</button>}</div> : <p className="texte-doux petit">{marche.donnees.total} enchère{marche.donnees.total > 1 ? 's' : ''} en cours.</p>}
               <ul className="liste-nue marche__encheres">
                 {marche.donnees.encheres.map((enchere) => (
-                  <LigneDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre} onAgir={agir} />
+                  <LigneDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />
                 ))}
               </ul>
               {marche.donnees.total > (page + 1) * REGLES.encheresParPage && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p + 1)}>Enchères suivantes</button>}
@@ -74,8 +74,8 @@ export function Marche() {
             <section className="rubrique" aria-label="Mes ventes et mes mises">
               <h2>Mes ventes et mes mises</h2>
               <ul className="liste-nue marche__encheres">
-                {miennes.donnees.ventes.map((enchere) => <LigneDEnchere key={`v${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre} onAgir={agir} />)}
-                {miennes.donnees.mises.filter((m) => !miennes.donnees!.ventes.some((v) => v.id === m.id)).map((enchere) => <LigneDEnchere key={`m${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre} onAgir={agir} />)}
+                {miennes.donnees.ventes.map((enchere) => <LigneDEnchere key={`v${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />)}
+                {miennes.donnees.mises.filter((m) => !miennes.donnees!.ventes.some((v) => v.id === m.id)).map((enchere) => <LigneDEnchere key={`m${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />)}
               </ul>
             </section>
           )}
@@ -101,7 +101,8 @@ function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere:
     evenement.preventDefault();
     const valeur = Math.floor(Number(montant));
     if (!Number.isFinite(valeur) || valeur < minimum) { void onAgir(async () => { throw new Error(`La mise doit être d'au moins ${minimum} Encre.`); }); return; }
-    if (valeur > encre) { void onAgir(async () => { throw new Error(`Il te manque ${valeur - encre} Encre pour cette mise.`); }); return; }
+    const disponible = encre + (enchere.enTete ? enchere.meilleureMise ?? 0 : 0);
+    if (valeur > disponible) { void onAgir(async () => { throw new Error(`Il te manque ${valeur - disponible} Encre pour cette mise.`); }); return; }
     lancer(async () => { const e = await encherir(enchere.id, valeur); return e.etat === 'vendue' ? `« ${carte?.mot ?? enchere.carte} » est à toi pour ${e.prixFinal} Encre.` : `Mise de ${valeur} Encre enregistrée : tu es en tête.`; });
   };
   const acheter = (): void => {

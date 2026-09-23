@@ -328,9 +328,9 @@ main:focus, main h1:focus { outline: none; }
 .duel__main { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; } /* la carte choisie se soulève */
 .duel__carte { border-radius: 8px; transition: transform 0.15s ease-out; }
 .duel__carte[data-choisie='true'] { transform: translateY(-8px); outline: 3px solid var(--accent); outline-offset: 3px; }
-.duel__prevision { margin: 0; line-height: 1.25; }
-.duel__prevision span { display: block; margin-top: 2px; }
-.duel__prevision span::first-letter { text-transform: uppercase; }
+.duel__engagement { margin: 0; line-height: 1.25; }
+.duel__engagement span { display: block; margin-top: 2px; }
+.duel__engagement span::first-letter { text-transform: uppercase; }
 .duel__action {
   position: sticky; bottom: calc(var(--hauteur-navigation) + env(safe-area-inset-bottom) + 8px); z-index: 5;
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
@@ -344,7 +344,6 @@ main:focus, main h1:focus { outline: none; }
 @media (min-width: 768px) { .duel__suite { position: static; } .duel__suite .bouton { flex: 0 0 auto; } }
 .duel__verdict { margin: 0; font-size: 1.05rem; }
 .duel__verdict .entete__surtitre { display: block; }
-.duel__si-parade { white-space: nowrap; }
 .duel__lecon { display: grid; gap: 6px; }
 .duel__lecon .entete__surtitre { margin: 0; }
 .epreuve__rappel { margin: 0; text-align: center; font-size: 0.9rem; font-weight: 700; }

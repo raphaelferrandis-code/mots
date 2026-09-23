@@ -3,8 +3,8 @@
 // contre un serveur, seul ce fichier changera.
 
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, prevoirLAttaque, taillesDesFactions } from '../jeu/duel.ts';
-import type { Duel, Niveau, Prevision, TaillesDesFactions } from '../jeu/duel.ts';
+import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, taillesDesFactions } from '../jeu/duel.ts';
+import type { Duel, Niveau, TaillesDesFactions } from '../jeu/duel.ts';
 import { composerLEpreuve } from '../jeu/epreuve.ts';
 import type { Definitions, Epreuve } from '../jeu/epreuve.ts';
 import { hasardDuSysteme } from '../jeu/hasard.ts';
@@ -64,11 +64,6 @@ export async function preparerUnDuel(adversaire: Adversaire): Promise<{ terrain:
 
 // Début de manche : l'adversaire pose son mot. (Le double d'un joueur pose toujours sa carte la plus solide.)
 export const motDeLOrdinateur = (terrain: Terrain, duel: Duel): CarteIndex => choisirPourLOrdinateur(duel, terrain.adversaire.type === 'entrainement' ? terrain.adversaire.niveau : 'Normal', hasardDuSysteme, terrain.tailles, REGLES);
-
-// Ce que donnerait la manche si le joueur répondait par cette carte : son attaque, et celle qu'il recevrait.
-export function prevoirLaManche(terrain: Terrain, duel: Duel, carte: CarteIndex, adverse: CarteIndex): { mienne: Prevision; sienne: Prevision } {
-  return { mienne: prevoirLAttaque(duel, 'joueur', carte, adverse, terrain.tailles, REGLES), sienne: prevoirLAttaque(duel, 'adversaire', adverse, carte, terrain.tailles, REGLES) };
-}
 
 // L'épreuve sur un mot. L'autre mot de la manche est écarté des leurres : sa définition sera demandée à son tour.
 export function poserLEpreuve(terrain: Terrain, carte: CarteIndex, autreMotDeLaManche: CarteIndex): Epreuve {

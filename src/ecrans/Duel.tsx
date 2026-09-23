@@ -12,23 +12,25 @@ import { Carte } from '../composants/carte/Carte.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { choisirAuxFleches } from '../composants/fleches.ts';
 import { useChargement } from '../composants/useChargement.ts';
+import { useCombatServeur } from '../composants/useCombatServeur.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { useSonsDuDuel } from '../composants/useSonsDuDuel.ts';
-import { EQUILIBRAGE, attaqueEnJeu } from '../config/equilibrage.ts';
+import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { NIVEAUX } from '../jeu/duel.ts';
-import type { Attaque, Camp, Duel as EtatDuDuel, Niveau, Prevision } from '../jeu/duel.ts';
+import type { Attaque, Camp, Duel as EtatDuDuel, Niveau } from '../jeu/duel.ts';
 import type { Epreuve } from '../jeu/epreuve.ts';
 import { ligueDe } from '../jeu/joute.ts';
 import { jourDe } from '../jeu/progression.ts';
+import { registresMasques } from '../jeu/partie.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../partage/types.ts';
-import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, prevoirLaManche, reglerLaManche } from '../services/duel.ts';
+import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
 import { serveurDeJoutes } from '../services/joutes.ts';
-import { commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
+import { abandonnerLeDuel, commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
 import type { FinDeDuel, RecompenseDuServeur } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
 import '../composants/commandeDuel.css';
@@ -87,6 +89,7 @@ export function Duel() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [ticket, setTicket] = useState<number | null>(null); // le numéro de la joute en cours, quand un serveur tient le classement
   const [enregistrement, setEnregistrement] = useState(false);
+  const enregistrementEnCours = useRef(false);
   const sons = useSonsDuDuel(sauvegarde?.reglages.sonsPaquets ?? true);
 
   // La dernière étape connue, pour qu'une réponse et la fin du temps ne comptent jamais toutes les deux.
@@ -99,8 +102,54 @@ export function Duel() {
     window.scrollTo({ top: 0 });
   };
 
+  const enLigne = useCombatServeur(sauvegarde !== null, (reponse) => {
+    const combat = reponse.combat;
+    setErreur(null);
+    if (!combat) { setDuel(null); setTerrain(null); changerDEtape({nom:'accueil'}); return; }
+    const vue = combat.vue;
+    setTerrain({adversaire:vue.adversaire,visibles:[],definitions:new Map(),tailles:new Map(),masques:[]});
+    setMode(vue.adversaire.type);
+    if (vue.adversaire.type === 'entrainement') setNiveau(vue.adversaire.niveau);
+    setDuel(vue.duel); setBilan(vue.bilan);
+    const e = vue.etape;
+    const precedente = etapeActuelle.current;
+    if (precedente.nom === 'attaque' && (e.nom === 'parade' || e.nom === 'echappe')) {
+      if (e.attaque.juste) sons.juste(); else sons.faux();
+    }
+    if (precedente.nom === 'parade' && e.nom === 'bilan') {
+      if (e.parade.juste) sons.juste(); else sons.faux();
+      const manche = e.apres.manches.at(-1);
+      sons.coup(manche?.joueur.infliges ?? 0,0.45); sons.coup(manche?.adversaire.infliges ?? 0,0.75);
+      if (e.attaque.maitrise || e.parade.maitrise) sons.cachet(1.1);
+    }
+    if (precedente.nom === 'bilan' && e.nom === 'fin') {
+      if (e.resultat === 'victoire') sons.victoire(); else if (e.resultat === 'defaite') sons.defaite();
+    }
+    if (e.nom === 'fin') {
+      changerDEtape({nom:'fin',resultat:e.resultat,nonEnregistree:false,...(combat.recompense ?? {encre:0,reduite:false,cote:null})});
+      if (e.expire) setErreur('Ce duel a expiré après 24 heures : défaite enregistrée, sans récompense de fin.');
+      else if (e.abandonne) setErreur('Duel abandonné : défaite enregistrée, sans récompense de fin.');
+    } else {
+      // Convertir uniquement l'affichage de l'horloge ; le serveur vérifie lui-même le délai.
+      changerDEtape(e.nom === 'attaque' || e.nom === 'parade' ? {...e,debut:e.debut + Date.now() - reponse.etat.maintenant} : e);
+    }
+  });
+
+  const retourAuSalon = (): void => {
+    if (enLigne.actif) { void enLigne.agir({type:'quitter'}); return; }
+    setDuel(null); changerDEtape({nom:'accueil'});
+  };
+
   const lancer = async (adversaire: Adversaire): Promise<void> => {
     if (etapeActuelle.current.nom === 'preparation') return;
+    if (enLigne.actif) {
+      if (!sauvegarde || enLigne.bloque) return;
+      sons.preparer(); changerDEtape({nom:'preparation'});
+      const commun = {masques:registresMasques(sauvegarde),temps:sauvegarde.reglages.tempsDeReponse};
+      const ok = await enLigne.commencer(adversaire.type === 'entrainement' ? {...commun,mode:'entrainement',niveau:adversaire.niveau} : {...commun,mode:'joute',adversaire:adversaire.profil.id});
+      if (!ok) changerDEtape({nom:'accueil'});
+      return;
+    }
     sons.preparer(); // dans le geste du joueur : les navigateurs n'ouvrent la sortie audio qu'à ce moment-là
     changerDEtape({ nom: 'preparation' });
     setErreur(null);
@@ -125,6 +174,7 @@ export function Duel() {
     if (!terrain || !duel) return;
     // Les deux questions s'enchaînent au même endroit de l'écran : un double toucher ne doit pas répondre à la seconde.
     if (choisie !== null && (enCours.nom === 'attaque' || enCours.nom === 'parade') && Date.now() - enCours.debut < 500) return;
+    if (enLigne.actif) { void enLigne.agir({type:'repondre',choisie}); return; }
     if (enCours.nom === 'attaque') {
       const juste = choisie === enCours.epreuve.bonne;
       if (juste) sons.juste(); else sons.faux();
@@ -138,7 +188,7 @@ export function Duel() {
       // Chaque parade tentée est comptée (son double parera comme lui). Et si le joueur possède aussi ce mot,
       // le reconnaître chez l'adversaire compte pour sa maîtrise.
       noterLaParade(enCours.adverse.rarete, juste);
-      const parade: Reponse = { epreuve: enCours.epreuve, choisie, juste, maitrise: noterLaReponse(enCours.adverse.id, juste) };
+      const parade: Reponse = { epreuve: enCours.epreuve, choisie, juste, maitrise: noterLaReponse(enCours.adverse.id, juste, false) };
       setBilan((b) => ({ ...b, parades: b.parades + 1, paradesReussies: b.paradesReussies + (juste ? 1 : 0), maitrises: parade.maitrise ? [...b.maitrises, enCours.adverse.mot] : b.maitrises }));
       const apres = reglerLaManche(terrain, duel, enCours.carte, enCours.adverse, enCours.attaque.juste, juste);
       // La réponse d'abord, puis les deux attaques l'une après l'autre, puis le cachet s'il vient d'être gagné.
@@ -152,7 +202,8 @@ export function Duel() {
   };
 
   // Le temps de l'épreuve : à son terme, la réponse est comptée fausse.
-  const duree = sauvegarde ? secondesPourRepondre(sauvegarde) : null;
+  const temps = enLigne.combat?.vue.temps;
+  const duree = temps ? temps === 'illimite' ? null : REGLES.secondesPourRepondre * (temps === 'double' ? 2 : 1) : sauvegarde ? secondesPourRepondre(sauvegarde) : null;
   const repondreALaFinDuTemps = useRef(repondre);
   repondreALaFinDuTemps.current = repondre;
   useEffect(() => {
@@ -163,49 +214,63 @@ export function Duel() {
 
   // Après le bilan d'une manche : le duel est fini, ou l'ordinateur pose son mot suivant.
   const continuer = async (apres: EtatDuDuel): Promise<void> => {
-    if (!terrain || !sauvegarde) return;
+    if (enLigne.actif) { await enLigne.agir({type:'continuer'}); return; }
+    if (!terrain || !sauvegarde || enregistrementEnCours.current) return;
     setDuel(apres);
     if (apres.vainqueur === null) { changerDEtape({ nom: 'choix', adverse: motDeLOrdinateur(terrain, apres), choisie: null }); return; }
 
     const resultat: Resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite';
-    // En joute, si un serveur tient le classement, c'est lui qui donne la nouvelle cote. S'il ne répond pas, la cote ne bouge pas.
-    let coteDuServeur: { avant: number; apres: number } | undefined;
-    let recompenseDuServeur: RecompenseDuServeur | undefined;
-    let nonEnregistree = false;
-    if (terrain.adversaire.type === 'joute' && serveurDeJoutes.enLigne) {
-      setEnregistrement(true);
-      try {
+    enregistrementEnCours.current = true;
+    setEnregistrement(true);
+    setErreur(null);
+    try {
+      // Un échec laisse le bilan disponible pour réessayer le même ticket.
+      let coteDuServeur: { avant: number; apres: number } | undefined;
+      let recompenseDuServeur: RecompenseDuServeur | undefined;
+      if (terrain.adversaire.type === 'joute' && serveurDeJoutes.enLigne) {
         const finDeJoute = await serveurDeJoutes.terminer(ticket, resultat);
         coteDuServeur = finDeJoute ?? undefined;
-        if (finDeJoute && typeof finDeJoute.encre === 'number') recompenseDuServeur = { encre: finDeJoute.encre, reduite: finDeJoute.reduite === true };
-      } catch {
-        const actuelle = sauvegarde.joutes.cote ?? EQUILIBRAGE.joute.coteDeDepart;
-        coteDuServeur = { avant: actuelle, apres: actuelle };
-        nonEnregistree = true;
-      } finally { setEnregistrement(false); }
+        if (finDeJoute && typeof finDeJoute.encre === 'number') recompenseDuServeur = { encre: finDeJoute.encre, reduite: finDeJoute.reduite === true, etat: finDeJoute.etat };
+      }
+      const fin = await finirLeDuel(terrain.adversaire, resultat, ticket, coteDuServeur, recompenseDuServeur);
+      if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
+      changerDEtape({ nom: 'fin', resultat, nonEnregistree: false, ...fin });
+    } catch (e) {
+      setErreur(`${e instanceof Error ? e.message : String(e)} Ton résultat reste affiché : réessaie avec « Voir le résultat ».`);
+    } finally {
+      enregistrementEnCours.current = false;
+      setEnregistrement(false);
     }
-    if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
+  };
+
+  const abandonner = async (): Promise<void> => {
+    if (!terrain || enregistrementEnCours.current || !window.confirm('Abandonner ce duel ? Cela compte comme une défaite, sans récompense.')) return;
+    if (enLigne.actif) { await enLigne.agir({type:'abandonner'}); return; }
+    enregistrementEnCours.current = true;
     setEnregistrement(true);
-    const fin = await finirLeDuel(terrain.adversaire, resultat, ticket, coteDuServeur, recompenseDuServeur);
-    setEnregistrement(false);
-    changerDEtape({ nom: 'fin', resultat, nonEnregistree, ...fin });
+    setErreur(null);
+    try {
+      await abandonnerLeDuel(terrain.adversaire, ticket);
+      setDuel(null);
+      changerDEtape({ nom: 'accueil' });
+    } catch (e) { setErreur(e instanceof Error ? e.message : String(e)); }
+    finally { enregistrementEnCours.current = false; setEnregistrement(false); }
   };
 
-  const abandonner = (): void => {
-    if (!window.confirm('Abandonner ce duel ? Tu ne recevras aucune récompense.')) return;
-    setDuel(null);
-    changerDEtape({ nom: 'accueil' });
-  };
-
-  if (!sauvegarde || deck.etat !== 'pret') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
+  const incidentServeur = enLigne.erreur && <div className="bloc bloc--alerte" role="alert"><p>{enLigne.erreur}</p><div className="rangee-de-boutons"><button type="button" className="bouton" disabled={enLigne.occupe} onClick={() => void enLigne.reessayer()}>Réessayer</button><button type="button" className="bouton bouton--discret" disabled={enLigne.occupe} onClick={() => void enLigne.reprendre()}>Reprendre la partie enregistrée</button></div></div>;
+  if (enLigne.actif && !enLigne.repris) return <main className="ecran"><p>Reprise de ta partie…</p>{incidentServeur}</main>;
+  if (deck.etat === 'erreur' && !enLigne.combat) return <main className="ecran"><p role="alert">{deck.message}</p><button className="bouton" onClick={() => window.location.reload()}>Réessayer</button></main>;
+  if (!sauvegarde || (deck.etat !== 'pret' && !enLigne.combat)) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
   // ── Avant le duel : le niveau, le deck, les règles ─────────────────────────
   if (etape.nom === 'accueil' || etape.nom === 'preparation' || !duel || !terrain) {
-    const pret = deck.donnees.length === REGLES.tailleDuDeck;
+    const disponibles = deck.etat === 'pret' ? deck.donnees : [];
+    const pret = disponibles.length === REGLES.tailleDuDeck;
     const victoiresDuJour = sauvegarde.duels.jour === jourDe(Date.now()) ? sauvegarde.duels.victoiresDuJour : 0;
     const pleinesRestantes = Math.max(0, REGLES.victoiresPleinesParJour - victoiresDuJour);
     return (
       <main className="ecran duel-salon">
+        {incidentServeur}
         <h1 className="visuellement-cache">Les duels</h1>
         <header className="duel-salon__modes">
 
@@ -218,13 +283,13 @@ export function Duel() {
         <div className="duel-salon__panneau" role="tabpanel" id="panneau-des-duels" aria-labelledby={`onglet-${mode}`}>
         {!pret ? (
           <section className="rubrique">
-            <p>Deck incomplet : {deck.donnees.length} / {REGLES.tailleDuDeck} timbres jouables.</p>
+            <p>Deck incomplet : {disponibles.length} / {REGLES.tailleDuDeck} timbres jouables.</p>
             <a className="bouton" href={lien({ ecran: 'deck' })}>Composer mon deck</a>
           </section>
         ) : mode === 'joute' ? (
           <>
             {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
-            <PanneauDesJoutes sauvegarde={sauvegarde} enPreparation={etape.nom === 'preparation'} onDefier={(profil) => void lancer({ type: 'joute', profil })} />
+            <PanneauDesJoutes sauvegarde={sauvegarde} enPreparation={etape.nom === 'preparation' || enLigne.bloque} onDefier={(profil) => void lancer({ type: 'joute', profil })} />
           </>
         ) : (
           <div className="panneaux">
@@ -252,7 +317,7 @@ export function Duel() {
               </p>
               {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
               <div className="rangee-de-boutons commande-duel__actions">
-                <button type="button" className="bouton bouton-presse bouton-sceau" data-frappe={etape.nom === 'preparation'} aria-busy={etape.nom === 'preparation'} disabled={etape.nom === 'preparation'} onClick={() => void lancer({ type: 'entrainement', niveau })}><SceauDuel /><span>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</span><span className="bouton-presse__fleche" aria-hidden="true">↗</span></button>
+                <button type="button" className="bouton bouton-presse bouton-sceau" data-frappe={etape.nom === 'preparation'} aria-busy={etape.nom === 'preparation'} disabled={etape.nom === 'preparation' || enLigne.bloque} onClick={() => void lancer({ type: 'entrainement', niveau })}><SceauDuel /><span>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</span><span className="bouton-presse__fleche" aria-hidden="true">↗</span></button>
                 <a className="bouton bouton--discret bouton-plaque" href={lien({ ecran: 'deck' })}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 5h13v16H7ZM4 18H2V2h14" /><path d="m13.5 10 3 3-3 3-3-3Z" /></svg><span>Modifier mon deck</span></a>
               </div>
             </section>
@@ -260,7 +325,7 @@ export function Duel() {
             <details className="rubrique repliable">
               <summary><h2>Voir mon deck</h2></summary>
               <div className="deck">
-                {deck.donnees.map((carte) => <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />)}
+                {disponibles.map((carte) => <CarteLegendee key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} />)}
               </div>
             </details>
 
@@ -268,11 +333,12 @@ export function Duel() {
               <summary><h2>Règles du duel</h2></summary>
               <ul className="regles">
                 <li><strong>Départ :</strong> {REGLES.pointsDeVie} points de vie et {REGLES.cartesEnMain} cartes en main. Choisis une carte face au mot adverse.</li>
+                <li><strong>Cartes :</strong> chaque carte jouée est épuisée pour ce duel, même en cas d’erreur. Pioche une nouvelle carte tant qu’il en reste ; ta collection est conservée.</li>
                 <li><strong>Attaque :</strong> retrouve la définition de ton mot parmi quatre{duree === null ? ', sans limite de temps' : ` en ${duree} secondes`}. Une erreur annule ton attaque.</li>
                 <li><strong>Parade :</strong> retrouve ensuite la définition du mot adverse pour diviser ses dégâts par deux.</li>
-                <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse, minimum {REGLES.degatsMinimum}. Tu frappes en premier. Les mots rares ont un bonus d'attaque et sont moins souvent parés.</li>
+                <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse, minimum {REGLES.degatsMinimum}. Tu frappes en premier. Les mots rares ont un bonus d'attaque et sont moins souvent parés. Les Hors-série sont plus connues, mais restent très puissantes même parées.</li>
                 <li><strong>Bonus :</strong> +{REGLES.bonusDeType} selon le cycle nom &gt; adjectif &gt; verbe &gt; nom ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
-                <li><strong>Victoire :</strong> réduis l'adversaire à zéro point de vie, ou garde le plus de points après {REGLES.manchesMaximum} manches.</li>
+                <li><strong>Victoire :</strong> réduis l'adversaire à zéro point de vie, ou garde le plus de points après {REGLES.manchesMaximum} manches ou lorsqu’un camp n’a plus de cartes. À égalité, match nul.</li>
                 <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes réponses sur un mot de ta collection lui donnent son cachet « Maîtrisé ».</li>
               </ul>
             </details>
@@ -298,7 +364,10 @@ export function Duel() {
   const carteJouee = etape.nom === 'choix' ? joueur.main.find((c) => c.id === etape.choisie) : 'carte' in etape ? etape.carte : undefined;
 
   return (
-    <main className="ecran duel" data-phase={etape.nom}>
+    <main className="ecran duel" data-phase={etape.nom} aria-busy={enLigne.occupe}>
+      {incidentServeur}
+      {enLigne.occupe && <p role="status" className="texte-doux petit">Enregistrement…</p>}
+      {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
       <h1 className="visuellement-cache">Duel contre {nomAdverse}</h1>
       <header className="duel__camps">
         <Jauge nom={nomAdverse} camp={adversaire} maison={enJoute?.maison} avant={duel.camps.adversaire.pv} delai="450ms" />
@@ -321,11 +390,14 @@ export function Duel() {
 
       {etape.nom === 'choix' && (() => {
         const choisie = joueur.main.find((c) => c.id === etape.choisie) ?? null;
-        const prevision = choisie ? prevoirLaManche(terrain, duel, choisie, etape.adverse) : null;
         return (
           <>
             <section className="rubrique duel__tour" aria-live="polite">
               <h2>Ta main</h2>
+              <p className="texte-doux petit">{joueur.main.length + joueur.pioche.length} cartes encore disponibles · {joueur.pioche.length} dans la pioche. Chaque carte ne se joue qu’une fois.</p>
+              <p className="texte-doux petit">Connaître ton mot, choisir le bon type, garder une carte pour la suite : à toi de décider.</p>
+              {joueur.derniere && <p className="texte-doux petit">Ton mot précédent : <strong>{joueur.derniere.mot}</strong> · {joueur.derniere.faction}.</p>}
+              {adversaire.derniere && <p className="texte-doux petit">Son mot précédent : <strong>{adversaire.derniere.mot}</strong> · {adversaire.derniere.faction}.</p>}
               <div className="duel__main">
                 {joueur.main.map((carte) => (
                   <div key={carte.id} className="duel__carte" data-choisie={carte.id === etape.choisie}>
@@ -333,14 +405,14 @@ export function Duel() {
                   </div>
                 ))}
               </div>
-              {choisie && prevision ? (
+              {choisie ? (
                 // Sur téléphone, ce bandeau reste collé en bas de l'écran : le bouton « Jouer » est toujours sous le pouce.
                 <div className="duel__action">
-                  <p className="duel__prevision">
-                    <strong>Tu infliges {prevision.mienne.degats}</strong>, tu reçois <strong>{prevision.sienne.degats}</strong> <span className="duel__si-parade">({prevision.sienne.degatsSiParee} si tu pares)</span>
-                    <span className="texte-doux petit">{detailDuCalcul(choisie, prevision.mienne)}.</span>
+                  <p className="duel__engagement">
+                    <strong>Jouer « {choisie.mot} » ?</strong>
+                    <span className="texte-doux petit">Cette carte sera épuisée pour le reste du duel, même si tu rates sa définition.</span>
                   </p>
-                  <button type="button" className="bouton" onClick={() => { sons.preparer(); sons.poser(); changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() }); }}>Jouer</button>
+                  <button type="button" className="bouton" disabled={enLigne.bloque} onClick={() => { sons.preparer(); sons.poser(); if (enLigne.actif) { void enLigne.agir({type:'choisir',carte:choisie.id}); return; } changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() }); }}>Jouer</button>
                 </div>
               ) : null}
             </section>
@@ -357,7 +429,7 @@ export function Duel() {
           <h2 className="epreuve__mot" lang="fr" tabIndex={-1} ref={viserLeMot}>{etape.epreuve.mot}</h2>
           <p className="texte-doux petit">{(etape.nom === 'attaque' ? etape.carte : etape.adverse).type} · Quelle est sa définition ?</p>
           {duree !== null && <Sablier debut={etape.debut} secondes={duree} onTic={() => sons.tic()} />}
-          <Propositions epreuve={etape.epreuve} onRepondre={repondre} />
+          <Propositions epreuve={etape.epreuve} onRepondre={repondre} disabled={enLigne.bloque} />
         </section>
       )}
 
@@ -368,7 +440,7 @@ export function Duel() {
           <p className="duel__verdict" data-reussi="false">Pas d'attaque cette manche.</p>
           <Propositions epreuve={etape.attaque.epreuve} reponse={etape.attaque} />
           <div className="duel__suite">
-            <button type="button" className="bouton" ref={viser} onClick={() => changerDEtape({ nom: 'parade', adverse: etape.adverse, carte: etape.carte, attaque: etape.attaque, epreuve: poserLEpreuve(terrain, etape.adverse, etape.carte), debut: Date.now() })}>
+            <button type="button" className="bouton" ref={viser} disabled={enLigne.bloque} onClick={() => { if (enLigne.actif) { void enLigne.agir({type:'continuer'}); return; } changerDEtape({ nom: 'parade', adverse: etape.adverse, carte: etape.carte, attaque: etape.attaque, epreuve: poserLEpreuve(terrain, etape.adverse, etape.carte), debut: Date.now() }); }}>
               Passer à la parade
             </button>
           </div>
@@ -414,7 +486,7 @@ export function Duel() {
                   ? `Cachet « Maîtrisé » obtenu : ${viennentDEtreMaitrises.join(', ')}.`
                   : dejaMaitrise ? `« ${etape.carte.mot} » : maîtrisé.` : `Maîtrise · ${etape.carte.mot} : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise}`}
               </p>
-              <div className="duel__suite"><button type="button" className="bouton" ref={viser} disabled={enregistrement} onClick={() => void continuer(etape.apres)}>{enregistrement ? 'Enregistrement du résultat…' : fini ? 'Voir le résultat' : 'Manche suivante'}</button></div>
+              <div className="duel__suite"><button type="button" className="bouton" ref={viser} disabled={enregistrement || enLigne.bloque} onClick={() => void continuer(etape.apres)}>{enregistrement ? 'Enregistrement du résultat…' : fini ? 'Voir le résultat' : 'Manche suivante'}</button></div>
             </section>
           </>
         );
@@ -423,7 +495,7 @@ export function Duel() {
       {etape.nom === 'fin' && (
         <section className="bloc duel__fin" aria-live="polite">
           <p className="entete__surtitre">{pluriel(duel.manches.length, 'manche')}</p>
-          <GainDuDuel resultat={etape.resultat} encre={etape.encre} xp={Math.max(0, sauvegarde.profil.xp - xpAuDebut.current)} />
+          <GainDuDuel resultat={etape.resultat} encre={etape.encre} xp={enLigne.combat?.xp ?? Math.max(0, sauvegarde.profil.xp - xpAuDebut.current)} />
           <p>
             {etape.nonEnregistree && <><span className="joute__refus">Serveur indisponible : résultat non enregistré, cote inchangée.</span><br /></>}
             {etape.cote && !etape.nonEnregistree && (
@@ -442,27 +514,17 @@ export function Duel() {
           </p>
           <div className="rangee-de-boutons">
             {terrain.adversaire.type === 'entrainement'
-              ? <button type="button" className="bouton" onClick={() => void lancer(terrain.adversaire)}>Rejouer</button>
-              : <button type="button" className="bouton" onClick={() => { setDuel(null); changerDEtape({ nom: 'accueil' }); }}>Nouvelle joute</button>}
-            {terrain.adversaire.type === 'entrainement' && <button type="button" className="bouton bouton--discret" onClick={() => { setDuel(null); changerDEtape({ nom: 'accueil' }); }}>Changer de niveau</button>}
+              ? <button type="button" className="bouton" disabled={enLigne.bloque} onClick={() => void lancer(terrain.adversaire)}>Rejouer</button>
+              : <button type="button" className="bouton" disabled={enLigne.bloque} onClick={retourAuSalon}>Nouvelle joute</button>}
+            {terrain.adversaire.type === 'entrainement' && <button type="button" className="bouton bouton--discret" disabled={enLigne.bloque} onClick={retourAuSalon}>Changer de niveau</button>}
             <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>
           </div>
         </section>
       )}
 
-      {etape.nom !== 'fin' && !enEpreuve && !(etape.nom === 'bilan' && etape.apres.vainqueur !== null) && <button type="button" className="bouton bouton--discret duel__abandon" onClick={abandonner}>Abandonner</button>}
+      {etape.nom !== 'fin' && (enLigne.actif || !enEpreuve) && (!!erreur || !(etape.nom === 'bilan' && etape.apres.vainqueur !== null)) && <button type="button" className="bouton bouton--discret duel__abandon" disabled={enregistrement || enLigne.bloque} onClick={() => void abandonner()}>Abandonner</button>}
     </main>
   );
-}
-
-// « attaque 9 (dont mot rare +1), triangle des types +2, même origine +1, 3 bloqués par sa défense »
-function detailDuCalcul(carte: CarteIndex, attaque: Prevision | Attaque): string {
-  return [
-    `attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}${attaque.bonusDeRarete > 0 ? ` (dont mot ${carte.rarete.toLowerCase()} +${attaque.bonusDeRarete})` : ''}`,
-    attaque.bonusDeType > 0 ? `triangle des types +${attaque.bonusDeType}` : '',
-    attaque.bonusDeFaction > 0 ? `même origine +${attaque.bonusDeFaction}` : '',
-    attaque.bloques > 0 ? `${attaque.bloques} bloqué${attaque.bloques > 1 ? 's' : ''} par sa défense` : '',
-  ].filter(Boolean).join(', ');
 }
 
 function Jauge({ nom, camp, maison, avant, delai }: { nom: string; camp: Camp; maison?: boolean; avant: number; delai: string }) {
@@ -500,11 +562,11 @@ function MotPose({ titre, carte, habillage, secret = false }: { titre: string; c
 }
 
 // Les quatre définitions : des boutons pendant l'épreuve, puis la correction une fois la réponse donnée.
-function Propositions({ epreuve, reponse, onRepondre, seulementLUtile = false }: { epreuve: Epreuve; reponse?: Reponse; onRepondre?: (choisie: number) => void; seulementLUtile?: boolean }) {
+function Propositions({ epreuve, reponse, onRepondre, seulementLUtile = false, disabled = false }: { epreuve: Epreuve; reponse?: Reponse; onRepondre?: (choisie: number) => void; seulementLUtile?: boolean; disabled?: boolean }) {
   return (
     <ol className="epreuve__propositions">
       {epreuve.propositions.map((texte, i) => {
-        if (!reponse) return <li key={i}><button type="button" className="proposition" lang="fr" onClick={() => onRepondre?.(i)}>{texte}</button></li>;
+        if (!reponse) return <li key={i}><button type="button" className="proposition" lang="fr" disabled={disabled} onClick={() => onRepondre?.(i)}>{texte}</button></li>;
         const etat = i === epreuve.bonne ? 'bonne' : i === reponse.choisie ? 'fausse' : 'autre';
         // La coche et la croix sont dessinées par la feuille de style : on les dit aussi en toutes lettres.
         const lue = etat === 'bonne' ? (i === reponse.choisie ? 'Ta réponse, la bonne : ' : 'La bonne réponse : ') : etat === 'fausse' ? 'Ta réponse, fausse : ' : '';

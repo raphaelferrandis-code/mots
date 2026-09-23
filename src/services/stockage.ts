@@ -10,8 +10,6 @@ const CLE_DE_SECOURS = 'mots.sauvegarde';
 
 export type Emplacement = 'base de données' | 'stockage simple' | 'mémoire seulement';
 
-let memoire: unknown;
-
 function ouvrirLaBase(): Promise<IDBDatabase> {
   return new Promise((resoudre, rejeter) => {
     const demande = indexedDB.open(BASE, 1);
@@ -32,43 +30,46 @@ function dansLaBase<T>(mode: IDBTransactionMode, action: (magasin: IDBObjectStor
   }));
 }
 
-export async function lireLaSauvegarde(): Promise<{ contenu: unknown; emplacement: Emplacement }> {
-  try {
-    const contenu = await dansLaBase('readonly', (magasin) => magasin.get(CLE));
-    if (contenu !== undefined) return { contenu, emplacement: 'base de données' };
-    // Rien dans la base : une sauvegarde de secours existe peut-être (écrite un jour où la base était indisponible).
-    const secours = localStorage.getItem(CLE_DE_SECOURS);
-    return { contenu: secours ? JSON.parse(secours) : undefined, emplacement: 'base de données' };
-  } catch {
-    try {
-      const secours = localStorage.getItem(CLE_DE_SECOURS);
-      return { contenu: secours ? JSON.parse(secours) : undefined, emplacement: 'stockage simple' };
-    } catch {
-      return { contenu: memoire, emplacement: 'mémoire seulement' };
-    }
+type Copie = { format: 'mots.stockage.v1'; ecriteLe: number; contenu?: unknown };
+const decoder = (brut: unknown): Copie => {
+  if (typeof brut === 'object' && brut !== null && 'format' in brut && brut.format === 'mots.stockage.v1'
+    && 'ecriteLe' in brut && typeof brut.ecriteLe === 'number' && Number.isFinite(brut.ecriteLe)) return brut as Copie;
+  return { format: 'mots.stockage.v1', ecriteLe: 0, contenu: brut };
+};
+
+export function creerLeStockage(io: { lireBase(): Promise<unknown>; ecrireBase(copie: Copie): Promise<unknown>; lireSecours(): unknown; ecrireSecours(copie: Copie): void; maintenant(): number }) {
+  let memoire: Copie = { format: 'mots.stockage.v1', ecriteLe: -1 };
+  async function lireLaSauvegarde(): Promise<{ contenu: unknown; emplacement: Emplacement }> {
+    const copies: { copie: Copie; emplacement: Emplacement }[] = [];
+    try { copies.push({ copie: decoder(await io.lireBase()), emplacement: 'base de données' }); } catch { /* lire l'autre copie */ }
+    try { copies.push({ copie: decoder(io.lireSecours()), emplacement: 'stockage simple' }); } catch { /* secours indisponible ou illisible */ }
+    copies.push({ copie: memoire, emplacement: 'mémoire seulement' });
+    const choisie = copies.sort((a, b) => b.copie.ecriteLe - a.copie.ecriteLe || Number(b.copie.contenu !== undefined) - Number(a.copie.contenu !== undefined))[0];
+    memoire = choisie.copie;
+    return { contenu: memoire.contenu, emplacement: choisie.emplacement };
   }
+  async function ecrireLaSauvegarde(contenu: unknown): Promise<Emplacement> {
+    memoire = { format: 'mots.stockage.v1', ecriteLe: Math.max(io.maintenant(), memoire.ecriteLe + 1), contenu };
+    // Les deux copies portent la même révision. Une ancienne base redevenue lisible
+    // ne doit jamais gagner contre le secours écrit pendant sa panne.
+    const copie = memoire;
+    let emplacement: Emplacement = 'mémoire seulement';
+    try { io.ecrireSecours(copie); emplacement = 'stockage simple'; } catch { /* la base peut encore fonctionner */ }
+    try { await io.ecrireBase(copie); emplacement = 'base de données'; } catch { /* le secours garde cette révision */ }
+    return emplacement;
+  }
+  // Une copie vide datée empêche une ancienne copie inaccessible de ressusciter la partie.
+  const effacerLaSauvegarde = async (): Promise<void> => { await ecrireLaSauvegarde(undefined); };
+  return { lireLaSauvegarde, ecrireLaSauvegarde, effacerLaSauvegarde };
 }
 
-export async function ecrireLaSauvegarde(contenu: unknown): Promise<Emplacement> {
-  memoire = contenu;
-  try {
-    await dansLaBase('readwrite', (magasin) => magasin.put(contenu, CLE));
-    return 'base de données';
-  } catch {
-    try {
-      localStorage.setItem(CLE_DE_SECOURS, JSON.stringify(contenu));
-      return 'stockage simple';
-    } catch {
-      return 'mémoire seulement';
-    }
-  }
-}
-
-export async function effacerLaSauvegarde(): Promise<void> {
-  memoire = undefined;
-  try { await dansLaBase('readwrite', (magasin) => magasin.delete(CLE)); } catch { /* base indisponible : rien à effacer */ }
-  try { localStorage.removeItem(CLE_DE_SECOURS); } catch { /* idem */ }
-}
+export const { lireLaSauvegarde, ecrireLaSauvegarde, effacerLaSauvegarde } = creerLeStockage({
+  lireBase: () => dansLaBase('readonly', magasin => magasin.get(CLE)),
+  ecrireBase: copie => dansLaBase('readwrite', magasin => magasin.put(copie, CLE)),
+  lireSecours: () => { const brut = localStorage.getItem(CLE_DE_SECOURS); return brut ? JSON.parse(brut) : undefined; },
+  ecrireSecours: copie => localStorage.setItem(CLE_DE_SECOURS, JSON.stringify(copie)),
+  maintenant: Date.now,
+});
 
 // Demande au navigateur de ne pas effacer les données du jeu quand il manque de place.
 // Sur iPhone, Safari peut malgré tout effacer les données d'un site resté longtemps sans visite : d'où l'export.

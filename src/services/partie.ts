@@ -3,8 +3,7 @@ import type { CarteIndex } from '../partage/types.ts';
 import { calculerGainXp, cosmetiquesPremium } from '../jeu/formule.ts';
 import { XP, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
-import { examinerLePseudo } from '../jeu/pseudo.ts';
-import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
+import { appliquerIdentite, pseudoDuJoueur, verifierIdentite } from './identite.ts';
 // La partie du joueur : sa sauvegarde en mémoire, les actions qui la modifient, et son enregistrement.
 // Les écrans ne touchent jamais au stockage : ils passent par ici.
 //
@@ -20,6 +19,8 @@ import { preparerReserve } from '../jeu/paquets.ts';
 import type { Reserve } from '../jeu/paquets.ts';
 import type { Niveau } from '../jeu/duel.ts';
 import { mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
+import type { RequeteCombat, ReponseServeurCombat } from '../jeu/combat.ts';
+import { chacunSonTour, clientDuServeur } from './compte.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
@@ -31,10 +32,11 @@ import type { Finition, Rarete } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { afficherUnCode, estUnCodeValable, fabriquerUnCode, normaliserUnCode } from '../jeu/codeDeSecours.ts';
-import { aQuelqueChoseAImporter, fusionner } from '../jeu/synchronisation.ts';
+import { aQuelqueChoseAImporter, fusionner, lireEtat } from '../jeu/synchronisation.ts';
 import type { EtatDuCompte, ProfilRetrouve } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
 import { serveurDesCollections } from './collections.ts';
+import { serveurDeJoutes } from './joutes.ts';
 import { serveurDuMarche } from './marche.ts';
 import type { MesEncheres, PageDuMarche } from './marche.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
@@ -67,6 +69,7 @@ export const decalageDuServeur = (): number => decalage;
 let editionDesSucces: ReadonlyMap<string, CarteIndex> | undefined;
 let chargementSucces: Promise<void> | undefined;
 let partie: Partie = { etat: 'chargement' };
+let generationIdentite = 0;
 const abonnes = new Set<() => void>();
 let ecritures: Promise<unknown> = Promise.resolve();
 
@@ -131,6 +134,14 @@ function appliquer(etat: EtatDuCompte): void {
   enregistrer(fusionner(partie.sauvegarde, etat));
 }
 
+export async function commanderCombat(commande: RequeteCombat): Promise<ReponseServeurCombat> {
+  const reponse = await surLeServeur(() => chacunSonTour(() => clientDuServeur().appelerCombat<ReponseServeurCombat>(commande)));
+  const etat = lireEtat(reponse.etat);
+  if (!etat.progression) throw new Error('La progression serveur doit être installée avant de jouer.');
+  appliquer(etat);
+  return { ...reponse, etat };
+}
+
 // ── Le code de secours (décision n° 36) ────────────────────────────────────
 // Le jeu tire le code, le serveur n'en garde que l'empreinte : il est montré une seule fois, au joueur, qui le note.
 export async function definirUnCodeDeSecours(): Promise<string> {
@@ -143,13 +154,15 @@ export async function definirUnCodeDeSecours(): Promise<string> {
 export async function recupererAvecUnCode(saisie: string): Promise<{ timbres: number; profil: ProfilRetrouve | null }> {
   const code = normaliserUnCode(saisie);
   if (!estUnCodeValable(code)) throw new Error('Ce code est incomplet : il compte vingt lettres et chiffres, en quatre groupes de cinq.');
-  const retrouvee = await surLeServeur(() => serveurDesCollections.recupererParCode(code));
+  generationIdentite++;
+  // Une session perdue ne doit pas empêcher la récupération explicite : aucun import local préalable.
+  const retrouvee = await serveurDesCollections.recupererParCode(code);
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
-  // Le profil de joute retrouvé remplace celui de l'appareil ; ce que l'appareil sait des mots (maîtrise) reste à lui.
+  // Le compte retrouvé remplace le classement et la progression de cet appareil.
   const joutes = retrouvee.profil
     ? { ...partie.sauvegarde.joutes, pseudo: retrouvee.profil.pseudo, cote: retrouvee.profil.cote, jouees: retrouvee.profil.jouees, gagnees: retrouvee.profil.gagnees }
     : nouvelleSauvegarde(maintenant(), 0).joutes;
-  enregistrer({ ...partie.sauvegarde, joutes });
+  enregistrer({ ...partie.sauvegarde, joutes, profil: { ...partie.sauvegarde.profil, pseudo: retrouvee.profil?.pseudo ?? '' } });
   appliquer(retrouvee.etat);
   return { timbres: Object.keys(retrouvee.etat.cartes).length, profil: retrouvee.profil };
 }
@@ -244,6 +257,7 @@ export async function ouvrirRecompense(type: 'achat' | 'hebdomadaire'): Promise<
 }
 function gagnerExperience(xp: number, combat = false): void {
   if (partie.etat !== 'prete') return;
+  if (serveurDesCollections.actif && partie.sauvegarde.progressionServeur) return;
   const profil = partie.sauvegarde.profil;
   const bonus = combat ? calculerGainXp(xp, profil.bonusXpReste ?? 0, partie.compte?.formule ?? null, maintenant()) : { gain: xp, reste: profil.bonusXpReste ?? 0 };
   enregistrer({ ...partie.sauvegarde, profil: { ...profil, xp: profil.xp + bonus.gain, bonusXpReste: bonus.reste } });
@@ -256,12 +270,28 @@ export function personnaliser(categorie: Categorie | 'paquet', id: string): void
   if (categorie === 'paquet' ? !PAQUETS.some((p) => p.id === id) : !choix || choix.categorie !== categorie || !estDisponible(profil, choix, partie.compte !== null && cosmetiquesPremium(partie.compte.formule, maintenant()))) return;
   enregistrer({ ...partie.sauvegarde, profil: { ...profil, [categorie]: id } });
 }
-export function nommerMonProfil(saisie: string): void {
-  if (partie.etat !== 'prete') return;
-  const verdict = examinerLePseudo(saisie, PSEUDOS_INTERDITS);
-  if (!verdict.accepte) throw new Error(verdict.raison);
-  enregistrer({ ...partie.sauvegarde, profil: { ...partie.sauvegarde.profil, pseudo: verdict.pseudo } });
+// Renommage et publication partagent la même file : une publication de l'ancien
+// écran ne peut repasser après un renommage et rétablir un ancien pseudonyme.
+let fileIdentite: Promise<unknown> = Promise.resolve();
+function enregistrerIdentite(saisie: string | undefined, rejoindre: boolean): Promise<void> {
+  const generation = generationIdentite;
+  const operation = fileIdentite.then(async () => {
+    if (partie.etat !== 'prete' || generation !== generationIdentite) throw new Error('Le compte a changé. Réessaie depuis ton profil.');
+    const { serveurDeJoutes } = await import('./joutes.ts');
+    if (generation !== generationIdentite) throw new Error('Le compte a changé. Réessaie depuis ton profil.');
+    const avant = partie.sauvegarde;
+    const identite = await verifierIdentite(avant, saisie ?? pseudoDuJoueur(avant), rejoindre, p => serveurDeJoutes.publier(p));
+    if (partie.etat !== 'prete' || generation !== generationIdentite) throw new Error('Le compte a changé. Réessaie depuis ton profil.');
+    // Si l'utilisateur a quitté les joutes entre-temps, ne pas le réinscrire.
+    if (avant.joutes.pseudo && !partie.sauvegarde.joutes.pseudo) throw new Error('Tu as quitté les joutes. Réessaie depuis ton profil.');
+    enregistrer(appliquerIdentite(partie.sauvegarde, identite));
+  });
+  fileIdentite = operation.catch(() => undefined);
+  return operation;
 }
+export const nommerMonProfil = (saisie: string): Promise<void> => enregistrerIdentite(saisie, false);
+export const rejoindreLesJoutes = (saisie: string): Promise<void> => enregistrerIdentite(saisie, true);
+export const publierMonIdentite = (): Promise<void> => enregistrerIdentite(undefined, true);
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
   if (partie.etat !== 'prete') return;
   enregistrer({ ...partie.sauvegarde, reglages: { ...partie.sauvegarde.reglages, [cle]: valeur } });
@@ -272,18 +302,19 @@ export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeu
 export function changerLeDeck(ids: readonly string[]): void {
   if (partie.etat !== 'prete') return;
   enregistrer(enregistrerLeDeck(partie.sauvegarde, ids, EQUILIBRAGE.duel));
+  const envoye = partie.sauvegarde.deck;
   if (!serveurDesCollections.actif || partie.serveur.etat !== 'en ligne') return;
-  void serveurDesCollections.changerDeDeck(partie.sauvegarde.deck).then((propre) => {
-    if (partie.etat === 'prete' && JSON.stringify(propre) !== JSON.stringify(partie.sauvegarde.deck)) enregistrer({ ...partie.sauvegarde, deck: propre });
+  void serveurDesCollections.changerDeDeck(envoye).then((propre) => {
+    if (partie.etat === 'prete' && partie.sauvegarde.deck === envoye && JSON.stringify(propre) !== JSON.stringify(envoye)) enregistrer({ ...partie.sauvegarde, deck: propre });
   }).catch(signalerLaPanne);
 }
 
 // Note la réponse du joueur à une épreuve de maîtrise. Rend vrai si le mot vient d'être maîtrisé.
-export function noterLaReponse(idCarte: string, reussi: boolean): boolean {
+export function noterLaReponse(idCarte: string, reussi: boolean, attribuerXp = true): boolean {
   if (partie.etat !== 'prete') return false;
   const reponse = noterUneReponse(partie.sauvegarde, idCarte, reussi, maintenant(), EQUILIBRAGE.duel);
   if (reponse.sauvegarde !== partie.sauvegarde) enregistrer(reponse.sauvegarde);
-  if (reussi && partie.sauvegarde.cartes[idCarte]) gagnerExperience(XP.reponse, true);
+  if (attribuerXp && reussi && partie.sauvegarde.cartes[idCarte]) gagnerExperience(XP.reponse, true);
   return reponse.vientDEtreMaitrisee;
 }
 
@@ -301,7 +332,7 @@ export async function commencerUnDuel(niveau: Niveau): Promise<number | null> {
 }
 
 export type FinDeDuel = { encre: number; reduite: boolean; cote: { avant: number; apres: number } | null };
-export type RecompenseDuServeur = { encre: number; reduite: boolean };
+export type RecompenseDuServeur = { encre: number; reduite: boolean; etat?: EtatDuCompte };
 
 // Fin d'un duel : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge.
 // Quand le serveur tient la collection, c'est lui qui verse l'Encre : d'après le ticket du duel d'entraînement, ou
@@ -314,35 +345,46 @@ export async function finirLeDuel(
   recompenseDuServeur?: RecompenseDuServeur,
 ): Promise<FinDeDuel> {
   if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
+  let confirme = recompenseDuServeur;
+  if (serveurDesCollections.actif) {
+    if (adversaire.type === 'entrainement') {
+      if (ticket === null) throw new Error('Ce duel ne possède pas de ticket serveur.');
+      confirme = await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, resultat));
+    }
+    if (!confirme?.etat) throw new Error('Le résultat doit être confirmé par le serveur avant de recevoir la récompense. Réessaie.');
+  }
   gagnerExperience(XP.duel + (resultat === 'victoire' ? XP.victoire : 0), true);
-  const avant = partie.sauvegarde.encre;
   if (adversaire.type === 'entrainement') {
     const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);
-    enregistrer(fin.sauvegarde);
-    if (serveurDesCollections.actif && ticket !== null) {
-      try {
-        const recompense = await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, resultat));
-        appliquer(recompense.etat);
-        return { encre: recompense.encre, reduite: recompense.reduite, cote: null };
-      } catch {
-        // Le serveur n'a pas pu compter ce duel : l'Encre affichée est celle du jeu, jusqu'à la prochaine synchronisation.
-      }
+    enregistrer(serveurDesCollections.actif ? { ...fin.sauvegarde, encre: partie.sauvegarde.encre } : fin.sauvegarde);
+    if (serveurDesCollections.actif && confirme?.etat) {
+      appliquer(confirme.etat);
+      return { encre: confirme.encre, reduite: confirme.reduite, cote: null };
     }
     return { encre: fin.encre, reduite: fin.reduite, cote: null };
   }
   const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, coteDuServeur);
-  if (serveurDesCollections.actif && recompenseDuServeur) {
-    enregistrer({ ...fin.sauvegarde, encre: avant + recompenseDuServeur.encre });
-    return { encre: recompenseDuServeur.encre, reduite: recompenseDuServeur.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
+  if (serveurDesCollections.actif && confirme?.etat) {
+    enregistrer({ ...fin.sauvegarde, encre: partie.sauvegarde.encre });
+    appliquer(confirme.etat);
+    return { encre: confirme.encre, reduite: confirme.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
   }
   enregistrer(fin.sauvegarde);
   return { encre: fin.encre, reduite: fin.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
 }
 
-// Le pseudonyme du joueur dans les joutes, et sa cote quand c'est le serveur qui la tient.
-export function changerDePseudonyme(pseudo: string): void {
+export async function abandonnerLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, ticket: number | null): Promise<void> {
   if (partie.etat !== 'prete') return;
-  enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, pseudo } });
+  const compte = adversaire.type === 'entrainement' && serveurDesCollections.actif && ticket !== null
+    ? await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, 'abandon')) : null;
+  const joute = adversaire.type === 'joute' && serveurDeJoutes.enLigne ? await serveurDeJoutes.terminer(ticket, 'abandon') : null;
+  const avant = partie.sauvegarde;
+  const fin = adversaire.type === 'entrainement'
+    ? terminerUnDuel(avant, adversaire.niveau, 'defaite', maintenant(), EQUILIBRAGE.duel)
+    : terminerUneJoute(avant, adversaire.profil, 'defaite', maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, joute ?? undefined);
+  enregistrer({ ...fin.sauvegarde, encre: avant.encre });
+  const etat = compte?.etat ?? joute?.etat;
+  if (etat) appliquer(etat);
 }
 
 // Le joueur quitte les joutes : pseudonyme, cote et compteurs de joutes repartent de zéro sur l'appareil.
@@ -350,6 +392,7 @@ export function changerDePseudonyme(pseudo: string): void {
 // Le profil gardé par le serveur se supprime à part (src/services/joutes.ts).
 export function quitterLesJoutes(): void {
   if (partie.etat !== 'prete') return;
+  generationIdentite++;
   enregistrer({ ...partie.sauvegarde, joutes: nouvelleSauvegarde(maintenant(), 0).joutes });
 }
 
@@ -422,6 +465,7 @@ export function importerUneSauvegarde(texte: string): void {
 // Tout effacer sur l'appareil. (Le compte du serveur, lui, est supprimé par src/services/joutes.ts, juste avant.)
 export async function toutEffacer(): Promise<void> {
   if (partie.etat !== 'prete') return;
+  generationIdentite++;
   await ecritures;
   await effacerLaSauvegarde();
   publier({ ...partie, serveur: etatDuServeurAuDepart(), compte: null });

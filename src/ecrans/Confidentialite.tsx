@@ -7,7 +7,7 @@ import { usePartie } from '../composants/usePartie.ts';
 import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { serveurDesCollections } from '../services/collections.ts';
-import { serveurDeJoutes, supprimerMonProfilDeJoute } from '../services/joutes.ts';
+import { supprimerMonProfilDeJoute } from '../services/joutes.ts';
 
 type Suppression = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'faite' } | { etat: 'erreur'; message: string };
 
@@ -16,7 +16,7 @@ export function Confidentialite() {
   const [suppression, setSuppression] = useState<Suppression>({ etat: 'repos' });
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
-  const aUnProfil = partie.sauvegarde.joutes.pseudo !== '' || serveurDeJoutes.aUnCompte();
+  const aUnProfil = partie.sauvegarde.joutes.pseudo !== '';
   const collectionSurLeServeur = serveurDesCollections.actif;
 
   const supprimer = async (): Promise<void> => {
@@ -38,7 +38,7 @@ export function Confidentialite() {
         <h2>En bref</h2>
         <ul className="regles">
           {collectionSurLeServeur
-            ? <><li>Ta collection est gardée par le serveur du jeu, sous un compte anonyme : ni nom, ni e-mail, ni mot de passe.</li><li>Tes réglages et tes résultats en duel restent sur ton appareil.</li></>
+            ? <><li>Ta collection et ta progression sont gardées par le serveur du jeu, sous un compte anonyme : ni nom, ni e-mail, ni mot de passe.</li><li>Tes réglages restent sur ton appareil. Le serveur vérifie tes duels et permet de les reprendre.</li></>
             : <><li>Ta partie reste sur ton appareil.</li><li>Rien n'est envoyé à un serveur tant que tu n'as pas rejoint les joutes classées.</li></>}
           <li>Pas de publicité, pas de mesure d'audience, pas de pistage.</li>
           <li>Tu peux tout effacer à tout moment, ici même.</li>
@@ -70,13 +70,14 @@ export function Confidentialite() {
             <li>tes timbres, avec leurs finitions, leurs doublons et la date où tu les as obtenus ;</li>
             <li>ton Encre, ta réserve de paquets et le nombre de paquets ouverts ;</li>
             <li>ton deck ;</li>
-            <li>l'heure de début et de fin de tes duels d'entraînement, pour verser l'Encre gagnée ;</li>
+            <li>ton expérience, tes réponses réussies, tes parades et ta maîtrise des mots, même après la vente d'un timbre ;</li>
+            <li>le déroulement de tes duels : cartes, questions, réponses, horaires, résultat et gains, pour les vérifier et les reprendre. Au lancement d'un nouveau duel, les parties archivées depuis plus de 30 jours sont supprimées ; les totaux de progression restent dans ton compte ;</li>
             <li>l'empreinte de ton code de secours, si tu en as créé un — jamais le code lui-même.</li>
           </ul>
           <p>
             Tout cela est attaché au même compte anonyme que les joutes : un simple numéro, lié à ce navigateur. La
-            première fois, la collection qui vivait sur ton appareil y a été copiée une fois pour toutes ; ensuite,
-            c'est le serveur qui fait foi.
+            collection est synchronisée depuis le serveur. Une ancienne collection locale peut être transférée après
+            validation ; ensuite, c'est le serveur qui fait foi.
           </p>
         </section>
       )}
@@ -93,7 +94,7 @@ export function Confidentialite() {
         </ul>
         <p>
           Ces données sont attachées à un compte anonyme créé automatiquement : un simple numéro, sans nom, sans adresse
-          e-mail, sans mot de passe. Ce compte est lié à ce navigateur : sur un autre appareil, tu repartirais avec un nouveau profil.
+          e-mail, sans mot de passe. Le code de secours permet de retrouver ce compte, sa progression et son combat sur un autre appareil.
         </p>
         <p>
           <strong>Ce que voient les autres joueurs :</strong> ton pseudonyme, ta cote, ta ligue et les raretés de ton deck.
@@ -116,11 +117,11 @@ export function Confidentialite() {
         <h2>Tout effacer</h2>
         <p>
           Ton profil de joute est conservé tant que tu ne le supprimes pas. Le supprimer retire du serveur ton pseudonyme,
-          ta cote, ton deck, tes résultats, tes joutes et ton compte anonyme. C'est immédiat et définitif. Ta collection
-          n'est pas touchée.
+          ta cote, ton deck public, tes résultats publics et tes joutes. C'est immédiat et définitif.
+          Ton compte, ta collection, tes droits et tes engagements au marché sont conservés.
         </p>
         {suppression.etat === 'faite'
-          ? <p role="status"><strong>Profil supprimé.</strong> Le serveur ne garde plus rien de toi.</p>
+          ? <p role="status"><strong>Profil de joute supprimé.</strong> Ta collection et ton compte sont conservés.</p>
           : aUnProfil
             ? <button type="button" className="bouton bouton--danger" disabled={suppression.etat === 'en cours'} onClick={() => void supprimer()}>{suppression.etat === 'en cours' ? 'Suppression…' : 'Supprimer mon profil de joute'}</button>
             : <p className="texte-doux">Tu n'as pas de profil de joute : rien n'a été envoyé au serveur.</p>}

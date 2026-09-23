@@ -4,19 +4,18 @@
 
 ## Ce que ce simulateur prouve, et ce qu’il suppose
 
-Les entrées et les sorties d'Encre sont **exactes** : elles ne dépendent que des règles du jeu (doublons, duels, commission). Ce que les joueurs sont prêts à payer, en revanche, est une **hypothèse**, réglée ici par le « désir » : un timbre qui manque vaut son Encre de doublon multipliée par le désir. Chaque tableau est donc donné pour trois désirs. Ce qui reste vrai dans les trois colonnes est solide ; le reste demande de vrais joueurs.
+Scénarios **gratuits uniquement** : l’ancienne rente payante de 300 Encre/jour et les plafonds supprimés pour les abonnés ont été retirés. Les nombres de paquets ouverts, de duels et le taux de victoire restent des hypothèses. Les règles de gain et de commission utilisent la configuration du jeu ; chaque scénario vérifie la conservation de l’Encre. Les retours d’enchères conservent leurs exemplaires, les doublons tirés dans les paquets sont convertis. Le « désir » représente une disposition à payer supposée : ces résultats ne remplacent pas des observations de joueurs.
 
 ## 1. L'Encre du jeu : ce qui entre, ce qui sort
 
 | Réglages | Encre créée par joueur et par jour | Encre détruite | Part détruite par la commission | Encre gardée par le joueur du milieu | Ventes par jour | Prix moyen |
 |---|---|---|---|---|---|---|
-| Désir ×2 — réglages actuels | 884 | 3 | 100 % | 94 799 | 67 | 27 |
-| Désir ×5 — réglages actuels | 881 | 30 | 100 % | 87 272 | 402 | 42 |
-| Désir ×10 — réglages actuels | 885 | 44 | 100 % | 83 151 | 404 | 64 |
-| Désir ×5 — commission 0 % | 884 | 0 | 0 % | 90 413 | 405 | 43 |
-| Désir ×5 — commission 20 % | 881 | 60 | 100 % | 82 946 | 410 | 42 |
-| Désir ×5 — un joueur sur dix est payant | 912 | 31 | 100 % | 86 932 | 420 | 41 |
-| Désir ×5 — sans plafond pour personne | 882 | 43 | 100 % | 89 594 | 582 | 42 |
+| Désir ×2 — réglages actuels | 884 | 3 | 100 % | 94 262 | 66 | 27 |
+| Désir ×5 — réglages actuels | 885 | 29 | 100 % | 86 222 | 397 | 41 |
+| Désir ×10 — réglages actuels | 882 | 44 | 100 % | 81 027 | 395 | 65 |
+| Désir ×5 — commission 0 % | 884 | 0 | 0 % | 90 713 | 396 | 41 |
+| Désir ×5 — commission 20 % | 883 | 58 | 100 % | 81 794 | 396 | 42 |
+| Désir ×5 — sans plafond pour personne | 880 | 43 | 100 % | 87 616 | 577 | 42 |
 
 
 ## 2. Les prix planchers, rareté par rareté
@@ -25,36 +24,36 @@ Les entrées et les sorties d'Encre sont **exactes** : elles ne dépendent que d
 
 | Rareté | Encre si doublon | Plancher | Mis en vente | Vendus | Prix médian obtenu | Invendus |
 |---|---|---|---|---|---|---|
-| Commune | 1 | 5 | 51 932 | 17 | 11 | 100 % |
-| Peu commune | 3 | 10 | 7 699 | 4 373 | 10 | 43 % |
-| Rare | 10 | 30 | 7 035 | 3 941 | 33 | 44 % |
-| Épique | 30 | 100 | 535 | 413 | 105 | 23 % |
-| Légendaire | 100 | 300 | 37 | 37 | 355 | 0 % |
+| Commune | 1 | 5 | 50 629 | 10 | 11 | 100 % |
+| Peu commune | 3 | 10 | 7 226 | 4 201 | 10 | 42 % |
+| Rare | 10 | 30 | 8 853 | 4 220 | 34 | 52 % |
+| Épique | 30 | 100 | 423 | 364 | 105 | 14 % |
+| Légendaire | 100 | 300 | 16 | 15 | 355 | 6 % |
 | Hors-série | 500 | 1 000 | 0 | 0 | — | — |
 
-**Désir ×5** — un timbre qui manque vaut 5 fois son Encre de doublon. Invendus : 23 % de ce qui est proposé.
+**Désir ×5** — un timbre qui manque vaut 5 fois son Encre de doublon. Invendus : 24 % de ce qui est proposé.
 
 | Rareté | Encre si doublon | Plancher | Mis en vente | Vendus | Prix médian obtenu | Invendus |
 |---|---|---|---|---|---|---|
-| Commune | 1 | 5 | 13 695 | 10 173 | 9 | 26 % |
-| Peu commune | 3 | 10 | 21 340 | 16 411 | 23 | 23 % |
-| Rare | 10 | 30 | 25 972 | 20 610 | 68 | 21 % |
-| Épique | 30 | 100 | 1 163 | 946 | 255 | 19 % |
-| Légendaire | 100 | 300 | 75 | 75 | 865 | 0 % |
+| Commune | 1 | 5 | 13 150 | 9 704 | 9 | 26 % |
+| Peu commune | 3 | 10 | 21 168 | 15 967 | 23 | 25 % |
+| Rare | 10 | 30 | 26 118 | 20 395 | 67 | 22 % |
+| Épique | 30 | 100 | 1 436 | 1 062 | 249 | 26 % |
+| Légendaire | 100 | 300 | 79 | 79 | 865 | 0 % |
 | Hors-série | 500 | 1 000 | 0 | 0 | — | — |
 
 **Désir ×10** — un timbre qui manque vaut 10 fois son Encre de doublon. Invendus : 22 % de ce qui est proposé.
 
 | Rareté | Encre si doublon | Plancher | Mis en vente | Vendus | Prix médian obtenu | Invendus |
 |---|---|---|---|---|---|---|
-| Commune | 1 | 5 | 14 129 | 10 479 | 17 | 26 % |
-| Peu commune | 3 | 10 | 20 595 | 15 921 | 40 | 23 % |
-| Rare | 10 | 30 | 26 000 | 20 939 | 120 | 19 % |
-| Épique | 30 | 100 | 1 359 | 1 035 | 400 | 24 % |
-| Légendaire | 100 | 300 | 69 | 69 | 1 200 | 0 % |
+| Commune | 1 | 5 | 13 749 | 10 581 | 17 | 23 % |
+| Peu commune | 3 | 10 | 20 779 | 16 275 | 40 | 22 % |
+| Rare | 10 | 30 | 26 207 | 20 079 | 120 | 23 % |
+| Épique | 30 | 100 | 1 048 | 940 | 400 | 10 % |
+| Légendaire | 100 | 300 | 70 | 70 | 1 200 | 0 % |
 | Hors-série | 500 | 1 000 | 0 | 0 | — | — |
 
-**Sans aucun plancher, au désir ×2** : 21 % d'invendus, contre 87 % avec les planchers actuels. L'écart est ce que les planchers coûtent en ventes manquées ; ils empêchent en échange de brader un timbre rare.
+**Sans aucun plancher, au désir ×2** : 24 % d'invendus, contre 87 % avec les planchers actuels. L'écart est ce que les planchers coûtent en ventes manquées ; ils empêchent en échange de brader un timbre rare.
 
 **Les timbres Hors-série ne sont jamais proposés** dans cette simulation, et c’est normal : ils n’ont pas de finition (toujours « Normale »), donc un joueur n’en possède jamais deux exemplaires, et la règle de vente retenue ici ne vend que les timbres dont on garde un autre exemplaire. Leur plancher de 1000 Encre n’est donc pas mis à l’épreuve ici.
 
@@ -64,9 +63,9 @@ Planchers essayés : commune 2, peu commune 6, rare 20, épique 60, légendaire 
 
 | Désir | Invendus avec les planchers actuels | Invendus avec des planchers doublés |
 |---|---|---|
-| ×2 | 87 % | 23 % |
-| ×5 | 23 % | 22 % |
-| ×10 | 22 % | 21 % |
+| ×2 | 87 % | 24 % |
+| ×5 | 24 % | 24 % |
+| ×10 | 22 % | 23 % |
 
 ## 3. Les plafonds des joueurs gratuits
 
@@ -75,7 +74,7 @@ Réglages actuels : **10 ventes en cours** et **10 achats par jour** pour un jou
 | Plafond | Joueurs qui y butent | Fois par jour, tous joueurs confondus |
 |---|---|---|
 | 10 ventes en cours | 60 sur 60 | 47 |
-| 10 achats par jour | 50 sur 60 | 27 |
+| 10 achats par jour | 50 sur 60 | 26 |
 
 
 ### Quel couple de plafonds ?
@@ -84,23 +83,23 @@ Ce qui compte n'est pas chaque plafond pris à part, mais l'équilibre entre ce 
 
 | Ventes en cours | Achats par jour | Ventes conclues par jour | Invendus | Encre gardée par le joueur du milieu |
 |---|---|---|---|---|
-| 3 | 3 | 121 | 29 % | 91 193 |
-| 10 | 3 | 146 | 71 % | 87 310 |
-| 3 | 10 | 152 | 10 % | 93 886 |
-| 10 | 10 | 400 | 23 % | 87 666 |
-| 20 | 20 | 574 | 6 % | 88 945 |
-| sans limite | sans limite | 577 | 6 % | 86 326 |
+| 3 | 3 | 120 | 29 % | 91 189 |
+| 10 | 3 | 136 | 73 % | 85 369 |
+| 3 | 10 | 155 | 9 % | 92 561 |
+| 10 | 10 | 397 | 23 % | 86 600 |
+| 20 | 20 | 575 | 6 % | 87 678 |
+| sans limite | sans limite | 573 | 6 % | 86 753 |
 
 
 ## Ce que ces chiffres disent
 
 **1. L’Encre ne paie plus de paquets.** La commission des enchères est désormais la seule sortie d’Encre simulée. Il faut comparer les entrées et les sorties avant de fixer les bonus payants ou de vendre de l’Encre.
 
-**2. Le plancher des timbres communs bloque le marché si les joueurs ne sont pas très demandeurs.** Au désir ×2, 51 932 timbres communs sont proposés et 17 trouvent preneur : le plancher de 5 Encre est au-dessus de ce que vaut un timbre commun pour un joueur tiède. Des planchers au double de l'Encre d'un doublon ramènent les invendus de 87 % à 23 %. À l'inverse, un plancher haut évite un marché noyé sous les timbres communs : c'est un choix, pas une erreur.
+**2. Le plancher des timbres communs bloque le marché si les joueurs ne sont pas très demandeurs.** Au désir ×2, 50 629 timbres communs sont proposés et 10 trouvent preneur : le plancher de 5 Encre est au-dessus de ce que vaut un timbre commun pour un joueur tiède. Des planchers au double de l'Encre d'un doublon ramènent les invendus de 87 % à 24 %. À l'inverse, un plancher haut évite un marché noyé sous les timbres communs : c'est un choix, pas une erreur.
 
 **3. Le plancher des Légendaires est le plus dur.** Même au désir ×5, 0 % des Légendaires proposées restent invendues à 300 Encre.
 
-**4. Des deux plafonds, c'est celui des achats qui pèse le plus.** 60 joueurs sur 60 butent sur les 10 ventes en cours, 50 sur 60 sur les 10 achats par jour. Sans aucun plafond, le marché voit 575 ventes par jour au lieu de 406. Un joueur accumule des timbres en double finition bien plus vite qu'il ne peut en acheter : si les vendeurs sont plus libres que les acheteurs, les invendus montent.
+**4. Des deux plafonds, c'est celui des achats qui pèse le plus.** 60 joueurs sur 60 butent sur les 10 ventes en cours, 50 sur 60 sur les 10 achats par jour. Sans aucun plafond, le marché voit 575 ventes par jour au lieu de 391. Un joueur accumule des timbres en double finition bien plus vite qu'il ne peut en acheter : si les vendeurs sont plus libres que les acheteurs, les invendus montent.
 
 ## Comment lire ces chiffres
 

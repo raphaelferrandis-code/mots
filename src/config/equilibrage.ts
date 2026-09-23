@@ -39,8 +39,13 @@ export const EQUILIBRAGE = {
     'Rare': 1,
     'Épique': 2,
     'Légendaire': 3,
-    'Hors-série': 4,
+    'Hors-série': 6,
   } satisfies Record<Rarete, number>,
+
+  // Les seize Hors-série seront vite reconnues : leur force vient des statistiques,
+  // pas de la surprise. Même « amour » ou « mot » doit rester puissant après une parade.
+  // On conserve des profils différents : attaque en jeu de 12 à 16, défense de 8 à 10.
+  minimumHorsSerie: { attaque: 12, defense: 8 },
 
   // ── Paquets ───────────────────────────────────────────────────────────────
   paquets: {
@@ -97,14 +102,14 @@ export const EQUILIBRAGE = {
   // ── Duel ──────────────────────────────────────────────────────────────────
   // Une manche : l'ordinateur pose un mot, le joueur lui répond par une carte ; le joueur doit retrouver la définition
   // de son mot (son attaque porte) puis celle du mot adverse (il pare). L'attaque du joueur part la première.
-  // ⚠️ Tous ces chiffres ont été réglés avec « npm run simulation:duel » (rapport : data/simulation-duel.md).
-  // Cible du brief : 6 à 10 manches par partie. Mesuré avec ces réglages : 5 à 9 manches selon les joueurs.
+  // Duels courts : chaque carte ne se joue qu'une fois par combat.
+  // Vérification de la durée avec « npm run simulation:duel » (rapport : data/simulation-duel.md).
   duel: {
     tailleDuDeck: 10,
     cartesEnMain: 3,
-    pointsDeVie: 25,
+    pointsDeVie: 20,
     // Au-delà de cette limite, le camp qui a le plus de points de vie gagne (égalité : match nul).
-    manchesMaximum: 20,
+    manchesMaximum: 10,
     // Temps pour retrouver une définition parmi quatre (deux épreuves par manche : son mot, puis le mot adverse).
     secondesPourRepondre: 15,
 
@@ -142,7 +147,8 @@ export const EQUILIBRAGE = {
     reussiteDeLOrdinateur: { 'Facile': 0.65, 'Normal': 0.85, 'Difficile': 0.9 },
     // …et il pare le mot du joueur d'autant moins souvent que ce mot est rare (chance = rareté × niveau).
     paradeDeLOrdinateur: {
-      selonLaRarete: { 'Commune': 0.7, 'Peu commune': 0.6, 'Rare': 0.45, 'Épique': 0.3, 'Légendaire': 0.15, 'Hors-série': 0.1 } satisfies Record<Rarete, number>,
+      // Exception : les Hors-série sont célèbres, donc aussi souvent parées que les communes.
+      selonLaRarete: { 'Commune': 0.7, 'Peu commune': 0.6, 'Rare': 0.45, 'Épique': 0.3, 'Légendaire': 0.15, 'Hors-série': 0.7 } satisfies Record<Rarete, number>,
       selonLeNiveau: { 'Facile': 0.7, 'Normal': 1, 'Difficile': 1 },
     },
 
@@ -183,8 +189,9 @@ export const EQUILIBRAGE = {
     adversairesRecentsEvites: 6,
     // Le double connaît ses mots comme son joueur : on part des vrais résultats du joueur (définitions retrouvées /
     // posées), mêlés à cette estimation par défaut tant qu'ils sont peu nombreux (elle pèse comme N réponses).
-    savoirParDefaut: { 'Commune': 0.9, 'Peu commune': 0.85, 'Rare': 0.75, 'Épique': 0.6, 'Légendaire': 0.5, 'Hors-série': 0.6 } satisfies Record<Rarete, number>,
-    paradeParDefaut: { 'Commune': 0.85, 'Peu commune': 0.75, 'Rare': 0.6, 'Épique': 0.45, 'Légendaire': 0.3, 'Hors-série': 0.4 } satisfies Record<Rarete, number>,
+    // Les Hors-série sont supposées familières ; les vrais résultats remplacent ensuite cette estimation.
+    savoirParDefaut: { 'Commune': 0.9, 'Peu commune': 0.85, 'Rare': 0.75, 'Épique': 0.6, 'Légendaire': 0.5, 'Hors-série': 0.9 } satisfies Record<Rarete, number>,
+    paradeParDefaut: { 'Commune': 0.85, 'Peu commune': 0.75, 'Rare': 0.6, 'Épique': 0.45, 'Légendaire': 0.3, 'Hors-série': 0.85 } satisfies Record<Rarete, number>,
     poidsDeLEstimation: 4,
     // Récompenses (même plafond quotidien que les duels d'entraînement).
     encreParVictoire: 35,
@@ -242,11 +249,13 @@ export const EQUILIBRAGE = {
 };
 
 export function attaqueEnJeu(attaque: number, rarete: Rarete): number {
-  return attaque + EQUILIBRAGE.bonusAttaqueParRarete[rarete];
+  const valeur = attaque + EQUILIBRAGE.bonusAttaqueParRarete[rarete];
+  return rarete === 'Hors-série' ? Math.max(EQUILIBRAGE.minimumHorsSerie.attaque, valeur) : valeur;
 }
 
 export function defenseEnJeu(defense: number, rarete: Rarete): number {
-  return Math.min(EQUILIBRAGE.statMaximale, defense + EQUILIBRAGE.bonusDefenseParRarete[rarete]);
+  const valeur = defense + EQUILIBRAGE.bonusDefenseParRarete[rarete];
+  return Math.min(EQUILIBRAGE.statMaximale, rarete === 'Hors-série' ? Math.max(EQUILIBRAGE.minimumHorsSerie.defense, valeur) : valeur);
 }
 
 // La recharge des paquets d'un joueur, selon qu'il a la version payante ou non. Le serveur applique la même règle

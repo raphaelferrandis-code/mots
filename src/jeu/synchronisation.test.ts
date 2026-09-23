@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { nouvelleSauvegarde } from './sauvegarde.ts';
+import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import { aImporter, aQuelqueChoseAImporter, fusionner, lireEtat, lireRecuperation } from './synchronisation.ts';
 import { FORMULE_GRATUITE } from './formule.ts';
 import type { EtatDuCompte } from './synchronisation.ts';
@@ -35,6 +35,40 @@ const etatDuServeur: EtatDuCompte = {
 };
 
 describe('la collection tenue par le serveur', () => {
+  it('synchronise XP, maîtrise et bilans sans additionner les copies locales et garde une archive exportable', () => {
+    const locale = partieLocale(); locale.profil.xp=900;
+    const progression = {version:1 as const,id:'compte-a',xp:50,bonusXpReste:25,heritageImporte:false,
+      duels:{joues:3,gagnes:1},parades:{Commune:{posees:2,reussies:1}},
+      apprentissages:{'zeugma-nom':{posees:2,reussites:1,maitriseeLe:null},'vendu-nom':{posees:5,reussites:5,maitriseeLe:T0}}};
+    const etat = lireEtat({...etatDuServeur,progression});
+    const premier = fusionner(locale,etat);
+    assert.equal(premier.profil.xp,50); assert.equal(premier.profil.bonusXpReste,25);
+    assert.equal(premier.cartes['zeugma-nom'].maitriseeLe,null);
+    assert.equal(premier.cartes['zeugma-nom'].posees,2);
+    assert.deepEqual(premier.parades,progression.parades);
+    assert.equal(premier.duels.joues,3);
+    assert.equal(premier.ancienneProgression!.xp,900);
+    assert.equal(premier.ancienneProgression!.apprentissages['zeugma-nom'].reussites,5);
+    const relue = relireSauvegarde(JSON.parse(JSON.stringify(premier)),T0);
+    assert.deepEqual(fusionner(relue,etat).ancienneProgression,premier.ancienneProgression);
+    assert.deepEqual(fusionner(relue,etat).apprentissages,progression.apprentissages);
+    const autre = fusionner(relue,{...etat,progression:{...progression,id:'compte-b',xp:0,apprentissages:{}}});
+    assert.equal(autre.profil.xp,0); assert.equal(autre.cartes['zeugma-nom'].reussites,0);
+    assert.equal(autre.progressionServeur!.id,'compte-b');
+    assert.equal(autre.joutes.pseudo,''); assert.equal(autre.joutes.cote,null);
+    assert.throws(()=>lireEtat({...etatDuServeur,progression:{version:2}}),/illisible/);
+  });
+  it('conserve une maîtrise après vente, export puis rachat et synchronise les compteurs confirmés', () => {
+    const locale = partieLocale();
+    const vendue = fusionner(locale, { ...etatDuServeur, cartes: {} });
+    assert.equal(vendue.cartes['zeugma-nom'], undefined);
+    const rechargee = relireSauvegarde(JSON.parse(JSON.stringify(vendue)), T0);
+    const rachetee = fusionner(rechargee, { ...etatDuServeur, plafondDuJour: { jour: '2026-09-23', victoires: 7 }, classementPersonnel: { pseudo: 'Lecteur', cote: 1234, jouees: 30, gagnees: 18 } });
+    assert.equal(rachetee.cartes['zeugma-nom'].maitriseeLe, T0 + 100);
+    assert.equal(rachetee.cartes['zeugma-nom'].reussites, 5);
+    assert.equal(rachetee.duels.victoiresDuJour, 7);
+    assert.equal(rachetee.joutes.cote, 1234);
+  });
   it('fusionne : le serveur donne l’Encre, les paquets, le deck et les timbres ; l’appareil garde ses réglages et sa maîtrise', () => {
     const locale = partieLocale();
     const avant = structuredClone(locale);

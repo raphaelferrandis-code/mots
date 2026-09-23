@@ -1,5 +1,7 @@
 # Brancher le serveur des joutes (Supabase) — guide pas à pas
 
+> **Client actuel :** le complément [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) remplace l’ordre d’installation historique ci-dessous. La migration `9-combats.sql` et la fonction `combats` sont nécessaires avant publication. Elles sont prêtes et testées localement ; leur application au serveur distant n’a pas été effectuée dans cette intervention.
+
 > **Migration appliquée le 23 septembre 2026 :** serveur/6-offres.sql exécuté avec succès sur le projet Supabase cgubfyxyivgufslpwlld. Contrôle avant/après : 38 comptes, 254 possessions, 77 Encre, inchangés. RPC de récompense disponible aux joueurs connectés ; tirage interne inaccessible. Aucun droit payant attribué et aucun déploiement du client dans cette intervention. Cette note remplace les indications antérieures disant que la migration reste à appliquer.
 
 

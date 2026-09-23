@@ -29,6 +29,7 @@ describe('le marché vu du jeu', () => {
     assert.equal(prixActuel(avecMise), 30);
     assert.equal(miseMinimale(avecMise, R), 30 + Math.max(1, Math.ceil(30 * R.surencherMinimale)));
     assert.equal(miseMinimale({ ...e, meilleureMise: 5 }, R), 6, 'au moins 1 Encre de plus');
+    assert.equal(miseMinimale({ ...e, meilleureMise: 99, achatImmediat: 100 }, R), 100, 'le prix immédiat prime sur le pas de surenchère');
     assert.equal(commissionSur(300, R), Math.ceil(300 * R.commission));
     assert.equal(vendeurRecoit(300, R) + commissionSur(300, R), 300);
   });

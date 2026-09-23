@@ -15,6 +15,8 @@ import { ETAGES, abonnementActif, nomDeLaFormule, peutPayer, prixEnClair } from 
 import type { Formule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { declarerMonAge } from '../services/partie.ts';
+import { PaiementsTest } from '../composants/PaiementsTest.tsx';
+import { paiementsDeTest } from '../services/paiements.ts';
 
 const AGE = EQUILIBRAGE.payant.ageMinimumPourPayer;
 const anneeActuelle = (): number => new Date().getFullYear();
@@ -65,7 +67,8 @@ export function Formules() {
         <details><summary>Que reste-t-il à la fin de l’abonnement ?</summary><p>Tes cartes, ton XP, les paquets en réserve et les droits hebdomadaires déjà acquis sont conservés. Le rythme et le plafond de recharge redeviennent ceux du jeu gratuit.</p></details>
         <details><summary>Quel avantage en duel ?</summary><p>Les offres accélèrent la collection et peuvent donner un avantage en duel, particulièrement au début. Répondre correctement reste nécessaire. Tout le jeu reste accessible gratuitement, sans publicité.</p></details>
       </section>
-      {surLeServeur && formule && <details className="offres-age"><summary>Âge et futurs achats</summary><Age formule={formule} /></details>}
+      {paiementsDeTest && <PaiementsTest />}
+      {surLeServeur && formule && <details className="offres-age" open={paiementsDeTest || undefined}><summary>Âge et futurs achats</summary><Age formule={formule} /></details>}
       <footer className="offres-pied"><span>Sans publicité. Le jeu reste ouvert à tous.</span><a href="mailto:contact@philamots.fr">Une question ? Écris-nous ↗</a></footer>
     </main>
   );
