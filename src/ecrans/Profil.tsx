@@ -10,7 +10,7 @@ import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, profilVisible, progressionDuNiveau } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
-import { lien } from '../navigation/routes.ts';
+
 import { nommerMonProfil, personnaliser } from '../services/partie.ts';
 
 type Section = Categorie | 'paquet';
@@ -88,7 +88,7 @@ export function Profil() {
           {equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
             : disponible ? <button className="bouton vestiaire__action" onClick={equiper}>Équiper</button>
             : succesSelectionne ? <button className="bouton vestiaire__action" onClick={() => { ciblerSucces(succesSelectionne.id); changerVue('succes'); }}>Voir le succès <span>↗</span></button>
-            : selection?.premium ? <a className="bouton vestiaire__action" href={lien({ ecran: 'formules' })}>Découvrir les formules <span>↗</span></a>
+            : selection?.premium ? null
             : <button className="bouton vestiaire__action" disabled>À gagner au niveau {selection?.niveau}</button>}
           {categorie === 'titre' && profil.titre && <button className="bouton vestiaire__annuler" onClick={() => { personnaliser('titre', ''); dire('Titre retiré.'); }}>Retirer le titre</button>}
           <p className="vestiaire__message" role="status">{message}</p>{erreur && <p className="vestiaire__erreur" role="alert">{erreur}</p>}
@@ -124,3 +124,4 @@ export function Profil() {
     <dialog aria-labelledby="titre-signature" className="vestiaire__dialogue" ref={dialogue} onCancel={() => editer(false)}><form onSubmit={(e) => { e.preventDefault(); try { nommerMonProfil(pseudo); editer(false); dire('Pseudo enregistré.'); signaler(''); } catch(e) { signaler((e as Error).message); } }}><h2 id="titre-signature">Votre signature</h2><label htmlFor="pseudo-personnel">Pseudo du profil</label><input id="pseudo-personnel" value={pseudo} onChange={e=>saisirPseudo(e.target.value)} maxLength={24} autoFocus />{erreur && <p role="alert">{erreur}</p>}<button className="bouton vestiaire__action">Enregistrer</button><button className="bouton vestiaire__annuler" type="button" onClick={() => { editer(false); signaler(''); }}>Annuler</button></form></dialog>
   </main>;
 }
+

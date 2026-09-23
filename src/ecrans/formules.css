@@ -54,3 +54,8 @@
 @media(prefers-reduced-motion:reduce) { .offre-paillettes i { animation:none; }.offre-specimen { transition:none; } }
 [data-animations-reduites] .offre-paillettes i { animation:none; } [data-animations-reduites] .offre-specimen { transition:none; }
 
+
+.offres-intro h1 em { background-size:250% 100%; animation:merveille-irisee 7s ease-in-out infinite; }
+@keyframes merveille-irisee { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+@media(prefers-reduced-motion:reduce) { .offres-intro h1 em { animation:none; } }
+[data-animations-reduites] .offres-intro h1 em { animation:none; }

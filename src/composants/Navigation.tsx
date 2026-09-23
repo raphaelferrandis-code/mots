@@ -36,7 +36,12 @@ export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: num
           ))}
         </ul>
       </nav>
+      <div className="navigation__personnel">
       <a className="lien-profil" href={lien({ ecran: 'profil' })} aria-current={ecran === 'profil' ? 'page' : undefined}>Profil</a>
+      <a className="lien-formules" href={lien({ ecran: 'formules' })} aria-label="Les formules" title="Les formules" aria-current={ecran === 'formules' ? 'page' : undefined}>
+        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="navigation-eclat" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffe1a1" /><stop offset=".5" stopColor="#e1b7ff" /><stop offset="1" stopColor="#8ce4eb" /></linearGradient></defs><path d="m15 4 3.5 8.5L27 16l-8.5 3.5L15 28l-3.5-8.5L3 16l8.5-3.5Z" fill="url(#navigation-eclat)" /><path d="m26 2 1.3 3.7L31 7l-3.7 1.3L26 12l-1.3-3.7L21 7l3.7-1.3Z" fill="#f9e9bd" /></svg>
+      </a>
+      </div>
       <a className="reserve-encre" href={lien({ ecran: 'paquet' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encre.toLocaleString('fr-FR')} Encre — voir les paquets`}>
         <Icone nom="encre" />
         <span><strong>{encre === null ? '…' : encre.toLocaleString('fr-FR')}</strong> Encre</span>

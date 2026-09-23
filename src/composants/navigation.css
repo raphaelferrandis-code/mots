@@ -45,3 +45,13 @@
   .navigation__lien[aria-current='page'] { color: var(--accent); }
   .navigation__lien[aria-current='page']::after { bottom: auto; top: 0; left: 24%; right: 24%; }
 }
+
+.navigation__personnel { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.lien-formules { display:grid; place-items:center; width:44px; height:44px; border-radius:8px; text-decoration:none; }
+.lien-formules svg { width:27px; height:27px; filter:drop-shadow(0 0 5px #cba6eb66); animation:navigation-scintille 4s ease-in-out infinite; }
+.lien-formules:hover,.lien-formules[aria-current=page] { background:#caa6ef14; }
+.lien-formules:focus-visible { outline:2px solid #dfc1f5; outline-offset:2px; }
+@keyframes navigation-scintille { 0%,100% { filter:drop-shadow(0 0 3px #e3bdf555); } 50% { filter:drop-shadow(0 0 7px #f0d7bbaa); } }
+@media(prefers-reduced-motion:reduce) { .lien-formules svg { animation:none; } }
+[data-animations-reduites] .lien-formules svg { animation:none; }
+@media(max-width:380px) { .navigation__personnel { gap:0; } .entete-application { column-gap:6px; padding-inline:12px; } }

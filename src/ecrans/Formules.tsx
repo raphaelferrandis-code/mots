@@ -30,10 +30,7 @@ export function Formules() {
   return (
     <main className="ecran formules">
       <header className="offres-intro">
-        <p className="offres-kicker">Le plaisir de collectionner</p>
         <h1>Un peu plus de <em>merveille.</em></h1>
-        <p>Des mots rares. Un album à ton image. Et le plaisir de découvrir ce que réserve le prochain paquet.</p>
-        <div className="offres-ouverture">✧ Deux offres à venir <span>·</span> Paiement non ouvert</div>
       </header>
       {enCours && <p className="offres-actuelle" role="status">Ta formule en cours : <strong>{enCours}</strong></p>}
       <section className="offres-vitrine" aria-label="Les deux formules">
@@ -46,7 +43,6 @@ export function Formules() {
               <div className="offre-paillettes">{Array.from({length: 9}, (_, i) => <i key={i} style={{left: ((i * 37 + 9) % 90) + '%', top: ((i * 23 + 12) % 86) + '%', animationDelay: (i * .37) + 's'}}>✦</i>)}</div>
               {album ? <div className="offre-eventail">{specimens.map(c => <div className="offre-specimen" key={c.id}><Carte carte={c} cliquable={false} /></div>)}</div>
                 : <div className="offre-paquet"><div className="offre-paquet__second"><PaquetScelle /></div><div className="offre-paquet__premier"><PaquetScelle /></div><span className="offre-sceau">Épique<small>ou mieux</small><b>✧</b></span></div>}
-              <span className="offre-legende">{album ? 'L’éclat des Hors-série' : 'Ton rendez-vous avec la découverte'}</span>
             </div>
             <div className="offre-contenu">
               <p className="offres-kicker">{album ? 'À garder pour toujours' : 'Le plaisir, chaque semaine'}</p>
