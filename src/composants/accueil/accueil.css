@@ -47,6 +47,36 @@
 .accueil-trouvailles { display: grid; gap: 16px; }
 .accueil-trouvailles h2 { font: 500 0.9rem var(--police-texte); color: var(--encre-douce); }
 .accueil-trouvailles__timbres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }
+/* Sur un grand bureau, les objets et les actions grandissent avec l'espace disponible. */
+@media (min-width: 1440px) {
+  .ecran.accueil {
+    --hauteur-illustration: clamp(280px, min(23vw, 40vh), 480px);
+    padding-block: clamp(36px, 4vh, 64px) 48px;
+    gap: clamp(32px, 4vh, 56px);
+  }
+  .accueil .accueil-profil { padding-bottom: 0; }
+  .accueil-pole {
+    min-height: clamp(340px, 46vh, 560px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 48%);
+    grid-template-rows: minmax(0, 1fr) auto auto minmax(0, 1fr);
+    padding: 24px clamp(28px, 2.5vw, 64px);
+    gap: 18px 24px;
+  }
+  .accueil-pole__entete { align-self: end; min-height: calc(clamp(32px, 2.3vw, 48px) * 1.2 + 1.5rem + 6px); }
+  .accueil-pole__entete h2 { font-size: clamp(32px, 2.3vw, 48px); }
+  .accueil-pole__entete p, .accueil-pole__note { font-size: 1rem; }
+  .accueil-pole__bilan { font-size: 1.15rem; }
+  .accueil-pole .accueil-pole__action { min-height: 52px; font-size: 1rem; padding: 12px 24px; }
+  .accueil-pole__detail { font-size: 0.9rem; }
+  .apercu-deck { height: calc(var(--hauteur-illustration) * 0.8); }
+  .apercu-deck__carte { max-width: 220px; }
+  .apercu-deck__dos span { font-size: clamp(80px, 6vw, 120px); }
+  .resume-collection { padding-top: 32px; gap: 40px; }
+  .resume-collection h2 { font-size: 1.8rem; }
+  .resume-collection__progression strong { font-size: 2.5rem; }
+  .resume-collection__details { font-size: 0.9rem; }
+  .resume-collection progress { height: 10px; }
+}
 @media (max-width: 1050px) {
   .accueil-pole { padding-inline: 20px; grid-template-columns: minmax(0, 1fr) minmax(90px, 36%); }
   .resume-collection { gap: 24px; padding-inline: 0; }

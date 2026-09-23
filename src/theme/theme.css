@@ -46,7 +46,7 @@
   --marge: 16px;
   --largeur-jeu: 1200px;
   --largeur-collection: 1440px;
-  --largeur-accueil: 1320px;
+  --largeur-accueil: clamp(1320px, 88vw, 1920px);
   --hauteur-navigation: 64px;
   --ombre: 0 12px 30px rgb(0 0 0 / 22%);
 }
