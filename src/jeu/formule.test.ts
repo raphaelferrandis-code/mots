@@ -43,7 +43,7 @@ describe('les formules payantes', () => {
     assert.deepEqual(ETAGES.map((e) => e.niveau), [1, 2]);
     assert.ok(ETAGES.every((e) => e.avantages.length > 0));
     assert.equal(prixEnClair(ETAGES[0]), '5,99 € une fois');
-    assert.equal(prixEnClair(ETAGES[1]), '5 € par mois');
+    assert.equal(prixEnClair(ETAGES[1]), '4,99 € par mois');
   });
 
   it('réserve le paiement aux majeurs', () => {
@@ -53,3 +53,4 @@ describe('les formules payantes', () => {
     assert.equal(peutPayer({ ...FORMULE_GRATUITE, anneeDeNaissance: 2026 - age }, 2026), true);
   });
 });
+
