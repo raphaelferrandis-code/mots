@@ -6,8 +6,8 @@ import { EQUILIBRAGE, reglagesDeRecharge } from '../config/equilibrage.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import type { CarteIndex, Rarete } from '../partage/types.ts';
 import { hasardReproductible } from './hasard.ts';
-import { encreMaximaleMoyenneParPaquet, ouvrirPaquet, preparerReserve, tirerFinition, tirerRarete } from './paquets.ts';
-import { acheterUnPaquet, mettreAJour, ouvrirUnPaquetGratuit } from './partie.ts';
+import { ouvrirPaquet, preparerReserve, tirerFinition, tirerRarete } from './paquets.ts';
+import { mettreAJour, ouvrirUnPaquetGratuit } from './partie.ts';
 import { attenteAvantLeProchain, rechargerLesPaquets, retirerUnPaquet } from './recharge.ts';
 import { VERSION_DE_SAUVEGARDE, meilleureFinition, nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 
@@ -28,10 +28,6 @@ const HORS_SERIE: CarteIndex[] = ['ressasser', 'amour'].map((mot) => ({ id: `${m
 describe('chiffres d\'équilibrage', () => {
   it('chaque emplacement de paquet totalise 100 %', () => {
     for (const chances of REGLAGES.emplacements) assert.equal(Object.values(chances).reduce((a, b) => a + b, 0), 100);
-  });
-  it('un paquet ne peut pas rapporter autant d\'Encre qu\'il en coûte (sinon les paquets seraient infinis)', () => {
-    const maximum = encreMaximaleMoyenneParPaquet(REGLAGES, FINITIONS, EQUILIBRAGE.encreParDoublon);
-    assert.ok(maximum < REGLAGES.prixEnEncre * 0.8, `un paquet tout en doublons rapporte ${maximum.toFixed(1)} Encre pour un prix de ${REGLAGES.prixEnEncre}`);
   });
 });
 
@@ -185,19 +181,18 @@ describe('une partie', () => {
     const encore = ouvrirUnPaquetGratuit(sauvegarde, { ...contexte(T0, 7), equilibrage: toutBrillant });
     assert.ok(encore.cartes.every((c) => !c.nouvelleFinition && c.encre > 0));
   });
-  it('permet d\'acheter un paquet avec de l\'Encre, sans toucher au stock', () => {
-    const riche = { ...nouvelleSauvegarde(T0, 2), encre: 200 };
-    const { sauvegarde } = acheterUnPaquet(riche, contexte(T0, 7));
-    assert.equal(sauvegarde.encre, 200 - REGLAGES.prixEnEncre);
-    assert.equal(sauvegarde.paquets.stock, 2);
-    assert.throws(() => acheterUnPaquet({ ...riche, encre: REGLAGES.prixEnEncre - 1 }, contexte(T0, 8)), /Pas assez/);
+  it("refuse une ouverture sans stock, même avec beaucoup d’Encre", () => {
+    const riche = { ...nouvelleSauvegarde(T0, 0), encre: 1000000 };
+    assert.throws(() => ouvrirUnPaquetGratuit(riche, contexte(T0, 7)));
+    assert.equal(riche.encre, 1000000);
+    assert.equal(riche.paquets.ouverts, 0);
   });
   it('compte les paquets sans Légendaire, et repart de zéro quand il en tombe une', () => {
     let sauvegarde = { ...nouvelleSauvegarde(T0, 0), encre: 1000000 };
     let vues = 0;
     for (let i = 0; i < 200; i++) {
       const avant = sauvegarde.paquets.sansLegendaire;
-      const ouverture = acheterUnPaquet(sauvegarde, contexte(T0, 100 + i));
+      const ouverture = ouvrirUnPaquetGratuit(sauvegarde, contexte(T0 + (i + 1) * REGLAGES.minutesEntreDeuxPaquets * MINUTE, 100 + i));
       const legendaire = ouverture.cartes.some((c) => c.carte.rarete === 'Légendaire');
       assert.equal(ouverture.sauvegarde.paquets.sansLegendaire, legendaire ? 0 : avant + 1);
       assert.ok(ouverture.sauvegarde.paquets.sansLegendaire < REGLAGES.paquetsAvantLegendaireGarantie);

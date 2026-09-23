@@ -1,3 +1,5 @@
+import { XP } from '../jeu/personnalisation.ts';
+import { GainDuDuel, useRecompensesSuspendues } from '../composants/Recompenses.tsx';
 // Le duel : à l'entraînement contre l'ordinateur, ou en joute classée contre le « double » d'un autre joueur.
 // L'écran ne contient aucune règle : il affiche l'état du duel et passe par src/services/ pour chaque action.
 // Une manche : l'adversaire pose un mot, le joueur lui répond par une
@@ -5,9 +7,10 @@
 // (il pare). Les deux attaques sont alors réglées, et l'on passe à la manche suivante.
 
 import { useEffect, useRef, useState } from 'react';
+import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
+import { SceauDuel } from '../composants/SceauDuel.tsx';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
-import { Entete } from '../composants/Entete.tsx';
 import { choisirAuxFleches } from '../composants/fleches.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
@@ -29,6 +32,8 @@ import { serveurDeJoutes } from '../services/joutes.ts';
 import { commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
 import type { FinDeDuel, RecompenseDuServeur } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
+import '../composants/commandeDuel.css';
+import '../composants/duelManche.css';
 
 const REGLES = EQUILIBRAGE.duel;
 const MODES: Adversaire['type'][] = ['entrainement', 'joute'];
@@ -65,12 +70,6 @@ const viserLeMot = (titre: HTMLHeadingElement | null): void => titre?.focus({ pr
 
 const pluriel = (n: number, mot: string): string => `${n} ${mot}${n > 1 ? 's' : ''}`;
 
-function descriptionDuNiveau(niveau: Niveau): string {
-  const crans = REGLES.cransDeRareteDeLOrdinateur[niveau];
-  const mots = crans <= 0 ? 'Mots de rareté comparable aux tiens' : `Mots ${crans >= 2 ? 'nettement ' : ''}plus rares que les tiens`;
-  return `${mots} · ${Math.round(REGLES.reussiteDeLOrdinateur[niveau] * 100)} % de réussite en attaque.`;
-}
-
 export function Duel() {
   const partie = usePartie();
   const sauvegarde = partie.etat === 'prete' ? partie.sauvegarde : null;
@@ -83,6 +82,7 @@ export function Duel() {
   const [terrain, setTerrain] = useState<Terrain | null>(null);
   const [duel, setDuel] = useState<EtatDuDuel | null>(null);
   const [etape, setEtape] = useState<Etape>({ nom: 'accueil' });
+  useRecompensesSuspendues(etape.nom !== 'accueil' && etape.nom !== 'fin');
   const [bilan, setBilan] = useState<Bilan>(BILAN_VIDE);
   const [erreur, setErreur] = useState<string | null>(null);
   const [ticket, setTicket] = useState<number | null>(null); // le numéro de la joute en cours, quand un serveur tient le classement
@@ -100,6 +100,7 @@ export function Duel() {
   };
 
   const lancer = async (adversaire: Adversaire): Promise<void> => {
+    if (etapeActuelle.current.nom === 'preparation') return;
     sons.preparer(); // dans le geste du joueur : les navigateurs n'ouvrent la sortie audio qu'à ce moment-là
     changerDEtape({ nom: 'preparation' });
     setErreur(null);
@@ -204,12 +205,14 @@ export function Duel() {
     const pleinesRestantes = Math.max(0, REGLES.victoiresPleinesParJour - victoiresDuJour);
     return (
       <main className="ecran duel-salon">
-        <Entete titre="Les duels" actions={
+        <h1 className="visuellement-cache">Les duels</h1>
+        <header className="duel-salon__modes">
+
           <div className="modes" role="tablist" aria-label="Mode de duel" onKeyDown={choisirAuxFleches(MODES, mode, setMode)}>
             <button type="button" role="tab" id="onglet-entrainement" aria-controls="panneau-des-duels" aria-selected={mode === 'entrainement'} tabIndex={mode === 'entrainement' ? 0 : -1} onClick={() => setMode('entrainement')}>Entraînement</button>
             <button type="button" role="tab" id="onglet-joute" aria-controls="panneau-des-duels" aria-selected={mode === 'joute'} tabIndex={mode === 'joute' ? 0 : -1} onClick={() => setMode('joute')}>Joutes classées</button>
           </div>
-        } />
+        </header>
 
         <div className="duel-salon__panneau" role="tabpanel" id="panneau-des-duels" aria-labelledby={`onglet-${mode}`}>
         {!pret ? (
@@ -224,14 +227,19 @@ export function Duel() {
           </>
         ) : (
           <div className="panneaux">
-            <section className="rubrique panneaux__large">
-              <h2>Difficulté</h2>
+            <section className="rubrique panneaux__large commande-duel">
               <div className="niveaux niveaux--entrainement" role="radiogroup" aria-label="Niveau de l'ordinateur" onKeyDown={choisirAuxFleches(NIVEAUX, niveau, setNiveau)}>
-                {NIVEAUX.map((n) => (
+                {NIVEAUX.map((n, rang) => (
                   <button key={n} type="button" role="radio" aria-checked={niveau === n} tabIndex={niveau === n ? 0 : -1} className="niveau" onClick={() => setNiveau(n)}>
-                    <strong>{n}</strong>
-                    <span className="texte-doux petit">{descriptionDuNiveau(n)}</span>
-                    <span className="niveau__gain">Victoire : +{REGLES.encreParVictoire[n]} Encre</span>
+                    <span className="niveau__gravure" aria-hidden="true">
+                      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor">
+                        <path className="niveau__medaillon" d="M32 3 57 17v30L32 61 7 47V17Z" />
+                        <path d="M32 8 52 20v24L32 56 12 44V20Z" opacity=".35" />
+                        {Array.from({ length: rang + 1 }, (_, i) => <path key={i} d={`m${32 - rang * 7 + i * 14} 19 3 7-3 19-3-19Z`} fill="currentColor" strokeWidth=".5" />)}
+                      </svg>
+                    </span>
+                    <span className="niveau__inscription"><strong>{n}</strong><span className="niveau__gain">Victoire <b>+{REGLES.encreParVictoire[n]}</b> Encre</span></span>
+                    <span className="niveau__temoin" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"><path d="m4 8 3 3 5-6" strokeWidth="1.5" /></svg></span>
                   </button>
                 ))}
               </div>
@@ -242,9 +250,9 @@ export function Duel() {
                 {' '}Défaite : +{REGLES.encreParDefaite} Encre.
               </p>
               {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
-              <div className="rangee-de-boutons">
-                <button type="button" className="bouton" disabled={etape.nom === 'preparation'} onClick={() => void lancer({ type: 'entrainement', niveau })}>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</button>
-                <a className="bouton bouton--discret" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>
+              <div className="rangee-de-boutons commande-duel__actions">
+                <button type="button" className="bouton bouton-presse bouton-sceau" data-frappe={etape.nom === 'preparation'} aria-busy={etape.nom === 'preparation'} disabled={etape.nom === 'preparation'} onClick={() => void lancer({ type: 'entrainement', niveau })}><SceauDuel /><span>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</span><span className="bouton-presse__fleche" aria-hidden="true">↗</span></button>
+                <a className="bouton bouton--discret bouton-plaque" href={lien({ ecran: 'deck' })}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 5h13v16H7ZM4 18H2V2h14" /><path d="m13.5 10 3 3-3 3-3-3Z" /></svg><span>Modifier mon deck</span></a>
               </div>
             </section>
 
@@ -285,26 +293,36 @@ export function Duel() {
   const enEpreuve = etape.nom === 'attaque' || etape.nom === 'echappe' || etape.nom === 'parade';
   const enJoute = terrain.adversaire.type === 'joute' ? terrain.adversaire.profil : null;
   const nomAdverse = enJoute ? enJoute.pseudo : "L'ordinateur";
+  const resolution = etape.nom === 'bilan' ? etape.apres.manches.at(-1) : undefined;
+  const carteJouee = etape.nom === 'choix' ? joueur.main.find((c) => c.id === etape.choisie) : 'carte' in etape ? etape.carte : undefined;
 
   return (
-    <main className="ecran duel">
+    <main className="ecran duel" data-phase={etape.nom}>
       <h1 className="visuellement-cache">Duel contre {nomAdverse}</h1>
       <header className="duel__camps">
-        <Jauge nom={nomAdverse} camp={adversaire} />
-        <span className="duel__manche"><span>Manche {duel.manche}<small> / {REGLES.manchesMaximum}</small></span><small>{terrain.adversaire.type === 'joute' ? `Joute · cote ${terrain.adversaire.profil.cote}` : `Niveau ${terrain.adversaire.niveau.toLowerCase()}`}</small></span>
-        <Jauge nom="Toi" camp={joueur} />
+        <Jauge nom={nomAdverse} camp={adversaire} maison={enJoute?.maison} avant={duel.camps.adversaire.pv} delai="450ms" />
+        <span className="duel__manche">{duel.manche === 1 && <SceauDuel empreinte />}<span>Manche {duel.manche}<small> / {REGLES.manchesMaximum}</small></span><small>{terrain.adversaire.type === 'joute' ? `Joute · cote ${terrain.adversaire.profil.cote}` : `Niveau ${terrain.adversaire.niveau.toLowerCase()}`}</small></span>
+        <Jauge nom="Toi" camp={joueur} avant={duel.camps.joueur.pv} delai="750ms" />
       </header>
+
+      {'adverse' in etape && <section className="duel__table duel-arene" aria-label="Les mots de la manche" data-compact={enEpreuve}>
+        <div className="duel-arene__place" data-camp="adversaire" data-actif={etape.nom === 'parade'} data-frappe={!!resolution && adversaire.pv > 0 && resolution.adversaire.reussie}>
+          <MotPose key={etape.adverse.id} titre="Son mot" carte={etape.adverse} secret={etape.nom !== 'bilan'} />
+          {resolution && <Impact key={`adversaire-${duel.manche}`} attaque={resolution.joueur} />}
+        </div>
+        <div className="duel-arene__liaison" aria-hidden="true"><span>{etape.nom === 'attaque' ? '↖' : etape.nom === 'parade' ? '↘' : '◇'}</span></div>
+        <div className="duel-arene__place" data-camp="joueur" data-actif={etape.nom === 'attaque'} data-frappe={resolution?.joueur.reussie ?? false}>
+          {carteJouee ? <MotPose key={carteJouee.id} titre="Ton mot" habillage={timbreDuJoueur(carteJouee)} carte={carteJouee} secret={etape.nom !== 'bilan'} />
+            : <figure className="duel__mot-pose"><figcaption className="entete__surtitre">Ton mot</figcaption><div className="deck__vide" /></figure>}
+          {resolution && <Impact key={`joueur-${duel.manche}`} attaque={resolution.adversaire} annulee={adversaire.pv === 0} />}
+        </div>
+      </section>}
 
       {etape.nom === 'choix' && (() => {
         const choisie = joueur.main.find((c) => c.id === etape.choisie) ?? null;
         const prevision = choisie ? prevoirLaManche(terrain, duel, choisie, etape.adverse) : null;
         return (
           <>
-            <section className="duel__table" aria-label="Les mots de la manche">
-              <MotPose titre="Son mot" carte={etape.adverse} secret />
-              {choisie ? <MotPose titre="Ton mot" habillage={timbreDuJoueur(choisie)} carte={choisie} secret /> : <figure className="duel__mot-pose"><figcaption className="entete__surtitre">Ton mot</figcaption><div className="deck__vide" /></figure>}
-            </section>
-
             <section className="rubrique duel__tour" aria-live="polite">
               <h2>Ta main</h2>
               <div className="duel__main">
@@ -323,7 +341,7 @@ export function Duel() {
                   </p>
                   <button type="button" className="bouton" onClick={() => { sons.preparer(); sons.poser(); changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() }); }}>Jouer</button>
                 </div>
-              ) : <p className="texte-doux petit">Choisis un timbre pour voir les dégâts prévus.</p>}
+              ) : null}
             </section>
           </>
         );
@@ -364,11 +382,6 @@ export function Duel() {
         const viennentDEtreMaitrises = [etape.attaque.maitrise ? etape.carte.mot : '', etape.parade.maitrise ? etape.adverse.mot : ''].filter(Boolean);
         return (
           <>
-            <section className="duel__table" aria-label="Les mots de la manche">
-              <MotPose titre="Son mot" carte={etape.adverse} />
-              <MotPose titre="Ton mot" habillage={timbreDuJoueur(etape.carte)} carte={etape.carte} />
-            </section>
-
             <section className="rubrique duel__tour" aria-live="polite">
               <h2>Manche {manche.numero}</h2>
               <p className="duel__verdict" data-reussi={manche.joueur.reussie}>
@@ -409,7 +422,7 @@ export function Duel() {
       {etape.nom === 'fin' && (
         <section className="bloc duel__fin" aria-live="polite">
           <p className="entete__surtitre">{pluriel(duel.manches.length, 'manche')}</p>
-          <h2>{etape.resultat === 'victoire' ? 'Victoire !' : etape.resultat === 'nul' ? 'Match nul' : 'Défaite'}</h2>
+          <GainDuDuel resultat={etape.resultat} encre={etape.encre} xp={XP.duel + (etape.resultat === 'victoire' ? XP.victoire : 0) + (bilan.attaquesReussies + bilan.paradesReussies) * XP.reponse} />
           <p>
             {etape.nonEnregistree && <><span className="joute__refus">Serveur indisponible : résultat non enregistré, cote inchangée.</span><br /></>}
             {etape.cote && !etape.nonEnregistree && (
@@ -420,8 +433,7 @@ export function Duel() {
                 <br />
               </>
             )}
-            <strong>+{etape.encre} Encre</strong>
-            {etape.reduite && <span className="texte-doux petit"> — gains réduits après {REGLES.victoiresPleinesParJour} victoires aujourd'hui.</span>}
+            {etape.reduite && <span className="texte-doux petit">Gains réduits après {REGLES.victoiresPleinesParJour} victoires aujourd'hui.</span>}
           </p>
           <p className="texte-doux">
             Attaques réussies : {bilan.attaquesReussies} / {bilan.attaques} · Parades : {bilan.paradesReussies} / {bilan.parades}
@@ -452,14 +464,26 @@ function detailDuCalcul(carte: CarteIndex, attaque: Prevision | Attaque): string
   ].filter(Boolean).join(', ');
 }
 
-function Jauge({ nom, camp }: { nom: string; camp: Camp }) {
+function Jauge({ nom, camp, maison, avant, delai }: { nom: string; camp: Camp; maison?: boolean; avant: number; delai: string }) {
   return (
-    <div className="jauge" role="img" aria-label={`${nom} : ${pluriel(camp.pv, 'point')} de vie sur ${REGLES.pointsDeVie}`}>
+    <div className="jauge" style={{ '--impact-delai': delai } as import('react').CSSProperties} role="img" aria-label={`${nom}${maison === true ? ', joueur simulé' : ''} : ${pluriel(camp.pv, 'point')} de vie sur ${REGLES.pointsDeVie}`}>
       <span className="jauge__nom">{nom}</span>
+      <BadgeJoueurSimule maison={maison} />
       <span className="jauge__barre" aria-hidden="true"><span style={{ width: `${(camp.pv / REGLES.pointsDeVie) * 100}%` }} /></span>
-      <span className="jauge__pv" aria-hidden="true">{camp.pv}</span>
+      <span key={`${avant}-${camp.pv}`} className="jauge__pv" data-perte={avant > camp.pv} aria-hidden="true"><span className="jauge__actuels">{camp.pv}</span>{avant > camp.pv && <span className="jauge__precedents">{avant}</span>}</span>
     </div>
   );
+}
+
+function Impact({ attaque, annulee = false }: { attaque: Attaque; annulee?: boolean }) {
+  const touche = !annulee && attaque.reussie;
+  return <div className="duel-impact" data-touche={touche} data-pare={touche && attaque.paree} aria-hidden="true">
+    {touche && <svg className="duel-impact__trace" viewBox="0 0 100 120" fill="none" stroke="currentColor">
+      {attaque.paree ? <path d="M50 9 85 25v34c0 23-20 42-35 51C35 101 15 82 15 59V25Z M50 20v74" />
+        : <><path d="m20 90 60-60m-50 68 54-72" /><path d="m19 49-8-4m69 34 10 5M45 18l-3-9M57 99l3 11" /></>}
+    </svg>}
+    <span className="duel-impact__chiffre">{annulee ? 'Sans riposte' : touche ? attaque.infliges === 0 ? 'Bloquée' : `${attaque.paree ? 'Parée · ' : ''}−${attaque.infliges}` : 'Manquée'}</span>
+  </div>;
 }
 
 // Un mot posé sur la table. « secret » : sa définition reste cachée (elle va être demandée).

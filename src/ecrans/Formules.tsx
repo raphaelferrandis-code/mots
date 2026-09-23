@@ -23,16 +23,11 @@ export function Formules() {
 
   return (
     <main className="ecran formules">
-      <Entete titre="La version payante">
-        Trois formules, chacune contenant la précédente. Elles accélèrent la collection ; elles ne donnent aucun
-        avantage pour retrouver la définition d'un mot, qui reste le cœur du jeu.
-      </Entete>
+      <Entete titre="La version payante" />
 
       <section className="rubrique">
         <p className="bloc bloc--a-venir">
-          <strong>Rien ne s'achète encore.</strong> Cette page dit ce que chaque formule donnera. Le paiement n'est pas
-          ouvert : il demande d'abord plusieurs vérifications, dont l'avis d'un juriste. Tu ne peux donc rien payer
-          aujourd'hui, et le jeu reste entièrement jouable sans.
+          <strong>Le paiement n'est pas encore ouvert.</strong>
         </p>
       </section>
 
@@ -58,8 +53,7 @@ export function Formules() {
           ))}
         </ol>
         <p className="texte-doux petit">
-          L'Encre s'achètera aussi à l'unité. Celle-là ne sert qu'au marché : elle ne permet jamais d'acheter un
-          paquet, donc de l'argent n'achète jamais un tirage au sort.
+          L’Encre sert aux enchères et aux personnalisations. La vente d’Encre n’est pas ouverte.
         </p>
       </section>
 
@@ -73,7 +67,7 @@ export function Formules() {
           <li>Tout le jeu reste accessible sans payer : les 3 000 timbres, les duels, les joutes, le marché.</li>
         </ul>
         <p className="texte-doux petit">
-          Ce que le jeu garde de toi est décrit sur la page <a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a>.
+          <a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a>
         </p>
       </section>
     </main>

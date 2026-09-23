@@ -24,7 +24,10 @@
 @media (hover: hover) {
   .navigation__lien:hover, .reserve-encre:hover { color: var(--accent); }
 }
-@media (max-width: 900px) and (min-width: 768px) {
+@media (max-width: 1150px) and (min-width: 768px) {
+  .entete-application { flex-wrap: wrap; }
+  .navigation { order: 3; flex-basis: 100%; }
+  .reserve-encre { margin-left: auto; }
   .entete-application { gap: 24px; padding-inline: 20px; }
   .navigation__liste { gap: 20px; }
   .marque { font-size: 26px; }
@@ -34,7 +37,7 @@
   .entete-application { min-height: 72px; padding-inline: 20px; justify-content: space-between; }
   .marque { font-size: 24px; }
   .navigation { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--papier); border-top: 1px solid var(--filet); padding-bottom: env(safe-area-inset-bottom); }
-  .navigation__liste { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); height: var(--hauteur-navigation); gap: 0; }
+  .navigation__liste { display: grid; grid-template-columns: repeat(7, minmax(64px, 1fr)); height: var(--hauteur-navigation); gap: 0; overflow-x: auto; }
   .navigation__liste li:last-child { margin-left: 0; }
   .navigation__lien { flex-direction: column; justify-content: center; gap: 2px; font-size: 0.7rem; }
   .navigation__icone { display: flex; }

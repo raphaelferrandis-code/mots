@@ -1,4 +1,7 @@
-// La carte du jeu : un timbre-poste émis par la langue d'origine du mot.
+import { Motif } from '../cosmetiques/Gravures.tsx';
+import { ornement, profilVisible } from '../../jeu/personnalisation.ts';
+import { usePartie } from '../usePartie.ts';
+// La carte du jeu : un timbre-poste dont l'encre indique la nature du mot.
 // Dentelure, attaque et défense dans les coins comme des valeurs faciales, rosace gravée unique au centre,
 // cachet d'origine daté de la première apparition du mot. La rareté se lit à la qualité de l'impression ;
 // la finition (brillante, holographique) est une variante de tirage, indépendante de la rareté.
@@ -17,6 +20,7 @@ import { VIGNETTES } from './vignettes.tsx';
 type Props = {
   carte: CarteIndex;
   finition?: Finition;
+  specimen?: 'Nacrée' | 'Encre latente'; // Essais visuels uniquement, sans entrée dans les tirages ni la sauvegarde.
   cliquable?: boolean; // ouvre la fiche de la carte
   sansDefinition?: boolean; // en duel, la carte en main ne montre pas sa définition
   maitriseeLe?: number | null; // date à laquelle le joueur a maîtrisé le mot : le timbre reçoit un second cachet
@@ -24,26 +28,27 @@ type Props = {
   action?: string; // ce que fait ce bouton, pour les lecteurs d'écran : « ajouter au deck », « jouer »…
 };
 
-export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
+export function Carte({ carte, finition = 'Normale', specimen, cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
   const timbre = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
-  const [encre, contraste] = encresDe(carte.faction);
+  const [encre, contraste, encreClaire] = encresDe(carte.type);
   const date = anneeDuCachet(carte.attestation);
   const idDuDessin = useId();
   // Le motif est propre au mot. Les timbres Hors-série ont, en plus, une illustration dessinée pour eux.
   const illustration = VIGNETTES[carte.id];
   const motif = useMemo(() => (illustration ? [] : motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2)), [carte.id, niveau, illustration]);
 
-  // Le reflet suit le doigt ou la souris ; au repos, il balaie lentement la carte tout seul.
+  // Le pointeur déplace le centre de la lumière ; son orbite CSS continue sans redémarrer.
   const incliner = (e: PointerEvent<HTMLElement>): void => {
     const cadre = e.currentTarget.getBoundingClientRect();
-    timbre.current?.style.setProperty('--rx', `${((e.clientX - cadre.left) / cadre.width) * 100}%`);
-    timbre.current?.style.setProperty('--ry', `${((e.clientY - cadre.top) / cadre.height) * 100}%`);
+    timbre.current?.style.setProperty('--rx', `${Math.max(0, Math.min(100, ((e.clientX - cadre.left) / cadre.width) * 100))}%`);
+    timbre.current?.style.setProperty('--ry', `${Math.max(0, Math.min(100, ((e.clientY - cadre.top) / cadre.height) * 100))}%`);
     timbre.current?.setAttribute('data-touchee', '');
   };
   const relacher = (): void => timbre.current?.removeAttribute('data-touchee');
-  const aUnReflet = horsSerie || finition !== 'Normale';
+  const aUnReflet = horsSerie || finition !== 'Normale' || !!specimen;
+  const reagitALaLumiere = aUnReflet || niveau >= 4;
 
   const contenu: ReactNode = (
     <div className="tim__papier">
@@ -58,6 +63,14 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
           <svg viewBox="0 0 60 60">
             {illustration ? illustration(idDuDessin) : motif.map((d, i) => <path key={i} d={d} />)}
           </svg>
+          {aUnReflet && !illustration && <svg className="tim__vernis" viewBox="0 0 60 60">
+            <defs><linearGradient id={`${idDuDessin}-vernis`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#fff8d5" /><stop offset=".3" stopColor="#82dedf" />
+              <stop offset=".5" stopColor="#fffef5" /><stop offset=".7" stopColor="#ca9fde" /><stop offset="1" stopColor="#efbf80" />
+            </linearGradient></defs>
+            {motif.map((d, i) => <path key={i} d={d} style={{ stroke: `url(#${idDuDessin}-vernis)` }} />)}
+          </svg>}
+          {specimen === 'Encre latente' && <svg className="tim__latent" viewBox="0 0 100 100"><Motif nom="plume" /></svg>}
         </div>
 
         <div className="tim__mot" lang="fr" style={{ fontSize: `${Math.min(10.5, 96 / carte.mot.length)}cqi` }}>{carte.mot}</div>
@@ -79,27 +92,35 @@ export function Carte({ carte, finition = 'Normale', cliquable = true, sansDefin
     </div>
   );
 
-  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
+  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${specimen ? `, spécimen ${specimen.toLowerCase()}` : finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
   const commun = {
     className: 'tim',
+    'data-nature': carte.type,
     'data-niveau': niveau,
-    'data-finition': horsSerie ? 'Prismatique' : finition,
-    style: { '--encre': encre, '--contraste': contraste } as CSSProperties,
-    onPointerMove: aUnReflet ? incliner : undefined,
-    onPointerLeave: aUnReflet ? relacher : undefined,
+    'data-finition': specimen ?? (horsSerie ? 'Prismatique' : finition),
+    style: { '--encre': horsSerie ? encreClaire : encre, '--contraste': contraste } as CSSProperties,
+    onPointerMove: reagitALaLumiere ? incliner : undefined,
+    onPointerDown: reagitALaLumiere ? incliner : undefined,
+    onPointerLeave: reagitALaLumiere ? relacher : undefined,
+    onPointerCancel: reagitALaLumiere ? relacher : undefined,
   };
 
   if (onChoisir) return <button type="button" {...commun} ref={timbre as Ref<HTMLButtonElement>} onClick={onChoisir} aria-label={`${description} — ${action ?? 'choisir'}`}>{contenu}</button>;
   return cliquable
     ? <a {...commun} ref={timbre as Ref<HTMLAnchorElement>} href={lien({ ecran: 'carte', id: carte.id })} aria-label={`${description} — voir la fiche`}>{contenu}</a>
-    : <article {...commun} ref={timbre} aria-label={description}>{contenu}</article>;
+    : <article {...commun} ref={timbre} tabIndex={specimen ? 0 : undefined} aria-label={description}>{contenu}</article>;
 }
 
 // Le dos d'un timbre, pour les cartes encore face cachée : la gomme, et le filigrane du jeu.
-export function DosDeCarte({ onRetourner, etiquette }: { onRetourner: () => void; etiquette: string }) {
+export function DosDeCarte({ onRetourner, etiquette, modele, anime = true }: { onRetourner?: () => void; etiquette: string; modele?: string; anime?: boolean }) {
+  const partie = usePartie();
+  const choix = modele ?? (partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null).dos : 'gomme');
+  const decor = ornement(choix);
+  const contenu = <span className="tim__papier"><span className="dos-grave" data-anime={anime && decor?.anime} style={{ '--dos-teinte': decor?.teinte } as CSSProperties} aria-hidden="true"><svg viewBox="0 0 120 160" fill="none" stroke="currentColor" strokeWidth=".75"><path d="m60 8 49 72-49 72L11 80Z" opacity=".3" /><circle cx="60" cy="80" r="46" opacity=".5" /><circle cx="60" cy="80" r="50" strokeDasharray="1 4" /><svg x="22" y="42" width="76" height="76" viewBox="0 0 100 100"><Motif nom={decor?.valeur ?? 'plume'} /></svg><path d="M30 16h60M30 144h60" /></svg><span className="dos-grave__nom">{SITE.nomEnCapitales}</span></span></span>;
+  if (!onRetourner) return <div className="tim tim--dos" data-modele={choix} role="img" aria-label={etiquette}>{contenu}</div>;
   return (
-    <button type="button" className="tim tim--dos" onClick={onRetourner} aria-label={etiquette}>
-      <span className="tim__papier"><span className="tim__filigrane" aria-hidden="true">{SITE.initiale}</span></span>
+    <button type="button" className="tim tim--dos" data-modele={choix} onClick={onRetourner} aria-label={etiquette}>
+      {contenu}
     </button>
   );
 }

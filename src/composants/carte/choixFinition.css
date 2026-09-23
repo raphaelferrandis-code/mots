@@ -1,0 +1,10 @@
+.choix-finition { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; width:min(100%,380px); margin:20px auto 4px; }
+.choix-finition__option { position:relative; display:flex; flex-direction:column; align-items:center; gap:7px; padding:12px 4px 10px; min-width:0; color:var(--encre); background:linear-gradient(145deg,#233747,#132333); border:1px solid #587180; box-shadow:inset 0 0 0 3px #0b172642,0 2px 2px #0004; font:inherit; font-size:.76rem; cursor:pointer; }
+.choix-finition__option small { font:500 .74rem var(--police-mention); color:var(--encre-douce); }
+.choix-finition__option[aria-pressed=true] { border-color:#d8e3db; box-shadow:inset 0 -2px #d8e3db,inset 0 0 0 3px #adcac514,0 2px 2px #0004; }
+.choix-finition__option:not(:disabled):hover { background:linear-gradient(145deg,#344b5a,#203340); border-color:#d8e3db; }
+.choix-finition__option:focus-visible { outline:2px solid #d8e3db; outline-offset:3px; }
+.choix-finition__option:disabled { cursor:default; opacity:.45; }
+.choix-finition__matiere { width:25px; height:32px; border:1px solid #e8dec5; background:#e4dcc9; box-shadow:inset 0 0 0 3px #887c6740; transform:rotate(-7deg); }
+[data-finition=Brillante] > .choix-finition__matiere { background:linear-gradient(120deg,#b7ac87 15%,#fff7d7 44%,#fffef3 49%,#bcaa75 58%,#ede1bd); }
+[data-finition=Holographique] > .choix-finition__matiere { background:linear-gradient(135deg,#b0dcd0,#8ecfd8 24%,#d6bce8 48%,#f3ddb3 72%,#b2d7ba); }

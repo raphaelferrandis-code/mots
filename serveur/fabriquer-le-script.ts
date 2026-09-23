@@ -14,7 +14,7 @@ import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
-import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections } from './collections.ts';
+import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections, migrationPersonnalisation } from './collections.ts';
 import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 
@@ -212,7 +212,7 @@ begin
     end if;
     if found then
       pris := pris || choisi.id;
-      resultat := resultat || jsonb_build_object('id', choisi.id, 'pseudo', choisi.pseudo, 'cote', choisi.cote, 'deck', choisi.deck, 'savoirs', choisi.savoirs, 'parades', choisi.parades);
+      resultat := resultat || jsonb_build_object('id', choisi.id, 'pseudo', choisi.pseudo, 'maison', choisi.maison, 'cote', choisi.cote, 'deck', choisi.deck, 'savoirs', choisi.savoirs, 'parades', choisi.parades);
     end if;
   end loop;
   return (select coalesce(jsonb_agg(a order by (a ->> 'cote')::integer), '[]'::jsonb) from jsonb_array_elements(resultat) a);
@@ -279,7 +279,7 @@ begin
   select 1 + count(*) into mon_rang from public.profils where cote > mon_profil.cote;
   return (
     with ranges as (
-      select row_number() over (order by p.cote desc, (p.id = mon_profil.id) desc, p.pseudo) as rang, p.pseudo, p.cote, (p.id = mon_profil.id) as moi from public.profils p
+      select row_number() over (order by p.cote desc, (p.id = mon_profil.id) desc, p.pseudo) as rang, p.pseudo, p.maison, p.cote, (p.id = mon_profil.id) as moi from public.profils p
     )
     select jsonb_build_object(
       'joueurs', (select count(*) from ranges),
@@ -334,5 +334,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '1-structure.sql'), structure());
   writeFileSync(path.join(RACINE, 'serveur', '2-joueurs-maison.sql'), joueursMaison(edition));
   writeFileSync(path.join(RACINE, 'serveur', '3-cartes.sql'), cartes(edition));
-  console.log('Écrits : serveur/1-structure.sql, serveur/2-joueurs-maison.sql et serveur/3-cartes.sql');
+  writeFileSync(path.join(RACINE, 'serveur', '4-personnalisation.sql'), migrationPersonnalisation());
+  console.log('Écrits : serveur/1-structure.sql, serveur/2-joueurs-maison.sql, serveur/3-cartes.sql et serveur/4-personnalisation.sql');
 }

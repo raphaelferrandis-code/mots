@@ -1,3 +1,4 @@
+import { Identite } from '../composants/Identite.tsx';
 import { useMemo } from 'react';
 import { DuelsAccueil } from '../composants/accueil/DuelsAccueil.tsx';
 import { PaquetsAccueil } from '../composants/accueil/PaquetsAccueil.tsx';
@@ -30,6 +31,7 @@ export function Accueil() {
   return (
     <main className="ecran accueil">
       <h1 className="visuellement-cache">{SITE.nom} — ton bureau de collectionneur</h1>
+      <a className="accueil-profil" href={lien({ ecran: 'profil' })}><Identite profil={partie.sauvegarde.profil} pseudo={partie.sauvegarde.joutes.pseudo} /></a>
       <div className="accueil__poles">
         <PaquetsAccueil partie={partie} />
         <DuelsAccueil deck={vue?.deck ?? null} sauvegarde={partie.sauvegarde} erreur={edition.etat === 'erreur'} />

@@ -77,6 +77,7 @@ a.tim:focus-visible, button.tim:focus-visible { outline: 3px solid var(--accent)
 
 /* La vignette : une rosace gravée, unique à chaque mot, sur un fond de tailles horizontales. */
 .tim__vignette {
+  position: relative;
   margin: 2.6cqi 6cqi 0;
   min-height: 0;
   display: grid; place-items: center;
@@ -151,9 +152,8 @@ a.tim:focus-visible, button.tim:focus-visible { outline: 3px solid var(--accent)
 .tim[data-niveau='5'] { --metal: var(--or); --seconde-encre: #a67c1a; }
 .tim[data-niveau='4'] .tim__valeur, .tim[data-niveau='5'] .tim__valeur,
 .tim[data-niveau='4'] .tim__bas, .tim[data-niveau='5'] .tim__bas {
-  background: var(--metal) 0% 50% / 220% 100%;
+  background: var(--metal) var(--lumiere-x) 50% / 220% 100%;
   color: #241a05;
-  animation: tim-miroitement 5s linear infinite;
 }
 .tim[data-niveau='4'] .tim__impression, .tim[data-niveau='5'] .tim__impression { border-image: var(--metal) 1; }
 .tim[data-niveau='5'] .tim__vignette {
@@ -163,50 +163,85 @@ a.tim:focus-visible, button.tim:focus-visible { outline: 3px solid var(--accent)
 }
 
 /* Hors-série (rang ultime) : papier noir, impression irisée, et le record que détient le mot. */
-.tim[data-niveau='6'] { --papier-timbre: #17161c; --texte-timbre: #efe9da; --encre: #e9dfc4; --seconde-encre: #9fd8ff; }
+.tim[data-niveau='6'] { --papier-timbre: #17161c; --texte-timbre: #efe9da; --seconde-encre: var(--contraste); }
 .tim[data-niveau='6'] .tim__papier { background: var(--papier-timbre); }
 .tim[data-niveau='6'] .tim__impression { border-image: var(--irise) 1; }
 .tim[data-niveau='6'] .tim__valeur, .tim[data-niveau='6'] .tim__record {
-  background: var(--irise) 0% 50% / 300% 100%;
+  background: var(--irise) var(--lumiere-x) 50% / 300% 100%;
   color: #15131a;
-  animation: tim-miroitement 7s linear infinite;
 }
 .tim[data-niveau='6'] .tim__vignette {
   background:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.07) 0 0.22cqi, transparent 0.22cqi 0.95cqi),
     radial-gradient(circle at 50% 60%, #2b2838, #121118);
 }
-.tim[data-niveau='6'] .tim__vignette svg { animation: tim-teinte 9s linear infinite; }
 .tim[data-niveau='6'] .tim__tampon { color: #f3ecd8; mix-blend-mode: screen; opacity: 0.55; }
 .tim__record {
   padding: 1.3cqi 2cqi; text-align: center;
   font-family: var(--police-mention);
   font-size: 2.9cqi; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
 }
-@keyframes tim-teinte { to { filter: hue-rotate(360deg); } }
-@keyframes tim-miroitement { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 
 /* ── La finition : une variante de tirage, indépendante de la rareté ───────── */
 
-.tim__reflet { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; background-position: var(--rx) var(--ry); }
-/* Au repos, le reflet balaie lentement la carte ; dès qu'on la touche, il suit le doigt ou la souris. */
-.tim:not([data-touchee]) .tim__reflet { animation: tim-balayage 6s ease-in-out infinite alternate; }
-@keyframes tim-balayage { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+/* Une lumière en orbite : sin/cos donnent la même position ET la même vitesse
+   à 0 et 360 degrés. Le pointeur déplace son centre sans redémarrer le cycle. */
+@property --tim-phase { syntax:'<angle>'; inherits:true; initial-value:0deg; }
+.tim__impression {
+  --lumiere-x:calc(38% + var(--rx) * .24 + sin(var(--tim-phase)) * 38%);
+  --lumiere-y:calc(38% + var(--ry) * .24 + cos(var(--tim-phase)) * 38%);
+}
+.tim:is([data-finition='Brillante'],[data-finition='Holographique'],[data-finition='Prismatique'],[data-finition='Nacrée'],[data-niveau='4'],[data-niveau='5']) .tim__impression {
+  animation:tim-lumiere-orbitale 16s linear infinite;
+}
+@keyframes tim-lumiere-orbitale { from { --tim-phase:0deg; } to { --tim-phase:360deg; } }
+.tim__reflet { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; background-position: var(--lumiere-x) var(--lumiere-y); }
 
 /* Brillante : un vernis qui accroche la lumière — une bande claire bordée d'une ombre, comme sur du papier glacé. */
 .tim[data-finition='Brillante'] .tim__reflet {
-  opacity: 0.85;
-  mix-blend-mode: hard-light;
-  background-image: linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.85) 40%, rgba(90, 80, 60, 0.28) 50%, rgba(255, 255, 255, 0.7) 60%, transparent 82%);
-  background-size: 260% 260%;
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+  background-image: linear-gradient(115deg, transparent 35%, #fff9df 47%, #fff 49%, #84755c44 52%, transparent 58%);
+  background-size: 220% 220%;
 }
 .tim[data-finition='Holographique'] .tim__reflet {
-  opacity: 0.62;
-  mix-blend-mode: overlay;
-  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.28) 0 0.18cqi, transparent 0.18cqi 0.72cqi), var(--irise);
-  background-size: auto, 320% 320%;
-  filter: saturate(1.5) contrast(1.1);
+  opacity: 0.38;
+  mix-blend-mode: soft-light;
+  background-image: repeating-linear-gradient(125deg, #9adee5 0%, #d6b2e9 12%, #f8d994 24%, #a4ddc9 36%, #9adee5 48%);
+  background-size: 240% 240%;
 }
+.tim__vignette .tim__vernis, .tim__vignette .tim__latent { position:absolute; inset:0; margin:auto; width:100%; height:100%; pointer-events:none; }
+.tim__vernis { opacity:0; }
+.tim[data-finition='Brillante'] .tim__vernis {
+  opacity:.9; filter:drop-shadow(.12cqi .2cqi .1cqi #30261580);
+  mask-image:linear-gradient(115deg,transparent 30%,#000 47%,transparent 58%);
+  mask-size:220% 220%; mask-position:var(--lumiere-x) var(--lumiere-y);
+}
+.tim[data-finition='Brillante'] .tim__vernis path { stroke:#fff9e5 !important; stroke-width:.48; }
+.tim[data-finition='Holographique'] .tim__vernis {
+  opacity:.95; filter:drop-shadow(.1cqi .2cqi .12cqi #22324e80);
+  mask-image:repeating-linear-gradient(120deg,#000 0%,#0003 15%,#000 30%);
+  mask-size:220% 220%; mask-position:var(--lumiere-x) var(--lumiere-y);
+}
+.tim[data-finition='Holographique'] .tim__vignette::after {
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.26; mix-blend-mode:color-burn;
+  background:repeating-linear-gradient(120deg,#81cfd8 0 .13cqi,transparent .13cqi .8cqi),repeating-linear-gradient(35deg,#c19cdc 0 .13cqi,transparent .13cqi 1.2cqi);
+  mask-image:radial-gradient(ellipse at var(--lumiere-x) var(--lumiere-y),#000,transparent 70%);
+}
+.tim[data-finition='Nacrée'] .tim__reflet {
+  opacity:.6; mix-blend-mode:soft-light;
+  background-image:radial-gradient(ellipse at 30% 30%,#f0acd8,transparent 48%),conic-gradient(from 35deg at 50% 50%,#fff5cb,#98d7db,#e2b6d6,#fff5cb);
+  background-size:200% 200%;
+}
+.tim[data-finition='Nacrée'] .tim__papier { background:var(--grain),linear-gradient(135deg,#f5e9de,#edf1ed 45%,#e8e0ed 75%,#f8efda); }
+.tim__vignette .tim__latent { width:65%; height:65%; opacity:.025; transition:opacity .35s ease; filter:drop-shadow(0 0 .5cqi #dbefc7); }
+.tim__latent :is(path,circle,line,polyline,polygon,rect) { stroke:#568370; stroke-width:.8; }
+.tim[data-touchee] .tim__latent, .tim:focus-visible .tim__latent { opacity:.9; mask-image:radial-gradient(ellipse at var(--rx) var(--ry),#000 12%,transparent 75%); }
+.tim[data-finition='Encre latente'] .tim__reflet { opacity:.2; background:radial-gradient(ellipse at var(--rx) var(--ry),#d5f0cf,transparent 65%); }
+.tim__mot, .tim__haut, .tim__bas, .tim__registre { position:relative; z-index:3; }
+.galerie--matieres figure { margin:0; min-width:0; }
+.galerie--matieres figcaption { text-align:center; padding:14px 0; font-family:var(--police-mention); letter-spacing:.08em; }
+@media (prefers-reduced-motion:reduce) { .tim__impression,.tim__vernis,.tim__reflet { animation:none !important; } .tim__latent { transition:none !important; } }
 /* Prismatique (Hors-série) : sur papier noir, un voile irisé discret et des éclats, pour que le noir reste noir. */
 .tim[data-finition='Prismatique'] .tim__reflet {
   opacity: 0.34;

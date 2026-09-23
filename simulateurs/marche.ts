@@ -6,7 +6,7 @@
 // Usage : npm run simulation:marche   → tableaux à l'écran et dans data/simulation-marche.md
 //
 // ⚠️ Ce que ce simulateur sait faire, et ce qu'il ne sait pas faire.
-// Il connaît exactement les entrées et les sorties d'Encre (doublons, duels, paquets achetés, commission) : ces
+// Il connaît exactement les entrées et les sorties d'Encre (doublons, duels, commission) : ces
 // chiffres-là ne dépendent que des vraies règles. En revanche, il ne sait pas ce qu'un vrai joueur est prêt à payer
 // pour un timbre : c'est une hypothèse, réglée ici par le « désir ». Tous les tableaux sont donc donnés pour
 // plusieurs désirs : ce qui compte est ce qui reste vrai dans les trois colonnes.
@@ -238,14 +238,6 @@ function simuler(reglages: Reglages, graine: number): Bilan {
         encheres.push({ vendeur: j, timbre, rarete, mise, achatImmediat: mise * 4 });
       }
 
-      // 5. Les paquets achetés avec l'Encre : la principale sortie d'Encre du jeu.
-      //    Le joueur garde de quoi miser au marché (le prix d'un paquet).
-      while (j.encre >= P.prixEnEncre * 2) {
-        j.encre -= P.prixEnEncre;
-        bilan.encreDetruite += P.prixEnEncre;
-        bilan.encreDesPaquets += P.prixEnEncre;
-        ouvrirUnPaquet(j);
-      }
     }
   }
 
@@ -347,7 +339,7 @@ const rapport = [
   '',
   '## Ce que ce simulateur prouve, et ce qu’il suppose',
   '',
-  "Les entrées et les sorties d'Encre sont **exactes** : elles ne dépendent que des règles du jeu (doublons, duels, paquets achetés, commission). Ce que les joueurs sont prêts à payer, en revanche, est une **hypothèse**, réglée ici par le « désir » : un timbre qui manque vaut son Encre de doublon multipliée par le désir. Chaque tableau est donc donné pour trois désirs. Ce qui reste vrai dans les trois colonnes est solide ; le reste demande de vrais joueurs.",
+  "Les entrées et les sorties d'Encre sont **exactes** : elles ne dépendent que des règles du jeu (doublons, duels, commission). Ce que les joueurs sont prêts à payer, en revanche, est une **hypothèse**, réglée ici par le « désir » : un timbre qui manque vaut son Encre de doublon multipliée par le désir. Chaque tableau est donc donné pour trois désirs. Ce qui reste vrai dans les trois colonnes est solide ; le reste demande de vrais joueurs.",
   '',
   "## 1. L'Encre du jeu : ce qui entre, ce qui sort",
   '',
@@ -408,7 +400,7 @@ const rapport = [
   '',
   '## Ce que ces chiffres disent',
   '',
-  `**1. La commission n'est pas ce qui tient l'économie.** Elle ne détruit que ${pourcent(plafonds.encreDeLaCommission / Math.max(1, plafonds.encreDetruite))} de l'Encre qui disparaît : tout le reste part en paquets achetés. La passer de 10 % à 20 % ne change presque rien au total. C'est donc un prix de service raisonnable, pas un levier d'équilibrage. Si un jour l'Encre s'accumule, c'est le prix du paquet qu'il faudra regarder, pas la commission.`,
+  "**1. L’Encre ne paie plus de paquets.** La commission des enchères est désormais la seule sortie d’Encre simulée. Il faut comparer les entrées et les sorties avant de fixer les bonus payants ou de vendre de l’Encre.",
   '',
   `**2. Le plancher des timbres communs bloque le marché si les joueurs ne sont pas très demandeurs.** Au désir ×2, ${nombre(avecPlancherDesir2.misesEnVenteParRarete['Commune'])} timbres communs sont proposés et ${nombre(avecPlancherDesir2.ventesParRarete['Commune'].length)} trouvent preneur : le plancher de ${M.planchers['Commune']} Encre est au-dessus de ce que vaut un timbre commun pour un joueur tiède. Des planchers au double de l'Encre d'un doublon ramènent les invendus de ${pourcent(invendusGlobal(avecPlancherDesir2))} à ${pourcent(invendusGlobal(parDesirDoubles.find((p) => p.desir === 2)!.bilan))}. À l'inverse, un plancher haut évite un marché noyé sous les timbres communs : c'est un choix, pas une erreur.`,
   '',
@@ -418,7 +410,7 @@ const rapport = [
   '',
   '## Comment lire ces chiffres',
   '',
-  "- **Si l'Encre créée dépasse durablement l'Encre détruite**, elle s'accumule et les prix montent : c'est l'inflation. La sortie principale reste l'achat de paquets, pas la commission du marché.",
+  "- **Si l'Encre créée dépasse durablement l'Encre détruite**, elle s'accumule et les prix montent : c'est l'inflation. Les paquets ne détruisent plus d’Encre ; seule la commission le fait dans cette simulation. Les prix restent une hypothèse de comportement, pas une prévision.",
   "- **Un taux d'invendus élevé pour une rareté** veut dire que son plancher est au-dessus de ce que les joueurs peuvent payer.",
   '- **Beaucoup de joueurs au plafond** veut dire que la limite gêne le jeu ordinaire, et pas seulement les revendeurs.',
   '',

@@ -1,4 +1,4 @@
-// Les actions du joueur sur sa sauvegarde : ouvrir un paquet gratuit, en acheter un avec de l'Encre.
+// Les actions du joueur sur sa sauvegarde : ouvrir un paquet de la réserve. L’Encre sert uniquement aux enchères.
 // Fonctions pures : elles reçoivent une sauvegarde et en rendent une nouvelle, sans rien écrire nulle part.
 
 import type { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -90,11 +90,4 @@ export function ouvrirUnPaquetGratuit(sauvegarde: Sauvegarde, contexte: Contexte
   const aJour = mettreAJour(sauvegarde, contexte.maintenant, contexte.equilibrage);
   const paquets = { ...aJour.paquets, ...retirerUnPaquet(aJour.paquets, contexte.maintenant, contexte.equilibrage.paquets) };
   return ouvrir({ ...aJour, paquets }, contexte);
-}
-
-export function acheterUnPaquet(sauvegarde: Sauvegarde, contexte: Contexte): Ouverture {
-  const prix = contexte.equilibrage.paquets.prixEnEncre;
-  if (sauvegarde.encre < prix) throw new Error("Pas assez d'Encre");
-  const aJour = mettreAJour(sauvegarde, contexte.maintenant, contexte.equilibrage);
-  return ouvrir({ ...aJour, encre: aJour.encre - prix }, contexte);
 }

@@ -28,7 +28,7 @@ export function CoteDuTimbre({ carte, cotes, payant }: { carte: string; cotes: C
           ? <>Cote du jour : <strong>{description}</strong> <span className="texte-doux petit">({ventes} vente{ventes > 1 ? 's' : ''} ces {FENETRE} derniers jours)</span></>
           : <span className="texte-doux">Pas encore de cote : aucune vente de ce timbre ces {FENETRE} derniers jours.</span>}
       </p>
-      {payant ? <HistoireDeLaCoteDuTimbre carte={carte} /> : <p className="texte-doux petit">L'histoire des prix et les statistiques feront partie de la version payante.</p>}
+      {payant && <HistoireDeLaCoteDuTimbre carte={carte} />}
     </>
   );
 }

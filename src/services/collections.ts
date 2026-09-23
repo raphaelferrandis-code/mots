@@ -19,12 +19,13 @@ export type Recompense = { encre: number; reduite: boolean; etat: EtatDuCompte }
 
 export type ServeurDesCollections = {
   actif: boolean;
+  acheterPersonnalisation(id: string): Promise<EtatDuCompte>;
   // Le compte du joueur, ou null s'il n'en a pas encore sur le serveur.
   monCompte(): Promise<EtatDuCompte | null>;
   ouvrirMonCompte(): Promise<EtatDuCompte>;
   // Importe une seule fois la partie qui vivait sur l'appareil (le serveur la ramène à ce qui est plausible).
   importer(sauvegarde: Sauvegarde): Promise<EtatDuCompte>;
-  ouvrirUnPaquet(masques: readonly Registre[], achat: boolean): Promise<{ cartes: CarteTireeParLeServeur[]; etat: EtatDuCompte }>;
+  ouvrirUnPaquet(masques: readonly Registre[]): Promise<{ cartes: CarteTireeParLeServeur[]; etat: EtatDuCompte }>;
   // Rend le deck tel que le serveur l'a enregistré (cartes possédées seulement).
   changerDeDeck(deck: readonly string[]): Promise<string[]>;
   commencerUnDuel(niveau: Niveau): Promise<number>;
@@ -54,14 +55,15 @@ function lireLaRecompense(brut: unknown): Recompense {
 export function serveurDesCollectionsAvec(client: ClientSupabase): ServeurDesCollections {
   return {
     actif: true,
+    acheterPersonnalisation: (id) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('acheter_personnalisation', { p_id: id }))),
     monCompte: async () => { const brut = await client.appeler<unknown>('mon_compte'); return brut === null ? null : lireEtat(brut); },
     ouvrirMonCompte: () => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('ouvrir_mon_compte'))),
     importer: (sauvegarde) => chacunSonTour(async () => {
       const envoi = aImporter(sauvegarde);
       return lireEtat(await client.appeler<unknown>('importer_ma_collection', { p_cree_le: envoi.creeLe, p_encre: envoi.encre, p_paquets: envoi.paquets, p_cartes: envoi.cartes, p_deck: envoi.deck }));
     }),
-    ouvrirUnPaquet: (masques, achat) => chacunSonTour(async () => {
-      const brut = await client.appeler<unknown>(achat ? 'acheter_un_paquet' : 'ouvrir_un_paquet', { p_masques: [...masques] });
+    ouvrirUnPaquet: (masques) => chacunSonTour(async () => {
+      const brut = await client.appeler<unknown>('ouvrir_un_paquet', { p_masques: [...masques] });
       const lu = estUnObjet(brut) ? brut : {};
       return { cartes: lireLesCartesTirees(lu.cartes), etat: lireEtat(lu.etat) };
     }),
@@ -85,6 +87,7 @@ export function serveurDesCollectionsAvec(client: ClientSupabase): ServeurDesCol
 const jamais = (): never => { throw new Error("La collection vit sur cet appareil : le serveur n'en est pas propriétaire."); };
 const inactif: ServeurDesCollections = {
   actif: false,
+  acheterPersonnalisation: async () => jamais(),
   monCompte: async () => null,
   ouvrirMonCompte: async () => jamais(),
   importer: async () => jamais(),

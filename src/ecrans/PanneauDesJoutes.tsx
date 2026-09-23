@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
@@ -113,7 +114,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
       <div className="panneaux joutes">
         <section className="rubrique panneaux__large joute__accueil">
           <h2>Rejoindre les joutes classées</h2>
-          <p>Affronte le double d'autres joueurs — leur deck, joué par l'ordinateur — et grimpe au classement, de la ligue Apprenti à la ligue Immortel.</p>
+          <p>Affronte le deck d'autres joueurs, joué par l'ordinateur.</p>
           <p className="texte-doux petit">
             En rejoignant les joutes, ton pseudonyme, ta cote et ton deck sont envoyés au serveur du jeu. Les autres joueurs voient ton pseudonyme,
             ta cote et les raretés de ton deck. Tu peux tout supprimer quand tu veux : <a href={lien({ ecran: 'confidentialite' })}>page Confidentialité</a>.
@@ -148,7 +149,6 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
 
       <section className="rubrique">
         <h2>Choisis ton adversaire</h2>
-        <p className="texte-doux petit">L'ordinateur joue son deck selon ses résultats aux définitions.</p>
         {adversaires.etat === 'erreur' && <p className="joute__refus" role="alert">{adversaires.message}</p>}
         {(adversaires.etat === 'en cours' || publication.etat === 'en cours') && <p className="texte-doux">Recherche d'adversaires…</p>}
         {adversaires.etat === 'pret' && publie && adversaires.donnees.length === 0 && <p className="texte-doux">Aucun adversaire disponible pour l'instant.</p>}
@@ -157,6 +157,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
             {adversaires.donnees.map((profil) => (
               <button key={profil.id} type="button" className="niveau" disabled={enPreparation} onClick={() => onDefier(profil)}>
                 <strong>{profil.pseudo} <small className="joute__cote">cote {profil.cote} · {ligueDe(profil.cote, REGLES).nom}</small></strong>
+                <BadgeJoueurSimule maison={profil.maison} />
                 {cartes && <span className="texte-doux petit">{raretesDuDeck(profil.deck, cartes)}</span>}
                 <span className="niveau__gain">Victoire {signe(coteApres(cote, profil.cote, 'victoire', REGLES) - cote)} · Défaite {signe(coteApres(cote, profil.cote, 'defaite', REGLES) - cote)} · +{REGLES.encreParVictoire} Encre</span>
               </button>
@@ -166,21 +167,7 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
         <button type="button" className="bouton bouton--discret" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation…' : 'Autres adversaires'}</button>
       </section>
 
-      {rang && (
-        <details className="rubrique repliable panneaux__large">
-          <summary><h2>Le classement</h2></summary>
-          <ol className="classement">
-            {[...rang.tete, ...rang.voisins.filter((v) => v.rang > rang.tete.length)].map((ligne, i, toutes) => (
-              <li key={ligne.rang} data-moi={ligne.moi} data-apres-un-saut={i > 0 && ligne.rang > toutes[i - 1].rang + 1}>
-                <span className="classement__rang">{ligne.rang}</span>
-                <span className="classement__pseudo">{ligne.moi ? `${ligne.pseudo} (toi)` : ligne.pseudo}</span>
-                <span className="classement__ligue texte-doux">{ligueDe(ligne.cote, REGLES).nom}</span>
-                <span className="classement__cote">{ligne.cote}</span>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
+
     </div>
   );
 }

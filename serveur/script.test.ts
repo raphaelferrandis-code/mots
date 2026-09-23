@@ -10,7 +10,8 @@ import { NOMBRE_DE_JOUEURS_MAISON, fabriquerLesJoueursMaison } from '../src/jeu/
 import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
-import { cartes } from './collections.ts';
+import { cartes, migrationPersonnalisation } from './collections.ts';
+import { ORNEMENTS } from '../src/jeu/personnalisation.ts';
 import { joueursMaison, structure } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -22,6 +23,16 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('1-structure.sql'), structure());
     assert.equal(lire('2-joueurs-maison.sql'), joueursMaison(edition));
     assert.equal(lire('3-cartes.sql'), cartes(edition));
+    assert.equal(lire('4-personnalisation.sql'), migrationPersonnalisation());
+  });
+
+  it('ne permet pas d’acheter en Encre les cosmétiques réservés aux formules', () => {
+    const sql = migrationPersonnalisation();
+    for (const o of ORNEMENTS.filter(o => o.premium)) assert.ok(!sql.includes(`when '${o.id}' then`), o.id);
+    assert.match(sql, /else null end;/);
+    assert.match(sql, /if prix is null then raise exception/);
+    assert.match(sql, /where utilisateur = auth.uid\(\) for update;/);
+    assert.match(sql, /if p_id = any\(c.personnalisations\) then return/);
   });
 
   it('reprennent les chiffres des paquets, de l’Encre et des duels, et toutes les cartes de l’édition', () => {
@@ -30,7 +41,9 @@ describe('les scripts du serveur', () => {
     assert.ok(sql.includes(`'${JSON.stringify(P.emplacements)}'::jsonb`));
     assert.ok(sql.includes(`>= ${P.paquetsAvantLegendaireGarantie};`));
     assert.ok(sql.includes(`random() < ${P.chanceHorsSerie}`));
-    assert.ok(sql.includes(`< ${P.prixEnEncre} then raise exception`));
+    assert.ok(sql.includes('drop function if exists public.acheter_un_paquet(text[]);'));
+    assert.ok(!sql.includes('create or replace function public.acheter_un_paquet'));
+    assert.doesNotMatch(sql, /grant execute on function [^;]*public\.acheter_un_paquet/);
     assert.ok(sql.includes(`else ${P.minutesEntreDeuxPaquets} end`), 'la recharge gratuite');
     assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.minutesEntreDeuxPaquets}`), 'la recharge payante');
     assert.ok(sql.includes(`when paye >= 1 then ${EQUILIBRAGE.payant.stockMaximum}`), 'la réserve payante');

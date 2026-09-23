@@ -69,12 +69,7 @@ export const EQUILIBRAGE = {
     //  de « très très rare » ; à 1 sur 1 000, sa première arrive après deux à trois semaines, et une quinzaine par an.)
     chanceHorsSerie: 1 / 1000,
 
-    // Prix d'un paquet obtenu tout de suite, sans attendre.
-    // ⚠️ Un paquet doit toujours rapporter nettement moins d'Encre (par ses doublons) qu'il n'en coûte,
-    // sinon les paquets deviennent infinis. Un test le vérifie.
-    // (Réglé à 150 d'après le simulateur : à 50, l'Encre doublait le nombre de paquets et un joueur régulier
-    //  finissait l'édition en 4 mois ; à 150, il lui faut environ 8 mois, dans la cible de 6 mois à 1 an.)
-    prixEnEncre: 150,
+    // Les paquets ne s’achètent pas : l’Encre sert uniquement aux enchères.
   },
 
   // ── Encre ─────────────────────────────────────────────────────────────────
@@ -151,7 +146,7 @@ export const EQUILIBRAGE = {
       selonLeNiveau: { 'Facile': 0.7, 'Normal': 1, 'Difficile': 1 },
     },
 
-    // Récompenses. Les victoires suivantes de la journée rapportent moins, pour que l'Encre du duel ne remplace pas les paquets.
+    // Récompenses. Les victoires suivantes rapportent moins pour limiter la création d’Encre pour les enchères.
     encreParVictoire: { 'Facile': 20, 'Normal': 30, 'Difficile': 45 },
     encreParDefaite: 5,
     victoiresPleinesParJour: 3,

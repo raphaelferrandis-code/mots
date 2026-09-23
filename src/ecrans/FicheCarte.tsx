@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Carte } from '../composants/carte/Carte.tsx';
+import { TimbreManipulable } from '../composants/carte/TimbreManipulable.tsx';
+import { ChoixFinition } from '../composants/carte/ChoixFinition.tsx';
 import { CoteDuTimbre } from '../composants/CoteDuTimbre.tsx';
 import { MiseEnVente } from '../composants/MiseEnVente.tsx';
 import { usePartie } from '../composants/usePartie.ts';
@@ -7,7 +8,7 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { histoireDesPrix } from '../jeu/formule.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
-import { FINITIONS } from '../partage/types.ts';
+import type { Finition } from '../partage/types.ts';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
@@ -30,6 +31,7 @@ export function FicheCarte({ id }: { id: string }) {
   const fiche = useChargement(() => chargerFiche(id), id);
   const partie = usePartie();
   const [partage, setPartage] = useState<Partage>({ etat: 'repos' });
+  const [exemplaire, setExemplaire] = useState<{ id: string; finition: Finition } | null>(null);
   const [vente, setVente] = useState<Enchere | null>(null); // le timbre vient d'être mis en vente depuis cette fiche
   const marcheOuvert = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
   const payant = partie.etat === 'prete' && partie.compte !== null && histoireDesPrix(partie.compte.formule);
@@ -49,7 +51,8 @@ export function FicheCarte({ id }: { id: string }) {
 
   const { carte, details } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
-  const finition = possedee ? meilleureFinition(possedee) : 'Normale';
+  const finition = possedee && exemplaire?.id === carte.id && (possedee.finitions[exemplaire.finition] ?? 0) > 0
+    ? exemplaire.finition : possedee ? meilleureFinition(possedee) : 'Normale';
   const dansLeDeck = partie.etat === 'prete' && partie.sauvegarde.deck.includes(carte.id);
 
   // L'image du timbre, telle qu'on la voit ici, part vers la feuille de partage du téléphone, ou se télécharge.
@@ -68,7 +71,8 @@ export function FicheCarte({ id }: { id: string }) {
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
         <div className="fiche__visuel">
-          <div className="fiche__carte"><Carte carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} cliquable={false} /></div>
+          <div className="fiche__carte"><TimbreManipulable key={carte.id} carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} /></div>
+          {possedee && carte.rarete !== 'Hors-série' && <ChoixFinition finitions={possedee.finitions} choisie={finition} indisponible={partage.etat === 'en cours'} onChoisir={(f) => { setExemplaire({ id: carte.id, finition: f }); setPartage({ etat: 'repos' }); }} />}
           {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
           {possedee && (
             <div className="fiche__partage">
@@ -87,9 +91,7 @@ export function FicheCarte({ id }: { id: string }) {
             {possedee ? (
               <p>
                 Obtenu le {enToutesLettres(possedee.obtenueLe)}.{' '}
-                {carte.rarete === 'Hors-série'
-                  ? 'Hors-série : finition unique.'
-                  : <>Finitions : {FINITIONS.map((f) => `${f.toLowerCase()} ${(possedee.finitions[f] ?? 0) > 0 ? '✓' : '—'}`).join(' · ')}.</>}
+                {carte.rarete === 'Hors-série' && 'Hors-série : finition unique.'}
               </p>
             ) : <p className="texte-doux">{vente ? 'Ton exemplaire est en vente sur le marché.' : 'Tu ne possèdes pas encore ce timbre.'}</p>}
             {possedee && (

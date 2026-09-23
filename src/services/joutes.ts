@@ -22,7 +22,7 @@ import { quitterLesJoutes, toutEffacer } from './partie.ts';
 const REGLES = EQUILIBRAGE.joute;
 
 export type MonProfil = Pick<ProfilDeJoute, 'pseudo' | 'deck' | 'savoirs' | 'parades'>;
-export type LigneDeClassement = { rang: number; pseudo: string; cote: number; moi: boolean };
+export type LigneDeClassement = { rang: number; pseudo: string; cote: number; moi: boolean; maison?: boolean };
 export type Classement = { joueurs: number; rang: number; tete: LigneDeClassement[]; voisins: LigneDeClassement[] };
 export type Publication = { accepte: true; cote: number | null } | { accepte: false; raison: string };
 // La fin d'une joute vue par le serveur : la cote avant et après ; et l'Encre versée, quand il tient aussi la collection.
@@ -73,7 +73,7 @@ const serveurLocal: ServeurDeJoutes = {
   async classement(pseudo, cote) {
     const autres = await joueursMaison();
     const rang = rangDansLeClassement(autres.map((p) => p.cote), cote);
-    const tous: LigneDeClassement[] = [...autres.map((p) => ({ pseudo: p.pseudo, cote: p.cote, moi: false })), { pseudo, cote, moi: true }]
+    const tous: LigneDeClassement[] = [...autres.map((p) => ({ pseudo: p.pseudo, cote: p.cote, moi: false, maison: p.maison === true })), { pseudo, cote, moi: true, maison: false }]
       // À cote égale, le joueur est placé devant : son rang est celui de « rangDansLeClassement ».
       .sort((a, b) => b.cote - a.cote || Number(b.moi) - Number(a.moi))
       .map((ligne, i) => ({ ...ligne, rang: i + 1 }));

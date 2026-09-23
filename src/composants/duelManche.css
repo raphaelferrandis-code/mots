@@ -1,0 +1,48 @@
+/* Une manche : pose, lecture, puis deux impacts aux mêmes instants que les sons. */
+.duel-arene { position:relative; isolation:isolate; padding:20px 18px; gap:48px; border-block:1px solid #a7c3ce30; background:radial-gradient(ellipse at 50% 100%,#29465344,transparent 75%); }
+.duel-arene__place { position:relative; min-width:0; --impact-delai:450ms; }
+.duel-arene__place[data-camp=joueur] { --impact-delai:750ms; }
+.duel-arene .duel__mot-pose { width:min(100%,200px); margin-inline:auto; }
+.duel-arene .duel__mot-pose > .tim { animation:duel-pose .38s cubic-bezier(.18,.7,.24,1) both; }
+.duel-arene [data-camp=adversaire] { --pose-y:-22px; --pose-angle:-5deg; }
+.duel-arene [data-camp=joueur] { --pose-y:32px; --pose-angle:5deg; }
+@keyframes duel-pose { from { opacity:.2; transform:translateY(var(--pose-y)) rotate(var(--pose-angle)) scale(.94); } to { opacity:1; transform:none; } }
+.duel-arene__liaison { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; color:#bfd0d070; }
+.duel-arene__liaison span { display:grid; place-items:center; width:30px; height:30px; border:1px solid #b8cbd02b; transform:rotate(0deg); }
+.duel-arene[data-compact=true] { padding-block:12px; }
+.duel > .duel-arene[data-compact=true] { grid-column:1 / -1; width:min(100%,960px); justify-self:center; }
+.duel-arene[data-compact=true] .duel__mot-pose { width:76px; }
+.duel-arene[data-compact=true] .entete__surtitre { font-size:.65rem; white-space:nowrap; }
+.duel-arene__place[data-actif=true] .tim { filter:drop-shadow(0 0 9px #cee5e44d); }
+.duel-arene__place[data-actif=true]::after { content:''; position:absolute; bottom:-7px; left:calc(50% - 18px); width:36px; height:2px; background:#d7e6e2; box-shadow:0 0 10px #cbe6e266; }
+.duel[data-phase=attaque] .epreuve { border-top-color:#cfab86; }
+.duel[data-phase=parade] .epreuve { border-top-color:#90c7c0; }
+.duel .epreuve { animation:duel-question .2s ease-out; border-top-width:2px; }
+@keyframes duel-question { from { opacity:.7; transform:translateY(5px); } to { opacity:1; transform:none; } }
+.duel__carte[data-choisie=true] { outline:1px solid #d6e1d5; outline-offset:5px; box-shadow:0 8px 22px #0005; }
+.duel-impact { position:absolute; inset:20px 0 0; pointer-events:none; display:flex; align-items:flex-end; justify-content:center; color:#f2c2a5; }
+.duel-arene__place:has(.duel-impact) { padding-bottom:30px; }
+.duel-impact[data-pare=true] { color:#b6e3df; }
+.duel-impact__trace { position:absolute; width:80%; height:85%; inset:0; margin:auto; stroke-width:2; filter:drop-shadow(0 0 6px currentColor); opacity:0; animation:duel-contact .55s ease-out var(--impact-delai) both; }
+.duel-impact[data-pare=true] .duel-impact__trace { stroke-width:1.3; }
+@keyframes duel-contact { 0% { opacity:0; transform:scale(.7) rotate(-7deg); } 18% { opacity:.95; } 100% { opacity:0; transform:scale(1.12) rotate(0deg); } }
+.duel-impact__chiffre { padding:5px 14px; background:#101e2af2; border:1px solid currentColor; font:600 1.15rem var(--police-mention); letter-spacing:.06em; box-shadow:0 4px 12px #0005; animation:duel-resultat .35s ease-out var(--impact-delai) both; }
+@keyframes duel-resultat { from { opacity:0; transform:translateY(10px) scale(.85); } to { opacity:1; transform:translateY(6px) scale(1); } }
+.duel-impact[data-touche=false] { color:#b4c3cf; }
+.duel-arene__place:has(.duel-impact[data-touche=true]) .duel__mot-pose { animation:duel-choc .32s ease-out var(--impact-delai); }
+.duel-arene__place[data-camp=joueur] { --frappe-x:-14px; --frappe-delai:300ms; }
+.duel-arene__place[data-camp=adversaire] { --frappe-x:14px; --frappe-delai:600ms; }
+.duel-arene__place[data-frappe=true] .duel__mot-pose > .tim { animation:duel-frappe .3s ease-in-out var(--frappe-delai) both; }
+@keyframes duel-frappe { 0%,100% { transform:none; } 50% { transform:translateX(var(--frappe-x)) scale(1.035); } }
+@keyframes duel-choc { 0%,100% { transform:none; } 25% { transform:translateX(-5px) rotate(-1deg); } 55% { transform:translateX(3px); } }
+.duel .jauge__barre span { background:linear-gradient(90deg,#668e9b,#c4ddd8); transition:width .3s ease-out; }
+.duel[data-phase=bilan] .jauge__barre span { transition-delay:var(--impact-delai); }
+.duel .jauge__pv { position:relative; }
+.jauge__precedents { position:absolute; inset:0; background:var(--fond,#0b1829); animation:duel-ancien-pv 1ms step-end var(--impact-delai) both; }
+.jauge__pv[data-perte=true] .jauge__actuels { animation:duel-nouveau-pv .3s ease-out var(--impact-delai) both; }
+@keyframes duel-ancien-pv { from { visibility:visible; } to { visibility:hidden; } }
+@keyframes duel-nouveau-pv { from { opacity:0; color:#f2c2a5; } to { opacity:1; } }
+@media(max-width:600px) { .duel-arene { padding:14px 8px; gap:34px; } .duel-arene .duel__mot-pose { max-width:145px; } .duel-arene[data-compact=true] .duel__mot-pose { width:60px; } .duel-impact__chiffre { font-size:.95rem; padding:4px 8px; } }
+/* Les informations restent présentes sans mouvement, y compris les valeurs finales. */
+@media(prefers-reduced-motion:reduce) { .duel-impact__trace,.jauge__precedents { display:none; } }
+[data-animations-reduites] .duel-impact__trace,[data-animations-reduites] .jauge__precedents { display:none; }

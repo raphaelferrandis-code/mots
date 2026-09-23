@@ -59,11 +59,6 @@ describe("chiffres d'équilibrage du duel", () => {
     assert.ok(attaqueEnJeu(5, 'Légendaire') > attaqueEnJeu(5, 'Commune'));
     assert.ok(attaqueEnJeu(10, 'Légendaire') > EQUILIBRAGE.statMaximale, "le bonus d'attaque n'est pas plafonné");
   });
-  it("l'Encre d'une journée de duels acharnée reste en dessous de quelques paquets", () => {
-    let sauvegarde = nouvelleSauvegarde(T0, 0);
-    for (let i = 0; i < 30; i++) sauvegarde = terminerUnDuel(sauvegarde, 'Difficile', 'victoire', T0 + i * 60_000, REGLES).sauvegarde;
-    assert.ok(sauvegarde.encre < EQUILIBRAGE.paquets.prixEnEncre * 4, `30 victoires en un jour rapportent ${sauvegarde.encre} Encre`);
-  });
 });
 
 describe('déroulement du duel', () => {

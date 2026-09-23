@@ -39,6 +39,9 @@ export function lireFormule(brut: unknown): Formule {
   };
 }
 
+// Toutes les formules payantes donnent les cosmétiques premium, tant que le droit est actif.
+export const cosmetiquesPremium = (f: Formule, maintenant = Date.now()): boolean => f.achatUnique || (f.niveau >= 1 && f.abonnement !== 'aucun' && f.jusquAu !== null && f.jusquAu > maintenant);
+
 // Les avantages, étage par étage. Chaque étage contient le précédent.
 export const paquetsPlusVite = (f: Formule): boolean => f.niveau >= 1;
 export const encreDoublee = (f: Formule): boolean => f.niveau >= 2;
@@ -56,6 +59,7 @@ export const ETAGES: Etage[] = [
     avantages: [
       `Un paquet toutes les ${P.minutesEntreDeuxPaquets} minutes au lieu de ${EQUILIBRAGE.paquets.minutesEntreDeuxPaquets}`,
       `Une réserve de ${P.stockMaximum} paquets au lieu de ${EQUILIBRAGE.paquets.stockMaximum}`,
+      'Cadres animés et cosmétiques premium',
       'Versé une seule fois, acquis pour toujours',
     ],
   },

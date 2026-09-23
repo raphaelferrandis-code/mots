@@ -32,9 +32,7 @@ export function Confidentialite() {
 
   return (
     <main className="ecran confidentialite">
-      <Entete titre="Confidentialité" actions={<a className="outil" href={lien({ ecran: 'reglages' })}>Retour aux réglages</a>}>
-        Ce que le jeu garde, où, et comment tout effacer.
-      </Entete>
+      <Entete titre="Confidentialité" actions={<a className="bouton outil" href={lien({ ecran: 'reglages' })}>Retour aux réglages</a>} />
 
       <section className="rubrique">
         <h2>En bref</h2>

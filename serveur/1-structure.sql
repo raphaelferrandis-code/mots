@@ -173,7 +173,7 @@ begin
     end if;
     if found then
       pris := pris || choisi.id;
-      resultat := resultat || jsonb_build_object('id', choisi.id, 'pseudo', choisi.pseudo, 'cote', choisi.cote, 'deck', choisi.deck, 'savoirs', choisi.savoirs, 'parades', choisi.parades);
+      resultat := resultat || jsonb_build_object('id', choisi.id, 'pseudo', choisi.pseudo, 'maison', choisi.maison, 'cote', choisi.cote, 'deck', choisi.deck, 'savoirs', choisi.savoirs, 'parades', choisi.parades);
     end if;
   end loop;
   return (select coalesce(jsonb_agg(a order by (a ->> 'cote')::integer), '[]'::jsonb) from jsonb_array_elements(resultat) a);
@@ -240,7 +240,7 @@ begin
   select 1 + count(*) into mon_rang from public.profils where cote > mon_profil.cote;
   return (
     with ranges as (
-      select row_number() over (order by p.cote desc, (p.id = mon_profil.id) desc, p.pseudo) as rang, p.pseudo, p.cote, (p.id = mon_profil.id) as moi from public.profils p
+      select row_number() over (order by p.cote desc, (p.id = mon_profil.id) desc, p.pseudo) as rang, p.pseudo, p.maison, p.cote, (p.id = mon_profil.id) as moi from public.profils p
     )
     select jsonb_build_object(
       'joueurs', (select count(*) from ranges),
@@ -313,6 +313,7 @@ alter table public.comptes
   add column if not exists encre_achetee integer not null default 0,
   add column if not exists annee_de_naissance integer,
   add column if not exists rente_le date;
+alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
@@ -386,6 +387,7 @@ language sql security definer set search_path = ''
 as $$
   select jsonb_build_object(
     'encre', c.encre,
+    'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
@@ -665,23 +667,9 @@ begin
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
--- Un paquet acheté 150 Encre, sans attendre.
-create or replace function public.acheter_un_paquet(p_masques text[]) returns jsonb
-language plpgsql security definer set search_path = ''
-as $$
-declare
-  c public.comptes%rowtype;
-  tirees jsonb;
-begin
-  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  select * into c from public.comptes where utilisateur = auth.uid() for update;
-  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
-  if c.encre < 150 then raise exception 'Pas assez d''Encre.'; end if;
-  c := public.recharger(c);
-  update public.comptes set encre = encre - 150, stock = c.stock, reference = c.reference where utilisateur = c.utilisateur;
-  tirees := public.tirer_un_paquet(c.utilisateur, p_masques);
-  return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
-end $$;
+-- Depuis le 23/09/2026, aucune Encre ne permet d’acheter un paquet.
+-- Supprime aussi la fonction des serveurs déjà installés.
+drop function if exists public.acheter_un_paquet(text[]);
 
 -- L'âge, déclaré par le joueur au moment où il regarde la version payante (décision du 22/09/2026 : le paiement
 -- est réservé aux majeurs). On ne garde que l'année : c'est assez pour savoir, et c'est le moins qu'on puisse demander.
@@ -745,6 +733,22 @@ begin
   update public.duels set termine_le = now() where id = duel.id;
   recompense := public.recompenser(auth.uid(), case duel.niveau when 'Facile' then 20 when 'Normal' then 30 when 'Difficile' then 45 else 0 end, p_resultat);
   return coalesce(recompense, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
+end $$;
+
+create or replace function public.acheter_personnalisation(p_id text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare c public.comptes%rowtype; prix integer;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  prix := case p_id when 'boussole' then 120 when 'lune' then 280 when 'renard' then 160 when 'papillon' then 240 when 'dragon' then 480 when 'postal' then 160 when 'laurier' then 400 when 'ronces' then 120 when 'vitrail' then 200 when 'maree' then 320 when 'eclipse' then 480 when 'entrelacs' then 120 when 'constellation' then 320 when 'herbier-dos' then 160 when 'vitrail-dos' then 240 when 'maree-dos' then 400 when 'jade' then 80 when 'amethyste' then 240 when 'glacier' then 120 when 'rose' then 160 when 'or' then 320 when 'perle' then 200 when 'corail' then 280 else null end;
+  if prix is null then raise exception 'Personnalisation inconnue.'; end if;
+  select * into c from public.comptes where utilisateur = auth.uid() for update;
+  if not found then raise exception 'Compte introuvable.'; end if;
+  if p_id = any(c.personnalisations) then return public.etat_du_compte(auth.uid()); end if;
+  if c.encre < prix then raise exception 'Pas assez d’Encre.'; end if;
+  update public.comptes set encre = encre - prix, personnalisations = array_append(personnalisations, p_id), maj_le = now() where utilisateur = auth.uid();
+  return public.etat_du_compte(auth.uid());
 end $$;
 
 
@@ -1177,6 +1181,6 @@ end $$;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.pseudo_refuse(text), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
 revoke execute on function public.pseudo_refuse(text), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.acheter_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;

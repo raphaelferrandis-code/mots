@@ -5,8 +5,7 @@ export const SITE = {
   nomEnCapitales: 'PHILAMOTS',
   // L'initiale, pour le sceau du paquet et l'icône de l'onglet.
   initiale: 'P',
-  // ⚠️ À changer pour https://philamots.fr/ le jour où le nom de domaine pointera sur le jeu (GUIDE-supabase.md).
-  adresse: 'https://raphaelferrandis-code.github.io/mots/',
-  adresseCourte: 'raphaelferrandis-code.github.io/mots',
+  adresse: 'https://philamots.fr/',
+  adresseCourte: 'philamots.fr',
   pageDuProjet: 'https://github.com/raphaelferrandis-code/mots',
 } as const;

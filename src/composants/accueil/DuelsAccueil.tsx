@@ -28,13 +28,14 @@ export function DuelsAccueil({ deck, sauvegarde, erreur = false }: { deck: reado
   const { joues, gagnes } = sauvegarde.duels;
   return (
     <section className="accueil-pole" aria-labelledby="titre-duels">
-      <header className="accueil-pole__entete"><h2 id="titre-duels">Les duels</h2><p>Entraînement ou joutes classées</p></header>
+      <header className="accueil-pole__entete"><h2 id="titre-duels">Les duels</h2></header>
       <div className="accueil-pole__illustration"><ApercuDeck cartes={deck ?? []} sauvegarde={sauvegarde} /></div>
       <p className="accueil-pole__bilan">{deck === null ? (erreur ? 'Aperçu du deck indisponible' : 'Chargement du deck…') : complet
         ? <><strong>{gagnes}</strong> victoire{gagnes > 1 ? 's' : ''} · {joues} duel{joues > 1 ? 's' : ''}</>
         : <>{deck.length} / {EQUILIBRAGE.duel.tailleDuDeck} timbres dans le deck</>}</p>
       <a className="bouton accueil-pole__action" href={lien({ ecran: complet ? 'duel' : 'deck' })}>{complet ? 'Lancer un duel' : deck === null ? 'Voir mon deck' : 'Composer mon deck'}</a>
       <div className="accueil-pole__suite">
+        <a className="accueil-lien accueil-pole__note" href={lien({ ecran: 'classement' })}>Voir le classement</a>
         {complet && <a className="accueil-lien accueil-pole__note" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>}
         {sauvegarde.joutes.cote !== null && <p className="accueil-pole__detail">Joutes : {ligueDe(sauvegarde.joutes.cote, EQUILIBRAGE.joute).nom} · cote {sauvegarde.joutes.cote}</p>}
       </div>

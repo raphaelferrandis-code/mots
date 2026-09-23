@@ -14,13 +14,13 @@ import { changerUnReglage, definirUnCodeDeSecours, exporterLaSauvegarde, importe
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
 
-const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string; aide: string }[] = [
+const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string; aide?: string }[] = [
   { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Inclut les mots populaires, argotiques et vulgaires.' },
-  { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux', aide: 'Selon les indications du dictionnaire.' },
+  { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux' },
 ];
 const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
-  { cle: 'sonsPaquets', nom: 'Sons du jeu', aide: 'Paquets, timbres et duels.' }, // la clé garde son premier nom : les sauvegardes existantes restent valables
-  { cle: 'reduireAnimations', nom: 'Réduire les animations', aide: 'Supprime les reflets et les effets de mouvement.' },
+  { cle: 'sonsPaquets', nom: 'Sons du jeu' }, // la clé garde son premier nom : les sauvegardes existantes restent valables
+  { cle: 'reduireAnimations', nom: 'Réduire les animations' },
 ];
 
 export function Reglages() {
@@ -107,7 +107,7 @@ export function Reglages() {
           {OPTIONS_CONFORT.map((option) => (
             <label key={option.cle} className="option">
               <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
-              <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
+              <span><strong>{option.nom}</strong>{option.aide && <span className="texte-doux petit">{option.aide}</span>}</span>
             </label>
           ))}
           <label className="option option--liste">
@@ -126,7 +126,7 @@ export function Reglages() {
           {OPTIONS_CONTENU.map((option) => (
             <label key={option.cle} className="option">
               <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
-              <span><strong>{option.nom}</strong><span className="texte-doux petit">{option.aide}</span></span>
+              <span><strong>{option.nom}</strong>{option.aide && <span className="texte-doux petit">{option.aide}</span>}</span>
             </label>
           ))}
         </section>
@@ -202,7 +202,6 @@ export function Reglages() {
 
         <section className="rubrique">
           <h2>Confidentialité</h2>
-          <p className="petit">Ta partie reste sur cet appareil. Seules les joutes classées envoient des données à un serveur.</p>
           <a className="bouton bouton--discret" href={lien({ ecran: 'confidentialite' })}>Ce que le jeu garde, et comment l'effacer</a>
         </section>
 
@@ -233,7 +232,7 @@ export function Reglages() {
             Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
           </p>
           <p className="texte-doux petit">
-            Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. Un paquet coûte {EQUILIBRAGE.paquets.prixEnEncre} Encre.
+            Encre par doublon : {RARETES.map((r) => `${r} ${EQUILIBRAGE.encreParDoublon[r]}`).join(' · ')}. L’Encre sert aux enchères et aux personnalisations.
           </p>
         </details>
 

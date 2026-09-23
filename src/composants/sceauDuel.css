@@ -1,0 +1,39 @@
+.sceau-duel { display: inline-grid; place-items: center; flex: 0 0 auto; pointer-events: none; }
+.sceau-duel svg { display: block; width: 100%; height: 100%; }
+.sceau-duel--matrice {
+  width: 50px; height: 50px; padding: 2px; border-radius: 50%;
+  color: #513421; border: 1px solid #f5d1a2;
+  background: linear-gradient(135deg, #f0cc9f, #c79769 55%, #b47a50);
+  box-shadow: inset 0 1px 0 #fff0d4b3, inset 0 -2px 3px #78492966, 0 2px 0 #93613e, 0 3px 4px #51311f55;
+  transform: rotate(-7deg);
+}
+.sceau-duel--matrice svg { filter: drop-shadow(0 1px 0 #f8dbb18c); }
+.commande-duel .bouton-presse.bouton-sceau { min-height: 66px; padding-block: 7px; padding-left: 11px; gap: 16px; }
+.bouton-sceau[data-frappe='true'] .sceau-duel--matrice {
+  animation: sceau-frappe 180ms ease-out both;
+  /* L'empreinte reste lisible si le serveur prend du temps. */
+  background: transparent; color: #d4b58b; border-color: transparent; box-shadow: none;
+}
+.bouton-sceau[data-frappe='true'] .sceau-duel--matrice svg { filter: none; }
+.sceau-duel--empreinte { width: 60px; height: 60px; margin-bottom: 3px; color: #d2b78e; opacity: .8; transform: rotate(-7deg); animation: sceau-encre 260ms ease-out both; }
+.sceau-duel--empreinte .sceau-duel__gravure { stroke-dasharray: 47 1 29 1.5; }
+.sceau-duel--empreinte .sceau-duel__plumes { stroke-dasharray: none; }
+.sceau-duel__oblitération { opacity: .65; }
+@keyframes sceau-frappe {
+  0% { transform: translateY(-2px) rotate(-7deg) scale(1.07); opacity: .6; }
+  55% { transform: translateY(2px) rotate(-7deg) scale(.95); opacity: 1; }
+  100% { transform: rotate(-7deg) scale(1); opacity: .85; }
+}
+@keyframes sceau-encre {
+  0% { transform: translateY(-4px) rotate(-9deg) scale(1.12); opacity: 0; }
+  45% { transform: translateY(1px) rotate(-7deg) scale(.97); opacity: .95; }
+  100% { transform: rotate(-7deg) scale(1); opacity: .8; }
+}
+@media(max-width:767px) {
+  .commande-duel .bouton-presse.bouton-sceau { padding-inline: 12px 42px; gap: 13px; }
+  .sceau-duel--empreinte { width: 48px; height: 48px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .sceau-duel { animation: none !important; }
+}
+[data-animations-reduites] .sceau-duel { animation: none !important; }

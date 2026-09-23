@@ -93,7 +93,7 @@ export function useOuvertureAnimee(sonsActifs: boolean, reduireAnimations: boole
     revelees.current.add(position);
     sons.retourner();
     const carte = ouverture?.cartes[position]?.carte;
-    if (carte) sons.rare(NIVEAU[carte.rarete], 0.18);
+    if (carte) sons.rare(NIVEAU[carte.rarete], RYTHME_PAQUET.retournement / 2000);
     setOuverture((o) => o && { ...o, retournees: o.retournees.map((r, i) => r || i === position) });
   };
   const toutRetourner = (): void => {
@@ -106,7 +106,7 @@ export function useOuvertureAnimee(sonsActifs: boolean, reduireAnimations: boole
       if (revelees.current.has(i)) return;
       sons.carte(i, i * 0.06);
       const niveau = NIVEAU[obtenue.carte.rarete];
-      if (niveau > plusRare) { plusRare = niveau; quand = i * 0.06 + 0.18; }
+      if (niveau > plusRare) { plusRare = niveau; quand = RYTHME_PAQUET.retournement / 2000; }
       revelees.current.add(i);
     });
     sons.rare(plusRare, quand);

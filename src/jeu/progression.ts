@@ -29,10 +29,13 @@ export type Reponse = { sauvegarde: Sauvegarde; vientDEtreMaitrisee: boolean };
 export function noterUneReponse(sauvegarde: Sauvegarde, idCarte: string, reussi: boolean, maintenant: number, regles: ReglesDuDuel): Reponse {
   const carte = sauvegarde.cartes[idCarte];
   if (!carte) return { sauvegarde, vientDEtreMaitrisee: false };
+  // Les réponses déjà données comptent encore après la vente d'un timbre.
+  const totalDefinitions = Math.max(sauvegarde.profil.progressionSucces.definitions ?? 0, Object.values(sauvegarde.cartes).reduce((n, c) => n + c.reussites, 0));
+  const profil = reussi ? { ...sauvegarde.profil, progressionSucces: { ...sauvegarde.profil.progressionSucces, definitions: totalDefinitions + 1 } } : sauvegarde.profil;
   const reussites = carte.reussites + (reussi ? 1 : 0);
   const vientDEtreMaitrisee = reussi && carte.maitriseeLe === null && reussites >= regles.reussitesPourLaMaitrise;
   return {
-    sauvegarde: { ...sauvegarde, cartes: { ...sauvegarde.cartes, [idCarte]: { ...carte, posees: carte.posees + 1, reussites, maitriseeLe: vientDEtreMaitrisee ? maintenant : carte.maitriseeLe } } },
+    sauvegarde: { ...sauvegarde, profil, cartes: { ...sauvegarde.cartes, [idCarte]: { ...carte, posees: carte.posees + 1, reussites, maitriseeLe: vientDEtreMaitrisee ? maintenant : carte.maitriseeLe } } },
     vientDEtreMaitrisee,
   };
 }

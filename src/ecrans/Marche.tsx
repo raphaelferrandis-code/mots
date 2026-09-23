@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { lien } from '../navigation/routes.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -42,17 +43,15 @@ export function Marche() {
 
   return (
     <main className="ecran ecran--large marche">
-      <Entete titre="Le marché">
-        Les timbres que les collectionneurs mettent aux enchères. Pour vendre un des tiens, ouvre sa fiche dans l'album.
-      </Entete>
+      <Entete titre="Le marché" />
 
       {!disponible ? (
-        <section className="rubrique"><p>Le marché a besoin du serveur du jeu : il n'est pas joignable depuis cet appareil pour l'instant.</p></section>
+        <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a></section>
       ) : (
         <>
           <section className="outils-album" aria-label="Chercher un timbre en vente">
             <input type="search" placeholder="Chercher un mot…" value={recherche} onChange={(e) => { setRecherche(e.target.value); setPage(0); }} aria-label="Chercher un mot" />
-            <button type="button" className="outil" onClick={() => rafraichir()}>Actualiser</button>
+            <button type="button" className="bouton outil" onClick={() => rafraichir()}>Actualiser</button>
           </section>
           {message && <p role="status" className="petit marche__message">{message}</p>}
 
@@ -60,7 +59,7 @@ export function Marche() {
           {marche.etat === 'en cours' && <p className="texte-doux">Ouverture du marché…</p>}
           {marche.etat === 'pret' && marche.donnees && (
             <section className="rubrique" aria-label="Enchères en cours">
-              <p className="texte-doux petit">{marche.donnees.total === 0 ? 'Aucune enchère en cours pour l’instant.' : `${marche.donnees.total} enchère${marche.donnees.total > 1 ? 's' : ''} en cours.`}</p>
+              {marche.donnees.total === 0 ? <div className="etat-vide"><h2>{recherche.trim() ? 'Aucun timbre trouvé' : 'Aucune enchère en cours'}</h2>{recherche.trim() && <button className="bouton" onClick={() => { setRecherche(''); setPage(0); }}>Effacer la recherche</button>}</div> : <p className="texte-doux petit">{marche.donnees.total} enchère{marche.donnees.total > 1 ? 's' : ''} en cours.</p>}
               <ul className="liste-nue marche__encheres">
                 {marche.donnees.encheres.map((enchere) => (
                   <LigneDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre} onAgir={agir} />

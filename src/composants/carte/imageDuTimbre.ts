@@ -126,11 +126,11 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   const H = U(140);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = niveau === 6;
-  const [encreFaction, contraste] = encresDe(carte.faction);
+  const [encreNature, contraste, encreClaire] = encresDe(carte.type);
   const papier = horsSerie ? '#17161c' : '#f8f2e2';
   const texte = horsSerie ? '#efe9da' : '#26201b';
-  const encre = horsSerie ? '#e9dfc4' : encreFaction;
-  const seconde = horsSerie ? '#9fd8ff' : niveau === 5 ? '#a67c1a' : niveau === 4 ? '#7b838d' : niveau === 2 || niveau === 3 ? melange(contraste, 0.72, '#000000') : encre;
+  const encre = horsSerie ? encreClaire : encreNature;
+  const seconde = horsSerie ? contraste : niveau === 5 ? '#a67c1a' : niveau === 4 ? '#7b838d' : niveau === 2 || niveau === 3 ? melange(contraste, 0.72, '#000000') : encre;
   const metal = niveau === 4 ? ARGENT : niveau === 5 ? OR : horsSerie ? IRISE : null;
   const angleMetal = horsSerie ? 115 : 120;
   const texteSurMetal = horsSerie ? '#15131a' : '#241a05';
@@ -252,6 +252,15 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
       ctx.strokeStyle = horsSerie ? '#fff6dc' : i % 2 === 1 ? seconde : encre;
       ctx.stroke(new Path2D(d));
     });
+    // Le vernis suit les traits ; l'image exportée en conserve un angle de lumière fixe.
+    if (finition === 'Brillante' || finition === 'Holographique') {
+      ctx.strokeStyle = finition === 'Brillante'
+        ? degrade(ctx, [[0, '#fff9e500'], [.35, '#fff9e500'], [.48, '#fff9e5'], [.6, '#fff9e500'], [1, '#fff9e500']], 0, 0, 60, 60, 115)
+        : degrade(ctx, [[0, '#fff8d5'], [.3, '#82dedf'], [.5, '#fffef5'], [.7, '#ca9fde'], [1, '#efbf80']], 0, 0, 60, 60, 135);
+      ctx.globalAlpha = finition === 'Brillante' ? .9 : .8;
+      ctx.lineWidth = finition === 'Brillante' ? .48 : .34;
+      motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2).forEach((d) => ctx.stroke(new Path2D(d)));
+    }
     ctx.restore();
   }
   ctx.restore();
@@ -306,17 +315,18 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   if (finition !== 'Normale') {
     ctx.save();
     if (finition === 'Brillante') {
-      ctx.globalCompositeOperation = 'hard-light';
-      ctx.globalAlpha = 0.85;
-      const reflet: Arrets = [[0.18, 'rgba(255,255,255,0)'], [0.4, 'rgba(255,255,255,0.85)'], [0.5, 'rgba(90,80,60,0.28)'], [0.6, 'rgba(255,255,255,0.7)'], [0.82, 'rgba(255,255,255,0)']];
-      ctx.fillStyle = degrade(ctx, reflet, cx - cw * 0.8, cy - ch * 0.8, cw * 2.6, ch * 2.6, 115);
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.globalAlpha = 0.32;
+      const reflet: Arrets = [[0, '#fff9df00'], [.35, '#fff9df00'], [.47, '#fff9df'], [.49, '#ffffff'], [.52, '#84755c44'], [.58, '#ffffff00'], [1, '#ffffff00']];
+      ctx.fillStyle = degrade(ctx, reflet, cx, cy, cw, ch, 115);
     } else {
-      ctx.globalCompositeOperation = finition === 'Prismatique' ? 'screen' : 'overlay';
-      ctx.globalAlpha = finition === 'Prismatique' ? 0.2 : 0.62;
+      ctx.globalCompositeOperation = finition === 'Prismatique' ? 'screen' : 'soft-light';
+      ctx.globalAlpha = finition === 'Prismatique' ? 0.2 : 0.38;
       ctx.fillStyle = degrade(ctx, IRISE, cx - cw * 1.1, cy - ch * 1.1, cw * 3.2, ch * 3.2, 115);
     }
+    if (finition !== 'Prismatique') { fenetre(); ctx.clip(); }
     ctx.fillRect(cx, cy, cw, ch);
-    if (finition === 'Holographique') hachures(ctx, cx, cy, cw, ch, U(0.72), U(0.18), 'rgba(255,255,255,0.28)');
+    if (finition === 'Holographique') hachures(ctx, vx, vy, vwid, vh, U(0.8), U(0.13), 'rgba(129,207,216,0.26)');
     ctx.restore();
   }
 

@@ -10,6 +10,7 @@ import type { CartePossedee, Sauvegarde } from './sauvegarde.ts';
 
 // Ce que le serveur rend après chaque action (fonction etat_du_compte de serveur/collections.ts).
 export type EtatDuCompte = {
+  achatsPersonnalisation?: string[];
   encre: number;
   paquets: { stock: number; reference: number; ouverts: number; sansLegendaire: number };
   deck: string[];
@@ -49,6 +50,7 @@ export function lireEtat(brut: unknown): EtatDuCompte {
     }
   }
   return {
+    ...(Array.isArray(brut.achatsPersonnalisation) ? { achatsPersonnalisation: brut.achatsPersonnalisation.filter((id): id is string => typeof id === 'string') } : {}),
     encre: nombre(brut.encre),
     paquets: { stock: nombre(paquets.stock), reference: nombre(paquets.reference), ouverts: nombre(paquets.ouverts), sansLegendaire: nombre(paquets.sansLegendaire) },
     deck: Array.isArray(brut.deck) ? brut.deck.filter((id): id is string => typeof id === 'string') : [],
@@ -73,7 +75,7 @@ export function fusionner(locale: Sauvegarde, etat: EtatDuCompte): Sauvegarde {
       maitriseeLe: connue?.maitriseeLe ?? null,
     };
   }
-  return { ...locale, encre: etat.encre, paquets: { ...etat.paquets }, cartes, deck: etat.deck.filter((id) => id in cartes) };
+  return { ...locale, profil: { ...locale.profil, achats: etat.achatsPersonnalisation ?? locale.profil.achats }, encre: etat.encre, paquets: { ...etat.paquets }, cartes, deck: etat.deck.filter((id) => id in cartes) };
 }
 
 // Une partie qui a déjà vécu sur l'appareil vaut la peine d'être importée sur le serveur (sinon : un compte neuf).

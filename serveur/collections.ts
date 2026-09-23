@@ -1,3 +1,4 @@
+import { ORNEMENTS } from '../src/jeu/personnalisation.ts';
 // La partie du script du serveur qui tient les collections (décision du 22/09/2026, BRIEF-marche.md §5a) :
 // le compte du joueur (Encre, réserve de paquets, deck), ses timbres, le tirage des paquets par le serveur,
 // les récompenses des duels et l'importation, une seule fois, de la collection qui vivait sur l'appareil.
@@ -95,6 +96,7 @@ alter table public.comptes
   add column if not exists encre_achetee integer not null default 0,
   add column if not exists annee_de_naissance integer,
   add column if not exists rente_le date;
+alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Les timbres d'un joueur : pour chaque carte, ses finitions et ses doublons (changés en Encre).
@@ -168,6 +170,7 @@ language sql security definer set search_path = ''
 as $$
   select jsonb_build_object(
     'encre', c.encre,
+    'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
     'codeDeSecoursLe', public.en_millisecondes(c.code_defini_le),
@@ -447,23 +450,9 @@ begin
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
--- Un paquet acheté ${P.prixEnEncre} Encre, sans attendre.
-create or replace function public.acheter_un_paquet(p_masques text[]) returns jsonb
-language plpgsql security definer set search_path = ''
-as $$
-declare
-  c public.comptes%rowtype;
-  tirees jsonb;
-begin
-  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  select * into c from public.comptes where utilisateur = auth.uid() for update;
-  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
-  if c.encre < ${P.prixEnEncre} then raise exception 'Pas assez d''Encre.'; end if;
-  c := public.recharger(c);
-  update public.comptes set encre = encre - ${P.prixEnEncre}, stock = c.stock, reference = c.reference where utilisateur = c.utilisateur;
-  tirees := public.tirer_un_paquet(c.utilisateur, p_masques);
-  return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
-end $$;
+-- Depuis le 23/09/2026, aucune Encre ne permet d’acheter un paquet.
+-- Supprime aussi la fonction des serveurs déjà installés.
+drop function if exists public.acheter_un_paquet(text[]);
 
 -- L'âge, déclaré par le joueur au moment où il regarde la version payante (décision du 22/09/2026 : le paiement
 -- est réservé aux majeurs). On ne garde que l'année : c'est assez pour savoir, et c'est le moins qu'on puisse demander.
@@ -528,13 +517,47 @@ begin
   recompense := public.recompenser(auth.uid(), case duel.niveau ${cas(NIVEAUX, (n) => D.encreParVictoire[n as keyof typeof D.encreParVictoire])} else 0 end, p_resultat);
   return coalesce(recompense, '{}'::jsonb) || jsonb_build_object('etat', public.etat_du_compte(auth.uid()));
 end $$;
+
+create or replace function public.acheter_personnalisation(p_id text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare c public.comptes%rowtype; prix integer;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  prix := case p_id ${ORNEMENTS.filter((o) => o.categorie !== 'titre' && !o.premium && o.prix > 0).map((o) => `when '${o.id}' then ${o.prix}`).join(' ')} else null end;
+  if prix is null then raise exception 'Personnalisation inconnue.'; end if;
+  select * into c from public.comptes where utilisateur = auth.uid() for update;
+  if not found then raise exception 'Compte introuvable.'; end if;
+  if p_id = any(c.personnalisations) then return public.etat_du_compte(auth.uid()); end if;
+  if c.encre < prix then raise exception 'Pas assez d’Encre.'; end if;
+  update public.comptes set encre = encre - prix, personnalisations = array_append(personnalisations, p_id), maj_le = now() where utilisateur = auth.uid();
+  return public.etat_du_compte(auth.uid());
+end $$;
+`;
+}
+
+// Migration ciblée pour les serveurs déjà installés. Le catalogue de prix reste commun au client.
+export function migrationPersonnalisation(): string {
+  const sql = collections();
+  const etat = sql.match(/create or replace function public\.etat_du_compte\(p_utilisateur uuid\)[\s\S]*?\$\$;/)?.[0];
+  const achat = sql.match(/create or replace function public\.acheter_personnalisation\(p_id text\)[\s\S]*?end \$\$;/)?.[0];
+  if (!etat || !achat) throw new Error('Fonctions de personnalisation introuvables.');
+  return `-- Migration des cosmétiques : générée par npm run serveur:script.
+-- Relançable ; conserve les collections, les soldes et les achats existants.
+begin;
+alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
+${etat}
+${achat}
+revoke execute on function public.acheter_personnalisation(text) from public, anon;
+grant execute on function public.acheter_personnalisation(text) to authenticated;
+commit;
 `;
 }
 
 // Les droits : les fonctions que le jeu appelle, et celles qui restent internes.
 export const FONCTIONS_DES_COLLECTIONS = [
-  'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
-  'public.ouvrir_un_paquet(text[])', 'public.acheter_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
+  'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
+  'public.ouvrir_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
   'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)',
 ];
 export const FONCTIONS_INTERNES = [

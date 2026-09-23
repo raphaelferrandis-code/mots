@@ -1,0 +1,65 @@
+.podium {
+  position: relative; isolation: isolate; overflow: hidden; padding: 42px clamp(16px, 4vw, 56px) 22px;
+  background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--classement-or) 8%, transparent), transparent 65%);
+}
+.podium::before { content: ''; position: absolute; z-index: -1; width: 720px; height: 720px; left: calc(50% - 360px); top: 100px; border: 1px solid color-mix(in srgb, var(--classement-or) 9%, transparent); border-radius: 50%; pointer-events: none; }
+.podium__entete { text-align: center; }
+.podium__entete h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 400; }
+.podium__joueurs { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: end; gap: clamp(12px, 3vw, 40px); max-width: 940px; margin: 38px auto 0; padding: 0; list-style: none; }
+.podium__joueur { --metal: var(--classement-or); grid-column: 2; grid-row: 1; min-width: 0; text-align: center; color: var(--metal); }
+.podium__joueur[data-rang='2'] { --metal: var(--classement-argent); grid-column: 1; }
+.podium__joueur[data-rang='3'] { --metal: var(--classement-bronze); grid-column: 3; }
+.podium__medaillon { position: relative; width: min(100%, 174px); aspect-ratio: 1; margin: 16px auto 24px; }
+.podium__joueur[data-rang='1'] .podium__medaillon { width: min(100%, 232px); }
+.podium__medaillon .cadre-grave { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--metal) 15%, transparent)); }
+.podium__coeur { position: absolute; inset: 18%; border-radius: 50%; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--metal) 35%, transparent); background: repeating-conic-gradient(from 0deg, transparent 0deg 14deg, color-mix(in srgb, var(--metal) 8%, transparent) 14deg 15deg), radial-gradient(circle at 35% 25%, color-mix(in srgb, var(--metal) 18%, var(--papier)), var(--papier) 80%); box-shadow: inset 0 0 24px var(--papier); }
+.podium__coeur span { font: 400 clamp(2.5rem, 5vw, 4.4rem) var(--police-serif); text-shadow: 0 2px 0 var(--papier); }
+.podium__sceau { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--metal); border-radius: 50%; background: var(--papier); font: 700 1rem var(--police-serif); box-shadow: 0 0 0 4px var(--papier); }
+.podium__identite { min-height: 110px; }
+.podium__identite h3 { font-size: clamp(1.15rem, 2.3vw, 1.7rem); overflow-wrap: anywhere; }
+.podium__joueur[data-rang='1'] h3 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+.podium__ligue { color: var(--encre-douce); margin: 8px 0 5px; font-size: .8rem; }
+.podium__toi { display: inline-block; color: var(--encre); font-size: .75rem; margin-top: 5px; }
+.podium__socle { position: relative; margin-top: 12px; padding: 20px 10px 22px; background: radial-gradient(ellipse at 50% 0, color-mix(in srgb, var(--metal) 9%, transparent), transparent 70%); border-radius: 50%; }
+.podium__joueur[data-rang='1'] .podium__socle { padding-bottom: 46px; }
+.podium__cote { display: block; font: 500 clamp(2rem, 4vw, 3.3rem)/1 var(--police-mention); font-variant-numeric: tabular-nums; }
+.podium__unite { display: block; margin-top: 7px; font-size: .65rem; text-transform: uppercase; letter-spacing: .22em; color: var(--encre-douce); }
+.podium__signature { display: flex; justify-content: center; align-items: center; gap: 16px; color: var(--classement-or); opacity: .6; }
+.podium__signature span { height: 1px; width: min(25%, 120px); background: linear-gradient(90deg, transparent, currentColor); }
+.podium__signature span:last-child { transform: rotate(180deg); }
+@media (max-width: 600px) {
+  .podium { padding: 28px 12px 16px; }
+  .podium__joueurs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; margin-top: 24px; }
+  .podium__joueur[data-rang='1'] { grid-column: 1 / -1; grid-row: 1; width: 100%; max-width: 300px; justify-self: center; }
+  .podium__joueur[data-rang='2'] { grid-column: 1; grid-row: 2; }
+  .podium__joueur[data-rang='3'] { grid-column: 2; grid-row: 2; }
+  .podium__joueur[data-rang='1'] .podium__medaillon { width: 196px; }
+  .podium__medaillon { width: 132px; margin-bottom: 20px; }
+  .podium__identite { min-height: 104px; }
+  .podium__joueur[data-rang='1'] .podium__identite { min-height: 0; }
+  .podium__joueur[data-rang='1'] .podium__socle { padding-bottom: 18px; }
+}
+
+.palmares { gap: 24px; }
+.palmares__suite { width: min(100%, 820px); margin: 0 auto; }
+.palmares__effectif { color: var(--encre-douce); font-size: .8rem; text-align: right; padding: 0 24px 16px; }
+.palmares__liste { list-style: none; margin: 0; padding: 0; }
+.palmares__liste li { position: relative; display: flex; align-items: center; gap: 24px; padding: 18px 24px; margin-block: 4px; border-radius: 32px; }
+.palmares__liste li[data-moi='true'] { background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent); }
+.palmares__liste li[data-intervalle='true'] { margin-top: 38px; }
+.palmares__liste li[data-intervalle='true']::before { content: '···'; position: absolute; left: 30px; top: -32px; letter-spacing: .2em; color: var(--encre-douce); }
+.palmares__rang { flex: 0 0 2.5em; color: var(--encre-douce); font: italic 1.35rem var(--police-serif); }
+.palmares__identite { display: flex; align-items: baseline; gap: 6px 16px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.palmares__pseudo { font: 400 1.2rem var(--police-serif); overflow-wrap: anywhere; }
+.palmares__pseudo small { font: 400 .75rem var(--police-texte); color: var(--accent); white-space: nowrap; }
+.palmares__ligue { color: var(--encre-douce); font-size: .75rem; }
+.palmares__cote { font: 500 1.55rem var(--police-mention); font-variant-numeric: tabular-nums; }
+.palmares__erreur { display: grid; justify-items: start; gap: 16px; }
+@media (max-width: 480px) {
+  .palmares__liste li { padding: 16px 10px; gap: 12px; }
+  .palmares__rang { flex-basis: 2em; font-size: 1.15rem; }
+  .palmares__pseudo { width: 100%; font-size: 1.05rem; }
+  .palmares__identite { gap: 4px 10px; }
+  .palmares__liste li[data-intervalle='true']::before { left: 16px; }
+  .palmares__effectif { padding-right: 10px; }
+}

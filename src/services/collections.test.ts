@@ -26,6 +26,13 @@ function doublure(reponses: Record<string, unknown>) {
 const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: ['a-nom'], maintenant: 5000, cartes: { 'a-nom': { obtenueLe: 900, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null, formule: { niveau: 0, achatUnique: false, abonnement: 'aucun', jusquAu: null, encreAchetee: 0, anneeDeNaissance: null } };
 
 describe('le service des collections', () => {
+  it('achète un cosmétique par son identifiant, sans laisser le client fixer le prix', async () => {
+    const { service, appels } = doublure({ acheter_personnalisation: { ...ETAT, encre: 0, achatsPersonnalisation: ['boussole'] } });
+    const etat = await service.acheterPersonnalisation('boussole');
+    assert.deepEqual(appels, [{ fonction: 'acheter_personnalisation', parametres: { p_id: 'boussole' } }]);
+    assert.deepEqual(etat.achatsPersonnalisation, ['boussole']);
+    assert.equal(etat.encre, 0);
+  });
   it('distingue « pas de compte » d’un compte vide, et relit l’état du serveur', async () => {
     const { service } = doublure({ mon_compte: null });
     assert.equal(await service.monCompte(), null);
@@ -49,15 +56,15 @@ describe('le service des collections', () => {
     });
   });
 
-  it('ouvre ou achète un paquet, avec les registres masqués, et ignore une carte tirée mal formée', async () => {
+  it('ouvre un paquet de la réserve, avec les registres masqués, et ignore une carte tirée mal formée', async () => {
     const tirage = { cartes: [{ id: 'b-nom', finition: 'Brillante', nouvelle: true, nouvelleFinition: true, encre: 0 }, { id: 'c-nom', finition: 'Dorée' }, 'rien'], etat: ETAT };
-    const { service, appels } = doublure({ ouvrir_un_paquet: tirage, acheter_un_paquet: tirage });
-    const ouvert = await service.ouvrirUnPaquet(['Familier'], false);
+    const { service, appels } = doublure({ ouvrir_un_paquet: tirage });
+    const ouvert = await service.ouvrirUnPaquet(['Familier']);
     assert.deepEqual(appels[0], { fonction: 'ouvrir_un_paquet', parametres: { p_masques: ['Familier'] } });
     assert.deepEqual(ouvert.cartes, [{ id: 'b-nom', finition: 'Brillante', nouvelle: true, nouvelleFinition: true, encre: 0 }]);
     assert.equal(ouvert.etat.encre, 12);
-    await service.ouvrirUnPaquet([], true);
-    assert.equal(appels[1].fonction, 'acheter_un_paquet');
+    await service.ouvrirUnPaquet([]);
+    assert.equal(appels[1].fonction, 'ouvrir_un_paquet');
   });
 
   it('enregistre le deck, et joue les duels avec un ticket', async () => {

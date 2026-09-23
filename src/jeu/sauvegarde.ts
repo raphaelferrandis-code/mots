@@ -1,3 +1,5 @@
+import { nouveauProfil, relireProfil } from './personnalisation.ts';
+import type { ProfilPersonnel } from './personnalisation.ts';
 // La sauvegarde du joueur : ce qu'elle contient, comment on en crée une, et comment on relit
 // une sauvegarde venue d'ailleurs (fichier importé, ancienne version du jeu) sans jamais planter.
 
@@ -8,7 +10,9 @@ import type { EtatDesPaquets } from './recharge.ts';
 // Version 1 : première sauvegarde. Version 2 : chaque carte compte ses finitions (normale, brillante, holographique).
 // Version 3 : le duel — deck, bonnes réponses et maîtrise de chaque carte, bilan des duels, temps de réponse.
 // Version 4 : les joutes — questions posées sur chaque carte, parades par rareté, pseudonyme et cote du joueur.
-export const VERSION_DE_SAUVEGARDE = 4;
+// Version 5 : expérience et personnalisations du profil, des dos et des paquets.
+// Version 6 : succès permanents et titres gagnés.
+export const VERSION_DE_SAUVEGARDE = 6;
 
 // Des réponses données à une épreuve : combien de fois la question a été posée, combien de fois la définition a été retrouvée.
 export type Savoir = { posees: number; reussies: number };
@@ -52,6 +56,7 @@ export type Joutes = {
 
 export type Sauvegarde = {
   version: number;
+  profil: ProfilPersonnel;
   creeLe: number;
   encre: number;
   paquets: EtatDesPaquets & {
@@ -71,6 +76,7 @@ export type Sauvegarde = {
 export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number): Sauvegarde {
   return {
     version: VERSION_DE_SAUVEGARDE,
+    profil: nouveauProfil(),
     creeLe: maintenant,
     encre: 0,
     paquets: { stock: paquetsDeDepart, reference: maintenant, ouverts: 0, sansLegendaire: 0 },
@@ -144,6 +150,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
 
   return {
     version: VERSION_DE_SAUVEGARDE,
+    profil: relireProfil(brut.profil),
     creeLe: entierPositif(brut.creeLe, maintenant),
     encre: entierPositif(brut.encre, 0),
     paquets: {

@@ -1,0 +1,25 @@
+.atelier-deck__places { gap: 18px 14px; }
+.atelier-deck__place { min-width: 0; position: relative; padding-top: 25px; }
+.atelier-deck__numero { position: absolute; inset: 0 0 auto; display: flex; justify-content: space-between; color: var(--encre-douce); font: .75rem var(--police-mention); letter-spacing: .12em; border-top: 2px solid var(--nature, #304658); padding-top: 5px; }
+.atelier-deck__numero > span { opacity: 0; color: #eee5d4; font-size: 1rem; line-height: .8; transition: opacity .18s; }
+.atelier-deck__place:hover .atelier-deck__numero > span,
+.atelier-deck__place:focus-within .atelier-deck__numero > span { opacity: 1; }
+.atelier-deck__empreinte { aspect-ratio: 5 / 7; display: grid; place-items: center; border: 1px solid #2e4355; outline: 1px solid #172a3b; outline-offset: -6px; background: linear-gradient(135deg, #07121f88, #13233755); box-shadow: inset 2px 3px 9px #0005; color: #698093; }
+.atelier-deck__empreinte > span { font-size: 1.35rem; font-weight: 300; }
+.atelier-deck__place--vide { padding-bottom: 33px; }
+.atelier-deck__composition { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin: 20px 0 18px; }
+.atelier-deck__natures, .atelier-deck__origines { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; list-style: none; margin: 0; padding: 0; }
+.atelier-deck__natures li { border-bottom: 2px solid var(--nature); padding: 4px 0 7px; font-size: .85rem; }
+.atelier-deck__natures b { color: var(--nature); font: 600 1.2rem var(--police-chiffres); margin-right: 4px; }
+.atelier-deck__origines { font-size: .75rem; color: var(--encre-douce); }
+.atelier-deck__origines b { color: #d7c49c; margin-left: 4px; }
+.atelier-deck__retour { display: flex; align-items: center; gap: 14px; min-height: 44px; font-size: .85rem; color: var(--encre-douce); }
+.atelier-deck__retour button { background: none; border: 0; padding: 10px 4px; min-height: 44px; color: var(--encre); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.atelier-deck__retour button:hover { color: #eee5d4; }
+.atelier-deck .rangee-de-cartes > div { min-width: 0; }
+@media (max-width: 600px) {
+  .atelier-deck__places { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 10px; }
+  .atelier-deck__composition { gap: 12px; }
+  .atelier-deck__natures { gap: 14px; }
+  .atelier-deck__natures li { font-size: .75rem; }
+}

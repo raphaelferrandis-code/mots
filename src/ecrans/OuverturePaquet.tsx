@@ -1,5 +1,7 @@
+import { XP } from '../jeu/personnalisation.ts';
+import { useRecompensesSuspendues } from '../composants/Recompenses.tsx';
 import type { CSSProperties } from 'react';
-import { Carte, DosDeCarte } from '../composants/carte/Carte.tsx';
+import { TimbreAReveler } from '../composants/paquet/TimbreAReveler.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { RYTHME_PAQUET } from '../composants/paquet/rythme.ts';
@@ -8,7 +10,7 @@ import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../composants
 import { NIVEAU } from '../composants/carte/decor.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
-import { HORS_LIGNE, acheterEtOuvrirUnPaquet, ouvrirUnPaquet, synchroniser } from '../services/partie.ts';
+import { HORS_LIGNE, ouvrirUnPaquet, synchroniser } from '../services/partie.ts';
 
 const viserTimbres = (liste: HTMLUListElement | null): void => {
   liste?.focus({ preventScroll: true });
@@ -21,13 +23,12 @@ export function OuverturePaquet() {
   const reglages = partie.etat === 'prete' ? partie.sauvegarde.reglages : null;
   const sonsActifs = reglages?.sonsPaquets ?? true;
   const { ouverture, phase, erreur, arriveeAnimee, lancer, retourner, toutRetourner, passer } = useOuvertureAnimee(sonsActifs, reglages?.reduireAnimations ?? false);
+  useRecompensesSuspendues(phase === 'chargement' || phase === 'ouverture' || (phase === 'cartes' && !(ouverture?.retournees.every(Boolean) ?? false)));
 
   if (partie.etat !== 'prete' || !paquets) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
-  const prix = EQUILIBRAGE.paquets.prixEnEncre;
-  const peutAcheter = partie.sauvegarde.encre >= prix;
   const occupe = phase === 'chargement' || phase === 'ouverture';
-  const disponibles = paquets.stock > 0 || peutAcheter;
+  const disponibles = paquets.stock > 0;
   const cartesVisibles = phase === 'cartes' && ouverture !== null;
   const toutEstRetourne = ouverture?.retournees.every(Boolean) ?? false;
   const nouvelles = ouverture?.cartes.filter((c) => c.nouvelle).length ?? 0;
@@ -39,11 +40,10 @@ export function OuverturePaquet() {
     '--arrivee': `${RYTHME_PAQUET.arrivee}ms`,
   } as CSSProperties;
 
-  const ouvrir = (): void => { void lancer(paquets.stock > 0 ? ouvrirUnPaquet : acheterEtOuvrirUnPaquet); };
+  const ouvrir = (): void => { void lancer(ouvrirUnPaquet); };
   const actions = (
     <div className="rangee-de-boutons atelier-paquets__actions">
       {paquets.stock > 0 && <button type="button" className="bouton" disabled={occupe} onClick={ouvrir}>{cartesVisibles ? 'Ouvrir le suivant' : 'Ouvrir ce paquet'}</button>}
-      {peutAcheter && <button type="button" className={`bouton${paquets.stock > 0 ? ' bouton--discret' : ''}`} disabled={occupe} onClick={() => void lancer(acheterEtOuvrirUnPaquet)}>Acheter et ouvrir — {prix} Encre</button>}
     </div>
   );
 
@@ -51,7 +51,7 @@ export function OuverturePaquet() {
     <main className="ecran ecran--large atelier-paquets" style={rythme}>
       <Entete titre={cartesVisibles ? 'Ton paquet' : 'Les paquets'}>
         {cartesVisibles
-          ? toutEstRetourne ? `${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : 'Touche pour retourner. Fais glisser pour défiler.'
+          ? toutEstRetourne ? `+${XP.paquet + nouvelles * XP.decouverte} XP · ${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : null
           : `${EQUILIBRAGE.paquets.emplacements.length} timbres, encore secrets.`}
       </Entete>
 
@@ -62,7 +62,7 @@ export function OuverturePaquet() {
             {phase === 'ouverture' ? <>
               <div className="cartes-envol" aria-hidden="true">{Array.from({ length: EQUILIBRAGE.paquets.emplacements.length }, (_, i) => <span key={i} style={{ '--i': i } as CSSProperties}>M</span>)}</div>
               <PaquetScelle />
-            </> : <button className="scene-paquet__ouvrir" type="button" onClick={ouvrir} disabled={!disponibles || occupe} aria-label={paquets.stock > 0 ? 'Ouvrir le paquet scellé' : `Acheter et ouvrir le paquet pour ${prix} Encre`}><PaquetScelle /></button>}
+            </> : <button className="scene-paquet__ouvrir" type="button" onClick={ouvrir} disabled={!disponibles || occupe} aria-label="Ouvrir le paquet scellé"><PaquetScelle /></button>}
           </div>
           <div className="scene-paquet__commandes">
             {occupe ? <>
@@ -71,7 +71,6 @@ export function OuverturePaquet() {
             </> : <>
               {actions}
               <p className="texte-doux petit">{paquets.stock} / {paquets.maximum} en réserve{paquets.attente !== null && <> · Prochain dans <span role="timer">{enMinutesEtSecondes(paquets.attente)}</span></>}</p>
-              {!disponibles && <p className="texte-doux petit">Un paquet coûte {prix} Encre.</p>}
             </>}
           </div>
         </section>
@@ -79,15 +78,15 @@ export function OuverturePaquet() {
         <ul ref={viserTimbres} className="paquet paquet--decouverte" data-arrivee={arriveeAnimee} aria-label="Timbres du paquet" aria-live="polite" tabIndex={0}>
           {ouverture.cartes.map((obtenue, position) => (
             <li key={`${position}-${obtenue.carte.id}`} className="paquet__place" style={{ '--i': position } as CSSProperties} data-retournee={ouverture.retournees[position]} data-rarete={obtenue.carte.rarete}>
-              {ouverture.retournees[position] ? <>
-                <Carte carte={obtenue.carte} finition={obtenue.finition} />
+              <TimbreAReveler carte={obtenue.carte} finition={obtenue.finition} retournee={ouverture.retournees[position]} onRetourner={() => retourner(position)} etiquette={`Retourner le timbre ${position + 1}`} />
+              {ouverture.retournees[position] && <>
                 <span className={obtenue.nouvelleFinition ? 'paquet__etiquette paquet__etiquette--nouvelle' : 'paquet__etiquette'}>
                   {obtenue.nouvelle ? 'Nouveau !' : obtenue.nouvelleFinition ? `Nouvelle finition : ${obtenue.finition.toLowerCase()}` : `Doublon · +${obtenue.encre} Encre`}
                   {obtenue.nouvelle && obtenue.finition !== 'Normale' && ` · ${obtenue.finition}`}
                   {/* À partir de Rare, la rareté se lit aussi sous le timbre : à l'écran, ses petites lettres se remarquent peu. */}
                   {NIVEAU[obtenue.carte.rarete] >= 3 && ` · ${obtenue.carte.rarete}`}
                 </span>
-              </> : <DosDeCarte onRetourner={() => retourner(position)} etiquette={`Retourner le timbre ${position + 1}`} />}
+              </>}
             </li>
           ))}
         </ul>
@@ -98,7 +97,7 @@ export function OuverturePaquet() {
         {toutEstRetourne && <p className="atelier-paquets__reserve texte-doux petit">{paquets.stock > 0 ? `${paquets.stock} en réserve` : paquets.attente !== null ? `Prochain paquet dans ${enMinutesEtSecondes(paquets.attente)}` : 'Réserve vide'}</p>}
       </>}
       {partie.serveur.etat === 'hors ligne' && (
-        <p className="bloc bloc--alerte" role="alert">{HORS_LIGNE} <button type="button" className="outil" onClick={() => void synchroniser()}>Réessayer</button></p>
+        <p className="bloc bloc--alerte" role="alert">{HORS_LIGNE} <button type="button" className="bouton outil" onClick={() => void synchroniser()}>Réessayer</button></p>
       )}
       {erreur && erreur !== HORS_LIGNE && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
       <a className="atelier-paquets__retour" href={lien({ ecran: 'accueil' })}>Retour à l’accueil</a>

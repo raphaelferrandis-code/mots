@@ -19,7 +19,7 @@ describe('adresses des écrans', () => {
   });
   it('fait l\'aller-retour pour toutes les routes, y compris les mots accentués ou composés', () => {
     const routes: Route[] = [
-      { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' }, { ecran: 'marche' }, { ecran: 'formules' },
+      { ecran: 'classement' }, { ecran: 'accueil' }, { ecran: 'paquet' }, { ecran: 'collection' }, { ecran: 'deck' }, { ecran: 'duel' }, { ecran: 'reglages' }, { ecran: 'confidentialite' }, { ecran: 'marche' }, { ecran: 'formules' },
       { ecran: 'carte', id: 'callipyge-adj' }, { ecran: 'carte', id: 'sérendipité-nom' }, { ecran: 'carte', id: 'arc-en-ciel-nom' },
     ];
     for (const route of routes) assert.deepEqual(lireRoute(lien(route)), route);

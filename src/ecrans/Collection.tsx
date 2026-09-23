@@ -99,12 +99,12 @@ export function Collection() {
 
   return (
     <main className="ecran ecran--large album">
-      <Entete titre="Ton album" actions={possedees.length > 0 && <button className="outil" type="button" aria-expanded={progressionVisible} aria-controls="progression-album" onClick={() => setProgressionVisible(!progressionVisible)}>Progression <span aria-hidden="true">{progressionVisible ? '−' : '+'}</span></button>}>
+      <Entete titre="Ton album" actions={possedees.length > 0 && <button className="bouton outil" type="button" aria-expanded={progressionVisible} aria-controls="progression-album" onClick={() => setProgressionVisible(!progressionVisible)}>Progression <span aria-hidden="true">{progressionVisible ? '−' : '+'}</span></button>}>
         {bilan.possedees.toLocaleString('fr-FR')} / {bilan.total.toLocaleString('fr-FR')} timbres · {bilan.horsSeriePossedees} / {bilan.horsSerie} hors-série
       </Entete>
 
       {possedees.length === 0 ? (
-        <section className="rubrique">
+        <section className="etat-vide">
           <p>Ton album est vide pour l'instant.</p>
           <a className="bouton" href={lien({ ecran: 'paquet' })}>Ouvrir mon premier paquet</a>
         </section>
@@ -131,19 +131,19 @@ export function Collection() {
             <select value={tri} onChange={(e) => filtrer(setTri)(e.target.value as Tri)} aria-label="Tri">
               {Object.entries(TRIS).map(([cle, nom]) => <option key={cle} value={cle}>{nom}</option>)}
             </select>
-            <button type="button" className="outil" aria-expanded={filtresVisibles} aria-controls="filtres-album" onClick={() => setFiltresVisibles(!filtresVisibles)}>Filtres{nombreDeFiltres > 0 && ` · ${nombreDeFiltres}`} <span aria-hidden="true">{filtresVisibles ? '−' : '+'}</span></button>
+            <button type="button" className="bouton outil" aria-expanded={filtresVisibles} aria-controls="filtres-album" onClick={() => setFiltresVisibles(!filtresVisibles)}>Filtres{nombreDeFiltres > 0 && ` · ${nombreDeFiltres}`} <span aria-hidden="true">{filtresVisibles ? '−' : '+'}</span></button>
           </section>
           <section id="filtres-album" className="filtres" aria-label="Filtres" hidden={!filtresVisibles}>
             <select value={rarete} onChange={(e) => filtrer(setRarete)(e.target.value as Rarete | '')} aria-label="Rareté">
               <option value="">Toutes les raretés</option>
               {[...RARETES].reverse().map((r) => <option key={r}>{r}</option>)}
             </select>
-            <select value={type} onChange={(e) => filtrer(setType)(e.target.value as Nature | '')} aria-label="Type de mot">
-              <option value="">Tous les types</option>
+            <select value={type} onChange={(e) => filtrer(setType)(e.target.value as Nature | '')} aria-label="Nature du mot">
+              <option value="">Toutes les natures</option>
               {TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
-            <select value={faction} onChange={(e) => filtrer(setFaction)(e.target.value)} aria-label="Faction">
-              <option value="">Toutes les factions</option>
+            <select value={faction} onChange={(e) => filtrer(setFaction)(e.target.value)} aria-label="Origine">
+              <option value="">Toutes les origines</option>
               {factions.map(([nom]) => <option key={nom}>{nom}</option>)}
             </select>
           </section>
@@ -151,9 +151,10 @@ export function Collection() {
           {rechercheActive && (
             <div className="album__resultats">
               <p className="texte-doux petit" role="status">{affichees.length.toLocaleString('fr-FR')} résultat{affichees.length > 1 ? 's' : ''}{faction && ` · ${faction}`}</p>
-              <button className="outil" type="button" onClick={reinitialiser}>Effacer les filtres</button>
+              <button className="bouton outil" type="button" onClick={reinitialiser}>Effacer les filtres</button>
             </div>
           )}
+          {affichees.length === 0 && <div className="etat-vide"><h2>Aucun timbre ne correspond</h2><p>Modifie ta recherche ou efface les filtres.</p></div>}
           <div className="rangee-de-cartes">
             {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} />)}
           </div>

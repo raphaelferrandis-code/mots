@@ -94,19 +94,35 @@ main:focus, main h1:focus { outline: none; }
 @media (hover: hover) { .outil:hover { color: var(--encre); background: var(--papier-fonce); } }
 
 .bouton {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-texte);
-  border-radius: 6px;
-  padding: 10px 18px;
-  min-height: 44px; /* taille confortable au doigt */
+  position: relative;
+  border: 1px solid #576d80;
+  border-top-color: #7a8e9c;
+  border-bottom-color: #263749;
+  background: linear-gradient(110deg, #2b3d4d, #1a2c3e);
+  color: #d5e2ec;
+  border-radius: 3px;
+  padding: 13px 23px;
+  min-height: 54px;
+  gap: 13px;
   align-self: flex-start;
+  box-shadow: inset 0 1px 0 #a9bcc426, 0 3px 0 #101c28, 0 4px 0 #3d5061, 0 6px 7px #0006;
+  text-shadow: 0 1px 1px #000;
+  transition: transform 100ms ease, box-shadow 100ms ease, background 100ms ease, border-color 100ms ease;
 }
-.bouton--discret { background: transparent; border-color: var(--filet); color: var(--encre); }
-.bouton:disabled { background: var(--papier-fonce); color: var(--encre-douce); border-color: var(--filet); cursor: not-allowed; }
+.bouton::before { content: ''; position: absolute; inset: 4px; border: 1px solid #b0c5d016; border-radius: 1px; pointer-events: none; }
+.bouton:disabled, .bouton--inactif {
+  background: #1b2937; color: #8fA1b2; border-color: #3b4b5b;
+  box-shadow: inset 0 1px 3px #0005, 0 1px 0 #334556;
+  text-shadow: none; cursor: not-allowed;
+}
 @media (hover: hover) {
-  .bouton:not(:disabled):hover { background: var(--accent-survol); border-color: var(--accent-survol); color: var(--accent-texte); }
+  .bouton:not(:disabled):not(.bouton--inactif):hover {
+    background: linear-gradient(110deg, #354b5c, #23384b);
+    border-color: #94a9b7; color: #eef3f6;
+  }
 }
+.bouton:not(:disabled):not(.bouton--inactif):active { transform: translateY(3px); box-shadow: inset 0 2px 4px #0004, 0 1px 0 #3d5061, 0 2px 2px #0007; }
+.bouton:focus-visible { outline: 3px solid var(--focus); outline-offset: 5px; }
 
 .liste-nue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 
@@ -136,8 +152,7 @@ main:focus, main h1:focus { outline: none; }
 .paquets__stock strong { font-size: 3.2rem; line-height: 1; color: var(--encre); }
 .rangee-de-boutons { display: flex; flex-wrap: wrap; gap: 10px; }
 .bouton { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
-.bouton--inactif { background: transparent; color: var(--encre-douce); border-color: var(--filet); cursor: default; }
-.bouton--danger { background: transparent; color: var(--accent); border-color: var(--accent); margin-top: 6px; }
+.bouton--danger { margin-top: 6px; }
 .bloc--alerte { border-color: var(--accent); }
 
 /* Sur téléphone, les cinq timbres défilent un par un, en grand (on lit la définition) ; sur grand écran, ils sont côte à côte. */
@@ -277,6 +292,10 @@ main:focus, main h1:focus { outline: none; }
 .classement__rang, .classement__cote { font-family: var(--police-chiffres); text-align: right; }
 .classement__ligue { font-size: 0.8rem; }
 .classement__pseudo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.classement__identite { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.classement__identite .classement__pseudo { max-width: 100%; }
+.jauge > .joueur-simule { grid-column: 1 / -1; }
+.joueur-simule { display: inline-block; width: fit-content; font-family: var(--police-mention); font-size: 0.8rem; font-weight: 500; line-height: 1.4; color: var(--encre); border: 1px solid currentColor; border-radius: 3px; padding: 0.05rem 0.3rem; white-space: normal; }
 
 .niveaux { display: grid; gap: 8px; }
 .niveau {
@@ -321,8 +340,8 @@ main:focus, main h1:focus { outline: none; }
 @media (min-width: 768px) { .duel__action { position: static; margin: 0; padding: 0; border: 0; box-shadow: none; } }
 /* Le bouton qui fait avancer le duel reste lui aussi sous le pouce, en bas de l'écran du téléphone. */
 .duel__suite { position: sticky; bottom: calc(var(--hauteur-navigation) + env(safe-area-inset-bottom) + 8px); z-index: 5; display: flex; }
-.duel__suite .bouton { flex: 1; box-shadow: var(--ombre); }
-@media (min-width: 768px) { .duel__suite { position: static; } .duel__suite .bouton { flex: 0 0 auto; box-shadow: none; } }
+.duel__suite .bouton { flex: 1; }
+@media (min-width: 768px) { .duel__suite { position: static; } .duel__suite .bouton { flex: 0 0 auto; } }
 .duel__verdict { margin: 0; font-size: 1.05rem; }
 .duel__verdict .entete__surtitre { display: block; }
 .duel__si-parade { white-space: nowrap; }
