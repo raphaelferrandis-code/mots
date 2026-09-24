@@ -1,6 +1,8 @@
 # Amis, échanges et défis amicaux
 
-Implémentation locale du 24 septembre 2026. Aucun déploiement de cette fonctionnalité n’a été effectué.
+Déployé le 24 septembre 2026 sur https://philamots.fr/ : migration `10-amis.sql`, fonction Edge `combats`, puis client du commit `12f50a4`. Le déploiement GitHub Pages a réussi.
+
+Contrôle avant/après migration : 60 comptes, 362 possessions, 243 profils, 84 Encre, 0 Encre achetée et un combat en cours, inchangés. RLS active sur les deux nouvelles tables, lecture directe interdite, RPC `mes_amis` accessible aux joueurs connectés et refusée aux anonymes. Le carnet et le salon des duels ont été contrôlés sur le site public ; les échanges complets et les défis ont été vérifiés avec deux comptes locaux.
 
 ## Ce que permet la première version
 

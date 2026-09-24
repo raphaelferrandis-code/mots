@@ -11,7 +11,7 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 - Le plan du serveur des joutes classées (duels contre d'autres joueurs) : [BRIEF-joutes.md](BRIEF-joutes.md) ; sa mise en route pas à pas : [GUIDE-supabase.md](GUIDE-supabase.md).
 - Le programme des testeurs : [GUIDE-testeurs.md](GUIDE-testeurs.md), et leurs retours : [RETOURS-testeurs.md](RETOURS-testeurs.md).
 - Le plan du marché (échanges et enchères entre joueurs) : [BRIEF-marche.md](BRIEF-marche.md).
-- Les amis, échanges directs et défis amicaux (code local, déploiement restant) : [GUIDE-amis.md](GUIDE-amis.md).
+- Les amis, échanges directs et défis amicaux (déployés le 24 septembre 2026) : [GUIDE-amis.md](GUIDE-amis.md).
 - Ce qui bloque la version payante : [BRIEF-version-payante.md](BRIEF-version-payante.md), et le brouillon des conditions de vente : [CGV-brouillon.md](CGV-brouillon.md).
 - L'origine et la licence des données sont dans [SOURCES.md](SOURCES.md).
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).

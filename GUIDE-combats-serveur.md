@@ -1,5 +1,7 @@
 # Combats vérifiés et progression synchronisée
 
+Mise à jour du 24 septembre 2026 : moteur version 2 et client `12f50a4` déployés avec les amis. Les attaques sont automatiques, suivies d’une seule question de définition pour la parade. Les anciennes parties restent reprises par le moteur. La migration `10-amis.sql` ajoute les défis amicaux sans variation de cote ni statistiques classées ; voir [GUIDE-amis.md](GUIDE-amis.md) pour le contrôle de cette publication.
+
 La migration 9 et la fonction `combats` ont été installées le 23 septembre 2026 sur le projet Supabase du jeu. Le client de cette révision exige ce moteur serveur. Pour toute nouvelle installation, respecter l’ordre ci-dessous.
 
 Contrôle de mise en service : 40 comptes, 274 possessions, 242 profils et 3 016 cartes conservés ; soldes cumulés inchangés (80 Encre et 0 Encre achetée). Les 40 comptes disposent de la progression serveur. Les accès directs aux RPC privées et aux anciens résultats déclaratifs sont refusés. Un export local en lecture seule des comptes, profils, mots interdits, fonctions et contraintes a précédé la migration ; il reste hors du dépôt public. Ce relevé ciblé ne constitue pas une sauvegarde intégrale du projet Supabase.
