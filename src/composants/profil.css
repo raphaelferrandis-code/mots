@@ -139,6 +139,8 @@
 .vestiaire__dialogue { width:min(400px,90vw); padding:28px; background:#111f33; color:#e3edfa; border:1px solid #59718c; border-radius:6px; --selection:#b5c5e8; }
 .vestiaire__dialogue::backdrop { background:#020916bf; backdrop-filter:blur(5px); }
 .vestiaire__dialogue form { display:grid; gap:18px; }
+.vestiaire__dialogue .choix-pseudonyme { justify-items:stretch; }
+.vestiaire__dialogue .choix-pseudonyme .rangee-de-boutons { display:grid; }
 .vestiaire__dialogue input { width:100%; font:inherit; padding:12px; background:#0b1729; border:1px solid #58718b; color:#e3edfa; border-radius:3px; }
 
 /* Les mouvements appartiennent aux ornements ; les vignettes non sélectionnées restent au repos. */

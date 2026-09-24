@@ -84,7 +84,7 @@ export function Confidentialite() {
 
       <section className="rubrique">
         <h2>Sur le serveur des joutes classées</h2>
-        <p>Pour que d'autres joueurs puissent affronter ton double, le jeu envoie à son serveur, à partir du moment où tu rejoins les joutes :</p>
+        <p>Pour que d'autres joueurs puissent te trouver et affronter ton double, le jeu envoie à son serveur, dès que tu choisis ton pseudonyme :</p>
         <ul className="regles">
           <li>ton pseudonyme ;</li>
           <li>ta cote, et le nombre de joutes jouées et gagnées ;</li>

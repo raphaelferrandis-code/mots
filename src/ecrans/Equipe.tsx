@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { lien } from '../navigation/routes.ts';
@@ -49,7 +50,7 @@ export function Equipe() {
     {!amisDisponibles ? <p>Connecte-toi au serveur pour former une équipe.</p>
       : partie.etat === 'erreur' ? <p role="alert">{partie.message}</p>
       : !donnees ? !erreur && <p role="status">Chargement de l’équipe…</p>
-      : !donnees.moi ? <div className="bloc"><p>Choisis un pseudo avant de rejoindre une équipe.</p><a className="bouton" href={lien({ ecran: 'amis' })}>Choisir mon pseudo</a></div>
+      : !donnees.moi ? <section className="bloc"><ChoixDuPseudonyme onValide={() => { setMessage('Ton pseudonyme est enregistré.'); setTour(t => t + 1); }} /></section>
       : donnees.equipe ? <GestionEquipe key={donnees.equipe.id} equipe={donnees.equipe} moi={donnees.moi} amis={donnees.amis} agir={agir} occupe={occupe} />
       : <>
         {donnees.invitations.length > 0 && <section className="rubrique"><h2>Invitations</h2><ul className="liste-nue equipe__invitations">

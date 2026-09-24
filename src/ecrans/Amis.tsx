@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
+import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
-import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { lien } from '../navigation/routes.ts';
 import { FINITIONS } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
@@ -12,7 +12,7 @@ import { amisDisponibles } from '../services/amis.ts';
 import { serveurEquipes } from '../services/equipes.ts';
 import type { AlbumAmi, CarnetAmis, Relation, TimbreEchange } from '../services/amis.ts';
 import { chargerEdition } from '../services/cartes.ts';
-import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, rejoindreLesJoutes, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
+import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
 import './amis.css';
 
 type Agir = (action: () => Promise<void>, message: string) => Promise<boolean>;
@@ -23,7 +23,6 @@ export function Amis() {
   const disponible = amisDisponibles && partie.etat === 'prete';
   const [tour, setTour] = useState(0);
   const [pseudo, setPseudo] = useState('');
-  const [monPseudo, setMonPseudo] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const verrou = useRef(false);
   const [message, setMessage] = useState('');
@@ -80,15 +79,10 @@ export function Amis() {
       : <>
         {carnet.etat === 'erreur' && <section className="bloc bloc--alerte" role="alert"><p>{carnet.message}</p><button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></section>}
         {carnet.etat === 'en cours' && !donnees && <p role="status">Chargement du carnet…</p>}
-        {donnees && !donnees.moi && <section className="rubrique"><h2>Choisis ton pseudonyme public</h2>
-          <p>Visible par tes amis et au classement.</p>
-          <form className="amis__recherche" onSubmit={e => { e.preventDefault(); void agir(() => rejoindreLesJoutes((monPseudo ?? partie.sauvegarde.profil.pseudo).trim()), 'Ton profil est prêt.'); }}>
-            <label>Pseudonyme<input required minLength={LONGUEUR_DU_PSEUDO.minimum} maxLength={LONGUEUR_DU_PSEUDO.maximum} value={monPseudo ?? partie.sauvegarde.profil.pseudo} onChange={e => setMonPseudo(e.target.value)} /></label>
-            <button className="bouton" disabled={occupe}>Publier mon pseudonyme</button>
-          </form></section>}
+        {donnees && !donnees.moi && <section className="rubrique"><ChoixDuPseudonyme onValide={() => { setMessage('Ton pseudonyme est enregistré.'); setTour(t => t + 1); }} /></section>}
         {donnees?.moi && <>
           <section className="rubrique amis__invitation"><h2>Ajouter un ami</h2>
-            <p>Ton pseudo : <strong>{donnees.moi.pseudo}</strong></p>
+            <p>Ton pseudonyme : <strong>{donnees.moi.pseudo}</strong></p>
             <form className="amis__recherche" onSubmit={e => { e.preventDefault(); void agir(() => demanderUnAmi(pseudo), 'Demande envoyée.').then(ok => { if (ok) setPseudo(''); }); }}>
               <label>Pseudonyme de ton ami<input required maxLength={24} placeholder="Son pseudonyme exact" value={pseudo} onChange={e => setPseudo(e.target.value)} /></label>
               <button className="bouton" disabled={occupe || !pseudo.trim()}>Envoyer une demande</button>

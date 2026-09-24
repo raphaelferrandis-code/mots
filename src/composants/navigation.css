@@ -38,13 +38,14 @@
   .entete-application { min-height: 72px; padding-inline: 20px; justify-content: space-between; }
   .marque__logo { width: 132px; }
   .navigation { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--papier); border-top: 1px solid var(--filet); padding-bottom: env(safe-area-inset-bottom); }
-  .navigation__liste { display: grid; grid-template-columns: repeat(7, minmax(64px, 1fr)); height: var(--hauteur-navigation); gap: 0; overflow-x: auto; }
+  .navigation__liste { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--hauteur-navigation); gap: 0; overflow-x: auto; }
+  .navigation__ordinateur { display: none; }
   .navigation__liste li:last-child { margin-left: 0; }
   .navigation__lien { flex-direction: column; justify-content: center; gap: 2px; font-size: 0.7rem; }
   .navigation__icone { display: flex; }
   .navigation__icone svg { width: 23px; height: 23px; }
-  .navigation__lien[aria-current='page'] { color: var(--accent); }
-  .navigation__lien[aria-current='page']::after { bottom: auto; top: 0; left: 24%; right: 24%; }
+  .navigation__lien:is([aria-current='page'], [data-rubrique='true']) { color: var(--accent); }
+  .navigation__lien:is([aria-current='page'], [data-rubrique='true'])::after { content: ''; position: absolute; height: 2px; background: var(--accent); bottom: auto; top: 0; left: 24%; right: 24%; }
 }
 
 .navigation__personnel { display:flex; align-items:center; gap:8px; flex-shrink:0; }

@@ -28,11 +28,11 @@
   .option:hover { background: #b9cbd306; }
 }
 @media (max-width: 767px) {
-  .navigation__liste { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .navigation__liste { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .navigation__nom-long { display: none; }
   .navigation__nom-court { display: inline; }
-  .navigation__lien { font-size: .65rem; }
-  .navigation__icone svg { width: 21px; height: 21px; }
+  .navigation__lien { font-size: .75rem; }
+  .navigation__icone svg { width: 22px; height: 22px; }
   .entete-application { gap: 12px; padding-inline: 16px; }
   .reserve-encre { gap: 5px; font-size: .8rem; }
   .reserve-encre svg { width: 24px; height: 24px; }

@@ -262,8 +262,11 @@ export function Duel() {
             <button type="button" role="tab" id="onglet-entrainement" aria-controls="panneau-des-duels" aria-selected={mode === 'entrainement'} tabIndex={mode === 'entrainement' ? 0 : -1} onClick={() => setMode('entrainement')}>Entraînement</button>
             <button type="button" role="tab" id="onglet-joute" aria-controls="panneau-des-duels" aria-selected={mode === 'joute'} tabIndex={mode === 'joute' ? 0 : -1} onClick={() => setMode('joute')}>Joutes classées</button>
           </div>
-          <a className="bouton bouton--discret" href={lien({ ecran: 'amis' })}>Défier un ami</a>
-          <a className="bouton bouton--discret" href={lien({ ecran: 'equipe' })}>Mon équipe</a>
+          <nav className="duel-salon__raccourcis" aria-label="Amis, équipe et classements">
+            <a className="bouton outil" href={lien({ ecran: 'amis' })}>Défier un ami</a>
+            <a className="bouton outil" href={lien({ ecran: 'equipe' })}>Mon équipe</a>
+            <a className="bouton outil" href={lien({ ecran: 'classement' })}>Classements</a>
+          </nav>
         </header>
 
         <div className="duel-salon__panneau" role="tabpanel" id="panneau-des-duels" aria-labelledby={`onglet-${mode}`}>

@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useJouteDirecte } from '../composants/useJouteDirecte.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { Carte } from '../composants/carte/Carte.tsx';
+import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { serveurEquipes } from '../services/equipes.ts';
 import { serveurUtilise } from '../services/compte.ts';
-import { rejoindreLesJoutes } from '../services/partie.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import type { ModeDirect } from '../jeu/direct.ts';
@@ -19,8 +19,6 @@ export function JoutesDirectes() {
   const direct = useJouteDirecte(inscrit);
   const equipe = useChargement(async () => serveurUtilise && inscrit ? serveurEquipes().lire() : null,`equipe-direct:${inscrit}`);
   const [mode, setMode] = useState<ModeDirect>('solo');
-  const [pseudo, setPseudo] = useState('');
-  const [message, setMessage] = useState('');
   const [abandon, setAbandon] = useState(false);
   const maintenant = useMaintenant(250) + direct.decalage;
   const p = direct.etat?.partie; const v = p?.vue;
@@ -37,10 +35,7 @@ export function JoutesDirectes() {
     <header className="direct__entete"><div><p className="texte-doux">Les joutes classées</p><h1>{v ? NOMS_DIRECTS[v.mode] : 'Jouer en direct'}</h1></div><a href={lien({ecran:'classement'})}>Les trois classements ↗</a></header>
     {!serveurUtilise ? <p>Les joutes en direct nécessitent une connexion au serveur du jeu.</p>
       : !sauvegarde ? <p role="status">Chargement du compte…</p>
-      : !inscrit ? <form className="bloc direct__inscription" onSubmit={e => { e.preventDefault(); setMessage(''); void rejoindreLesJoutes(pseudo).catch(e => setMessage(String(e.message))); }}>
-        <h2>Prends place dans les joutes</h2><label>Ton pseudonyme public<input value={pseudo} onChange={e => setPseudo(e.target.value)} required minLength={3} maxLength={16} /></label>
-        <p>Affronte d’autres joueurs connectés. Ta cote et ton pseudonyme apparaîtront au classement.</p><button className="bouton">Rejoindre les joutes</button>{message && <p role="alert">{message}</p>}
-      </form> : <>
+      : !inscrit ? <section className="bloc direct__inscription"><ChoixDuPseudonyme /></section> : <>
         {direct.erreur && <div className="bloc bloc--alerte" role="alert"><p>{direct.erreur}</p><button className="bouton" disabled={direct.occupe} onClick={() => void direct.retenter()}>Réessayer</button></div>}
         {!direct.etat && !direct.erreur && <p role="status">Connexion aux joutes…</p>}
         {direct.etat && <p className="texte-doux petit">{direct.connecte ? '● En direct' : 'Reconnexion au direct · la partie reste synchronisée régulièrement'}</p>}

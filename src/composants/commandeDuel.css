@@ -1,6 +1,8 @@
 /* Prototype du salon d'entraînement : lumière en haut, chants et ombres en bas.
    Les sélecteurs restent locaux jusqu'à validation de cette direction. */
 .duel-salon__modes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-bottom: 4px; }
+.duel-salon__raccourcis { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 767px) { .duel-salon__modes > .modes { flex-basis: 100%; } }
 .commande-duel .niveaux--entrainement {
   padding: 2px 0 8px;
   gap: 14px;

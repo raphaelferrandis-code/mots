@@ -294,7 +294,7 @@ function enregistrerIdentite(saisie: string | undefined, rejoindre: boolean): Pr
   fileIdentite = operation.catch(() => undefined);
   return operation;
 }
-export const nommerMonProfil = (saisie: string): Promise<void> => enregistrerIdentite(saisie, false);
+// Le pseudonyme est public dès qu'il est choisi (décision du 24/09/2026) : le choisir, c'est rejoindre les joutes.
 export const rejoindreLesJoutes = (saisie: string): Promise<void> => enregistrerIdentite(saisie, true);
 export const publierMonIdentite = (): Promise<void> => enregistrerIdentite(undefined, true);
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
