@@ -19,13 +19,20 @@
 .accueil-lien svg { width: 24px; height: 24px; flex: none; }
 @media (hover: hover) { .accueil-lien:hover { color: var(--accent); } }
 .enveloppe { width: 100%; max-width: 510px; max-height: 100%; overflow: visible; filter: drop-shadow(0 15px 14px rgb(0 0 0 / 25%)); }
-.apercu-deck { position: relative; width: min(100%, calc(var(--hauteur-illustration) * 1.45)); max-width: 475px; height: 100%; isolation: isolate; }
-.apercu-deck__carte { position: absolute; width: min(40%, calc(var(--hauteur-illustration) * 0.58)); max-width: 190px; bottom: 10%; left: 8%; transform: rotate(-12deg); transform-origin: center 90%; }
-.apercu-deck__carte:nth-child(2) { left: 50%; bottom: 12%; transform: translateX(-50%); z-index: 2; }
+/* Une pochette assortie au paquet scellé ; toute la scène garde ses proportions. */
+.apercu-deck { --cuivre-deck: #d9aa79; position: relative; container-type: inline-size; width: min(100%, var(--hauteur-illustration)); aspect-ratio: 1; isolation: isolate; transform: rotate(4deg); }
+.apercu-deck::before { content: ''; position: absolute; inset: 37% 10% 5%; border: 1px solid var(--filet-fort); border-radius: 3px; background: linear-gradient(135deg, var(--enveloppe-fond), var(--enveloppe-ombre)); box-shadow: 0 16px 22px #0004; }
+.apercu-deck__carte { position: absolute; width: 44%; bottom: 26%; left: 8%; transform: rotate(-17deg); transform-origin: center 90%; }
+.apercu-deck__carte:nth-child(2) { left: 50%; bottom: 28%; transform: translateX(-50%) rotate(-4deg); z-index: 2; }
 .apercu-deck__carte:nth-child(3) { left: auto; right: 8%; transform: rotate(12deg); }
-.apercu-deck__support { position: absolute; left: 0; right: 0; bottom: 3%; height: 22px; background: linear-gradient(var(--enveloppe-fond), var(--enveloppe-ombre)); border: 1px solid var(--filet); border-radius: 4px; z-index: 3; box-shadow: 0 9px 15px rgb(0 0 0 / 25%); }
-.apercu-deck__dos { display: grid; place-items: center; aspect-ratio: 5 / 7; padding: 12px; border: 1px solid #6080a2; outline: 1px solid #6080a2; outline-offset: -8px; background: repeating-linear-gradient(45deg, transparent 0 5px, #adc3da0a 5px 6px), var(--enveloppe-fond); box-shadow: var(--ombre); }
-.apercu-deck__dos span { font: 700 clamp(45px, 6vw, 80px)/1 var(--police-serif); color: #9ebcda; opacity: 0.65; }
+.apercu-deck__pochette { position: absolute; inset: 69% 7% 4%; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5cqi; color: var(--cuivre-deck); border: 1px solid #6385a0; border-top: 2px solid var(--cuivre-deck); border-radius: 1px 1px 4px 4px; background: repeating-linear-gradient(0deg, transparent 0 3px, #adc3da05 3px 4px), linear-gradient(115deg, var(--enveloppe-fond), var(--enveloppe-ombre)); box-shadow: 0 -4px 8px #0003, inset 0 2px 0 #ffffff0d; }
+.apercu-deck__pochette::before { content: ''; position: absolute; inset: 2cqi; border: 1px solid #a9c5dc40; pointer-events: none; }
+.apercu-deck__marque { font: 500 3cqi/1 var(--police-mention); letter-spacing: 0.2em; color: var(--encre-douce); }
+.apercu-deck__titre { display: flex; align-items: center; gap: 3cqi; font: 600 7cqi/1 var(--police-serif); }
+.apercu-deck__titre span { width: 10cqi; height: 1px; background: currentColor; opacity: 0.5; }
+.apercu-deck__ornement { font-size: 3cqi; line-height: 1; }
+.apercu-deck__dos { display: grid; place-items: center; aspect-ratio: 5 / 7; border: 1px solid #6080a2; outline: 1px solid #6080a2; outline-offset: -5px; background: repeating-linear-gradient(45deg, transparent 0 5px, #adc3da0a 5px 6px), var(--enveloppe-fond); box-shadow: var(--ombre); }
+.apercu-deck__dos span { font: 700 20cqi/1 var(--police-serif); color: var(--cuivre-deck); opacity: 0.65; }
 .resume-collection { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 32px; align-items: center; padding: 20px 0 0; border-top: 1px solid var(--filet); }
 .resume-collection h2 { display: flex; align-items: center; gap: 16px; font-size: 1.5rem; white-space: nowrap; }
 .resume-collection h2 svg { width: 42px; height: 42px; color: var(--encre-douce); }
@@ -68,9 +75,6 @@
   .accueil-pole__bilan { font-size: 1.15rem; }
   .accueil-pole .accueil-pole__action { min-height: 52px; font-size: 1rem; padding: 12px 24px; }
   .accueil-pole__detail { font-size: 0.9rem; }
-  .apercu-deck { height: calc(var(--hauteur-illustration) * 0.8); }
-  .apercu-deck__carte { max-width: 220px; }
-  .apercu-deck__dos span { font-size: clamp(80px, 6vw, 120px); }
   .resume-collection { padding-top: 32px; gap: 40px; }
   .resume-collection h2 { font-size: 1.8rem; }
   .resume-collection__progression strong { font-size: 2.5rem; }
@@ -91,8 +95,6 @@
   .accueil-pole__entete h2 { font-size: 26px; }
   .accueil-pole__entete p { font-size: 0.8rem; margin-top: 4px; }
   .accueil-pole__illustration { max-width: 390px; }
-  .apercu-deck { max-width: 350px; }
-  .apercu-deck__carte { max-width: 160px; }
   .accueil-pole__suite { min-height: 0; }
   .accueil-pole__note { min-height: 24px; }
   .resume-collection { grid-template-columns: 1fr auto; gap: 18px 12px; padding-top: 24px; }

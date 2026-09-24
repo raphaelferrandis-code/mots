@@ -18,7 +18,11 @@ function ApercuDeck({ cartes, sauvegarde }: { cartes: readonly CarteIndex[]; sau
             : <div className="apercu-deck__dos"><span>{SITE.initiale}</span></div>}
         </div>;
       })}
-      <div className="apercu-deck__support" />
+      <div className="apercu-deck__pochette">
+        <span className="apercu-deck__marque">{SITE.nomEnCapitales}</span>
+        <span className="apercu-deck__titre"><span />Duels<span /></span>
+        <span className="apercu-deck__ornement">✦</span>
+      </div>
     </div>
   );
 }
