@@ -73,6 +73,9 @@ begin
     if not exists(select 1 from public.profils where utilisateur=p_utilisateur) then raise exception 'Publie d''abord ton profil.'; end if;
     if not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and utilisateur is distinct from p_utilisateur)
       then raise exception 'Cet adversaire n''est plus disponible.'; end if;
+    if coalesce((p_etat->'adversaire'->>'amical')::boolean,false) and not public.sont_amis(
+      (select id from public.profils where utilisateur=p_utilisateur),(p_etat->'adversaire'->'profil'->>'id')::uuid)
+      then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
   end if;
   perform public.autoriser_joute(p_utilisateur); -- quota commun, conservé après retrait du profil
   update public.combats set archive=true where utilisateur=p_utilisateur and not archive and termine;
@@ -99,7 +102,7 @@ begin
     then raise exception 'Le résultat de ce combat est définitif.'; end if;
   gain_enregistre := b.recompense;
   if p_reponse is not null then
-    if b.termine or b.etat->'etape'->>'nom' not in ('attaque','parade')
+    if b.termine or b.etat->'etape'->>'nom' <> 'parade'
       or p_reponse->>'carte' is distinct from b.etat->'etape'->'epreuve'->>'idCarte' then raise exception 'Réponse hors séquence.'; end if;
     perform public.noter_reponse_verifiee(p_utilisateur,p_reponse);
     if (p_reponse->>'reussie')::boolean then gain_xp := public.gagner_xp(p_utilisateur,${XP.reponse},true); end if;
@@ -115,7 +118,7 @@ begin
       gain_xp := gain_xp + public.gagner_xp(p_utilisateur,${XP.duel} + case when resultat='victoire' then ${XP.victoire} else 0 end,true);
     end if;
     update public.comptes set combats_joues=combats_joues+1, combats_gagnes=combats_gagnes+(resultat='victoire')::integer where utilisateur=p_utilisateur;
-    if b.etat->'adversaire'->>'type'='joute' then
+    if b.etat->'adversaire'->>'type'='joute' and not coalesce((b.etat->'adversaire'->>'amical')::boolean,false) then
       select * into moi from public.profils where utilisateur=p_utilisateur for update;
       if not found then raise exception 'Le profil du joueur a disparu.'; end if;
       cote_adverse := (b.etat->'adversaire'->'profil'->>'cote')::integer;

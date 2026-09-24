@@ -100,11 +100,6 @@ var e = {
 			Difficile: 0
 		},
 		cartesProchesPourLOrdinateur: 6,
-		reussiteDeLOrdinateur: {
-			Facile: .65,
-			Normal: .85,
-			Difficile: .9
-		},
 		paradeDeLOrdinateur: {
 			selonLaRarete: {
 				Commune: .7,
@@ -323,7 +318,7 @@ function d(e, r, i, a, o, c) {
 }
 function f(e, t, n) {
 	return {
-		reussir: n.reussiteDeLOrdinateur[e],
+		reussir: 1,
 		parer: n.paradeDeLOrdinateur.selonLaRarete[t.rarete] * n.paradeDeLOrdinateur.selonLeNiveau[e]
 	};
 }
@@ -350,23 +345,23 @@ function m(e, t, n, r, i, a, o) {
 			paree: i && s,
 			infliges: i ? s ? c.degatsSiParee : c.degats : 0
 		};
-	}, u = l("joueur", s, c, r.joueurReussit, r.adversairePare), f = u.infliges >= e.camps.adversaire.pv, m = l("adversaire", c, s, r.adversaireReussit && !f, r.joueurPare), h = {
-		joueur: p(e.camps.joueur, s, m.infliges),
+	}, u = l("joueur", s, c, !0, r.adversairePare), f = l("adversaire", c, s, !(u.infliges >= e.camps.adversaire.pv), r.joueurPare), m = {
+		joueur: p(e.camps.joueur, s, f.infliges),
 		adversaire: p(e.camps.adversaire, c, u.infliges)
 	};
-	for (let e of ["joueur", "adversaire"]) h[e] = {
-		...h[e],
-		pv: Math.max(0, h[e].pv)
+	for (let e of ["joueur", "adversaire"]) m[e] = {
+		...m[e],
+		pv: Math.max(0, m[e].pv)
 	};
-	let g = h.joueur.pv === 0 || h.adversaire.pv === 0 || e.manche >= o.manchesMaximum || h.joueur.main.length === 0 || h.adversaire.main.length === 0, _ = g ? h.joueur.pv === h.adversaire.pv ? "nul" : h.joueur.pv > h.adversaire.pv ? "joueur" : "adversaire" : null;
+	let h = m.joueur.pv === 0 || m.adversaire.pv === 0 || e.manche >= o.manchesMaximum || m.joueur.main.length === 0 || m.adversaire.main.length === 0, g = h ? m.joueur.pv === m.adversaire.pv ? "nul" : m.joueur.pv > m.adversaire.pv ? "joueur" : "adversaire" : null;
 	return {
-		manche: g ? e.manche : e.manche + 1,
-		camps: h,
-		vainqueur: _,
+		manche: h ? e.manche : e.manche + 1,
+		camps: m,
+		vainqueur: g,
 		manches: [...e.manches, {
 			numero: e.manche,
 			joueur: u,
-			adversaire: m
+			adversaire: f
 		}]
 	};
 }
@@ -521,7 +516,7 @@ function j(e, t, n) {
 }
 function M(e, t, n, r) {
 	return {
-		reussir: j(e.savoirs[t.id], r.savoirParDefaut[t.rarete], r.poidsDeLEstimation),
+		reussir: 1,
 		parer: j(e.parades[n.rarete], r.paradeParDefaut[n.rarete], r.poidsDeLEstimation)
 	};
 }
@@ -537,18 +532,19 @@ function L(e, t, n, r) {
 function R(e, t, n, r, i, a) {
 	let o = I(r, e.masques), s = new Map(o.map((e) => [e.id, e])), c = [...new Set(t.deck)].flatMap((e) => t.possedees.includes(e) && s.has(e) ? [s.get(e)] : []);
 	if (c.length !== F.tailleDuDeck) throw new N(`Ton deck doit compter ${F.tailleDuDeck} cartes jouables.`);
-	if (e.mode === "joute" && (!n || n.id !== e.adversaire)) throw new N("Cet adversaire est indisponible.");
+	if (e.mode !== "entrainement" && (!n || n.id !== e.adversaire)) throw new N("Cet adversaire est indisponible.");
 	let l = e.mode === "entrainement" ? {
 		type: "entrainement",
 		niveau: e.niveau
 	} : {
 		type: "joute",
-		profil: n
+		profil: n,
+		...e.mode === "amical" ? { amical: !0 } : {}
 	}, d = l.type === "entrainement" ? _(c, o, l.niveau, i, F) : [...new Set(l.profil.deck)].flatMap((e) => s.has(e) ? [s.get(e)] : []);
 	if (d.length !== F.tailleDuDeck) throw new N("Le deck adverse contient des mots masqués ou est incomplet.");
 	let f = u(c, d, i, F);
 	return {
-		versionMoteur: 1,
+		versionMoteur: 2,
 		duel: f,
 		adversaire: l,
 		masques: e.masques,
@@ -587,21 +583,23 @@ function z(t, n, r, i, a) {
 		expire: c
 	}, { etat: o };
 	if (n.type === "quitter" && o.termine) return o.archive = !0, { etat: o };
-	if (o.versionMoteur !== 1) throw new N("Cette ancienne partie doit être abandonnée avant de continuer.");
+	if (o.versionMoteur !== 1 && o.versionMoteur !== 2) throw new N("Cette ancienne partie doit être abandonnée avant de continuer.");
+	o.versionMoteur = 2;
 	let l = (e, t) => A(e, r.definitions, I(r, o.masques).filter((e) => e.id !== t.id), o.masques, i);
 	if (n.type === "choisir" && s.nom === "choix") {
 		let e = o.duel.camps.joueur.main.find((e) => e.id === n.carte);
 		if (!e) throw new N("Cette carte ne figure pas dans ta main.");
 		o.etape = {
-			nom: "attaque",
+			nom: "parade",
 			carte: e,
 			adverse: s.adverse,
-			epreuve: l(e, s.adverse),
+			epreuve: l(s.adverse, e),
 			debut: a
 		};
-	} else if (n.type === "continuer" && s.nom === "echappe") o.etape = {
-		...s,
+	} else if (n.type === "continuer" && (s.nom === "attaque" || s.nom === "echappe")) o.etape = {
 		nom: "parade",
+		carte: s.carte,
+		adverse: s.adverse,
 		epreuve: l(s.adverse, s.carte),
 		debut: a
 	};
@@ -615,70 +613,51 @@ function z(t, n, r, i, a) {
 		adverse: L(s.apres, o.adversaire, r, i),
 		choisie: null
 	};
-	else if (n.type === "repondre" && (s.nom === "attaque" || s.nom === "parade")) {
+	else if (n.type === "repondre" && s.nom === "parade") {
 		if (n.choisie !== null && (!Number.isInteger(n.choisie) || n.choisie < 0 || n.choisie >= s.epreuve.propositions.length)) throw new N("Réponse invalide.");
-		let t = o.temps === "illimite" ? Infinity : F.secondesPourRepondre * (o.temps === "double" ? 2 : 1), c = a > s.debut + t * 1e3 ? null : n.choisie, u = c !== null && c === s.epreuve.bonne, d = s.nom === "attaque" ? s.carte : s.adverse, p = o.possedees.includes(d.id), h = o.apprentissages[d.id] ?? {
+		let t = o.temps === "illimite" ? Infinity : F.secondesPourRepondre * (o.temps === "double" ? 2 : 1), c = a > s.debut + t * 1e3 ? null : n.choisie, l = c !== null && c === s.epreuve.bonne, u = s.adverse, d = o.possedees.includes(u.id), p = o.apprentissages[u.id] ?? {
 			posees: 0,
 			reussites: 0,
 			maitriseeLe: null
-		}, g = p && u && h.maitriseeLe === null && h.reussites + 1 >= F.reussitesPourLaMaitrise;
-		p && (o.apprentissages[d.id] = {
-			posees: h.posees + 1,
-			reussites: h.reussites + Number(u),
-			maitriseeLe: g ? a : h.maitriseeLe
+		}, h = d && l && p.maitriseeLe === null && p.reussites + 1 >= F.reussitesPourLaMaitrise;
+		d && (o.apprentissages[u.id] = {
+			posees: p.posees + 1,
+			reussites: p.reussites + Number(l),
+			maitriseeLe: h ? a : p.maitriseeLe
 		});
-		let _ = {
+		let g = {
 			epreuve: s.epreuve,
 			choisie: c,
-			juste: u,
-			maitrise: g
+			juste: l,
+			maitrise: h
 		};
-		if (g && o.bilan.maitrises.push(d.mot), s.nom === "attaque") o.bilan.attaques++, o.bilan.attaquesReussies += Number(u), o.etape = u ? {
-			nom: "parade",
+		h && o.bilan.maitrises.push(u.mot), o.bilan.parades++, o.bilan.paradesReussies += Number(l);
+		let _ = o.adversaire.type === "entrainement" ? f(o.adversaire.niveau, s.carte, F) : M(o.adversaire.profil, s.adverse, s.carte, e.joute), v = m(o.duel, s.carte.id, s.adverse.id, {
+			joueurPare: l,
+			adversairePare: i() < _.parer
+		}, i, y(r.cartes), F);
+		return o.etape = {
+			nom: "bilan",
 			carte: s.carte,
 			adverse: s.adverse,
-			attaque: _,
-			epreuve: l(s.adverse, s.carte),
-			debut: a
-		} : {
-			nom: "echappe",
-			carte: s.carte,
-			adverse: s.adverse,
-			attaque: _
-		};
-		else {
-			o.bilan.parades++, o.bilan.paradesReussies += Number(u);
-			let t = o.adversaire.type === "entrainement" ? f(o.adversaire.niveau, s.carte, F) : M(o.adversaire.profil, s.adverse, s.carte, e.joute), n = m(o.duel, s.carte.id, s.adverse.id, {
-				joueurReussit: s.attaque.juste,
-				joueurPare: u,
-				adversaireReussit: i() < t.reussir,
-				adversairePare: i() < t.parer
-			}, i, y(r.cartes), F);
-			o.etape = {
-				nom: "bilan",
-				carte: s.carte,
-				adverse: s.adverse,
-				attaque: s.attaque,
-				parade: _,
-				apres: n
-			}, n.vainqueur && (o.termine = !0, o.resultat = n.vainqueur === "joueur" ? "victoire" : n.vainqueur === "nul" ? "nul" : "defaite");
-		}
-		return {
+			parade: g,
+			apres: v
+		}, v.vainqueur && (o.termine = !0, o.resultat = v.vainqueur === "joueur" ? "victoire" : v.vainqueur === "nul" ? "nul" : "defaite"), o.bilan.attaques++, o.bilan.attaquesReussies++, {
 			etat: o,
 			reponse: {
-				carte: d.id,
-				rarete: d.rarete,
-				reussie: u,
-				parade: s.nom === "parade",
-				apprentissage: p
+				carte: u.id,
+				rarete: u.rarete,
+				reussie: l,
+				parade: !0,
+				apprentissage: d
 			}
 		};
 	} else throw new N("Cette action ne correspond plus à l’étape du combat. Reprends la partie.");
 	return { etat: o };
 }
 function B(e) {
-	let t = structuredClone(e.etape);
-	(t.nom === "attaque" || t.nom === "parade") && (t = {
+	let t = e.etape.nom === "attaque" || e.etape.nom === "echappe" ? { nom: "reprise" } : structuredClone(e.etape);
+	t.nom === "parade" && (t = {
 		...t,
 		epreuve: {
 			...t.epreuve,
@@ -711,7 +690,7 @@ function B(e) {
 	});
 	t.nom === "bilan" && (t.apres = r(t.apres));
 	let i = e.adversaire.type === "entrainement" ? e.adversaire : {
-		type: "joute",
+		...e.adversaire,
 		profil: {
 			...e.adversaire.profil,
 			deck: [],
@@ -782,7 +761,7 @@ function G(e) {
 				temps: t.temps
 			}
 		};
-		if (t.mode === "joute" && U(t.adversaire) && t.niveau === void 0) return {
+		if ((t.mode === "joute" || t.mode === "amical") && U(t.adversaire) && t.niveau === void 0) return {
 			type: "commencer",
 			requete: e.requete,
 			choix: {
@@ -830,7 +809,7 @@ function q(e) {
 		combat: t && !t.archive ? {
 			id: t.id,
 			revision: t.revision,
-			vue: t.vue,
+			vue: B(t.etat),
 			xp: t.xp,
 			recompense: t.recompense
 		} : null
@@ -840,7 +819,7 @@ async function J(e, t, n) {
 	let r = await n.rpc("combat_contexte", {
 		p_utilisateur: e,
 		p_id: t.type === "agir" ? t.combat : null,
-		p_adversaire: t.type === "commencer" && t.choix.mode === "joute" ? t.choix.adversaire : null
+		p_adversaire: t.type === "commencer" && t.choix.mode !== "entrainement" ? t.choix.adversaire : null
 	}), i = r.ligne, a = t.type === "agir" ? t.action : t.type === "commencer" ? {
 		type: t.type,
 		choix: t.choix

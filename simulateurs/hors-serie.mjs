@@ -21,11 +21,11 @@ function mesurer(nom,remplacement,paradeHS){
    const enFace=choisirPourLOrdinateur(duel,'Normal',rng,tailles,r);
    const valeur=c=>{
     const a=prevoirLAttaque(duel,'joueur',c,enFace,tailles,r), b=prevoirLAttaque(duel,'adversaire',enFace,c,tailles,r);
-    return .95*((1-parade(c))*a.degats+parade(c)*a.degatsSiParee)-.95*(.15*b.degats+.85*b.degatsSiParee);
+    return ((1-parade(c))*a.degats+parade(c)*a.degatsSiParee)-(.15*b.degats+.85*b.degatsSiParee);
    };
    const c=duel.camps.joueur.main.reduce((a,b)=>valeur(b)>valeur(a)?b:a);
    jouees+=Number(c.id===speciale?.id);
-   duel=jouerLaManche(duel,c.id,enFace.id,{joueurReussit:savoir()<.95,joueurPare:savoir()<.85,adversaireReussit:savoir()<.95,adversairePare:savoir()<parade(c)},rng,tailles,r);
+   duel=jouerLaManche(duel,c.id,enFace.id,{joueurPare:savoir()<.85,adversairePare:savoir()<parade(c)},rng,tailles,r);
   }
   victoires+=Number(duel.vainqueur==='joueur');nuls+=Number(duel.vainqueur==='nul');manches+=duel.manche;
  }
@@ -35,7 +35,7 @@ const rapport=[
  '# Mots rares et Hors-série : équilibrage', '',
  'Raretés ordinaires : probabilités de parade conservées. Hors-série : attaque minimale 12, bonus d’attaque +6 ; défense minimale 8, bonus de défense +3 et plafond 10. Elles sont estimées aussi familières que les communes (70 % de parade en entraînement Normal ; 85 % par défaut en joute). Les observations du joueur remplacent progressivement les estimations des joutes.', '',
  '## Une carte exceptionnelle dans un deck', '',
- '2 000 combats par ligne. Deux decks de dix cartes tirées dans le quart supérieur des communes selon attaque + défense, sans doublon entre camps. Remplacement d’une carte du joueur par une légendaire ou une Hors-série tirée dans son ensemble. Les deux camps connaissent leurs propres mots à 95 %. Le joueur pare les communes à 85 % ; le double pare selon les estimations des joutes, sauf la ligne où il reconnaît toutes les Hors-série. Il pose sa meilleure carte suivant les règles réelles ; le joueur répond par le meilleur échange immédiat calculé. Ces hypothèses ne mesurent pas des joueurs réels ni toutes les compositions possibles. Incertitude d’échantillonnage maximale : environ ±2,2 points à 95 %.', '',
+ '2 000 combats par ligne. Deux decks de dix cartes tirées dans le quart supérieur des communes selon attaque + défense, sans doublon entre camps. Remplacement d’une carte du joueur par une légendaire ou une Hors-série tirée dans son ensemble. Les deux camps attaquent automatiquement. Le joueur pare les communes à 85 % ; le double pare selon les estimations des joutes, sauf la ligne où il reconnaît toutes les Hors-série. Il pose sa meilleure carte suivant les règles réelles ; le joueur répond par le meilleur échange immédiat calculé. Ces hypothèses ne mesurent pas des joueurs réels ni toutes les compositions possibles. Incertitude d’échantillonnage maximale : environ ±2,2 points à 95 %.', '',
  '| Deck du joueur | Victoires | Nuls | Manches | Carte spéciale jouée |', '|---|---:|---:|---:|---:|',
  mesurer('10 communes fortes',null,.85),
  mesurer('9 communes fortes + 1 légendaire',legendaires,.85),

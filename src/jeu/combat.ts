@@ -7,17 +7,16 @@ import type { Resultat } from './progression.ts';
 import type { TempsDeReponse } from './sauvegarde.ts';
 import type { EtatDuCompte } from './synchronisation.ts';
 
-export type AdversaireCombat = { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute };
+export type AdversaireCombat = { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute; amical?: boolean };
 export type ReponseCombat = { epreuve: Epreuve; choisie: number | null; juste: boolean; maitrise: boolean };
 export type EtapeCombat =
   | { nom: 'choix'; adverse: CarteIndex; choisie: string | null }
-  | { nom: 'attaque'; adverse: CarteIndex; carte: CarteIndex; epreuve: Epreuve; debut: number }
-  | { nom: 'echappe'; adverse: CarteIndex; carte: CarteIndex; attaque: ReponseCombat }
-  | { nom: 'parade'; adverse: CarteIndex; carte: CarteIndex; attaque: ReponseCombat; epreuve: Epreuve; debut: number }
-  | { nom: 'bilan'; adverse: CarteIndex; carte: CarteIndex; attaque: ReponseCombat; parade: ReponseCombat; apres: Duel }
+  | { nom: 'reprise' } // une ancienne manche doit passer à la nouvelle épreuve de parade
+  | { nom: 'parade'; adverse: CarteIndex; carte: CarteIndex; epreuve: Epreuve; debut: number }
+  | { nom: 'bilan'; adverse: CarteIndex; carte: CarteIndex; parade: ReponseCombat; apres: Duel }
   | { nom: 'fin'; resultat: Resultat; abandonne: boolean; expire: boolean };
 export type ChoixCombat = { mode: 'entrainement'; niveau: Niveau; masques: Registre[]; temps: TempsDeReponse }
-  | { mode: 'joute'; adversaire: string; masques: Registre[]; temps: TempsDeReponse };
+  | { mode: 'joute' | 'amical'; adversaire: string; masques: Registre[]; temps: TempsDeReponse };
 export type ActionCombat = { type: 'choisir'; carte: string } | { type: 'repondre'; choisie: number | null }
   | { type: 'continuer' } | { type: 'abandonner' } | { type: 'quitter' };
 export type RequeteCombat = { type: 'lire' }

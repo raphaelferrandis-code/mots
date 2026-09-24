@@ -10,6 +10,7 @@ describe('adresses des écrans', () => {
     }
   });
   it('reconnaît chaque écran', () => {
+    assert.deepEqual(lireRoute('#/amis'), { ecran: 'amis' });
     assert.deepEqual(lireRoute('#/collection'), { ecran: 'collection' });
     assert.deepEqual(lireRoute('#/reglages'), { ecran: 'reglages' });
     assert.deepEqual(lireRoute('#/duel'), { ecran: 'duel' });

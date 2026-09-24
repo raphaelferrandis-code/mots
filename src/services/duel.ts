@@ -19,7 +19,7 @@ import { lirePartie } from './partie.ts';
 const REGLES = EQUILIBRAGE.duel;
 
 // Contre qui l'on joue : l'ordinateur à l'entraînement, ou le double d'un autre joueur en joute classée.
-export type Adversaire = { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute };
+export type Adversaire = { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute; amical?: boolean };
 
 // Tout ce qui reste fixe pendant un duel.
 export type Terrain = {
@@ -65,15 +65,14 @@ export async function preparerUnDuel(adversaire: Adversaire): Promise<{ terrain:
 // Début de manche : l'adversaire pose son mot. (Le double d'un joueur pose toujours sa carte la plus solide.)
 export const motDeLOrdinateur = (terrain: Terrain, duel: Duel): CarteIndex => choisirPourLOrdinateur(duel, terrain.adversaire.type === 'entrainement' ? terrain.adversaire.niveau : 'Normal', hasardDuSysteme, terrain.tailles, REGLES);
 
-// L'épreuve sur un mot. L'autre mot de la manche est écarté des leurres : sa définition sera demandée à son tour.
+// L'épreuve de parade. Le mot joué est écarté des leurres.
 export function poserLEpreuve(terrain: Terrain, carte: CarteIndex, autreMotDeLaManche: CarteIndex): Epreuve {
   return composerLEpreuve(carte, terrain.definitions, terrain.visibles.filter((c) => c.id !== autreMotDeLaManche.id), terrain.masques, hasardDuSysteme);
 }
 
-// Règle la manche : le joueur a su (ou non) retrouver son mot, puis parer le mot adverse. L'ordinateur, lui, connaît
-// son mot et pare celui du joueur selon les chances de son niveau ; le double d'un joueur, selon les résultats de ce joueur.
-export function reglerLaManche(terrain: Terrain, duel: Duel, carte: CarteIndex, adverse: CarteIndex, reussi: boolean, pare: boolean): Duel {
+// Les deux attaques sont automatiques. Seules les parades sont évaluées.
+export function reglerLaManche(terrain: Terrain, duel: Duel, carte: CarteIndex, adverse: CarteIndex, pare: boolean): Duel {
   const chances = terrain.adversaire.type === 'entrainement' ? chancesDeLOrdinateur(terrain.adversaire.niveau, carte, REGLES) : chancesDuDouble(terrain.adversaire.profil, adverse, carte, EQUILIBRAGE.joute);
-  const savoirs = { joueurReussit: reussi, joueurPare: pare, adversaireReussit: hasardDuSysteme() < chances.reussir, adversairePare: hasardDuSysteme() < chances.parer };
+  const savoirs = { joueurPare: pare, adversairePare: hasardDuSysteme() < chances.parer };
   return jouerLaManche(duel, carte.id, adverse.id, savoirs, hasardDuSysteme, terrain.tailles, REGLES);
 }

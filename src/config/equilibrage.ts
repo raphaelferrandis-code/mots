@@ -101,7 +101,7 @@ export const EQUILIBRAGE = {
 
   // ── Duel ──────────────────────────────────────────────────────────────────
   // Une manche : l'ordinateur pose un mot, le joueur lui répond par une carte ; le joueur doit retrouver la définition
-  // de son mot (son attaque porte) puis celle du mot adverse (il pare). L'attaque du joueur part la première.
+  // du mot adverse pour parer. Les attaques sont automatiques ; le joueur frappe le premier.
   // Duels courts : chaque carte ne se joue qu'une fois par combat.
   // Vérification de la durée avec « npm run simulation:duel » (rapport : data/simulation-duel.md).
   duel: {
@@ -110,7 +110,7 @@ export const EQUILIBRAGE = {
     pointsDeVie: 20,
     // Au-delà de cette limite, le camp qui a le plus de points de vie gagne (égalité : match nul).
     manchesMaximum: 10,
-    // Temps pour retrouver une définition parmi quatre (deux épreuves par manche : son mot, puis le mot adverse).
+    // Temps pour retrouver une définition parmi quatre (une seule épreuve par manche : le mot adverse).
     secondesPourRepondre: 15,
 
     // Dégâts d'une attaque qui porte = attaque de la carte + bonus − part de la défense de la carte d'en face
@@ -143,9 +143,7 @@ export const EQUILIBRAGE = {
     ecartDeForceDeLOrdinateur: { 'Facile': 1, 'Normal': 0, 'Difficile': 0 },
     // Chaque carte de l'ordinateur est tirée au hasard parmi les N cartes dont la force est la plus proche de la force visée.
     cartesProchesPourLOrdinateur: 6,
-    // L'ordinateur ne passe pas l'épreuve de maîtrise : il connaît son propre mot selon une chance fixe…
-    reussiteDeLOrdinateur: { 'Facile': 0.65, 'Normal': 0.85, 'Difficile': 0.9 },
-    // …et il pare le mot du joueur d'autant moins souvent que ce mot est rare (chance = rareté × niveau).
+    // Les attaques sont automatiques. La parade dépend de la rareté et du niveau.
     paradeDeLOrdinateur: {
       // Exception : les Hors-série sont célèbres, donc aussi souvent parées que les communes.
       selonLaRarete: { 'Commune': 0.7, 'Peu commune': 0.6, 'Rare': 0.45, 'Épique': 0.3, 'Légendaire': 0.15, 'Hors-série': 0.7 } satisfies Record<Rarete, number>,
@@ -187,8 +185,8 @@ export const EQUILIBRAGE = {
     ecartsDeCoteProposes: [-120, 0, 120],
     joueursProchesParProposition: 8,
     adversairesRecentsEvites: 6,
-    // Le double connaît ses mots comme son joueur : on part des vrais résultats du joueur (définitions retrouvées /
-    // posées), mêlés à cette estimation par défaut tant qu'ils sont peu nombreux (elle pèse comme N réponses).
+    // Les résultats de parade du joueur sont mêlés à une estimation tant qu'ils sont peu nombreux.
+    // savoirParDefaut reste une donnée historique pour fabriquer les anciens profils ; il ne règle plus l'attaque.
     // Les Hors-série sont supposées familières ; les vrais résultats remplacent ensuite cette estimation.
     savoirParDefaut: { 'Commune': 0.9, 'Peu commune': 0.85, 'Rare': 0.75, 'Épique': 0.6, 'Légendaire': 0.5, 'Hors-série': 0.9 } satisfies Record<Rarete, number>,
     paradeParDefaut: { 'Commune': 0.85, 'Peu commune': 0.75, 'Rare': 0.6, 'Épique': 0.45, 'Légendaire': 0.3, 'Hors-série': 0.85 } satisfies Record<Rarete, number>,

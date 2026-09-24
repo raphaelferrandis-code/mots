@@ -20,7 +20,7 @@ export function Confidentialite() {
   const collectionSurLeServeur = serveurDesCollections.actif;
 
   const supprimer = async (): Promise<void> => {
-    if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, ta cote et tes joutes seront effacés du serveur. Cette action est définitive.')) return;
+    if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, ta cote, tes joutes, tes amis et tes propositions d’échange seront effacés du serveur. Cette action est définitive.')) return;
     setSuppression({ etat: 'en cours' });
     try {
       await supprimerMonProfilDeJoute();
@@ -65,7 +65,7 @@ export function Confidentialite() {
       {collectionSurLeServeur && (
         <section className="rubrique">
           <h2>Sur le serveur du jeu : ta collection</h2>
-          <p>Pour que tes timbres aient un propriétaire connu (c'est ce qui permettra de les échanger), le serveur du jeu garde :</p>
+          <p>Pour gérer ta collection et tes échanges, le serveur du jeu garde :</p>
           <ul className="regles">
             <li>tes timbres, avec leurs finitions, leurs doublons et la date où tu les as obtenus ;</li>
             <li>ton Encre, ta réserve de paquets et le nombre de paquets ouverts ;</li>
@@ -110,6 +110,12 @@ export function Confidentialite() {
         <p>Ces informations servent à retrouver ton compte et ne sont pas affichées aux autres joueurs. Une session est conservée dans ton navigateur jusqu’à sa déconnexion ou son expiration.</p>
       </section>
 
+      {collectionSurLeServeur && <section className="rubrique">
+        <h2>Amis et échanges</h2>
+        <p>Le serveur conserve tes demandes d’amitié, ta liste d’amis et vos propositions d’échange. Seuls les deux joueurs concernés peuvent les consulter. Accepter une amitié permet à cet ami de voir les mots et finitions de ta collection pour proposer un échange, sans lui donner accès à ton compte ni à tes réponses.</p>
+        <p>Les propositions expirent après sept jours. Retirer un ami annule vos propositions en attente et ferme l’accès à ta collection. Les défis amicaux affrontent son double automatisé, sans changer vos cotes.</p>
+      </section>}
+
       <section className="rubrique">
         <h2>Qui héberge quoi</h2>
         <p>
@@ -123,7 +129,7 @@ export function Confidentialite() {
         <h2>Tout effacer</h2>
         <p>
           Ton profil de joute est conservé tant que tu ne le supprimes pas. Le supprimer retire du serveur ton pseudonyme,
-          ta cote, ton deck public, tes résultats publics et tes joutes. C'est immédiat et définitif.
+          ta cote, ton deck public, tes résultats publics, tes joutes, tes relations d’amitié et tes propositions d’échange. C'est immédiat et définitif.
           Ton compte, ta collection, tes droits et tes engagements au marché sont conservés.
         </p>
         {suppression.etat === 'faite'

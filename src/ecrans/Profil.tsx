@@ -11,6 +11,7 @@ import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, profilVisible, progres
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
 import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
+import { lien } from '../navigation/routes.ts';
 
 import { nommerMonProfil, personnaliser } from '../services/partie.ts';
 
@@ -69,6 +70,7 @@ export function Profil() {
     e.currentTarget.style.setProperty('--inclinaison-y', `${(e.clientX-b.left-b.width/2)/b.width*9}deg`);
   }
   return <main className="ecran vestiaire" style={{ '--selection': teinte } as CSSProperties}>
+    <a className="bouton bouton--discret" href={lien({ ecran: 'amis' })}>Mes amis · échanges et défis</a>
     <header className="vestiaire__entete">
       <h1 className="visuellement-cache">Mon profil</h1><div className="vestiaire__vues" role="group" aria-label="Section du profil"><button aria-pressed={vue === 'personnalisation'} onClick={() => changerVue('personnalisation')}>Personnalisation</button><button aria-pressed={vue === 'succes'} onClick={() => { ciblerSucces(null); changerVue('succes'); }}>Succès <small>{profil.succes.length}/{SUCCES.length}</small></button></div>
       <div className="vestiaire__compte"><div><strong>{profil.pseudo || sauvegarde.joutes.pseudo || 'Collectionneur'}</strong><button className="vestiaire__renommer" aria-label="Modifier le pseudo" onClick={() => { saisirPseudo(profil.pseudo || sauvegarde.joutes.pseudo); signaler(''); editer(true); }}>✎</button></div><div className="vestiaire__niveau"><span>Niv. {niveau.niveau}</span><progress aria-label={`Niveau ${niveau.niveau} : ${niveau.acquis} sur ${niveau.requis} XP`} value={niveau.acquis} max={niveau.requis} /><small>{niveau.acquis}/{niveau.requis} XP</small></div></div>

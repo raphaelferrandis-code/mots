@@ -27,7 +27,7 @@ export function lireRequeteCombat(v: unknown): RequeteCombat {
       || !['normal','double','illimite'].includes(String(c.temps))) throw new ErreurCombat('Réglages de combat invalides.');
     if (c.mode === 'entrainement' && ['Facile','Normal','Difficile'].includes(String(c.niveau)) && c.adversaire === undefined)
       return { type: 'commencer', requete: v.requete, choix: { mode: c.mode, niveau: c.niveau, masques: c.masques, temps: c.temps } as ChoixCombat };
-    if (c.mode === 'joute' && uuid(c.adversaire) && c.niveau === undefined)
+    if ((c.mode === 'joute' || c.mode === 'amical') && uuid(c.adversaire) && c.niveau === undefined)
       return { type: 'commencer', requete: v.requete, choix: { mode: c.mode, adversaire: c.adversaire, masques: c.masques, temps: c.temps } as ChoixCombat };
   }
   if (v.type === 'agir' && uuid(v.combat) && Number.isInteger(v.revision) && Number(v.revision) >= 0 && objet(v.action)) {
@@ -58,13 +58,13 @@ export type OutilsCombat = { rpc: RpcCombat; catalogue: CatalogueCombat; hasard:
 const canonique = (v: unknown): string => JSON.stringify(v, (_cle, valeur) => objet(valeur) ? Object.fromEntries(Object.keys(valeur).sort().map(k => [k, valeur[k]])) : valeur);
 function publique(c: ContexteCombat): ReponseServeurCombat {
   const b = c.ligne;
-  return { etat: c.compte, combat: b && !b.archive ? { id: b.id, revision: b.revision, vue: b.vue, xp: b.xp, recompense: b.recompense } : null };
+  return { etat: c.compte, combat: b && !b.archive ? { id: b.id, revision: b.revision, vue: vueCombat(b.etat), xp: b.xp, recompense: b.recompense } : null };
 }
 
 export async function executerCombat(utilisateur: string, requete: RequeteCombat, outils: OutilsCombat): Promise<ReponseServeurCombat> {
   const contexte = await outils.rpc<ContexteCombat>('combat_contexte', {
     p_utilisateur: utilisateur, p_id: requete.type === 'agir' ? requete.combat : null,
-    p_adversaire: requete.type === 'commencer' && requete.choix.mode === 'joute' ? requete.choix.adversaire : null,
+    p_adversaire: requete.type === 'commencer' && requete.choix.mode !== 'entrainement' ? requete.choix.adversaire : null,
   });
   const b = contexte.ligne;
   const action = requete.type === 'agir' ? requete.action : requete.type === 'commencer' ? { type: requete.type, choix: requete.choix } : null;

@@ -43,7 +43,7 @@ export function Marche() {
 
   return (
     <main className="ecran ecran--large marche">
-      <Entete titre="Le marché" />
+      <Entete titre="Le marché" actions={<a className="bouton outil" href={lien({ ecran: 'amis' })}>Échanger avec un ami</a>} />
 
       {!disponible ? (
         <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a></section>

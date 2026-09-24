@@ -12,11 +12,14 @@ import type { CarteIndex, Rarete, Registre } from '../src/partage/types.ts';
 import type { Resultat } from '../src/jeu/progression.ts';
 
 export class RefusCombat extends Error {}
-export const VERSION_MOTEUR = 1;
+export const VERSION_MOTEUR = 2;
 export const DUREE_COMBAT = 24 * 60 * 60 * 1000; // y compris le temps illimité d'accessibilité
 const R = EQUILIBRAGE.duel;
 export type CatalogueCombat = { cartes: CarteIndex[]; definitions: Definitions };
-export type EtatCombatPrive = VueCombat & {
+export type EtatCombatPrive = Omit<VueCombat, 'etape'> & {
+  // Compatibilité des combats sauvegardés avant l'attaque automatique.
+  etape: EtapeCombat | { nom: 'attaque'; adverse: CarteIndex; carte: CarteIndex; epreuve: import('../src/jeu/epreuve.ts').Epreuve; debut: number }
+    | { nom: 'echappe'; adverse: CarteIndex; carte: CarteIndex; attaque: ReponseCombat };
   versionMoteur: number; masques: Registre[]; possedees: string[]; deckDepart: string[];
   apprentissages: Record<string, Apprentissage>; resultat: Resultat | null;
   abandonne: boolean; archive: boolean;
@@ -36,8 +39,8 @@ export function creerCombat(choix: ChoixCombat, compte: { deck: string[]; possed
   const parId = new Map(disponibles.map(c => [c.id, c]));
   const deck = [...new Set(compte.deck)].flatMap(id => compte.possedees.includes(id) && parId.has(id) ? [parId.get(id)!] : []);
   if (deck.length !== R.tailleDuDeck) throw new RefusCombat(`Ton deck doit compter ${R.tailleDuDeck} cartes jouables.`);
-  if (choix.mode === 'joute' && (!profil || profil.id !== choix.adversaire)) throw new RefusCombat('Cet adversaire est indisponible.');
-  const adversaire: AdversaireCombat = choix.mode === 'entrainement' ? { type: 'entrainement', niveau: choix.niveau } : { type: 'joute', profil: profil! };
+  if (choix.mode !== 'entrainement' && (!profil || profil.id !== choix.adversaire)) throw new RefusCombat('Cet adversaire est indisponible.');
+  const adversaire: AdversaireCombat = choix.mode === 'entrainement' ? { type: 'entrainement', niveau: choix.niveau } : { type: 'joute', profil: profil!, ...(choix.mode === 'amical' ? { amical: true } : {}) };
   const autre = adversaire.type === 'entrainement' ? deckDeLOrdinateur(deck, disponibles, adversaire.niveau, hasard, R)
     : [...new Set(adversaire.profil.deck)].flatMap(id => parId.has(id) ? [parId.get(id)!] : []);
   if (autre.length !== R.tailleDuDeck) throw new RefusCombat('Le deck adverse contient des mots masqués ou est incomplet.');
@@ -62,49 +65,45 @@ export function avancerCombat(avant: EtatCombatPrive, action: ActionCombat, cata
     return { etat };
   }
   if (action.type === 'quitter' && etat.termine) { etat.archive = true; return { etat }; }
-  if (etat.versionMoteur !== VERSION_MOTEUR) throw new RefusCombat('Cette ancienne partie doit être abandonnée avant de continuer.');
+  if (etat.versionMoteur !== 1 && etat.versionMoteur !== VERSION_MOTEUR) throw new RefusCombat('Cette ancienne partie doit être abandonnée avant de continuer.');
+  etat.versionMoteur = VERSION_MOTEUR;
   const question = (carte: CarteIndex, autre: CarteIndex) => composerLEpreuve(carte, catalogue.definitions, visibles(catalogue, etat.masques).filter(c => c.id !== autre.id), etat.masques, hasard);
   if (action.type === 'choisir' && e.nom === 'choix') {
     const carte = etat.duel.camps.joueur.main.find(c => c.id === action.carte);
     if (!carte) throw new RefusCombat('Cette carte ne figure pas dans ta main.');
-    etat.etape = { nom: 'attaque', carte, adverse: e.adverse, epreuve: question(carte, e.adverse), debut: maintenant };
-  } else if (action.type === 'continuer' && e.nom === 'echappe') {
-    etat.etape = { ...e, nom: 'parade', epreuve: question(e.adverse, e.carte), debut: maintenant };
+    etat.etape = { nom: 'parade', carte, adverse: e.adverse, epreuve: question(e.adverse, carte), debut: maintenant };
+  } else if (action.type === 'continuer' && (e.nom === 'attaque' || e.nom === 'echappe')) {
+    etat.etape = { nom: 'parade', carte: e.carte, adverse: e.adverse, epreuve: question(e.adverse, e.carte), debut: maintenant };
   } else if (action.type === 'continuer' && e.nom === 'bilan') {
     etat.duel = e.apres;
     etat.etape = etat.resultat ? { nom: 'fin', resultat: etat.resultat, abandonne: false, expire: false }
       : { nom: 'choix', adverse: adverse(e.apres, etat.adversaire, catalogue, hasard), choisie: null };
-  } else if (action.type === 'repondre' && (e.nom === 'attaque' || e.nom === 'parade')) {
+  } else if (action.type === 'repondre' && e.nom === 'parade') {
     if (action.choisie !== null && (!Number.isInteger(action.choisie) || action.choisie < 0 || action.choisie >= e.epreuve.propositions.length)) throw new RefusCombat('Réponse invalide.');
     const secondes = etat.temps === 'illimite' ? Infinity : R.secondesPourRepondre * (etat.temps === 'double' ? 2 : 1);
     const choisie = maintenant > e.debut + secondes * 1000 ? null : action.choisie;
     const juste = choisie !== null && choisie === e.epreuve.bonne;
-    const carte = e.nom === 'attaque' ? e.carte : e.adverse;
+    const carte = e.adverse;
     const apprentissage = etat.possedees.includes(carte.id);
     const connu = etat.apprentissages[carte.id] ?? { posees: 0, reussites: 0, maitriseeLe: null };
     const maitrise = apprentissage && juste && connu.maitriseeLe === null && connu.reussites + 1 >= R.reussitesPourLaMaitrise;
     if (apprentissage) etat.apprentissages[carte.id] = { posees: connu.posees + 1, reussites: connu.reussites + Number(juste), maitriseeLe: maitrise ? maintenant : connu.maitriseeLe };
     const reponse: ReponseCombat = { epreuve: e.epreuve, choisie, juste, maitrise };
     if (maitrise) etat.bilan.maitrises.push(carte.mot);
-    if (e.nom === 'attaque') {
-      etat.bilan.attaques++; etat.bilan.attaquesReussies += Number(juste);
-      etat.etape = juste ? { nom: 'parade', carte: e.carte, adverse: e.adverse, attaque: reponse, epreuve: question(e.adverse, e.carte), debut: maintenant }
-        : { nom: 'echappe', carte: e.carte, adverse: e.adverse, attaque: reponse };
-    } else {
-      etat.bilan.parades++; etat.bilan.paradesReussies += Number(juste);
-      const chances = etat.adversaire.type === 'entrainement' ? chancesDeLOrdinateur(etat.adversaire.niveau, e.carte, R) : chancesDuDouble(etat.adversaire.profil, e.adverse, e.carte, EQUILIBRAGE.joute);
-      const apres = jouerLaManche(etat.duel, e.carte.id, e.adverse.id, { joueurReussit: e.attaque.juste, joueurPare: juste, adversaireReussit: hasard() < chances.reussir, adversairePare: hasard() < chances.parer }, hasard, taillesDesFactions(catalogue.cartes), R);
-      etat.etape = { nom: 'bilan', carte: e.carte, adverse: e.adverse, attaque: e.attaque, parade: reponse, apres };
-      if (apres.vainqueur) { etat.termine = true; etat.resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite'; }
-    }
-    return { etat, reponse: { carte: carte.id, rarete: carte.rarete, reussie: juste, parade: e.nom === 'parade', apprentissage } };
+    etat.bilan.parades++; etat.bilan.paradesReussies += Number(juste);
+    const chances = etat.adversaire.type === 'entrainement' ? chancesDeLOrdinateur(etat.adversaire.niveau, e.carte, R) : chancesDuDouble(etat.adversaire.profil, e.adverse, e.carte, EQUILIBRAGE.joute);
+    const apres = jouerLaManche(etat.duel, e.carte.id, e.adverse.id, { joueurPare: juste, adversairePare: hasard() < chances.parer }, hasard, taillesDesFactions(catalogue.cartes), R);
+    etat.etape = { nom: 'bilan', carte: e.carte, adverse: e.adverse, parade: reponse, apres };
+    if (apres.vainqueur) { etat.termine = true; etat.resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite'; }
+    etat.bilan.attaques++; etat.bilan.attaquesReussies++;
+    return { etat, reponse: { carte: carte.id, rarete: carte.rarete, reussie: juste, parade: true, apprentissage } };
   } else throw new RefusCombat('Cette action ne correspond plus à l’étape du combat. Reprends la partie.');
   return { etat };
 }
 
 export function vueCombat(etat: EtatCombatPrive): VueCombat {
-  let etape: EtapeCombat = structuredClone(etat.etape);
-  if (etape.nom === 'attaque' || etape.nom === 'parade') etape = { ...etape, epreuve: { ...etape.epreuve, bonne: -1 } };
+  let etape: EtapeCombat = etat.etape.nom === 'attaque' || etat.etape.nom === 'echappe' ? { nom: 'reprise' } : structuredClone(etat.etape);
+  if (etape.nom === 'parade') etape = { ...etape, epreuve: { ...etape.epreuve, bonne: -1 } };
   // Aucun ordre de pioche, main adverse cachée ou statistique privée n'est transmis.
   const dos: CarteIndex = { id: 'cachee', mot: '', definition: '', type: 'Nom', rarete: 'Commune', faction: '', attaque: 0, defense: 0, registre: [] };
   const cacher = (duel: VueCombat['duel']) => ({ ...duel, camps: {
@@ -113,6 +112,6 @@ export function vueCombat(etat: EtatCombatPrive): VueCombat {
   } });
   if (etape.nom === 'bilan') etape.apres = cacher(etape.apres);
   const adversaire: AdversaireCombat = etat.adversaire.type === 'entrainement' ? etat.adversaire
-    : { type: 'joute', profil: { ...etat.adversaire.profil, deck: [], savoirs: {}, parades: {} } };
+    : { ...etat.adversaire, profil: { ...etat.adversaire.profil, deck: [], savoirs: {}, parades: {} } };
   return { duel: cacher(etat.duel), etape, adversaire, temps: etat.temps, creeLe: etat.creeLe, expireLe: etat.expireLe, termine: etat.termine, bilan: etat.bilan };
 }

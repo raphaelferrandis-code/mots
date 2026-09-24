@@ -19,9 +19,9 @@ const carte = (mot: string, rarete: Rarete = 'Commune'): CarteIndex => ({ id: mo
 const profil = (id: string, cote: number, champs: Partial<ProfilDeJoute> = {}): ProfilDeJoute => ({ id, pseudo: id, cote, deck: [], savoirs: {}, parades: {}, ...champs });
 
 describe('le double d\'un joueur absent', () => {
-  it('sans résultats connus, connaît ses mots selon leur rareté ; avec des résultats, comme son joueur', () => {
+  it('attaque automatiquement et pare selon les résultats du joueur', () => {
     const inconnu = chancesDuDouble(profil('a', 1000), carte('callipyge', 'Légendaire'), carte('maison'), REGLES);
-    assert.equal(inconnu.reussir, REGLES.savoirParDefaut['Légendaire']);
+    assert.equal(inconnu.reussir, 1);
     assert.equal(inconnu.parer, REGLES.paradeParDefaut['Commune']);
 
     // Quarante réponses, toutes justes : le double retrouve presque toujours ce mot, quelle que soit sa rareté.
@@ -33,7 +33,7 @@ describe('le double d\'un joueur absent', () => {
     // Peu de réponses : l'estimation par défaut pèse encore.
     const debutant = profil('c', 1000, { savoirs: { callipyge: { posees: 1, reussies: 1 } } });
     const prudent = chancesDuDouble(debutant, carte('callipyge', 'Légendaire'), carte('maison'), REGLES).reussir;
-    assert.ok(prudent > REGLES.savoirParDefaut['Légendaire'] && prudent < 0.7);
+    assert.equal(prudent, 1, 'même un double débutant attaque toujours');
   });
 
   it('par défaut, pare d\'autant moins bien que le mot est rare', () => {
@@ -48,7 +48,7 @@ describe('la connaissance prime sur la rareté en joute', () => {
   it('estime les Hors-série familières, puis respecte les résultats réels du joueur', () => {
     const hs = carte('amour', 'Hors-série');
     const sansHistorique = chancesDuDouble(profil('a', 1000), hs, hs, REGLES);
-    assert.equal(sansHistorique.reussir, REGLES.savoirParDefaut.Commune);
+    assert.equal(sansHistorique.reussir, 1);
     assert.equal(sansHistorique.parer, REGLES.paradeParDefaut.Commune);
     const savant = profil('b', 1000, { parades: { 'Légendaire': { posees: 100, reussies: 100 } } });
     assert.ok(chancesDuDouble(savant, hs, carte('rare', 'Légendaire'), REGLES).parer > .95, 'un mot rare reconnu doit être paré');

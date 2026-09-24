@@ -3,11 +3,9 @@
 // Le duel se joue en manches, mot contre mot. À chaque manche :
 //   1. l'ordinateur pose un mot de sa main, face visible ;
 //   2. le joueur lui répond par une carte de la sienne ;
-//   3. le joueur doit retrouver la définition de SON mot (son attaque porte, sinon « le mot lui échappe »),
-//      puis celle du mot ADVERSE (il pare : les dégâts qu'il reçoit sont réduits) ;
-//   4. l'attaque du joueur part la première ; si l'ordinateur tient encore debout, la sienne suit ; puis chacun pioche.
-// L'ordinateur ne passe pas d'épreuve : il connaît son mot, et pare celui du joueur, selon des chances fixées
-// par son niveau — et il pare d'autant moins bien que le mot du joueur est rare.
+//   3. le joueur retrouve la définition du mot ADVERSE pour réduire les dégâts reçus ;
+//   4. les attaques sont automatiques. Le joueur frappe le premier ; si l'adversaire survit, il riposte.
+// L'ordinateur pare selon son niveau et la rareté du mot. Chaque carte ne sert qu'une fois.
 
 import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import type { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -41,7 +39,7 @@ export type Prevision = {
 
 export type Attaque = Prevision & {
   carte: CarteIndex;
-  reussie: boolean; // le camp connaissait son mot
+  reussie: boolean; // attaque exécutée (la riposte est annulée si le camp est déjà vaincu)
   paree: boolean; // l'autre camp connaissait ce mot, lui aussi
   infliges: number; // dégâts réellement infligés
 };
@@ -56,7 +54,7 @@ export type Duel = {
 };
 
 // Ce que chaque camp a su faire pendant la manche.
-export type Savoirs = { joueurReussit: boolean; joueurPare: boolean; adversaireReussit: boolean; adversairePare: boolean };
+export type Savoirs = { joueurPare: boolean; adversairePare: boolean };
 
 // Triangle des types : chaque type bat le suivant. Les adverbes sont neutres.
 const BAT: Partial<Record<Nature, Nature>> = { Nom: 'Adjectif', Adjectif: 'Verbe', Verbe: 'Nom' };
@@ -98,13 +96,13 @@ export function prevoirLAttaque(duel: Duel, cote: Cote, carte: CarteIndex, enFac
   return { degats, degatsSiParee: Math.floor(degats * regles.partDesDegatsApresParade), bonusDeRarete: attaqueEnJeu(carte.attaque, carte.rarete) - carte.attaque, bonusDeType, bonusDeFaction, bloques };
 }
 
-// Les chances de l'ordinateur pour cette manche : connaître son propre mot, et parer celui du joueur.
+// Les attaques sont certaines ; seule la parade dépend de la connaissance du mot adverse.
 export function chancesDeLOrdinateur(niveau: Niveau, carteDuJoueur: CarteIndex, regles: ReglesDuDuel): { reussir: number; parer: number } {
-  return { reussir: regles.reussiteDeLOrdinateur[niveau], parer: regles.paradeDeLOrdinateur.selonLaRarete[carteDuJoueur.rarete] * regles.paradeDeLOrdinateur.selonLeNiveau[niveau] };
+  return { reussir: 1, parer: regles.paradeDeLOrdinateur.selonLaRarete[carteDuJoueur.rarete] * regles.paradeDeLOrdinateur.selonLeNiveau[niveau] };
 }
 
 function apresLaManche(camp: Camp, jouee: CarteIndex, subis: number): Camp {
-  // Une carte jouée est épuisée pour ce duel, même si l'attaque échoue.
+  // Une carte jouée est épuisée pour ce duel, même si elle est parée.
   // Quand la pioche est vide, on termine avec les cartes encore en main.
   const pioche = camp.pioche;
   const defausse = [...camp.defausse, jouee];
@@ -123,9 +121,9 @@ export function jouerLaManche(duel: Duel, idDuJoueur: string, idAdverse: string,
     const prevision = prevoirLAttaque(duel, cote, carte, enFace, tailles, regles);
     return { ...prevision, carte, reussie, paree: reussie && paree, infliges: !reussie ? 0 : paree ? prevision.degatsSiParee : prevision.degats };
   };
-  const duJoueur = attaque('joueur', carteDuJoueur, carteAdverse, savoirs.joueurReussit, savoirs.adversairePare);
+  const duJoueur = attaque('joueur', carteDuJoueur, carteAdverse, true, savoirs.adversairePare);
   const terrasse = duJoueur.infliges >= duel.camps.adversaire.pv;
-  const adverse = attaque('adversaire', carteAdverse, carteDuJoueur, savoirs.adversaireReussit && !terrasse, savoirs.joueurPare);
+  const adverse = attaque('adversaire', carteAdverse, carteDuJoueur, !terrasse, savoirs.joueurPare);
 
   const camps: Record<Cote, Camp> = {
     joueur: apresLaManche(duel.camps.joueur, carteDuJoueur, adverse.infliges),

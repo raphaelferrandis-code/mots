@@ -38,7 +38,7 @@ function situation(mainDuJoueur: CarteIndex[], mainAdverse: CarteIndex[], preced
   const camp = (cote: string) => ({ pv: REGLES.pointsDeVie, pioche: [carte(`pioche-1-${cote}`), carte(`pioche-2-${cote}`)], defausse: [] });
   return { manche: 1, vainqueur: null, manches: [], camps: { joueur: { ...camp('joueur'), main: mainDuJoueur, derniere: precedentes.joueur ?? null }, adversaire: { ...camp('adverse'), main: mainAdverse, derniere: precedentes.adversaire ?? null } } };
 }
-const TOUT_REUSSI = { joueurReussit: true, joueurPare: false, adversaireReussit: true, adversairePare: false };
+const TOUT_REUSSI = { joueurPare: false, adversairePare: false };
 
 describe("chiffres d'équilibrage du duel", () => {
   it('un deck donne de quoi former une main, et les chances de l\'ordinateur sont des probabilités', () => {
@@ -85,7 +85,7 @@ describe('Hors-série : puissance et parade', () => {
       assert.equal(chancesDeLOrdinateur(niveau, hs, REGLES).parer, chancesDeLOrdinateur(niveau, commune, REGLES).parer);
       assert.ok(chancesDeLOrdinateur(niveau, hs, REGLES).parer > chancesDeLOrdinateur(niveau, carte('rare', { rarete: 'Légendaire' }), REGLES).parer);
     }
-    const fin = jouerLaManche(situation([commune], [hs]), commune.id, hs.id, { ...TOUT_REUSSI, joueurReussit: false, joueurPare: true }, hasardReproductible(1), TAILLES, REGLES);
+    const fin = jouerLaManche(situation([commune], [hs]), commune.id, hs.id, { ...TOUT_REUSSI, joueurPare: true }, hasardReproductible(1), TAILLES, REGLES);
     assert.equal(fin.manches[0].adversaire.paree, true);
     assert.equal(fin.manches[0].adversaire.infliges, fin.manches[0].adversaire.degatsSiParee);
   });
@@ -152,7 +152,7 @@ describe('déroulement du duel', () => {
     assert.equal(bonus('Latin', null), 0);
   });
 
-  it('règle les deux attaques de la manche : réussie, échappée, parée', () => {
+  it('règle les deux attaques de la manche : automatique ou parée', () => {
     const mien = carte('mien', { attaque: 8, defense: 2, type: 'Adverbe' });
     const sien = carte('sien', { attaque: 6, defense: 4, type: 'Adverbe' });
     const depart = situation([mien, carte('reste')], [sien, carte('autre')]);
@@ -165,18 +165,11 @@ describe('déroulement du duel', () => {
     assert.equal(plein.camps.joueur.pv, REGLES.pointsDeVie - prevueAdverse.degats);
     assert.deepEqual([plein.manches[0].joueur.infliges, plein.manches[0].adversaire.infliges], [prevueDuJoueur.degats, prevueAdverse.degats]);
 
-    const echappe = regler({ joueurReussit: false, adversaireReussit: false });
-    assert.deepEqual([echappe.camps.joueur.pv, echappe.camps.adversaire.pv], [REGLES.pointsDeVie, REGLES.pointsDeVie]);
-    assert.equal(echappe.manches[0].joueur.reussie, false);
-
     const pare = regler({ joueurPare: true, adversairePare: true });
     assert.equal(pare.camps.joueur.pv, REGLES.pointsDeVie - prevueAdverse.degatsSiParee);
     assert.equal(pare.camps.adversaire.pv, REGLES.pointsDeVie - prevueDuJoueur.degatsSiParee);
     assert.ok(pare.manches[0].adversaire.paree && pare.manches[0].joueur.paree);
-    // Parer une attaque qui ne porte pas ne compte pas comme une parade.
-    assert.equal(regler({ adversaireReussit: false, joueurPare: true }).manches[0].adversaire.paree, false);
-
-    for (const apres of [plein, echappe, pare]) {
+    for (const apres of [plein, pare]) {
       assert.equal(apres.manche, 2);
       assert.equal(apres.camps.joueur.derniere?.id, mien.id);
       assert.deepEqual(apres.camps.joueur.defausse.map((c) => c.id), [mien.id]);
@@ -206,12 +199,12 @@ describe('déroulement du duel', () => {
     assert.equal(duel.camps.adversaire.main.length, 0);
   });
 
-  it('épuise aussi les attaques manquées et interdit de rejouer une carte', () => {
+  it('épuise aussi les cartes après une parade manquée et interdit de rejouer une carte', () => {
     const hasard = hasardReproductible(12);
     const depart = commencerLeDuel(DECK, AUTRE_DECK, hasard, REGLES);
     const mien = depart.camps.joueur.main[0].id;
     const sien = depart.camps.adversaire.main[0].id;
-    const apres = jouerLaManche(depart, mien, sien, { ...TOUT_REUSSI, joueurReussit: false, adversaireReussit: false }, hasard, TAILLES, REGLES);
+    const apres = jouerLaManche(depart, mien, sien, TOUT_REUSSI, hasard, TAILLES, REGLES);
     assert.equal(apres.camps.joueur.defausse[0].id, mien);
     assert.equal(apres.camps.adversaire.defausse[0].id, sien);
     assert.throws(() => jouerLaManche(apres, mien, apres.camps.adversaire.main[0].id, TOUT_REUSSI, hasard, TAILLES, REGLES), /pas dans la main/);
@@ -219,12 +212,13 @@ describe('déroulement du duel', () => {
   });
 
   it('départage aux PV quand un seul camp épuise ses cartes, avec égalité possible', () => {
-    const rien = { joueurReussit: false, joueurPare: false, adversaireReussit: false, adversairePare: false };
+    const rien = { joueurPare: true, adversairePare: true };
     for (const cote of ['joueur', 'adversaire'] as const) {
       for (const avance of [-1, 0, 1]) {
         const depart = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(1), REGLES);
         depart.camps[cote].main = [depart.camps[cote].main[0]];
         depart.camps[cote].pioche = [];
+        for (const camp of Object.values(depart.camps)) camp.main = camp.main.map(c => ({...c, type:'Adverbe', attaque:1, defense:10, rarete:'Commune'}));
         depart.camps.joueur.pv += avance;
         const fin = jouerLaManche(depart, depart.camps.joueur.main[0].id, depart.camps.adversaire.main[0].id, rien, hasardReproductible(2), TAILLES, REGLES);
         assert.equal(fin.vainqueur, avance === 0 ? 'nul' : avance > 0 ? 'joueur' : 'adversaire');
@@ -243,26 +237,30 @@ describe('déroulement du duel', () => {
     assert.equal(fin.manches[0].adversaire.infliges, 0);
     assert.equal(fin.manche, 1);
     assert.throws(() => jouerLaManche(fin, fin.camps.joueur.main[0].id, fin.camps.adversaire.main[0].id, TOUT_REUSSI, hasardReproductible(6), TAILLES, regles));
-    // Si le mot du joueur lui échappe, c'est l'ordinateur qui l'emporte.
-    const perdu = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, { ...TOUT_REUSSI, joueurReussit: false }, hasardReproductible(6), TAILLES, regles);
+    // Une attaque entièrement parée laisse l'adversaire riposter et gagner.
+    const faible = situation([carte('a', { attaque: 1 })], [carte('b', { defense: 10 })]);
+    faible.camps.joueur.pv = 1;
+    const perdu = jouerLaManche(faible, faible.camps.joueur.main[0].id, faible.camps.adversaire.main[0].id, { joueurPare: false, adversairePare: true }, hasardReproductible(6), TAILLES, REGLES);
     assert.equal(perdu.vainqueur, 'adversaire');
-    assert.equal(perdu.camps.joueur.pv, 0);
+    assert.equal(perdu.manches[0].joueur.reussie, true);
+    assert.equal(perdu.manches[0].joueur.infliges, 0);
   });
 
   it('à la limite de manches, le mieux portant l\'emporte ; à égalité, match nul', () => {
     const regles = { ...REGLES, manchesMaximum: 3 };
     const jouerTout = (savoirs: (manche: number) => typeof TOUT_REUSSI): Duel => {
-      let duel = commencerLeDuel(DECK, AUTRE_DECK, hasardReproductible(5), regles);
+      const uniformes = (deck: CarteIndex[]) => deck.map(c => ({...c, type:'Adverbe' as const, rarete:'Commune' as const, faction:'Latin', attaque: 4, defense: 4}));
+      let duel = commencerLeDuel(uniformes(DECK), uniformes(AUTRE_DECK), hasardReproductible(5), regles);
       while (duel.vainqueur === null) duel = jouerLaManche(duel, duel.camps.joueur.main[0].id, duel.camps.adversaire.main[0].id, savoirs(duel.manche), hasardReproductible(7), TAILLES, regles);
       return duel;
     };
-    const rien = { joueurReussit: false, joueurPare: false, adversaireReussit: false, adversairePare: false };
+    const rien = { joueurPare: true, adversairePare: true };
     const nul = jouerTout(() => rien);
     assert.equal(nul.vainqueur, 'nul');
     assert.equal(nul.manches.length, 3);
     assert.equal(nul.manche, 3);
-    assert.equal(jouerTout((manche) => ({ ...rien, joueurReussit: manche === 2 })).vainqueur, 'joueur');
-    assert.equal(jouerTout((manche) => ({ ...rien, adversaireReussit: manche === 1 })).vainqueur, 'adversaire');
+    assert.equal(jouerTout((manche) => ({ joueurPare: true, adversairePare: manche !== 2 })).vainqueur, 'joueur');
+    assert.equal(jouerTout((manche) => ({ joueurPare: manche !== 1, adversairePare: true })).vainqueur, 'adversaire');
   });
 });
 

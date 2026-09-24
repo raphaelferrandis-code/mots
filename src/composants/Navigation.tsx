@@ -39,6 +39,7 @@ export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: num
         </ul>
       </nav>
       <div className="navigation__personnel">
+      <a className="lien-compte" href={lien({ ecran: 'amis' })} aria-label="Amis — échanges et défis" title="Amis" aria-current={ecran === 'amis' ? 'page' : undefined}><svg viewBox="0 0 24 24" {...trait} aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2" /></svg></a>
       <a className="lien-compte" href={lien({ ecran: 'compte' })} aria-label="Mon compte — inscription et connexion" title="Mon compte" aria-current={ecran === 'compte' ? 'page' : undefined}><svg viewBox="0 0 24 24" {...trait} aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg></a>
       <a className="lien-reglages" href={lien({ ecran: 'reglages' })} aria-label="Réglages" title="Réglages" aria-current={ecran === 'reglages' || ecran === 'confidentialite' ? 'page' : undefined}><svg viewBox="0 0 24 24" {...trait} aria-hidden="true" focusable="false"><path d="m9.5 3-.6 2.3-1.7 1-2.3-.6-2.5 4.3 1.7 1.7v2l-1.7 1.7 2.5 4.3 2.3-.6 1.7 1 .6 2.3h5l.6-2.3 1.7-1 2.3.6 2.5-4.3-1.7-1.7v-2l1.7-1.7-2.5-4.3-2.3.6-1.7-1-.6-2.3z" transform="translate(0 -1)" /><circle cx="12" cy="12" r="3" /></svg></a>
       <a className="lien-formules" href={lien({ ecran: 'formules' })} aria-label="Les formules" title="Les formules" aria-current={ecran === 'formules' ? 'page' : undefined}>

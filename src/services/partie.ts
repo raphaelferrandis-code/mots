@@ -1,4 +1,6 @@
 import { actualiserLesSucces } from '../jeu/succes.ts';
+import { serveurDesAmis } from './amis.ts';
+import type { ActionAmitie, ActionEchange, TimbreEchange } from './amis.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { calculerGainXp, cosmetiquesPremium } from '../jeu/formule.ts';
 import { XP, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
@@ -408,6 +410,21 @@ export function recevoirLaCoteDuServeur(cote: number): void {
 // Les enchères vivent sur le serveur : l'appareil les affiche, et après chaque action, l'état du compte que le
 // serveur renvoie (Encre, timbres) remplace le sien.
 export const lireLeMarche = (recherche: string, page: number): Promise<PageDuMarche> => surLeServeur(() => serveurDuMarche.marche(recherche, page));
+
+export async function lireMesAmis() {
+  return surLeServeur(() => chacunSonTour(async () => {
+    const etat = await serveurDesCollections.monCompte();
+    if (etat) appliquer(etat);
+    return serveurDesAmis().lire();
+  }));
+}
+export const demanderUnAmi = (pseudo: string) => surLeServeur(() => serveurDesAmis().demander(pseudo));
+export const repondreAUnAmi = (id: string, action: ActionAmitie) => surLeServeur(() => serveurDesAmis().repondre(id, action));
+export const lireAlbumAmi = (id: string) => surLeServeur(() => serveurDesAmis().album(id));
+export const proposerUnEchange = (id: string, ami: string, offerte: TimbreEchange, demandee: TimbreEchange) => surLeServeur(() => serveurDesAmis().proposer(id, ami, offerte, demandee));
+export async function repondreAUnEchange(id: string, action: ActionEchange) {
+  appliquer(await surLeServeur(() => serveurDesAmis().echanger(id, action)));
+}
 
 // Mes ventes et mes mises. Le compte est relu d'abord : le serveur clôt au passage les enchères échues, et une
 // vente conclue entre-temps (remportée, ou la mienne) a pu changer l'Encre et les timbres.

@@ -1,4 +1,5 @@
 import { Profil } from './ecrans/Profil.tsx';
+import { Amis } from './ecrans/Amis.tsx';
 import { Compte } from './ecrans/Compte.tsx';
 import { Recompenses } from './composants/Recompenses.tsx';
 import { Classement } from './ecrans/Classement.tsx';
@@ -22,6 +23,7 @@ import type { Route } from './navigation/routes.ts';
 
 function Ecran({ route }: { route: Route }) {
   switch (route.ecran) {
+    case 'amis': return <Amis />;
     case 'compte': return <Compte />;
     case 'classement': return <Classement />;
     case 'profil': return <Profil />;

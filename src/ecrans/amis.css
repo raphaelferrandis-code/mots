@@ -1,0 +1,25 @@
+.amis { max-width: 1060px; }
+.amis__introduction { color: var(--encre-douce); margin-bottom: 28px; }
+.amis .rubrique { margin-block: 24px; }
+.amis__invitation { border-top: 2px solid var(--accent); }
+.amis__recherche { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-block: 20px; }
+.amis label { display: grid; gap: 8px; min-width: 0; flex: 1; }
+.amis input, .amis select { width: 100%; min-height: 44px; min-width: 0; padding: 10px; color: var(--encre); background: var(--papier); border: 1px solid var(--filet-fort); border-radius: 6px; font: inherit; }
+.amis__liste { display: grid; gap: 16px; }
+.amis__ligne { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-block: 12px; }
+.amis__ligne strong { overflow-wrap: anywhere; }
+.amis__ligne p { margin-block: 6px 0; }
+.amis__liste > li + li { border-top: 1px solid var(--filet); }
+.amis__echange { padding-block: 12px; }
+.amis__confirmation { flex-basis: 100%; padding: 20px; border: 1px solid var(--accent); border-radius: var(--rayon); margin-top: 16px; }
+.amis__timbres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-bottom: 24px; }
+.amis__choix { display: grid; gap: 16px; align-content: start; }
+.amis__apercu { display: grid; justify-items: center; text-align: center; }
+.amis__composition { scroll-margin-top: 140px; }
+.amis fieldset { border: 0; padding: 0; margin: 0 0 16px; min-width: 0; }
+@media (max-width: 600px) {
+  .amis__timbres { grid-template-columns: minmax(0, 1fr); }
+  .amis__recherche { display: grid; }
+  .amis__confirmation { padding: 12px; }
+  .amis__composition { scroll-margin-top: 16px; }
+}

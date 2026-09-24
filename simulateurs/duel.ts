@@ -6,7 +6,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { EQUILIBRAGE, defenseEnJeu } from '../src/config/equilibrage.ts';
+import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { NIVEAUX, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, forceDeLaCarte, jouerLaManche, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
 import type { Niveau, ReglesDuDuel } from '../src/jeu/duel.ts';
 import { choisir, hasardReproductible } from '../src/jeu/hasard.ts';
@@ -19,32 +19,28 @@ const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public'
 const TAILLES = taillesDesFactions(edition.cartes);
 const RESERVE = preparerReserve(edition.cartes);
 
-const DUELS_PAR_LIGNE = 3000;
+const DUELS_PAR_LIGNE = Number(process.env.MOTS_DUELS_PAR_LIGNE ?? 3000);
+if (!Number.isSafeInteger(DUELS_PAR_LIGNE) || DUELS_PAR_LIGNE < 1) throw new Error('MOTS_DUELS_PAR_LIGNE doit être un entier positif.');
 
 // ── Les joueurs fictifs ─────────────────────────────────────────────────────
 // Chance de retrouver la bonne définition, selon la rareté du mot : plus un mot est rare, moins on le connaît.
-// « siens » : les mots de son propre deck ; « adverses » : les mots de l'ordinateur, qu'il découvre à chaque duel.
+// Seule la connaissance des mots adverses règle les parades ; les attaques sont automatiques.
 // (Ce sont des hypothèses : les vrais chiffres viendront des testeurs.)
 type Connaissance = Record<Rarete, number>;
 const HESITANT: Connaissance = { 'Commune': 0.8, 'Peu commune': 0.7, 'Rare': 0.55, 'Épique': 0.45, 'Légendaire': 0.35, 'Hors-série': 0.5 };
 const LECTEUR: Connaissance = { 'Commune': 0.95, 'Peu commune': 0.9, 'Rare': 0.8, 'Épique': 0.65, 'Légendaire': 0.5, 'Hors-série': 0.7 };
 const EXPERT: Connaissance = { 'Commune': 0.99, 'Peu commune': 0.97, 'Rare': 0.92, 'Épique': 0.85, 'Légendaire': 0.75, 'Hors-série': 0.9 };
-const PAR_COEUR: Connaissance = { 'Commune': 1, 'Peu commune': 1, 'Rare': 1, 'Épique': 1, 'Légendaire': 1, 'Hors-série': 1 };
 
-type Joueur = { nom: string; siens: Connaissance; adverses: Connaissance };
+type Joueur = { nom: string; adverses: Connaissance };
 const JOUEURS: Joueur[] = [
-  { nom: 'Joueur hésitant', siens: HESITANT, adverses: HESITANT },
-  { nom: 'Bon lecteur', siens: LECTEUR, adverses: LECTEUR },
-  { nom: 'Expert des mots', siens: EXPERT, adverses: EXPERT },
-  // Le joueur qui rejoue toujours les mêmes dix cartes finit par connaître toutes leurs définitions ;
-  // les mots de l'ordinateur, eux, changent à chaque duel.
-  { nom: 'Bon lecteur qui connaît son deck par cœur', siens: PAR_COEUR, adverses: LECTEUR },
+  { nom: 'Joueur hésitant', adverses: HESITANT },
+  { nom: 'Bon lecteur', adverses: LECTEUR },
+  { nom: 'Expert des mots', adverses: EXPERT },
 ];
 const BON_LECTEUR = JOUEURS[1];
 
 // ── Les decks ───────────────────────────────────────────────────────────────
-// Le joueur fictif ouvre de vrais paquets, puis aligne ses dix meilleures cartes — en tenant compte de ses
-// chances de connaître le mot, car une attaque qu'on rate ne vaut rien.
+// Le joueur fictif ouvre de vrais paquets, puis aligne ses dix cartes les plus fortes.
 const COLLECTIONS_PAR_PROFIL = 40;
 const COLLECTIONS: { nom: string; paquets: number }[] = [
   { nom: 'Débutant (3 paquets ouverts)', paquets: 3 },
@@ -66,8 +62,8 @@ function ouvrirDesPaquets(nombre: number, hasard: Hasard): CarteIndex[] {
 
 const collections = new Map<number, CarteIndex[][]>(COLLECTIONS.map(({ paquets }) => [paquets, Array.from({ length: COLLECTIONS_PAR_PROFIL }, (_, i) => ouvrirDesPaquets(paquets, hasardReproductible(900 + i)))]));
 
-function composerUnDeck(paquets: number, joueur: Joueur, hasard: Hasard, regles: ReglesDuDuel): CarteIndex[] {
-  const valeur = (c: CarteIndex): number => joueur.siens[c.rarete] * (forceDeLaCarte(c) - defenseEnJeu(c.defense, c.rarete)) + defenseEnJeu(c.defense, c.rarete);
+function composerUnDeck(paquets: number, hasard: Hasard, regles: ReglesDuDuel): CarteIndex[] {
+  const valeur = forceDeLaCarte;
   return [...choisir(collections.get(paquets)!, hasard)].sort((a, b) => valeur(b) - valeur(a)).slice(0, regles.tailleDuDeck);
 }
 
@@ -76,7 +72,7 @@ type Bilan = { manches: number; vainqueur: 'joueur' | 'adversaire' | 'nul'; aLaL
 
 function simulerUnDuel(paquets: number, joueur: Joueur, niveau: Niveau, regles: ReglesDuDuel, graine: number): Bilan {
   const hasard = hasardReproductible(graine);
-  const deck = composerUnDeck(paquets, joueur, hasard, regles);
+  const deck = composerUnDeck(paquets, hasard, regles);
   let duel = commencerLeDuel(deck, deckDeLOrdinateur(deck, edition.cartes, niveau, hasard, regles), hasard, regles);
   let parades = 0, attaquesSubies = 0;
   while (duel.vainqueur === null) {
@@ -88,13 +84,13 @@ function simulerUnDuel(paquets: number, joueur: Joueur, niveau: Niveau, regles: 
       const ordinateur = chancesDeLOrdinateur(niveau, c, regles);
       const mienne = prevoirLAttaque(etat, 'joueur', c, adverse, TAILLES, regles);
       const sienne = prevoirLAttaque(etat, 'adversaire', adverse, c, TAILLES, regles);
-      const inflige = joueur.siens[c.rarete] * (ordinateur.parer * mienne.degatsSiParee + (1 - ordinateur.parer) * mienne.degats);
-      const subi = ordinateur.reussir * (saParade * sienne.degatsSiParee + (1 - saParade) * sienne.degats);
+      const inflige = (ordinateur.parer * mienne.degatsSiParee + (1 - ordinateur.parer) * mienne.degats);
+      const subi = (saParade * sienne.degatsSiParee + (1 - saParade) * sienne.degats);
       return inflige - subi;
     };
     const carte = etat.camps.joueur.main.reduce((a, b) => (promesse(b) > promesse(a) ? b : a));
     const ordinateur = chancesDeLOrdinateur(niveau, carte, regles);
-    const savoirs = { joueurReussit: hasard() < joueur.siens[carte.rarete], joueurPare: hasard() < saParade, adversaireReussit: hasard() < ordinateur.reussir, adversairePare: hasard() < ordinateur.parer };
+    const savoirs = { joueurPare: hasard() < saParade, adversairePare: hasard() < ordinateur.parer };
     duel = jouerLaManche(etat, carte.id, adverse.id, savoirs, hasard, TAILLES, regles);
     const manche = duel.manches.at(-1)!;
     if (manche.adversaire.reussie) { attaquesSubies++; if (manche.adversaire.paree) parades++; }
@@ -161,7 +157,7 @@ const variantes = VARIANTES.map((v) => ligne(v.nom, MOYENNE.paquets, BON_LECTEUR
 const rapport = [
   '# Simulation de duel',
   '',
-  `*Généré par \`npm run simulation:duel\`. ${DUELS_PAR_LIGNE.toLocaleString('fr-FR')} duels simulés par ligne, avec les vraies cartes de l'édition. À chaque manche, l'ordinateur pose un mot, le joueur lui répond, et les deux attaques sont réglées ensemble. Le joueur fictif aligne les dix meilleures cartes de sa collection et répond par la carte qui lui promet le meilleur échange ; ses chances de retrouver une définition baissent avec la rareté du mot (hypothèses en tête de \`simulateurs/duel.ts\`). L'ordinateur reçoit un deck des mêmes raretés et de force comparable, selon le niveau. Les réglages sont dans \`src/config/equilibrage.ts\`.*`,
+  `*Généré par \`npm run simulation:duel\`. ${DUELS_PAR_LIGNE.toLocaleString('fr-FR')} duels simulés par ligne, avec les vraies cartes de l'édition. À chaque manche, l'ordinateur pose un mot, le joueur lui répond, et les deux attaques sont réglées ensemble. Le joueur fictif aligne les dix meilleures cartes de sa collection et répond par la carte qui lui promet le meilleur échange ; les attaques sont automatiques et ses chances de parer baissent avec la rareté du mot adverse (hypothèses en tête de \`simulateurs/duel.ts\`). L'ordinateur reçoit un deck des mêmes raretés et de force comparable, selon le niveau. Les réglages sont dans \`src/config/equilibrage.ts\`.*`,
   '',
   `**Format actuel :** ${REGLES.pointsDeVie} PV, ${REGLES.manchesMaximum} manches maximum. Chaque carte ne se joue qu’une fois ; à épuisement d’un camp, les PV restants départagent les joueurs.`,
   '',

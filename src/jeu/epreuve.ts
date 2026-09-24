@@ -1,4 +1,4 @@
-// L'épreuve de maîtrise : avant d'attaquer, le joueur doit retrouver la définition de son mot parmi quatre.
+// L'épreuve de parade : le joueur retrouve la définition du mot adverse parmi quatre.
 // Fonctions pures : les définitions et le hasard sont fournis par l'appelant.
 
 import { contientLeMot, masquerLeMot, trahitLeMot } from '../partage/famille.ts';

@@ -1,6 +1,6 @@
 // Les joutes : des duels classés contre d'autres joueurs. L'adversaire n'est pas connecté : on affronte son
-// « double », c'est-à-dire son deck, joué par l'ordinateur avec ses vrais résultats (s'il retrouve « callipyge »
-// quatre fois sur cinq, son double aussi). Fonctions pures : les profils et le hasard sont fournis par l'appelant.
+// « double », c'est-à-dire son deck, joué par l'ordinateur avec ses résultats de parade par rareté.
+// Les attaques sont automatiques. Fonctions pures : les profils et le hasard viennent de l'appelant.
 
 import type { EQUILIBRAGE } from '../config/equilibrage.ts';
 import type { CarteIndex, Rarete } from '../partage/types.ts';
@@ -28,10 +28,10 @@ function estimer(observe: Savoir | undefined, estimation: number, poids: number)
   return ((observe?.reussies ?? 0) + estimation * poids) / ((observe?.posees ?? 0) + poids);
 }
 
-// Les chances du double pour cette manche : retrouver son propre mot, et parer celui du joueur.
-export function chancesDuDouble(profil: ProfilDeJoute, carteDuDouble: CarteIndex, carteDuJoueur: CarteIndex, regles: ReglesDesJoutes): { reussir: number; parer: number } {
+// Le double attaque automatiquement ; ses résultats de parade règlent sa défense.
+export function chancesDuDouble(profil: ProfilDeJoute, _carteDuDouble: CarteIndex, carteDuJoueur: CarteIndex, regles: ReglesDesJoutes): { reussir: number; parer: number } {
   return {
-    reussir: estimer(profil.savoirs[carteDuDouble.id], regles.savoirParDefaut[carteDuDouble.rarete], regles.poidsDeLEstimation),
+    reussir: 1,
     parer: estimer(profil.parades[carteDuJoueur.rarete], regles.paradeParDefaut[carteDuJoueur.rarete], regles.poidsDeLEstimation),
   };
 }

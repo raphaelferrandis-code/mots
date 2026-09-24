@@ -18,6 +18,7 @@ import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections, mig
 import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 import { combats } from './combats.ts';
+import { amis } from './amis.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -375,6 +376,7 @@ end $$;
 ${collections()}
 ${recuperation()}
 ${marche()}
+${amis()}
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
 revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
@@ -394,6 +396,10 @@ export function migrationIntegrite(): string {
 
 export function migrationCombats(): string {
   return '-- Combats vérifiés et progression serveur. Installer aussi la fonction combats avant le client.\nbegin;\n' + structure() + '\ncommit;\n';
+}
+
+export function migrationAmis(): string {
+  return '-- Amis, échanges atomiques et défis amicaux. Après 9-combats.sql.\n-- Redéployer aussi la fonction combats avant le client.\nbegin;\n' + amis() + combats() + '\ncommit;\n';
 }
 
 export function joueursMaison(edition: IndexEdition): string {
@@ -423,5 +429,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '6-offres.sql'), migrationOffres());
   writeFileSync(path.join(RACINE, 'serveur', '8-integrite.sql'), migrationIntegrite());
   writeFileSync(path.join(RACINE, 'serveur', '9-combats.sql'), migrationCombats());
+  writeFileSync(path.join(RACINE, 'serveur', '10-amis.sql'), migrationAmis());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

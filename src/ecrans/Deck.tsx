@@ -183,7 +183,7 @@ export function Deck() {
               <li><strong>Rareté :</strong> les mots rares frappent plus fort et sont moins souvent parés. À l'entraînement, ils rendent aussi le deck adverse plus rare. Les Hors-série sont plus faciles à reconnaître, mais leurs statistiques sont exceptionnelles.</li>
               <li><strong>Types :</strong> +{REGLES.bonusDeType} dégâts selon le cycle nom &gt; adjectif &gt; verbe &gt; nom. Les adverbes sont neutres.</li>
               <li><strong>Origine :</strong> deux mots de même origine joués à la suite donnent +{REGLES.bonusDeFaction} dégât, ou +{REGLES.bonusDePetiteFaction} pour une petite langue.</li>
-              <li><strong>Définitions :</strong> retrouve celle de ton mot pour attaquer, celle du mot adverse pour parer.</li>
+              <li><strong>Définitions :</strong> ton attaque est automatique. Retrouve uniquement la définition du mot adverse pour parer.</li>
             </ul>
           </details>
 

@@ -17,6 +17,40 @@ const catalogue = { cartes: brut.cartes, definitions: new Map(brut.definitions) 
 const deck = brut.cartes.filter(c => c.registre.length === 0 && c.rarete === 'Commune').slice(0,10).map(c => c.id);
 const choix = { mode:'entrainement' as const,niveau:'Normal' as const,masques:[],temps:'normal' as const };
 
+it('un défi amical exige une amitié et ne modifie aucune cote, même après abandon', async () => {
+  const l = await laboratoire();
+  try {
+    await l.admin();
+    await l.db.query('update public.profils set deck=$1 where utilisateur in ($2,$3)', [JSON.stringify(deck), l.ids[0], l.ids[1]]);
+    const profils = (await l.db.query<{ id: string }>('select id from public.profils order by pseudo')).rows.map(p => p.id);
+    const amical = { mode: 'amical' as const, adversaire: profils[1], masques: [], temps: 'illimite' as const };
+    const lancer = () => l.appel(lireRequeteCombat({ type: 'commencer', requete: crypto.randomUUID(), choix: amical }));
+    await assert.rejects(lancer(), /amis/);
+    await l.joueur(0); await l.db.query("select public.demander_ami('lecteur1')");
+    await assert.rejects(lancer(), /amis/, 'une demande en attente ne suffit pas');
+    await l.joueur(1); await l.db.query("select public.repondre_ami($1,'accepter')", [profils[0]]);
+    await l.admin();
+    const avant = (await l.db.query('select id,cote,jouees,gagnees from public.profils order by id')).rows;
+    let r = await lancer();
+    assert.equal(r.combat!.vue.adversaire.type === 'joute' && r.combat!.vue.adversaire.amical, true);
+    while (!r.combat!.vue.termine) {
+      const prive = await l.lirePrive(r.combat!.id);
+      const e = prive.etat.etape;
+      if (e.nom === 'parade') r = await l.agir(r, { type: 'repondre', choisie: e.epreuve.bonne });
+      else if (e.nom === 'choix') r = await l.agir(r, { type: 'choisir', carte: prive.etat.duel.camps.joueur.main[0].id });
+      else r = await l.agir(r, { type: 'continuer' });
+    }
+    assert.equal(r.combat!.recompense!.cote, null);
+    await l.agir(r, { type: 'quitter' });
+    r = await lancer(); r = await l.agir(r, { type: 'abandonner' });
+    assert.equal(r.combat!.recompense!.cote, null);
+    await l.admin();
+    assert.deepEqual((await l.db.query('select id,cote,jouees,gagnees from public.profils order by id')).rows, avant);
+    await l.joueur(0); await l.db.query("select public.repondre_ami($1,'retirer')", [profils[1]]);
+    await assert.rejects(lancer(), /amis/);
+  } finally { await l.db.close(); }
+});
+
 async function laboratoire() {
   const b = await baseDeTest(true);
   await b.db.exec(cartes({ cartes:brut.cartes, meta:{edition:1,version:'test'} } as IndexEdition));
@@ -58,8 +92,8 @@ it('le serveur utilise le moteur du jeu, cache les réponses, refuse les résult
     assert.throws(()=>lireRequeteCombat({type:'agir',requete:crypto.randomUUID(),combat:id,revision:0,action:{type:'terminer',resultat:'victoire'}}),/invalide/);
     const reponsePerdue={type:'agir' as const,requete:crypto.randomUUID(),combat:id,revision:0,action:{type:'choisir' as const,carte:r.combat!.vue.duel.camps.joueur.main[0].id}};
     r=await l.appel(reponsePerdue);
-    assert.equal(r.combat!.vue.etape.nom,'attaque');
-    if(r.combat!.vue.etape.nom==='attaque') assert.equal(r.combat!.vue.etape.epreuve.bonne,-1);
+    assert.equal(r.combat!.vue.etape.nom,'parade');
+    if(r.combat!.vue.etape.nom==='parade') assert.equal(r.combat!.vue.etape.epreuve.bonne,-1);
     const repetee=await l.appel(reponsePerdue);
     assert.equal(repetee.combat!.revision,r.combat!.revision);
     assert.ok(r.combat!.vue.duel.camps.adversaire.main.every(c=>c.id==='cachee'));
@@ -68,7 +102,7 @@ it('le serveur utilise le moteur du jeu, cache les réponses, refuse les résult
     while(!r.combat!.vue.termine) {
       const prive=await l.lirePrive(id);
       const e=prive.etat.etape;
-      if(e.nom==='attaque'||e.nom==='parade') {
+      if(e.nom==='parade') {
         const commande={type:'agir' as const,requete:crypto.randomUUID(),combat:id,revision:r.combat!.revision,action:{type:'repondre' as const,choisie:e.epreuve.bonne}};
         r=await l.appel(commande); bonnes++;
         assert.deepEqual({...((await l.appel(commande)).etat),maintenant:0},{...r.etat,maintenant:0});
@@ -93,11 +127,16 @@ it('le temps serveur décide des réponses, le temps illimité reste jouable et 
     let r=await l.commencer();
     r=await l.agir(r,{type:'choisir',carte:r.combat!.vue.duel.camps.joueur.main[0].id});
     const e=(await l.lirePrive(r.combat!.id)).etat.etape;
-    assert.equal(e.nom,'attaque');
-    if(e.nom!=='attaque') return;
+    assert.equal(e.nom,'parade');
+    if(e.nom!=='parade') return;
     l.avancerHeure(60_000);
     r=await l.agir(r,{type:'repondre',choisie:e.epreuve.bonne});
-    assert.equal(r.combat!.vue.etape.nom,'echappe');
+    assert.equal(r.combat!.vue.etape.nom,'bilan');
+    if (r.combat!.vue.etape.nom === 'bilan') {
+      assert.equal(r.combat!.vue.etape.parade.juste,false);
+      assert.equal(r.combat!.vue.etape.apres.manches.at(-1)!.joueur.reussie,true);
+      assert.equal(r.combat!.vue.etape.apres.manches.at(-1)!.adversaire.reussie,true);
+    }
     assert.equal(r.combat!.xp,0);
     l.avancerHeure(25*3_600_000);
     r=await l.appel({type:'lire'});
@@ -106,20 +145,22 @@ it('le temps serveur décide des réponses, le temps illimité reste jouable et 
     assert.equal(r.combat!.xp,0);
     const s=creerCombat({...choix,temps:'illimite'},{deck,possedees:deck,apprentissages:{}},null,catalogue,()=>0.999,0);
     const question=avancerCombat(s,{type:'choisir',carte:s.duel.camps.joueur.main[0].id},catalogue,()=>0.999,1).etat;
-    if(question.etape.nom!=='attaque') throw Error('attaque attendue');
+    if(question.etape.nom!=='parade') throw Error('attaque attendue');
     const suite=avancerCombat(question,{type:'repondre',choisie:question.etape.epreuve.bonne},catalogue,()=>0.999,3_600_000);
-    assert.equal(suite.etat.etape.nom,'parade');
-    assert.equal(vueCombat(suite.etat).etape.nom,'parade');
+    assert.equal(suite.etat.etape.nom,'bilan');
+    assert.equal(vueCombat(suite.etat).etape.nom,'bilan');
   } finally {await l.db.close();}
 });
 
 it('la progression et le combat suivent la récupération du compte, avec migration ancienne administrative distincte du classement',async()=>{
   const l=await laboratoire();
   try {
+    await l.admin();
+    await l.db.query("insert into public.possessions(utilisateur,carte,finitions) select $1,id,'{\"Normale\":1}' from public.cartes on conflict do nothing",[l.ids[0]]);
     let r=await l.commencer();
     r=await l.agir(r,{type:'choisir',carte:r.combat!.vue.duel.camps.joueur.main[0].id});
     const e=(await l.lirePrive(r.combat!.id)).etat.etape;
-    if(e.nom!=='attaque') throw Error('attaque attendue');
+    if(e.nom!=='parade') throw Error('attaque attendue');
     r=await l.agir(r,{type:'repondre',choisie:e.epreuve.bonne});
     await l.joueur(0);await l.db.query("select public.definir_un_code_de_secours('ABCDEFGHIJKLMNOPQRST')");
     await l.joueur(2);await l.db.query("select public.recuperer_par_code('ABCDEFGHIJKLMNOPQRST')");
@@ -129,15 +170,15 @@ it('la progression et le combat suivent la récupération du compte, avec migrat
     await l.admin();
     const xp=(await l.db.query<{xp:number}>('select xp::integer xp from public.comptes where utilisateur=$1',[l.ids[2]])).rows[0].xp;
     assert.equal(xp,XP.reponse);
-    await l.db.query('delete from public.possessions where utilisateur=$1 and carte=$2',[l.ids[2],e.carte.id]);
-    assert.equal((await l.db.query<{reussites:number}>('select reussites from public.apprentissages where utilisateur=$1 and carte=$2',[l.ids[2],e.carte.id])).rows[0].reussites,1);
-    await l.db.query('insert into public.progressions_validees values($1,$2)',[l.ids[2],JSON.stringify({xp:120,apprentissages:{[e.carte.id]:{posees:5,reussites:5,maitriseeLe:1000}}})]);
+    await l.db.query('delete from public.possessions where utilisateur=$1 and carte=$2',[l.ids[2],e.adverse.id]);
+    assert.equal((await l.db.query<{reussites:number}>('select reussites from public.apprentissages where utilisateur=$1 and carte=$2',[l.ids[2],e.adverse.id])).rows[0].reussites,1);
+    await l.db.query('insert into public.progressions_validees values($1,$2)',[l.ids[2],JSON.stringify({xp:120,apprentissages:{[e.adverse.id]:{posees:5,reussites:5,maitriseeLe:1000}}})]);
     await l.joueur(2); await assert.rejects(l.db.query('select public.importer_progression_validee($1)',[l.ids[2]]),/permission denied/);
     await l.admin(); await l.db.query('select public.importer_progression_validee($1)',[l.ids[2]]);
     const p=(await l.db.query<{r:{xp:number;apprentissages:Record<string,{reussites:number}>}}>('select public.progression_du_compte($1) r',[l.ids[2]])).rows[0].r;
-    assert.equal(p.xp,125); assert.equal(p.apprentissages[e.carte.id].reussites,6);
-    const verifie=(await l.db.query<{r:Record<string,{reussies:number}>}>('select public.savoirs_verifies($1,$2) r',[l.ids[2],JSON.stringify(deck)])).rows[0].r;
-    assert.equal(verifie[e.carte.id].reussies,1,'le double n’hérite pas des statistiques déclarées de l’ancien client');
+    assert.equal(p.xp,125); assert.equal(p.apprentissages[e.adverse.id].reussites,6);
+    const verifie=(await l.db.query<{r:Record<string,{reussies:number}>}>('select public.savoirs_verifies($1,$2) r',[l.ids[2],JSON.stringify([e.adverse.id])])).rows[0].r;
+    assert.equal(verifie[e.adverse.id].reussies,1,'le double n’hérite pas des statistiques déclarées de l’ancien client');
     await assert.rejects(l.db.query('select public.importer_progression_validee($1)',[l.ids[2]]),/déjà importée/);
     await l.db.exec(migrationCombats());
     assert.equal((await l.db.query<{r:{xp:number}}>('select public.progression_du_compte($1) r',[l.ids[2]])).rows[0].r.xp,125);
@@ -195,8 +236,12 @@ it('les paquets et les réponses créditent l’expérience serveur et son bonus
     let r=await l.commencer();
     r=await l.agir(r,{type:'choisir',carte:r.combat!.vue.duel.camps.joueur.main[0].id});
     for(let i=1;i<=2;i++) {
+      if (i > 1) {
+        r=await l.agir(r,{type:'continuer'});
+        r=await l.agir(r,{type:'choisir',carte:r.combat!.vue.duel.camps.joueur.main[0].id});
+      }
       const e=(await l.lirePrive(r.combat!.id)).etat.etape;
-      if(e.nom!=='attaque'&&e.nom!=='parade') throw Error('question attendue');
+      if(e.nom!=='parade') throw Error('question attendue');
       r=await l.agir(r,{type:'repondre',choisie:e.epreuve.bonne});
       const bonus=i*XP.reponse*EQUILIBRAGE.payant.bonusXpPourcent;
       assert.equal(r.combat!.xp,i*XP.reponse+Math.floor(bonus/100));
