@@ -200,6 +200,9 @@ au paiement ; sa résolution nécessite une vérification administrative dans ce
 
 ## Limites avant production
 
+La préparation séparée de la production est décrite dans `GUIDE-paiements-production.md`.
+Les fonctions de test conservent leurs clés, tarifs et restrictions actuels.
+
 - Cette intégration est volontairement **limitée aux tests** : clés réelles refusées,
   liste de joueurs autorisés obligatoire, aucun bouton public par défaut.
 - La récupération par e-mail n'est pas ajoutée : le code de secours existant reste

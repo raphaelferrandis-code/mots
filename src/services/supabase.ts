@@ -94,12 +94,12 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
 
   // Pour payer, ne jamais ouvrir silencieusement un nouveau compte si la session
   // a disparu : l'achat doit appartenir à la collection que le joueur regarde.
-  async function appelerPaiement<T>(corps: object): Promise<T> {
+  async function appelerPaiement<T>(corps: object, mode: 'test' | 'production' = 'test'): Promise<T> {
     const gardee = exterieur.lireLaSession() ?? enMemoire;
     if (!gardee || gardee.expireLe <= exterieur.maintenant()) throw new ErreurDuServeur('Session expirée. Recharge le jeu et vérifie ta collection avant de payer.', true);
     let reponse: Response;
     try {
-      reponse = await exterieur.requete(`${base}/functions/v1/paiement`, {
+      reponse = await exterieur.requete(`${base}/functions/v1/${mode === 'production' ? 'paiement-production' : 'paiement'}`, {
         method: 'POST', headers: { ...enTetes, Authorization: `Bearer ${gardee.acces}` },
         body: JSON.stringify(corps), signal: AbortSignal.timeout(60_000),
       });

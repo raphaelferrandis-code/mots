@@ -1,19 +1,22 @@
 // @ts-nocheck
 // Généré par node serveur/preparer-paiements.mjs — coller dans index.ts de Supabase.
 //#region supabase/functions/_shared/configuration.ts
-function configuration() {
+function configuration(mode = "test") {
 	const lire = (nom) => {
 		const valeur = Deno.env.get(nom);
 		if (!valeur) throw new Error(`Configuration manquante : ${nom}`);
 		return valeur;
 	};
+	const reel = mode === "production";
 	return {
 		supabase: lire("SUPABASE_URL"),
 		service: lire("SUPABASE_SERVICE_ROLE_KEY"),
-		stripe: lire("STRIPE_SECRET_KEY"),
-		signature: lire("STRIPE_WEBHOOK_SECRET"),
-		site: lire("SITE_URL"),
-		testeurs: lire("STRIPE_TEST_USER_IDS").split(",").map((s) => s.trim()).filter(Boolean)
+		stripe: lire(reel ? "STRIPE_LIVE_SECRET_KEY" : "STRIPE_SECRET_KEY"),
+		signature: lire(reel ? "STRIPE_LIVE_WEBHOOK_SECRET" : "STRIPE_WEBHOOK_SECRET"),
+		site: lire(reel ? "SITE_URL_PRODUCTION" : "SITE_URL"),
+		testeurs: reel ? [] : lire("STRIPE_TEST_USER_IDS").split(",").map((s) => s.trim()).filter(Boolean),
+		mode,
+		achatsOuverts: reel && Deno.env.get("PAIEMENTS_PRODUCTION_OUVERTS") === "true"
 	};
 }
 //#endregion
@@ -29,8 +32,19 @@ var PRIX = {
 		centimes: 499
 	}
 };
-function creerStripe(secret, requete = fetch) {
-	if (!secret.startsWith("sk_test_")) throw new Error("Seule une clé Stripe de test est acceptée.");
+var PRIX_PRODUCTION = {
+	necessaire: {
+		id: "price_1UJ6tHK2IFab5EhcM6zOoVai",
+		centimes: 599
+	},
+	collectionneur: {
+		id: "price_1UJ6tHK2IFab5EhcHMwpkEsQ",
+		centimes: 499
+	}
+};
+var prixDuMode = (mode) => mode === "production" ? PRIX_PRODUCTION : PRIX;
+function creerStripe(secret, requete = fetch, mode = "test") {
+	if (!secret.startsWith(mode === "production" ? "sk_live_" : "sk_test_")) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
 	return async (path, body, key) => {
 		const r = await requete(`https://api.stripe.com/v1/${path}`, {
 			method: body ? "POST" : "GET",
@@ -45,7 +59,12 @@ function creerStripe(secret, requete = fetch) {
 		});
 		if (!r.ok) throw new Error(`Stripe indisponible (${r.status}).`);
 		const data = await r.json();
-		if (data.livemode === true) throw new Error("Objet Stripe réel interdit.");
+		const verifierMode = (objet) => {
+			if (!objet || typeof objet !== "object") return;
+			if ("livemode" in objet && objet.livemode !== (mode === "production")) throw new Error("Objet Stripe du mauvais environnement.");
+			for (const valeur of Object.values(objet)) verifierMode(valeur);
+		};
+		verifierMode(data);
 		return data;
 	};
 }
@@ -75,35 +94,37 @@ async function liste(stripe, path) {
 		if (!r.data.length) break;
 		curseur = r.data.at(-1).id;
 	}
-	throw new Error("Historique Stripe trop long pour ce mode test.");
+	throw new Error("Historique Stripe trop long pour une synchronisation immédiate.");
 }
-function verifierPrix(prix, offre) {
-	const attendu = PRIX[offre];
-	if (prix.livemode !== false || prix.id !== attendu.id || prix.active !== true || prix.unit_amount !== attendu.centimes || prix.currency !== "eur" || (offre === "necessaire" ? prix.type !== "one_time" : prix.type !== "recurring" || prix.recurring?.interval !== "month" || prix.recurring?.interval_count !== 1)) throw new Error("Le tarif Stripe ne correspond pas à l’offre prévue.");
+function verifierPrix(prix, offre, mode = "test") {
+	const attendu = prixDuMode(mode)[offre];
+	if (prix.livemode !== (mode === "production") || prix.id !== attendu.id || prix.active !== true || prix.unit_amount !== attendu.centimes || prix.currency !== "eur" || (offre === "necessaire" ? prix.type !== "one_time" : prix.type !== "recurring" || prix.recurring?.interval !== "month" || prix.recurring?.interval_count !== 1)) throw new Error("Le tarif Stripe ne correspond pas à l’offre prévue.");
 }
-async function lireDroits(stripe, client, compte) {
+async function lireDroits(stripe, client, compte, mode = "test") {
+	const prix = prixDuMode(mode);
+	const reel = mode === "production";
 	const query = `customer=${encodeURIComponent(client)}`;
 	const sessions = await liste(stripe, `checkout/sessions?${query}`);
 	let album = false;
 	const paiementValide = async (pi) => {
 		if (typeof pi !== "string" || !pi.startsWith("pi_")) return false;
-		return (await liste(stripe, `charges?payment_intent=${encodeURIComponent(pi)}`)).some((c) => c.livemode === false && c.customer === client && c.paid === true && c.status === "succeeded" && c.disputed !== true && c.amount > 0 && c.amount_refunded < c.amount);
+		return (await liste(stripe, `charges?payment_intent=${encodeURIComponent(pi)}`)).some((c) => c.livemode === reel && c.customer === client && c.paid === true && c.status === "succeeded" && c.disputed !== true && c.amount > 0 && c.amount_refunded < c.amount);
 	};
 	for (const s of sessions) {
-		if (s.livemode !== false || s.metadata?.compte !== compte || s.metadata?.offre !== "necessaire" || s.mode !== "payment" || s.status !== "complete" || s.payment_status !== "paid") continue;
+		if (s.livemode !== reel || s.metadata?.compte !== compte || s.metadata?.offre !== "necessaire" || s.mode !== "payment" || s.status !== "complete" || s.payment_status !== "paid") continue;
 		const lignes = await liste(stripe, `checkout/sessions/${s.id}/line_items`);
-		if (lignes.length === 1 && lignes[0].price?.id === PRIX.necessaire.id && lignes[0].quantity === 1 && await paiementValide(s.payment_intent)) album = true;
+		if (lignes.length === 1 && lignes[0].price?.id === prix.necessaire.id && lignes[0].quantity === 1 && await paiementValide(s.payment_intent)) album = true;
 	}
-	const abonnements = (await liste(stripe, `subscriptions?${query}&status=all`)).filter((s) => s.livemode === false && s.metadata?.compte === compte && s.metadata?.offre === "collectionneur");
+	const abonnements = (await liste(stripe, `subscriptions?${query}&status=all`)).filter((s) => s.livemode === reel && s.metadata?.compte === compte && s.metadata?.offre === "collectionneur");
 	const ouverts = abonnements.filter((s) => !["canceled", "incomplete_expired"].includes(s.status));
 	let fin = 0;
 	for (const s of abonnements) {
 		const factures = await liste(stripe, `invoices?subscription=${s.id}&status=paid`);
 		for (const f of factures) {
-			if (f.livemode !== false || f.customer !== client || f.paid !== true || f.amount_paid <= 0 || !await paiementValide(f.payment_intent)) continue;
+			if (f.livemode !== reel || f.customer !== client || f.paid !== true || f.amount_paid <= 0 || !await paiementValide(f.payment_intent)) continue;
 			const lignes = await liste(stripe, `invoices/${f.id}/lines`);
 			for (const l of lignes) {
-				if (l.price?.id !== PRIX.collectionneur.id || l.proration === true || l.quantity !== 1 || !Number.isFinite(l.period?.end)) continue;
+				if (l.price?.id !== prix.collectionneur.id || l.proration === true || l.quantity !== 1 || !Number.isFinite(l.period?.end)) continue;
 				fin = Math.max(fin, Math.min(l.period.end, s.ended_at ?? Infinity));
 			}
 		}
@@ -117,14 +138,20 @@ async function lireDroits(stripe, client, compte) {
 //#endregion
 //#region supabase/functions/_shared/paiements.ts
 function creerPaiements(config, requete = fetch) {
-	const stripe = creerStripe(config.stripe, requete);
+	const mode = config.mode ?? "test";
+	const reel = mode === "production";
+	const prix = prixDuMode(mode);
+	const suffixe = reel ? "production" : "test";
+	const application = `philamots-${suffixe}`;
+	const stripe = creerStripe(config.stripe, requete, mode);
 	const site = new URL(config.site);
 	if (site.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(site.hostname)) throw new Error("Adresse du site invalide.");
+	if (reel && (site.origin !== "https://philamots.fr" || site.pathname !== "/" || site.search || site.hash || site.username || site.password)) throw new Error("La production doit utiliser https://philamots.fr.");
 	const retour = `${site.origin}${site.pathname.replace(/\/$/, "")}/`;
 	const cors = {
 		"Access-Control-Allow-Origin": site.origin,
 		"Access-Control-Allow-Headers": "authorization, apikey, content-type",
-		"Access-Control-Allow-Methods": "POST, OPTIONS",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 		Vary: "Origin"
 	};
 	const json = (data, status = 200) => new Response(JSON.stringify(data), {
@@ -150,7 +177,7 @@ function creerPaiements(config, requete = fetch) {
 		const texte = await r.text();
 		return texte ? JSON.parse(texte) : null;
 	}
-	const rpc = (nom, body) => db(`rpc/${nom}`, body);
+	const rpc = (nom, body) => db(`rpc/${nom.replace(/_test$/, `_${suffixe}`)}`, body);
 	async function sousVerrou(id, action) {
 		const l = await rpc("verrouiller_paiement_test", { p_id: id });
 		try {
@@ -174,7 +201,7 @@ function creerPaiements(config, requete = fetch) {
 			fin: null,
 			ouvert: false
 		};
-		const droits = await lireDroits(stripe, l.client_stripe, l.id);
+		const droits = await lireDroits(stripe, l.client_stripe, l.id, mode);
 		await rpc("appliquer_paiement_test", {
 			p_id: l.id,
 			p_verrou: l.verrou,
@@ -185,6 +212,11 @@ function creerPaiements(config, requete = fetch) {
 		return droits;
 	}
 	async function paiement(req) {
+		if (req.method === "GET" && new URL(req.url).searchParams.get("action") === "etat") return json({
+			version: "philamots-paiements-v1",
+			mode,
+			achatsOuverts: reel ? config.achatsOuverts === true : false
+		});
 		if (req.headers.get("origin") !== site.origin) return json({ erreur: "Origine non autorisée." }, 403);
 		if (req.method === "OPTIONS") return new Response(null, {
 			headers: cors,
@@ -203,35 +235,38 @@ function creerPaiements(config, requete = fetch) {
 			});
 			if (!auth.ok) return json({ erreur: "Session expirée. Retrouve ton compte avant de payer." }, 401);
 			const user = await auth.json();
-			if (!config.testeurs.includes(user.id)) return json({ erreur: "Les paiements sont réservés aux comptes de test autorisés." }, 403);
+			if (!reel && !config.testeurs.includes(user.id)) return json({ erreur: "Les paiements sont réservés aux comptes de test autorisés." }, 403);
 			const body = await req.json();
 			if (![
 				"achat",
 				"portail",
 				"synchroniser"
 			].includes(body.action)) return json({ erreur: "Action inconnue." }, 400);
-			if (body.action === "achat" && !Object.hasOwn(PRIX, body.offre)) return json({ erreur: "Offre inconnue." }, 400);
+			if (body.action === "achat" && reel && config.achatsOuverts !== true) return json({ erreur: "Les achats ne sont pas encore ouverts." }, 403);
+			if (body.action === "achat" && !Object.hasOwn(prix, body.offre)) return json({ erreur: "Offre inconnue." }, 400);
 			const comptes = await db(`comptes?utilisateur=eq.${encodeURIComponent(user.id)}&select=annee_de_naissance,code_defini_le`);
 			if (comptes.length !== 1) return json({ erreur: "Ouvre ta collection avant de continuer." }, 409);
-			if (body.action === "achat" && (!comptes[0].code_defini_le || !comptes[0].annee_de_naissance || (/* @__PURE__ */ new Date()).getUTCFullYear() - comptes[0].annee_de_naissance < 18)) return json({ erreur: "Déclare ton âge et crée ton code de secours dans les Réglages avant le test." }, 403);
-			return await sousVerrou((await rpc("preparer_paiement_test", { p_utilisateur: user.id })).id, async (l) => {
+			if (body.action === "achat" && (!comptes[0].code_defini_le || !comptes[0].annee_de_naissance || (/* @__PURE__ */ new Date()).getUTCFullYear() - comptes[0].annee_de_naissance < 18)) return json({ erreur: "Déclare ton âge et crée ton code de secours dans les Réglages avant l’achat." }, 403);
+			const existantes = body.action === "achat" ? null : await db(`paiements_${suffixe}?utilisateur=eq.${encodeURIComponent(user.id)}&select=*`);
+			if (existantes && !existantes[0]?.client_stripe) return json({ erreur: "Aucun paiement associé à ce compte dans cet environnement." }, 409);
+			return await sousVerrou((existantes ? existantes[0] : await rpc("preparer_paiement_test", { p_utilisateur: user.id })).id, async (l) => {
 				if (!l.client_stripe) {
 					if (Date.now() - Date.parse(l.cree_le) > 828e5) throw new Error("Création Stripe à vérifier avant de poursuivre. Contacte contact@philamots.fr.");
 					l.client_stripe = (await stripe("customers", {
 						"metadata[compte]": l.id,
-						"metadata[application]": "philamots-test"
+						"metadata[application]": application
 					}, `client-${l.id}`)).id;
 					await enregistrer(l);
 				}
 				if (body.action === "synchroniser") return json(await synchroniser(l));
 				if (body.action === "portail") {
 					const configuration = await stripe("billing_portal/configurations", {
-						"business_profile[headline]": "Philamots — environnement de test",
+						"business_profile[headline]": reel ? "Philamots" : "Philamots — environnement de test",
 						"features[subscription_cancel][enabled]": "true",
 						"features[subscription_cancel][mode]": "at_period_end",
 						"features[payment_method_update][enabled]": "true",
 						"features[invoice_history][enabled]": "true"
-					}, "philamots-portail-test-v1");
+					}, `philamots-portail-${suffixe}-v1`);
 					const portal = await stripe("billing_portal/sessions", {
 						customer: l.client_stripe,
 						configuration: configuration.id,
@@ -242,7 +277,7 @@ function creerPaiements(config, requete = fetch) {
 				const offre = body.offre;
 				const droits = await synchroniser(l);
 				if (offre === "necessaire" ? droits.album : droits.ouvert) return json({ erreur: "Cette offre est déjà souscrite. Utilise « Gérer mon abonnement »." }, 409);
-				verifierPrix(await stripe(`prices/${PRIX[offre].id}`), offre);
+				verifierPrix(await stripe(`prices/${prix[offre].id}`), offre, mode);
 				const ancienne = l.sessions[offre];
 				if (ancienne?.id) {
 					const s = await stripe(`checkout/sessions/${ancienne.id}`);
@@ -258,13 +293,13 @@ function creerPaiements(config, requete = fetch) {
 				}
 				const tentative = l.sessions[offre];
 				if (Date.now() - tentative.cree > 828e5) throw new Error("Un ancien paiement doit être vérifié avant de réessayer.");
-				const mode = offre === "necessaire" ? "payment" : "subscription";
-				const prefixe = mode === "payment" ? "payment_intent_data" : "subscription_data";
+				const modeCheckout = offre === "necessaire" ? "payment" : "subscription";
+				const prefixe = modeCheckout === "payment" ? "payment_intent_data" : "subscription_data";
 				const session = await stripe("checkout/sessions", {
-					mode,
+					mode: modeCheckout,
 					customer: l.client_stripe,
 					client_reference_id: l.id,
-					"line_items[0][price]": PRIX[offre].id,
+					"line_items[0][price]": prix[offre].id,
 					"line_items[0][quantity]": "1",
 					"payment_method_types[0]": "card",
 					locale: "fr",
@@ -289,15 +324,15 @@ function creerPaiements(config, requete = fetch) {
 		if (!await verifierSignature(corps, req.headers.get("stripe-signature") ?? "", config.signature)) return json({ erreur: "Signature invalide." }, 400);
 		try {
 			const evt = JSON.parse(corps);
-			if (evt.livemode !== false) return json({ erreur: "Événement réel interdit." }, 400);
+			if (evt.livemode !== reel) return json({ erreur: "Événement du mauvais environnement." }, 400);
 			if (!/^(checkout\.session\.|invoice\.|customer\.subscription\.|charge\.)/.test(evt.type)) return json({ ignore: true });
 			let objet = evt.data.object;
 			if (evt.type.startsWith("charge.dispute.")) objet = await stripe(`charges/${typeof objet.charge === "string" ? objet.charge : objet.charge.id}`);
 			const client = typeof objet.customer === "string" ? objet.customer : objet.customer?.id;
 			if (!client) return json({ ignore: true });
 			const customer = await stripe(`customers/${encodeURIComponent(client)}`);
-			if (customer.metadata?.application !== "philamots-test") return json({ ignore: true });
-			const liens = await db(`paiements_test?id=eq.${encodeURIComponent(customer.metadata.compte)}&select=*`);
+			if (customer.metadata?.application !== application) return json({ ignore: true });
+			const liens = await db(`paiements_${suffixe}?id=eq.${encodeURIComponent(customer.metadata.compte)}&select=*`);
 			if (liens.length !== 1 || liens[0].client_stripe !== client) throw new Error("Liaison Stripe pas encore enregistrée.");
 			await sousVerrou(liens[0].id, synchroniser);
 			return json({ recu: true });

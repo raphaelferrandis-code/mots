@@ -346,6 +346,6 @@ function creerPaiements(config, requete = fetch) {
 	};
 }
 //#endregion
-//#region supabase/functions/stripe-webhook/index.ts
-Deno.serve((req) => creerPaiements(configuration()).webhook(req));
+//#region supabase/functions/stripe-webhook-production/index.ts
+Deno.serve((req) => creerPaiements(configuration("production")).webhook(req));
 //#endregion

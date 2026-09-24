@@ -4,12 +4,18 @@ export const PRIX = {
   necessaire: { id: 'price_1UIqsGKBKL3aSktUL2DDagCC', centimes: 599 },
   collectionneur: { id: 'price_1UIquSKBKL3aSktUxN8o68C5', centimes: 499 },
 } as const;
+export const PRIX_PRODUCTION = {
+  necessaire: { id: 'price_1UJ6tHK2IFab5EhcM6zOoVai', centimes: 599 },
+  collectionneur: { id: 'price_1UJ6tHK2IFab5EhcHMwpkEsQ', centimes: 499 },
+} as const;
+export type ModePaiement = 'test' | 'production';
+export const prixDuMode = (mode: ModePaiement) => mode === 'production' ? PRIX_PRODUCTION : PRIX;
 export type Offre = keyof typeof PRIX;
 export type Objet = Record<string, any>; // Objets REST validés aux frontières ci-dessous.
 export type Stripe = (path: string, body?: Record<string, string>, key?: string) => Promise<Objet>;
 
-export function creerStripe(secret: string, requete: typeof fetch = fetch): Stripe {
-  if (!secret.startsWith('sk_test_')) throw new Error('Seule une clé Stripe de test est acceptée.');
+export function creerStripe(secret: string, requete: typeof fetch = fetch, mode: ModePaiement = 'test'): Stripe {
+  if (!secret.startsWith(mode === 'production' ? 'sk_live_' : 'sk_test_')) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
   return async (path, body, key) => {
     const r = await requete(`https://api.stripe.com/v1/${path}`, {
       method: body ? 'POST' : 'GET', signal: AbortSignal.timeout(15_000),
@@ -19,7 +25,13 @@ export function creerStripe(secret: string, requete: typeof fetch = fetch): Stri
     });
     if (!r.ok) throw new Error(`Stripe indisponible (${r.status}).`);
     const data = await r.json();
-    if (data.livemode === true) throw new Error('Objet Stripe réel interdit.');
+    // Certaines réponses (listes, portail) n'ont pas de livemode. Vérifier aussi les objets imbriqués.
+    const verifierMode = (objet: any): void => {
+      if (!objet || typeof objet !== 'object') return;
+      if ('livemode' in objet && objet.livemode !== (mode === 'production')) throw new Error('Objet Stripe du mauvais environnement.');
+      for (const valeur of Object.values(objet)) verifierMode(valeur);
+    };
+    verifierMode(data);
     return data;
   };
 }
@@ -48,12 +60,12 @@ export async function liste(stripe: Stripe, path: string): Promise<Objet[]> {
     if (!r.data.length) break;
     curseur = r.data.at(-1).id;
   }
-  throw new Error('Historique Stripe trop long pour ce mode test.');
+  throw new Error('Historique Stripe trop long pour une synchronisation immédiate.');
 }
 
-export function verifierPrix(prix: Objet, offre: Offre): void {
-  const attendu = PRIX[offre];
-  if (prix.livemode !== false || prix.id !== attendu.id || prix.active !== true || prix.unit_amount !== attendu.centimes || prix.currency !== 'eur'
+export function verifierPrix(prix: Objet, offre: Offre, mode: ModePaiement = 'test'): void {
+  const attendu = prixDuMode(mode)[offre];
+  if (prix.livemode !== (mode === 'production') || prix.id !== attendu.id || prix.active !== true || prix.unit_amount !== attendu.centimes || prix.currency !== 'eur'
     || (offre === 'necessaire' ? prix.type !== 'one_time' : prix.type !== 'recurring' || prix.recurring?.interval !== 'month' || prix.recurring?.interval_count !== 1)) {
     throw new Error('Le tarif Stripe ne correspond pas à l’offre prévue.');
   }
@@ -62,33 +74,35 @@ export function verifierPrix(prix: Objet, offre: Offre): void {
 export type Droits = { album: boolean; fin: string | null; ouvert: boolean };
 // Lecture de l'état actuel, pas du contenu ancien d'un événement : doublons et
 // notifications reçues dans le désordre produisent les mêmes droits.
-export async function lireDroits(stripe: Stripe, client: string, compte: string): Promise<Droits> {
+export async function lireDroits(stripe: Stripe, client: string, compte: string, mode: ModePaiement = 'test'): Promise<Droits> {
+  const prix = prixDuMode(mode);
+  const reel = mode === 'production';
   const query = `customer=${encodeURIComponent(client)}`;
   const sessions = await liste(stripe, `checkout/sessions?${query}`);
   let album = false;
   const paiementValide = async (pi: unknown): Promise<boolean> => {
     if (typeof pi !== 'string' || !pi.startsWith('pi_')) return false;
     const charges = await liste(stripe, `charges?payment_intent=${encodeURIComponent(pi)}`);
-    return charges.some(c => c.livemode === false && c.customer === client && c.paid === true && c.status === 'succeeded'
+    return charges.some(c => c.livemode === reel && c.customer === client && c.paid === true && c.status === 'succeeded'
       && c.disputed !== true && c.amount > 0 && c.amount_refunded < c.amount);
   };
   for (const s of sessions) {
-    if (s.livemode !== false || s.metadata?.compte !== compte || s.metadata?.offre !== 'necessaire'
+    if (s.livemode !== reel || s.metadata?.compte !== compte || s.metadata?.offre !== 'necessaire'
       || s.mode !== 'payment' || s.status !== 'complete' || s.payment_status !== 'paid') continue;
     const lignes = await liste(stripe, `checkout/sessions/${s.id}/line_items`);
-    if (lignes.length === 1 && lignes[0].price?.id === PRIX.necessaire.id && lignes[0].quantity === 1 && await paiementValide(s.payment_intent)) album = true;
+    if (lignes.length === 1 && lignes[0].price?.id === prix.necessaire.id && lignes[0].quantity === 1 && await paiementValide(s.payment_intent)) album = true;
   }
   const abonnements = (await liste(stripe, `subscriptions?${query}&status=all`))
-    .filter(s => s.livemode === false && s.metadata?.compte === compte && s.metadata?.offre === 'collectionneur');
+    .filter(s => s.livemode === reel && s.metadata?.compte === compte && s.metadata?.offre === 'collectionneur');
   const ouverts = abonnements.filter(s => !['canceled', 'incomplete_expired'].includes(s.status));
   let fin = 0;
   for (const s of abonnements) {
     const factures = await liste(stripe, `invoices?subscription=${s.id}&status=paid`);
     for (const f of factures) {
-      if (f.livemode !== false || f.customer !== client || f.paid !== true || f.amount_paid <= 0 || !await paiementValide(f.payment_intent)) continue;
+      if (f.livemode !== reel || f.customer !== client || f.paid !== true || f.amount_paid <= 0 || !await paiementValide(f.payment_intent)) continue;
       const lignes = await liste(stripe, `invoices/${f.id}/lines`);
       for (const l of lignes) {
-        if (l.price?.id !== PRIX.collectionneur.id || l.proration === true || l.quantity !== 1 || !Number.isFinite(l.period?.end)) continue;
+        if (l.price?.id !== prix.collectionneur.id || l.proration === true || l.quantity !== 1 || !Number.isFinite(l.period?.end)) continue;
         // Une résiliation immédiate coupe les droits ; à échéance, ended_at est la fin payée.
         fin = Math.max(fin, Math.min(l.period.end, s.ended_at ?? Infinity));
       }

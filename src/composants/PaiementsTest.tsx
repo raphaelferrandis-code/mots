@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePartie } from './usePartie.ts';
-import { paiement } from '../services/paiements.ts';
+import { paiement, paiementsDeTest } from '../services/paiements.ts';
 import { synchroniser } from '../services/partie.ts';
 import { lien } from '../navigation/routes.ts';
 import { abonnementActif, peutPayer } from '../jeu/formule.ts';
@@ -25,15 +25,15 @@ export function PaiementsTest() {
     } catch (erreur) { setMessage(erreur instanceof Error ? erreur.message : 'Paiement indisponible.'); }
     finally { setOccupe(false); }
   }
-  return <section className="rubrique" aria-label="Paiements de test">
-    <h2>Essayer les paiements</h2>
-    <p>Mode test réservé aux comptes autorisés. Aucun argent réel n’est encaissé.</p>
+  return <section className="rubrique" aria-label={paiementsDeTest ? 'Paiements de test' : 'Mes achats'}>
+    <h2>{paiementsDeTest ? 'Essayer les paiements' : 'Mes achats'}</h2>
+    {paiementsDeTest && <p>Mode test réservé aux comptes autorisés. Aucun argent réel n’est encaissé.</p>}
     {retour === 'retour' && <p role="status">De retour de Stripe : clique sur « Vérifier mes avantages » pour confirmer le paiement.</p>}
     {retour === 'annule' && <p>Tu as quitté le paiement. Tu peux reprendre avec le même bouton.</p>}
-    {!pret && <p>Avant l’achat, confirme ton âge en cliquant sur « Acheter » dans une formule et <a href={lien({ ecran: 'reglages' })}>crée ton code de secours dans les Réglages</a>.</p>}
+    {paiementsDeTest && !pret && <p>Avant l’achat, confirme ton âge en cliquant sur « Acheter » dans une formule et <a href={lien({ ecran: 'reglages' })}>crée ton code de secours dans les Réglages</a>.</p>}
     <div className="rangee-de-boutons">
-      <button className="bouton" disabled={occupe || !pret || formule.achatUnique} onClick={() => void lancer('achat', 'necessaire')}>Tester Mon album · 5,99 €</button>
-      <button className="bouton" disabled={occupe || !pret || abonnementActif(formule)} onClick={() => void lancer('achat', 'collectionneur')}>Tester Collectionneur · 4,99 €/mois</button>
+      {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || formule.achatUnique} onClick={() => void lancer('achat', 'necessaire')}>Tester Mon album · 5,99 €</button>}
+      {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || abonnementActif(formule)} onClick={() => void lancer('achat', 'collectionneur')}>Tester Collectionneur · 4,99 €/mois</button>}
       <button className="bouton" disabled={occupe} onClick={() => void lancer('portail')}>Gérer mon abonnement</button>
       <button className="bouton" disabled={occupe} onClick={() => void lancer('synchroniser')}>Vérifier mes avantages</button>
     </div>

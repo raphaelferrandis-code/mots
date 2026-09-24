@@ -1,5 +1,5 @@
 // La version payante (décision n° 34, offre arrêtée le 22 septembre 2026) : ce que donne chaque formule.
-// Les achats restent réservés au mode test ; la confirmation utilise les services de paiement existants.
+// Les achats sont fermés par défaut ; chaque environnement utilise sa propre fonction de paiement.
 
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -15,12 +15,14 @@ import type { Etage, Formule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { declarerMonAge } from '../services/partie.ts';
 import { PaiementsTest } from '../composants/PaiementsTest.tsx';
-import { paiement, paiementsDeTest } from '../services/paiements.ts';
+import { paiement, paiementsDeTest, paiementsDisponibles } from '../services/paiements.ts';
+import { useAchatsOuverts } from '../composants/useAchatsOuverts.ts';
 
 const AGE = EQUILIBRAGE.payant.ageMinimumPourPayer;
 const anneeActuelle = (): number => new Date().getFullYear();
 
 export function Formules() {
+  const achatsOuverts = useAchatsOuverts();
   const partie = usePartie();
   const [achat, setAchat] = useState<Etage | null>(null);
   const edition = useChargement(chargerEdition, 'edition');
@@ -55,10 +57,10 @@ export function Formules() {
                 <p className="offre-note">{album ? 'Cartes illustrées à titre d’exemple, une seule reçue. Finition non garantie.' : 'L’abonnement seul ne débloque pas les cosmétiques premium.'}</p>
               </div>
               <div className="offre-achat">
-                <p className="offre-prix">{prixEnClair(etage)}<small>Tarif envisagé</small></p>
-                <button type="button" className="offre-acheter" disabled={active} aria-label={`Acheter ${etage.nom}`} onClick={() => setAchat(etage)}>
+                <p className="offre-prix">{prixEnClair(etage)}<small>{achatsOuverts && !paiementsDeTest ? (album ? 'Paiement unique' : 'Abonnement mensuel') : 'Tarif envisagé'}</small></p>
+                <button type="button" className="offre-acheter" disabled={active} aria-label={`${achatsOuverts ? 'Acheter' : 'Découvrir'} ${etage.nom}`} onClick={() => setAchat(etage)}>
                   {!active && <span className="offre-acheter__eclat" aria-hidden="true">✧</span>}
-                  <span>{active ? 'Déjà activé' : 'Acheter'}</span>
+                  <span>{active ? 'Déjà activé' : achatsOuverts ? 'Acheter' : 'Bientôt disponible'}</span>
                   {!active && <span className="offre-acheter__fleche" aria-hidden="true">↗</span>}
                 </button>
               </div>
@@ -70,7 +72,7 @@ export function Formules() {
         <details>
           <summary>La surprise, en toute clarté</summary>
           <div className="offres-transparence">
-            <div><h2>De belles cartes.<br />Des règles transparentes.</h2><p>Deux offres indépendantes, qui peuvent se cumuler. Aucun achat possible pour le moment.</p></div>
+            <div><h2>De belles cartes.<br />Des règles transparentes.</h2><p>Deux offres indépendantes, qui peuvent se cumuler.{!achatsOuverts && ' Aucun achat possible pour le moment.'}</p></div>
             <div className="offres-probabilites"><h3>La dernière carte du paquet hebdomadaire</h3><div className="offres-chances">{Object.entries(EQUILIBRAGE.payant.dernierEmplacementHebdomadaire).map(([rarete, chance]) => <div key={rarete}><strong>{chance}<small> %</small></strong><span>{rarete}</span></div>)}</div><p>Les quatre premières cartes suivent les probabilités habituelles. La garantie de Légendaire des paquets ordinaires reste séparée.</p></div>
           </div>
         </details>
@@ -78,14 +80,14 @@ export function Formules() {
         <details><summary>Que reste-t-il à la fin de l’abonnement ?</summary><p>Tes cartes, ton XP, les paquets en réserve et les droits hebdomadaires déjà acquis sont conservés. Le rythme et le plafond de recharge redeviennent ceux du jeu gratuit.</p></details>
         <details><summary>Quel avantage en duel ?</summary><p>Les offres accélèrent la collection et peuvent donner un avantage en duel, particulièrement au début. Répondre correctement reste nécessaire. Tout le jeu reste accessible gratuitement, sans publicité.</p></details>
       </section>
-      {paiementsDeTest && <PaiementsTest />}
-      {achat && <ConfirmationAchat offre={achat} fermer={() => setAchat(null)} />}
+      {paiementsDisponibles && <PaiementsTest />}
+      {achat && <ConfirmationAchat offre={achat} achatsOuverts={achatsOuverts} fermer={() => setAchat(null)} />}
       <footer className="offres-pied"><span>Sans publicité. Le jeu reste ouvert à tous.</span><a href="mailto:contact@philamots.fr">Une question ? Écris-nous ↗</a></footer>
     </main>
   );
 }
 
-function ConfirmationAchat({ offre, fermer }: { offre: Etage; fermer: () => void }) {
+function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; achatsOuverts: boolean; fermer: () => void }) {
   const dialogue = useRef<HTMLDialogElement>(null);
   const partie = usePartie();
   const [occupe, setOccupe] = useState(false);
@@ -93,7 +95,7 @@ function ConfirmationAchat({ offre, fermer }: { offre: Etage; fermer: () => void
   const compte = partie.etat === 'prete' ? partie.compte : null;
   const surLeServeur = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
   const active = compte && (offre.cle === 'necessaire' ? compte.formule.achatUnique : abonnementActif(compte.formule));
-  const pret = paiementsDeTest && surLeServeur && compte && !!compte.codeDeSecoursLe && peutPayer(compte.formule, anneeActuelle()) && !active;
+  const pret = achatsOuverts && surLeServeur && compte && !!compte.codeDeSecoursLe && peutPayer(compte.formule, anneeActuelle()) && !active;
 
   useEffect(() => {
     const element = dialogue.current;
@@ -111,18 +113,18 @@ function ConfirmationAchat({ offre, fermer }: { offre: Etage; fermer: () => void
   }
 
   return <dialog className="offres-confirmation" ref={dialogue} aria-labelledby="confirmation-achat-titre" onCancel={e => { e.preventDefault(); if (!occupe) fermer(); }}>
-    <p className="offres-kicker">Confirmer mon choix</p>
+    <p className="offres-kicker">{achatsOuverts ? 'Confirmer mon choix' : 'La formule'}</p>
     <h2 id="confirmation-achat-titre">{offre.nom}</h2>
     <p className="offre-prix">{prixEnClair(offre)}</p>
-    <p className="petit">{paiementsDeTest ? 'Paiement de test : aucun argent réel ne sera encaissé.' : 'Les achats ne sont pas encore ouverts.'}</p>
-    {surLeServeur && compte ? <>
+    <p className="petit">{paiementsDeTest ? 'Paiement de test : aucun argent réel ne sera encaissé.' : achatsOuverts ? (offre.cle === 'collectionneur' ? 'Abonnement à 4,99 € par mois, renouvelé automatiquement. Résiliation possible depuis « Gérer mon abonnement ».' : 'Paiement unique de 5,99 €. Le cadeau de bienvenue est attribué une seule fois par compte.') : 'Les achats ne sont pas encore ouverts.'}</p>
+    {achatsOuverts && (surLeServeur && compte ? <>
       <Age formule={compte.formule} />
       {!compte.codeDeSecoursLe && <p className="petit">Avant l’achat, <a href={lien({ ecran: 'reglages' })}>crée ton code de secours dans les Réglages</a> pour protéger ta collection.</p>}
-    </> : <p className="petit">Un compte connecté est nécessaire pour confirmer ton âge et accéder au paiement.</p>}
+    </> : <p className="petit">Un compte connecté est nécessaire pour confirmer ton âge et accéder au paiement.</p>)}
     {active && <p role="status">Cette formule est déjà activée.</p>}
     {message && <p role="alert">{message}</p>}
     <div className="rangee-de-boutons">
-      <button type="button" className="bouton" disabled={!pret || occupe} onClick={() => void confirmer()}>{occupe ? 'Ouverture…' : paiementsDeTest ? 'Confirmer l’achat de test' : 'Achats bientôt disponibles'}</button>
+      <button type="button" className="bouton" disabled={!pret || occupe} onClick={() => void confirmer()}>{occupe ? 'Ouverture…' : paiementsDeTest ? 'Confirmer l’achat de test' : achatsOuverts ? 'Continuer vers le paiement' : 'Achats bientôt disponibles'}</button>
       <button type="button" className="bouton" disabled={occupe} onClick={fermer}>Fermer</button>
     </div>
   </dialog>;

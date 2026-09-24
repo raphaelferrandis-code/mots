@@ -30,6 +30,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # Prépare l'interface ; l'ouverture reste commandée par le serveur.
+          VITE_PAIEMENTS_PRODUCTION: 'true'
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

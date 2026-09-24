@@ -3,7 +3,7 @@ import { build } from 'vite';
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
 const dossier = new URL('./deploiement-paiements/', import.meta.url);
 await mkdir(dossier, { recursive: true });
-for (const nom of ['paiement', 'stripe-webhook']) {
+for (const nom of ['paiement', 'stripe-webhook', 'paiement-production', 'stripe-webhook-production']) {
   await build({ configFile: false, publicDir: false, build: {
     outDir: 'serveur/deploiement-paiements', emptyOutDir: false, minify: false, target: 'es2022',
     lib: { entry: `supabase/functions/${nom}/index.ts`, formats: ['es'], fileName: () => `${nom}.js` },
