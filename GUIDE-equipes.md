@@ -1,6 +1,8 @@
 # Équipes de deux joueurs
 
-Version du 24 septembre 2026, préparée localement. Compilation, 332 tests et parcours navigateur validés. La migration de production attend l’autorisation explicite de Raphaël ; rien n’a été publié pour cette fonctionnalité.
+Déployé le 24 septembre 2026 après autorisation de Raphaël : migration `11-equipes.sql` sur Supabase, puis client `f8639ab` sur https://philamots.fr/#/equipe. Compilation, 332 tests et parcours navigateur validés ; déploiement GitHub Pages réussi.
+
+Contrôle avant/après migration : 60 comptes, 243 profils, 409 possessions, 114 Encre et 0 Encre achetée, inchangés. RLS active sur les trois tables ; lecture directe interdite ; `mon_equipe` accessible aux joueurs connectés et refusée aux anonymes.
 
 - Page `#/equipe`, accessible depuis les amis, le profil et le salon des duels.
 - Nom unique de 3 à 16 caractères, soumis au même filtre que les pseudonymes ; six emblèmes au choix.

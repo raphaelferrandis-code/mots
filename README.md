@@ -12,7 +12,7 @@ Jeu de cartes à collectionner où chaque carte est un vrai mot de la langue fra
 - Le programme des testeurs : [GUIDE-testeurs.md](GUIDE-testeurs.md), et leurs retours : [RETOURS-testeurs.md](RETOURS-testeurs.md).
 - Le plan du marché (échanges et enchères entre joueurs) : [BRIEF-marche.md](BRIEF-marche.md).
 - Les amis, échanges directs et défis amicaux (déployés le 24 septembre 2026) : [GUIDE-amis.md](GUIDE-amis.md).
-- Les équipes de deux joueurs (nom, emblème et invitations ; migration 11 nécessaire) : [GUIDE-equipes.md](GUIDE-equipes.md).
+- Les équipes de deux joueurs (nom, emblème et invitations ; déployées le 24 septembre 2026) : [GUIDE-equipes.md](GUIDE-equipes.md).
 - Ce qui bloque la version payante : [BRIEF-version-payante.md](BRIEF-version-payante.md), et le brouillon des conditions de vente : [CGV-brouillon.md](CGV-brouillon.md).
 - L'origine et la licence des données sont dans [SOURCES.md](SOURCES.md).
 - Ce que contiennent vraiment les données : [COMPTE-RENDU-donnees.md](COMPTE-RENDU-donnees.md).
