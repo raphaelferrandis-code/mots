@@ -1,6 +1,8 @@
 # Préparation des paiements de production
 
-24 septembre 2026 — **Installation en cours, achats réels fermés par défaut.**
+24 septembre 2026 — **Code publié, fonctions et migration installées, achats réels fermés.**
+Les secrets Stripe de production, la destination webhook et le réglage JWT des deux
+fonctions restent à terminer. Voir `ACTIVATION-paiements.md` pour la reprise précise.
 Les essais effectués avec Raphi concernent le sandbox. Les tests automatiques du
 mode production simulent Stripe : aucun débit réel n'a été effectué.
 
