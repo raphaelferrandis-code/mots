@@ -9,6 +9,7 @@ import { lien } from '../navigation/routes.ts';
 import { FINITIONS } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { amisDisponibles } from '../services/amis.ts';
+import { serveurEquipes } from '../services/equipes.ts';
 import type { AlbumAmi, CarnetAmis, Relation, TimbreEchange } from '../services/amis.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, rejoindreLesJoutes, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
@@ -31,6 +32,8 @@ export function Amis() {
   const [aRetirer, setARetirer] = useState<string | null>(null);
   const [aAccepter, setAAccepter] = useState<string | null>(null);
   const carnet = useChargement(() => disponible ? lireMesAmis() : Promise.resolve(null), `amis:${disponible}:${tour}`);
+  const equipe = useChargement(() => disponible ? serveurEquipes().lire() : Promise.resolve(null), `equipe:${disponible}:${tour}`);
+  const invitationsEquipe = equipe.etat === 'pret' ? equipe.donnees?.invitations.length ?? 0 : 0;
   const [dernierCarnet, setDernierCarnet] = useState<CarnetAmis | null>(null);
   useEffect(() => { if (carnet.etat === 'pret') setDernierCarnet(carnet.donnees); }, [carnet]);
   const edition = useChargement(chargerEdition, 'edition');
@@ -69,7 +72,7 @@ export function Amis() {
 
   return <main className="ecran amis" aria-busy={occupe}>
     <h1 className="visuellement-cache">Amis</h1>
-    {disponible && <div className="amis__outils"><button className="bouton outil" disabled={occupe} onClick={() => setTour(t => t + 1)}>Actualiser</button></div>}
+    <div className="amis__outils"><a className="bouton bouton--discret" href={lien({ ecran: 'equipe' })}>Mon équipe{invitationsEquipe > 0 && ` · ${invitationsEquipe} invitation${invitationsEquipe > 1 ? 's' : ''}`}</a>{disponible && <button className="bouton outil" disabled={occupe} onClick={() => setTour(t => t + 1)}>Actualiser</button>}</div>
     {message && <p className="bloc" role="status">{message}</p>}
     {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
     {!amisDisponibles ? <section className="etat-vide"><h2>Retrouvons-nous en ligne</h2><p>Les amis, échanges et défis nécessitent une connexion au serveur du jeu.</p></section>

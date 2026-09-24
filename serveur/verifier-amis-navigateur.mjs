@@ -55,7 +55,7 @@ try {
           return route.fulfill({ status: r.status, headers, body: await r.text() });
         }
         const nom = u.pathname.split('/').at(-1);
-        assert.ok(['mon_compte', 'mes_amis', 'demander_ami', 'repondre_ami', 'album_ami', 'proposer_echange', 'repondre_echange'].includes(nom), `RPC inattendue : ${nom}`);
+        assert.ok(['mon_compte', 'mon_equipe', 'mes_amis', 'demander_ami', 'repondre_ami', 'album_ami', 'proposer_echange', 'repondre_echange'].includes(nom), `RPC inattendue : ${nom}`);
         const r = await serialiser(async () => {
           await b.joueur(joueur);
           return (await b.db.query(`select public.${nom}(${Object.keys(corps).map((k, i) => { assert.match(k, /^p_[a-z_]+$/); return `${k}=>$${i + 1}`; }).join(',')}) r`, Object.values(corps))).rows[0].r;

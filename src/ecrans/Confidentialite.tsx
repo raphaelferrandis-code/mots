@@ -113,6 +113,7 @@ export function Confidentialite() {
       {collectionSurLeServeur && <section className="rubrique">
         <h2>Amis et échanges</h2>
         <p>Le serveur conserve tes demandes d’amitié, ta liste d’amis et vos propositions d’échange. Seuls les deux joueurs concernés peuvent les consulter. Accepter une amitié permet à cet ami de voir les mots et finitions de ta collection pour proposer un échange, sans lui donner accès à ton compte ni à tes réponses.</p>
+        <p>Ton équipe conserve son nom, son emblème et ses deux membres. Ces informations et les invitations sont visibles uniquement par les joueurs concernés. Supprimer ton profil te retire de l’équipe : ton partenaire en devient capitaine, ou l’équipe disparaît si elle est vide.</p>
         <p>Les propositions expirent après sept jours. Retirer un ami annule vos propositions en attente et ferme l’accès à ta collection. Les défis amicaux affrontent son double automatisé, sans changer vos cotes.</p>
       </section>}
 
