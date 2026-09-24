@@ -11,6 +11,8 @@ export type Exterieur = {
   ecrireLaSession: (session: Session | null) => void;
   maintenant: () => number;
   sessionExclusive?: <T>(action: () => Promise<T>) => Promise<T>;
+  // Le contrôle anti-robot exigé par Supabase avant d'ouvrir un compte (voir antiRobot.ts). Absent : pas de contrôle.
+  jetonAntiRobot?: () => Promise<string | undefined>;
 };
 
 // Une erreur que l'on peut montrer au joueur : soit le refus motivé d'une fonction de la base
@@ -26,6 +28,7 @@ export class ErreurDuServeur extends Error {
 }
 
 const PANNE = 'Le serveur du jeu ne répond pas. Réessaie dans un moment.';
+const ANTI_ROBOT = "La vérification anti-robot n'a pas abouti. Recharge la page pour réessayer.";
 const MARGE_AVANT_EXPIRATION = 60_000;
 
 export function creerLeClient(adresse: string, clePublique: string, exterieur: Exterieur) {
@@ -59,8 +62,9 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
         if (!recuperation) throw new ErreurDuServeur('Session expirée. Reconnecte-toi depuis Mon compte, ou utilise ton code de secours dans le Profil.', true, 401);
       }
       if (conserverCompte) throw new ErreurDuServeur('Recharge ton compte avant de reprendre le duel.', true, 401);
-      const nouvelle = await demanderUneSession('signup', { data: {}, gotrue_meta_security: {} });
-      if (nouvelle === 'refusee') throw new ErreurDuServeur("Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant.", false);
+      const jeton = exterieur.jetonAntiRobot ? await exterieur.jetonAntiRobot() : undefined;
+      const nouvelle = await demanderUneSession('signup', { data: {}, gotrue_meta_security: jeton ? { captcha_token: jeton } : {} });
+      if (nouvelle === 'refusee') throw new ErreurDuServeur(exterieur.jetonAntiRobot ? ANTI_ROBOT : "Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant.", false);
       return nouvelle;
     };
     ouverture ??= (exterieur.sessionExclusive ? exterieur.sessionExclusive(obtenir) : obtenir()).finally(() => { ouverture = null; });

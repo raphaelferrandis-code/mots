@@ -1,5 +1,5 @@
 import { SERVEUR } from '../config/serveur.ts';
-import { CLE_IDENTITE, clientDuServeur, serveurUtilise } from './compte.ts';
+import { CLE_IDENTITE, clientDuServeur, jetonAntiRobot, serveurUtilise } from './compte.ts';
 import { creerAuthentification } from './authentification.ts';
 import type { RetourGoogle } from './authentification.ts';
 import type { Session } from './supabase.ts';
@@ -7,7 +7,7 @@ import type { Session } from './supabase.ts';
 const CLE_GOOGLE = 'mots.connexion-google';
 export const authentification = creerAuthentification({
   adresse: SERVEUR.adresse, clePublique: SERVEUR.clePublique,
-  requete: (...args) => fetch(...args), lireSession: () => clientDuServeur().lireSession(), maintenant: Date.now,
+  requete: (...args) => fetch(...args), lireSession: () => clientDuServeur().lireSession(), maintenant: Date.now, jetonAntiRobot,
 });
 
 export function verifierStockageConnexion(): void {

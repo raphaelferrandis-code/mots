@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
+import { SERVEUR } from '../config/serveur.ts';
 import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { serveurDesCollections } from '../services/collections.ts';
@@ -124,6 +125,12 @@ export function Confidentialite() {
           ces hébergeurs voient passer l'adresse internet (IP) de ton appareil, et peuvent la conserver un temps limité
           dans leurs journaux techniques. Le jeu, lui, ne s'en sert pas.
         </p>
+        {SERVEUR.cleAntiRobot && <p>
+          Avant d'ouvrir un compte ou d'envoyer un code de connexion, un contrôle anti-robot de Cloudflare (Turnstile)
+          vérifie que tu n'es pas un programme qui fabrique des comptes en série. Cloudflare reçoit pour cela l'adresse IP
+          et des informations techniques sur ton navigateur. Ce contrôle ne sert ni à la publicité ni au pistage, et
+          n'est chargé que lorsqu'il est nécessaire.
+        </p>}
       </section>
 
       <section className="rubrique">

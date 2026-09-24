@@ -21,11 +21,13 @@ const ERREURS: Record<string, string> = {
   email_address_invalid: 'Vérifie ton adresse e-mail.',
   email_address_not_authorized: 'L’envoi d’e-mails doit encore être configuré pour le jeu.',
   validation_failed: 'Vérifie les informations saisies et réessaie.',
+  captcha_failed: 'La vérification anti-robot n’a pas abouti. Recharge la page et réessaie.',
 };
 
 export function creerAuthentification(io: {
   adresse: string; clePublique: string; requete: typeof fetch;
   lireSession(): Promise<Session>; maintenant(): number;
+  jetonAntiRobot?: () => Promise<string | undefined>; // exigé par Supabase avant d'envoyer un code (antiRobot.ts)
 }) {
   const base = `${io.adresse.replace(/\/+$/, '')}/auth/v1`;
   async function demander<T>(chemin: string, methode = 'GET', corps?: object, acces?: string): Promise<T> {
@@ -68,7 +70,8 @@ export function creerAuthentification(io: {
       await demander('user', 'PUT', { email }, u.acces);
       return { email, type: 'email_change', utilisateur: u.id };
     }
-    await demander('otp', 'POST', { email, create_user: false });
+    const jeton = io.jetonAntiRobot ? await io.jetonAntiRobot() : undefined;
+    await demander('otp', 'POST', { email, create_user: false, ...(jeton ? { gotrue_meta_security: { captcha_token: jeton } } : {}) });
     return { email, type: 'email' };
   }
   async function verifierCode(attente: VerificationMail, saisie: string): Promise<Session> {

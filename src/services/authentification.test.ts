@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { creerAuthentification } from './authentification.ts';
 
 const JETONS = { access_token: 'nouveau', refresh_token: 'secret-test', expires_in: 3600 };
-function monde(options: { anonyme?: boolean; refuse?: string; google?: boolean; mauvaisCompte?: boolean } = {}) {
+function monde(options: { anonyme?: boolean; refuse?: string; google?: boolean; mauvaisCompte?: boolean; jeton?: string } = {}) {
   const appels: { url: URL; methode: string; corps: Record<string, unknown>; acces: string | null }[] = [];
   const auth = creerAuthentification({
     adresse: 'https://exemple.supabase.co/', clePublique: 'publique', maintenant: () => 1000,
     lireSession: async () => ({ acces: 'invite', renouvellement: 'r', expireLe: 999999 }),
+    ...(options.jeton ? { jetonAntiRobot: async () => options.jeton } : {}),
     requete: (async (entree, init) => {
       const url = new URL(String(entree)); const acces = new Headers(init?.headers).get('Authorization');
       const corps = JSON.parse(String(init?.body ?? '{}'));
@@ -42,6 +43,14 @@ it('la connexion e-mail ne crée pas de compte et n’utilise pas la session inv
   assert.equal(appels[0].acces, null);
   await auth.verifierCode(attente, '12345678');
   assert.equal(appels[1].corps.type, 'email');
+});
+it('joint le jeton anti-robot à l’envoi du code de connexion, pas à la création par rattachement', async () => {
+  const { auth, appels } = monde({ jeton: 'jeton-cloudflare' });
+  await auth.envoyerCode('joueur@example.fr', 'connexion');
+  assert.deepEqual(appels[0].corps, { email: 'joueur@example.fr', create_user: false, gotrue_meta_security: { captcha_token: 'jeton-cloudflare' } });
+  await auth.envoyerCode('joueur@example.fr', 'creation');
+  assert.deepEqual(appels.find(a => a.methode === 'PUT')!.corps, { email: 'joueur@example.fr' });
+  await assert.rejects(monde({ refuse: 'captcha_failed' }).auth.envoyerCode('joueur@example.fr', 'connexion'), /anti-robot/);
 });
 it('refuse une conversion si la collection appartient déjà à un compte permanent', async () => {
   const { auth, appels } = monde({ anonyme: false });

@@ -2,6 +2,7 @@
 // gardée sur l'appareil, une seule requête qui modifie le compte à la fois, et la règle du développement.
 
 import { SERVEUR } from '../config/serveur.ts';
+import { creerAntiRobot } from './antiRobot.ts';
 import { creerLeClient } from './supabase.ts';
 import type { ClientSupabase, Session } from './supabase.ts';
 
@@ -23,6 +24,8 @@ export function vraiServeurPermis(): boolean {
 export const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '';
 // Le serveur est réglé, et l'on a le droit de lui parler.
 export const serveurUtilise = serveurRegle && vraiServeurPermis();
+// Le contrôle anti-robot, quand une clé est réglée (voir GUIDE-anti-robot.md).
+export const jetonAntiRobot = SERVEUR.cleAntiRobot !== '' ? creerAntiRobot(SERVEUR.cleAntiRobot) : undefined;
 
 let client: ClientSupabase | undefined;
 export function clientDuServeur(): ClientSupabase {
@@ -37,6 +40,7 @@ export function clientDuServeur(): ClientSupabase {
       return fetch(...args);
     },
     maintenant: () => Date.now(),
+    jetonAntiRobot,
     sessionExclusive: action => typeof navigator !== 'undefined' && navigator.locks
       ? navigator.locks.request('mots.session', action) : action(),
     lireLaSession: () => { try { return JSON.parse(localStorage.getItem(CLE_DE_SESSION) ?? 'null') as Session | null; } catch { return null; } },

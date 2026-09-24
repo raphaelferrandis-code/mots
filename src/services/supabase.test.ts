@@ -8,7 +8,7 @@ import type { Session } from './supabase.ts';
 type Appel = { adresse: string; enTetes: Record<string, string>; corps: unknown };
 
 // Un faux Supabase : il note chaque appel, et répond ce que le test a prévu pour cette adresse.
-function fauxMonde(reponses: (appel: Appel) => { statut: number; corps?: unknown } | 'panne', sessionGardee: Session | null = null) {
+function fauxMonde(reponses: (appel: Appel) => { statut: number; corps?: unknown } | 'panne', sessionGardee: Session | null = null, jetonAntiRobot?: () => Promise<string | undefined>) {
   const appels: Appel[] = [];
   let session = sessionGardee;
   let heure = 1_000_000;
@@ -23,6 +23,7 @@ function fauxMonde(reponses: (appel: Appel) => { statut: number; corps?: unknown
     lireLaSession: () => session,
     ecrireLaSession: (nouvelle) => { session = nouvelle; },
     maintenant: () => heure,
+    jetonAntiRobot,
   });
   return { client, appels, session: () => session, avancer: (ms: number) => { heure += ms; } };
 }
@@ -97,6 +98,27 @@ describe('le client Supabase', () => {
     assert.equal(monde.appels[1].enTetes.Authorization, 'Bearer acces-1');
     assert.deepEqual(monde.appels[1].corps, { p_pseudo: 'Zeugma' });
     assert.equal(monde.session()?.renouvellement, 'renouvellement-1');
+  });
+
+  it('joint le jeton anti-robot à l’ouverture du compte, et seulement à elle', async () => {
+    let controles = 0;
+    const monde = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 200, corps: [] }), null, async () => { controles++; return 'jeton-cloudflare'; });
+    await Promise.all([monde.client.appeler('mon_compte'), monde.client.appeler('classement')]);
+    await monde.client.appeler('mon_compte');
+    assert.equal(controles, 1, 'un seul contrôle pour un seul compte');
+    const ouverture = monde.appels.find((a) => a.adresse.includes('/signup'))!;
+    assert.deepEqual(ouverture.corps, { data: {}, gotrue_meta_security: { captcha_token: 'jeton-cloudflare' } });
+    assert.ok(monde.appels.filter((a) => !a.adresse.includes('/signup')).every((a) => !JSON.stringify(a.corps).includes('jeton-cloudflare')));
+  });
+
+  it('sans contrôle réglé, ouvre le compte comme avant ; contrôle échoué, le dit au joueur', async () => {
+    const sans = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 200, corps: [] }));
+    await sans.client.appeler('mon_compte');
+    assert.deepEqual(sans.appels[0].corps, { data: {}, gotrue_meta_security: {} });
+    const echoue = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 400, corps: { error_code: 'captcha_failed' } } : { statut: 200, corps: [] }), null, async () => undefined);
+    await assert.rejects(echoue.client.appeler('mon_compte'), /vérification anti-robot/);
+    assert.deepEqual(echoue.appels[0].corps, { data: {}, gotrue_meta_security: {} });
+    assert.equal(echoue.session(), null);
   });
 
   it('réutilise la session gardée, et ne crée jamais deux comptes pour deux appels simultanés', async () => {

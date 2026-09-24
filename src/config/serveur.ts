@@ -18,4 +18,7 @@ export const SERVEUR = {
   // 1-structure.sql et 3-cartes.sql collés dans Supabase (GUIDE-supabase.md, étape 8). Tant que c'est « false »,
   // la partie vit sur l'appareil, comme avant.
   collectionsSurLeServeur: true,
+  // Le contrôle anti-robot (Cloudflare Turnstile) : la « clé du site » (Site Key), PUBLIQUE, faite pour être visible.
+  // Vide : pas de contrôle. Voir GUIDE-anti-robot.md. La clé « secrète » va dans Supabase, JAMAIS ici.
+  cleAntiRobot: '',
 };
