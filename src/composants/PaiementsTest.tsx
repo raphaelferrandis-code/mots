@@ -30,7 +30,7 @@ export function PaiementsTest() {
     {paiementsDeTest && <p>Mode test réservé aux comptes autorisés. Aucun argent réel n’est encaissé.</p>}
     {retour === 'retour' && <p role="status">De retour de Stripe : clique sur « Vérifier mes avantages » pour confirmer le paiement.</p>}
     {retour === 'annule' && <p>Tu as quitté le paiement. Tu peux reprendre avec le même bouton.</p>}
-    {paiementsDeTest && !pret && <p>Avant l’achat, confirme ton âge en cliquant sur « Acheter » dans une formule et <a href={lien({ ecran: 'reglages' })}>crée ton code de secours dans les Réglages</a>.</p>}
+    {paiementsDeTest && !pret && <p>Avant l’achat, confirme ton âge en cliquant sur « Acheter » dans une formule et <a href={lien({ ecran: 'profil' })}>crée ton code de secours dans le Profil</a>.</p>}
     <div className="rangee-de-boutons">
       {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || formule.achatUnique} onClick={() => void lancer('achat', 'necessaire')}>Tester Mon album · 5,99 €</button>}
       {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || abonnementActif(formule)} onClick={() => void lancer('achat', 'collectionneur')}>Tester Collectionneur · 4,99 €/mois</button>}

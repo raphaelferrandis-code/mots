@@ -6,6 +6,7 @@ import type { CSSProperties } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { ConseilsComposition } from '../composants/ConseilsComposition.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
@@ -178,13 +179,7 @@ export function Deck() {
 
           <details className="rubrique repliable">
             <summary><h2>Conseils de composition</h2></summary>
-            <ul className="regles">
-              <li><strong>Valeurs du timbre :</strong> attaque à gauche, défense à droite.</li>
-              <li><strong>Rareté :</strong> les mots rares frappent plus fort et sont moins souvent parés. À l'entraînement, ils rendent aussi le deck adverse plus rare. Les Hors-série sont plus faciles à reconnaître, mais leurs statistiques sont exceptionnelles.</li>
-              <li><strong>Types :</strong> +{REGLES.bonusDeType} dégâts selon le cycle nom &gt; adjectif &gt; verbe &gt; nom. Les adverbes sont neutres.</li>
-              <li><strong>Origine :</strong> deux mots de même origine joués à la suite donnent +{REGLES.bonusDeFaction} dégât, ou +{REGLES.bonusDePetiteFaction} pour une petite langue.</li>
-              <li><strong>Définitions :</strong> ton attaque est automatique. Retrouve uniquement la définition du mot adverse pour parer.</li>
-            </ul>
+            <ConseilsComposition />
           </details>
 
           {!complet && (

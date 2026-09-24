@@ -1,3 +1,4 @@
+import { CompteDuProfil } from '../composants/CompteDuProfil.tsx';
 import { AlbumDesSucces } from '../composants/AlbumDesSucces.tsx';
 import { FAMILLES_SUCCES, SUCCES, succesDuTitre } from '../jeu/catalogueSucces.ts';
 import { useEffect, useRef, useState } from 'react';
@@ -75,6 +76,7 @@ export function Profil() {
       <h1 className="visuellement-cache">Mon profil</h1><div className="vestiaire__vues" role="group" aria-label="Section du profil"><button aria-pressed={vue === 'personnalisation'} onClick={() => changerVue('personnalisation')}>Personnalisation</button><button aria-pressed={vue === 'succes'} onClick={() => { ciblerSucces(null); changerVue('succes'); }}>Succès <small>{profil.succes.length}/{SUCCES.length}</small></button></div>
       <div className="vestiaire__compte"><div><strong>{profil.pseudo || sauvegarde.joutes.pseudo || 'Collectionneur'}</strong><button className="vestiaire__renommer" aria-label="Modifier le pseudo" onClick={() => { saisirPseudo(profil.pseudo || sauvegarde.joutes.pseudo); signaler(''); editer(true); }}>✎</button></div><div className="vestiaire__niveau"><span>Niv. {niveau.niveau}</span><progress aria-label={`Niveau ${niveau.niveau} : ${niveau.acquis} sur ${niveau.requis} XP`} value={niveau.acquis} max={niveau.requis} /><small>{niveau.acquis}/{niveau.requis} XP</small></div></div>
     </header>
+    <CompteDuProfil />
     {vue === 'succes' ? <AlbumDesSucces profil={profil} cible={cibleSucces} /> : <div className="vestiaire__atelier">
       <aside ref={essayage} className="vestiaire__essayage" aria-label="Aperçu de la personnalisation">
         <div className="vestiaire__scene" onPointerMove={incliner} onPointerLeave={(e) => { e.currentTarget.style.setProperty('--inclinaison-x','0deg'); e.currentTarget.style.setProperty('--inclinaison-y','0deg'); }}>

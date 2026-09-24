@@ -119,7 +119,7 @@ function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; ach
     <p className="petit">{paiementsDeTest ? 'Paiement de test : aucun argent réel ne sera encaissé.' : achatsOuverts ? (offre.cle === 'collectionneur' ? 'Abonnement à 4,99 € par mois, renouvelé automatiquement. Résiliation possible depuis « Gérer mon abonnement ».' : 'Paiement unique de 5,99 €. Le cadeau de bienvenue est attribué une seule fois par compte.') : 'Les achats ne sont pas encore ouverts.'}</p>
     {achatsOuverts && (surLeServeur && compte ? <>
       <Age formule={compte.formule} />
-      {!compte.codeDeSecoursLe && <p className="petit">Avant l’achat, <a href={lien({ ecran: 'reglages' })}>crée ton code de secours dans les Réglages</a> pour protéger ta collection.</p>}
+      {!compte.codeDeSecoursLe && <p className="petit">Avant l’achat, <a href={lien({ ecran: 'profil' })}>crée ton code de secours dans le Profil</a> pour protéger ta collection.</p>}
     </> : <p className="petit">Un compte connecté est nécessaire pour confirmer ton âge et accéder au paiement.</p>)}
     {active && <p role="status">Cette formule est déjà activée.</p>}
     {message && <p role="alert">{message}</p>}

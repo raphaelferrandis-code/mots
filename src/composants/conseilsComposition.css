@@ -1,0 +1,45 @@
+.conseils-composition {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 1fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 64px);
+  padding-block: 20px 12px;
+}
+.cycle-types { min-width: 0; margin: 0; }
+.cycle-types > figcaption {
+  color: var(--encre-douce);
+  font: 500 .75rem var(--police-texte);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.cycle-types__schema { display: grid; grid-template-columns: minmax(0, 1fr) 110px; align-items: center; gap: 18px; }
+.cycle-types__triangle { display: block; width: 100%; overflow: visible; }
+.cycle-types__orbite { color: var(--filet); opacity: .45; }
+.cycle-types__nom { font: 500 21px var(--police-serif); }
+.cycle-types__bonus { fill: #dfc496; font: 500 38px var(--police-serif); }
+.cycle-types__mention { fill: var(--encre-douce); font: 500 11px var(--police-texte); letter-spacing: 2.5px; }
+.cycle-types__neutre { text-align: center; }
+.cycle-types__neutre > svg { display: block; width: 100%; }
+.cycle-types__neutre p { display: grid; gap: 4px; margin: 8px 0 0; }
+.cycle-types__neutre strong { color: #d9b9ee; font-size: .8rem; font-weight: 500; }
+.cycle-types__neutre span { color: var(--encre-douce); font-size: .7rem; }
+.conseils-composition__notes { display: grid; gap: 20px; margin: 0; }
+.conseils-composition__notes > div { border-left: 1px solid var(--filet); padding-left: 20px; }
+.conseils-composition__notes dt { font: 600 1rem var(--police-serif); margin-bottom: 7px; }
+.conseils-composition__notes dd { margin: 0; color: var(--encre-douce); font-size: .88rem; line-height: 1.65; }
+.conseils-composition__notes strong { color: var(--encre); font-weight: 500; }
+.conseils-composition__notes .conseils-composition__precision { font-size: .78rem; margin-top: 7px; }
+
+@media (max-width: 1000px) {
+  .conseils-composition { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .cycle-types { width: 100%; max-width: 580px; justify-self: center; }
+  .conseils-composition__notes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+}
+@media (max-width: 600px) {
+  .cycle-types__schema { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .cycle-types__neutre { display: flex; align-items: center; justify-content: center; gap: 14px; text-align: left; }
+  .cycle-types__neutre > svg { width: 100px; flex: 0 0 100px; }
+  .cycle-types__neutre p { margin: 0; }
+  .conseils-composition__notes { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}

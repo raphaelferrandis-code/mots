@@ -1,15 +1,14 @@
 import { useRef, useState } from 'react';
-import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { nomDeLaFormule } from '../jeu/formule.ts';
-import { TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
 import { telechargerUnFichier } from '../services/partage.ts';
-import { changerUnReglage, definirUnCodeDeSecours, exporterLaSauvegarde, importerUneSauvegarde, recupererAvecUnCode } from '../services/partie.ts';
+import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
+
+import './reglages.css';
 
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
@@ -27,13 +26,6 @@ export function Reglages() {
   const partie = usePartie();
   const fichier = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
-  // Le code de secours : montré une seule fois quand on le crée ; et le formulaire pour retrouver une collection.
-  const [code, setCode] = useState<string | null>(null);
-  const [saisie, setSaisie] = useState('');
-  const [recuperation, setRecuperation] = useState(false);
-  const [occupe, setOccupe] = useState(false);
-  const [messageDuCompte, setMessageDuCompte] = useState<string | null>(null);
-
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
   const { sauvegarde } = partie;
 
@@ -60,31 +52,6 @@ export function Reglages() {
 
   // Le profil de joute gardé par le serveur part avec la partie. Si le serveur ne répond pas, rien n'est effacé :
   // le joueur garderait sinon un profil au classement sans plus pouvoir le retirer.
-  const creerUnCode = async (): Promise<void> => {
-    if (partie.etat === 'prete' && partie.compte?.codeDeSecoursLe && !window.confirm("Un nouveau code annule l'ancien. Continuer ?")) return;
-    setOccupe(true);
-    setMessageDuCompte(null);
-    try { setCode(await definirUnCodeDeSecours()); } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
-  };
-
-  const copierLeCode = async (): Promise<void> => {
-    if (!code) return;
-    try { await navigator.clipboard.writeText(code); setMessageDuCompte('Code copié.'); } catch { setMessageDuCompte("Le navigateur n'a pas voulu copier : note le code à la main."); }
-  };
-
-  const recuperer = async (evenement: React.FormEvent): Promise<void> => {
-    evenement.preventDefault();
-    if (!window.confirm('La collection attachée à ce code remplacera celle de cet appareil. Continuer ?')) return;
-    setOccupe(true);
-    setMessageDuCompte(null);
-    try {
-      const retrouvee = await recupererAvecUnCode(saisie);
-      setRecuperation(false);
-      setSaisie('');
-      setMessageDuCompte(`Collection retrouvée : ${retrouvee.timbres} timbre${retrouvee.timbres > 1 ? 's' : ''}${retrouvee.profil ? `, et ton profil de joute « ${retrouvee.profil.pseudo} »` : ''}.`);
-    } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
-  };
-
   const effacer = async (): Promise<void> => {
     if (!window.confirm('Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ? Cette action est définitive.')) return;
     try {
@@ -99,7 +66,7 @@ export function Reglages() {
 
   return (
     <main className="ecran panneaux reglages">
-      <Entete titre="Réglages" />
+      <h1 className="visuellement-cache">Réglages</h1>
 
       <div className="reglages__preferences">
         <section className="rubrique">
@@ -110,14 +77,7 @@ export function Reglages() {
               <strong>{option.nom}</strong>
             </label>
           ))}
-          <label className="option option--liste">
-            <span><strong>Temps par définition en duel</strong></span>
-            <select value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
-              <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
-              <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
-              <option value="illimite">Sans limite</option>
-            </select>
-          </label>
+
         </section>
 
         <section className="rubrique">
@@ -152,54 +112,8 @@ export function Reglages() {
           <button type="button" className="bouton bouton--danger" onClick={() => void effacer()}>Effacer ma partie</button>
         </section>
 
-        {partie.serveur.etat !== 'appareil' && (
-          <section className="rubrique">
-            <h2>Ton compte</h2>
-            <a className="bouton" href={lien({ ecran: 'compte' })}>Créer un compte ou se connecter</a>
-            {partie.compte && nomDeLaFormule(partie.compte.formule) && (
-              <p className="petit">
-                <strong>Formule « {nomDeLaFormule(partie.compte.formule)} ».</strong>
-                {partie.compte.formule.jusquAu !== null && ` Jusqu'au ${new Date(partie.compte.formule.jusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.`}
-                {partie.compte.formule.encreAchetee > 0 && ` Tu as ${partie.compte.formule.encreAchetee} Encre achetée, utilisable au marché seulement.`}
-                {' '}<a href={lien({ ecran: 'formules' })}>Voir ce que donne chaque formule</a>
-              </p>
-            )}
-            {code ? (
-              <div className="code-de-secours" role="status">
-                <p className="petit"><strong>Note ce code quelque part de sûr : il ne sera plus affiché.</strong></p>
-                <code className="code-de-secours__code">{code}</code>
-                <div className="rangee-de-boutons">
-                  <button type="button" className="bouton bouton--discret" onClick={() => void copierLeCode()}>Copier</button>
-                  <button type="button" className="bouton bouton--discret" onClick={() => { setCode(null); setMessageDuCompte(null); }}>J'ai noté mon code</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                {partie.compte?.codeDeSecoursLe && <p className="texte-doux petit">Code créé le {new Date(partie.compte.codeDeSecoursLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.</p>}
-                <div className="rangee-de-boutons">
-                  <button type="button" className="bouton" disabled={occupe} onClick={() => void creerUnCode()}>{partie.compte?.codeDeSecoursLe ? 'Créer un nouveau code' : 'Créer mon code de secours'}</button>
-                  {!recuperation && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(true); setMessageDuCompte(null); }}>Retrouver ma collection avec un code</button>}
-                </div>
-              </>
-            )}
-            {recuperation && (
-              <form className="joute__saisie" onSubmit={(e) => void recuperer(e)}>
-                <label htmlFor="code-de-secours"><strong>Code de secours</strong></label>
-                <input id="code-de-secours" type="text" value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="PHIL-XXXXX-XXXXX-XXXXX-XXXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
-                <div className="rangee-de-boutons">
-                  <button type="submit" className="bouton" disabled={occupe}>{occupe ? 'Recherche…' : 'Retrouver ma collection'}</button>
-                  <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(false); setSaisie(''); }}>Annuler</button>
-                </div>
-              </form>
-            )}
-            {messageDuCompte && <p role="status" className="petit">{messageDuCompte}</p>}
-          </section>
-        )}
 
-        <section className="rubrique">
-          <h2>Confidentialité</h2>
-          <a className="bouton bouton--discret" href={lien({ ecran: 'confidentialite' })}>Ce que le jeu garde, et comment l'effacer</a>
-        </section>
+        <a className="reglages__confidentialite" href={lien({ ecran: 'confidentialite' })}>Confidentialité <span aria-hidden="true">↗</span></a>
 
         <details className="rubrique repliable">
           <summary><h2>Paquets et probabilités</h2></summary>

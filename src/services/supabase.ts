@@ -56,7 +56,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       if (gardee) {
         const renouvelee = await demanderUneSession('token?grant_type=refresh_token', { refresh_token: gardee.renouvellement });
         if (renouvelee !== 'refusee') return renouvelee;
-        if (!recuperation) throw new ErreurDuServeur('Session expirée. Reconnecte-toi depuis Mon compte, ou utilise ton code de secours dans les Réglages.', true, 401);
+        if (!recuperation) throw new ErreurDuServeur('Session expirée. Reconnecte-toi depuis Mon compte, ou utilise ton code de secours dans le Profil.', true, 401);
       }
       if (conserverCompte) throw new ErreurDuServeur('Recharge ton compte avant de reprendre le duel.', true, 401);
       const nouvelle = await demanderUneSession('signup', { data: {}, gotrue_meta_security: {} });

@@ -28,7 +28,7 @@ export function Compte() {
         const u = await authentification.utilisateur();
         if (actif) setUtilisateur(u);
       } catch {
-        if (actif) { setMode('connexion'); setMessage('Connecte-toi pour retrouver ton compte, ou utilise ton code de secours dans les Réglages.'); }
+        if (actif) { setMode('connexion'); setMessage('Connecte-toi pour retrouver ton compte, ou utilise ton code de secours dans le Profil.'); }
       } finally { if (actif) setChargement(false); }
     })();
     return () => { actif = false; };
@@ -77,7 +77,7 @@ export function Compte() {
           <div className="compte__modes" role="group" aria-label="Créer un compte ou se connecter">
             {(['creation', 'connexion'] as const).map(m => <button key={m} type="button" aria-pressed={mode === m} disabled={occupe} onClick={() => { setMode(m); setAttente(null); setCode(''); setErreur(null); setMessage(''); }}>{m === 'creation' ? 'Créer un compte' : 'Se connecter'}</button>)}
           </div>
-          {mode === 'connexion' && <p className="petit">La collection de ce compte sera chargée. Elle ne sera pas fusionnée avec celle de cet appareil. Si tu jouais en invité, protège d’abord tes timbres en créant un compte ou un <a href={lien({ ecran: 'reglages' })}>code de secours</a>.</p>}
+          {mode === 'connexion' && <p className="petit">La collection de ce compte sera chargée. Elle ne sera pas fusionnée avec celle de cet appareil. Si tu jouais en invité, protège d’abord tes timbres en créant un compte ou un <a href={lien({ ecran: 'profil' })}>code de secours</a>.</p>}
           {!attente ? <>
             <button type="button" className="bouton compte__google" disabled={occupe} onClick={() => void agir(async () => { await preparerCreation(); await connexionGoogle(mode); })}><span aria-hidden="true">G</span> Continuer avec Google</button>
             <div className="compte__separation">ou par e-mail</div>
@@ -97,7 +97,7 @@ export function Compte() {
         </>}
       {erreur && <p className="compte__erreur" role="alert">{erreur}</p>}
       {message && <p className="petit" role="status">{message}</p>}
-      <p className="petit texte-doux"><a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a> · <a href={lien({ ecran: 'reglages' })}>Réglages et code de secours</a></p>
+      <p className="petit texte-doux"><a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a> · <a href={lien({ ecran: 'profil' })}>Profil et code de secours</a></p>
     </section>
     <a className="compte__retour" href={lien({ ecran: 'accueil' })}>Revenir au jeu</a>
   </main>;

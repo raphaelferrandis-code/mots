@@ -1,0 +1,52 @@
+.ecran.reglages {
+  max-width: 1080px;
+  align-items: start;
+  column-gap: clamp(24px, 5vw, 64px);
+}
+
+.reglages .reglages__preferences,
+.reglages .reglages__gestion { gap: 24px; align-content: start; }
+.reglages .rubrique { gap: 12px; }
+.reglages .option { align-items: center; min-height: 52px; padding: 12px 0; }
+.reglages .option:last-child { border-bottom: 0; }
+.reglages .option input { margin: 0; }
+.reglages .option strong { font-weight: 400; }
+.reglages .bouton { font-size: .9rem; min-height: 44px; padding: 10px 16px; }
+.reglages .bouton--danger { justify-self: start; }
+.reglages .repliable { padding-top: 16px; }
+.reglages .repliable > summary { min-height: 44px; align-items: center; }
+.reglages__confidentialite {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  font-size: .85rem;
+  color: var(--encre-douce);
+  text-decoration: none;
+}
+.reglages__confidentialite:hover { color: var(--encre); text-decoration: underline; }
+
+.vestiaire .profil-compte { margin-bottom: 24px; padding-block: 0; border-block: 1px solid var(--filet); }
+.profil-compte > summary { display: flex; align-items: center; min-height: 52px; }
+.profil-compte__contenu { display: grid; gap: 16px; padding-block: 8px 24px; max-width: 760px; }
+.profil-compte__contenu > .bouton { justify-self: start; }
+.profil-compte .bouton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.profil-compte .joute__saisie { min-width: 0; }
+
+.commande-duel .duel-temps {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 240px);
+  gap: 4px 24px;
+  align-items: center;
+  max-width: 620px;
+  margin-block: 4px 12px;
+  border-bottom: 0;
+}
+.duel-temps > small { grid-column: 1; }
+.commande-duel .duel-temps > select { grid-column: 2; grid-row: 1 / 3; }
+
+@media (max-width: 600px) {
+  .commande-duel .duel-temps { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .commande-duel .duel-temps > select { grid-column: 1; grid-row: auto; }
+  .profil-compte__contenu > .bouton { justify-self: stretch; }
+}

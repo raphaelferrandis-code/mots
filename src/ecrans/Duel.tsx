@@ -23,18 +23,19 @@ import { ligueDe } from '../jeu/joute.ts';
 import { jourDe } from '../jeu/progression.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import type { Resultat } from '../jeu/progression.ts';
-import { meilleureFinition } from '../jeu/sauvegarde.ts';
+import { meilleureFinition, TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../partage/types.ts';
 import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
 import { serveurDeJoutes } from '../services/joutes.ts';
-import { abandonnerLeDuel, commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
+import { changerUnReglage, abandonnerLeDuel, commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
 import type { FinDeDuel, RecompenseDuServeur } from '../services/partie.ts';
 import { PanneauDesJoutes } from './PanneauDesJoutes.tsx';
 import '../composants/commandeDuel.css';
 import '../composants/duelManche.css';
+import './reglages.css';
 
 const REGLES = EQUILIBRAGE.duel;
 const MODES: Adversaire['type'][] = ['entrainement', 'joute'];
@@ -300,6 +301,15 @@ export function Duel() {
                 {' '}Défaite : +{REGLES.encreParDefaite} Encre.
               </p>
               {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
+              <label className="option option--liste duel-temps">
+                <span><strong>Temps par définition</strong></span>
+                <small className="texte-doux">Contre l’ordinateur uniquement</small>
+                <select disabled={etape.nom === 'preparation' || enLigne.bloque} value={sauvegarde.reglages.tempsDeReponse} onChange={(e) => changerUnReglage('tempsDeReponse', TEMPS_DE_REPONSE.find((t) => t === e.target.value) ?? 'normal')}>
+                  <option value="normal">Normal ({EQUILIBRAGE.duel.secondesPourRepondre} s)</option>
+                  <option value="double">Doublé ({EQUILIBRAGE.duel.secondesPourRepondre * 2} s)</option>
+                  <option value="illimite">Sans limite</option>
+                </select>
+              </label>
               <div className="rangee-de-boutons commande-duel__actions">
                 <button type="button" className="bouton bouton-presse bouton-sceau" data-frappe={etape.nom === 'preparation'} aria-busy={etape.nom === 'preparation'} disabled={etape.nom === 'preparation' || enLigne.bloque} onClick={() => void lancer({ type: 'entrainement', niveau })}><SceauDuel /><span>{etape.nom === 'preparation' ? 'Préparation du duel…' : 'Lancer le duel'}</span><span className="bouton-presse__fleche" aria-hidden="true">↗</span></button>
                 <a className="bouton bouton--discret bouton-plaque" href={lien({ ecran: 'deck' })}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 5h13v16H7ZM4 18H2V2h14" /><path d="m13.5 10 3 3-3 3-3-3Z" /></svg><span>Modifier mon deck</span></a>
@@ -316,14 +326,13 @@ export function Duel() {
             <details className="rubrique repliable">
               <summary><h2>Règles du duel</h2></summary>
               <ul className="regles">
-                <li><strong>Départ :</strong> {REGLES.pointsDeVie} points de vie et {REGLES.cartesEnMain} cartes en main. Choisis une carte face au mot adverse.</li>
-                <li><strong>Cartes :</strong> chaque carte jouée est épuisée pour ce duel, même si elle est parée. Pioche une nouvelle carte tant qu’il en reste ; ta collection est conservée.</li>
-                <li><strong>Attaque :</strong> ta carte attaque automatiquement, sans question sur ton propre mot. L’adversaire attaque aussi automatiquement s’il survit.</li>
-                <li><strong>Parade :</strong> retrouve la définition du mot adverse parmi quatre{duree === null ? ", sans limite de temps" : ` en ${duree} secondes`}, pour diviser ses dégâts par deux. Une erreur ou un délai dépassé laisse passer les dégâts entiers, sans annuler ton attaque.</li>
-                <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse, minimum {REGLES.degatsMinimum}. Tu frappes en premier. Les mots rares ont un bonus d'attaque et sont moins souvent parés. Les Hors-série sont plus connues, mais restent très puissantes même parées.</li>
-                <li><strong>Bonus :</strong> +{REGLES.bonusDeType} selon le cycle nom &gt; adjectif &gt; verbe &gt; nom ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
-                <li><strong>Victoire :</strong> réduis l'adversaire à zéro point de vie, ou garde le plus de points après {REGLES.manchesMaximum} manches ou lorsqu’un camp n’a plus de cartes. À égalité, match nul.</li>
-                <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes réponses sur un mot de ta collection lui donnent son cachet « Maîtrisé ».</li>
+                <li><strong>Format :</strong> {REGLES.pointsDeVie} PV, {REGLES.tailleDuDeck} cartes, {REGLES.cartesEnMain} en main. Chaque carte se joue une fois ; pioche jusqu’à épuisement du deck.</li>
+                <li><strong>Manche :</strong> attaque automatique en premier, puis riposte si l’adversaire survit.</li>
+                <li><strong>Parade :</strong> bonne définition du mot adverse{duree === null ? ', sans chronomètre' : ` en ${duree} s`} : dégâts reçus divisés par deux. Erreur ou délai dépassé : dégâts entiers.</li>
+                <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse (minimum {REGLES.degatsMinimum} avant parade).</li>
+                <li><strong>Bonus :</strong> +{REGLES.bonusDeType} pour l’avantage de type ; +{REGLES.bonusDeFaction} pour deux mots de même origine consécutifs (+{REGLES.bonusDePetiteFaction} pour une petite langue). <a href={lien({ ecran: 'deck' })}>Voir les affinités dans le deck.</a></li>
+                <li><strong>Victoire :</strong> adversaire à 0 PV. Sinon, les PV départagent après {REGLES.manchesMaximum} manches ou à épuisement des cartes. Égalité : match nul.</li>
+                <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes définitions d’un mot possédé débloquent son cachet « Maîtrisé ».</li>
               </ul>
             </details>
           </div>
