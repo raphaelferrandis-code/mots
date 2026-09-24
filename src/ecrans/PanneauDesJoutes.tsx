@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
+import { CadreGrave, Embleme } from '../composants/cosmetiques/Gravures.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../config/pseudos-interdits.ts';
@@ -18,10 +19,40 @@ import { chargerEdition } from '../services/cartes.ts';
 import { serveurDeJoutes, tirerUnPseudonyme } from '../services/joutes.ts';
 import { publierMonIdentite, rejoindreLesJoutes } from '../services/partie.ts';
 import { pseudoDuJoueur } from '../services/identite.ts';
+import './joutes.css';
 
 const REGLES = EQUILIBRAGE.joute;
 const signe = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
 const messageDe = (erreur: unknown): string => (erreur instanceof Error ? erreur.message : String(erreur));
+
+function ArmesDeJoute() {
+  return <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    {[-1, 1].map((sens) => <g key={sens} transform={sens === -1 ? 'translate(100 0) scale(-1 1)' : undefined}>
+      <path d="m24 79 43-49 12-12-3 18-45 50Z" fill="currentColor" fillOpacity=".08" />
+      <path d="m28 82 46-57M19 73l17 16M25 83l-9 10m-3-3 6 6" />
+      <path d="m63 36 7 1m-12 5 7 1m-12 5 7 1" strokeOpacity=".5" />
+    </g>)}
+  </svg>;
+}
+
+// Les ligues ont leurs propres insignes. Le laurier du vainqueur reste au podium.
+const INSIGNES_DE_LIGUE = [
+  { cadre: 'simple', motif: 'plume' },
+  { cadre: 'postal', motif: 'feuilles' },
+  { cadre: 'vitrail', motif: 'boussole' },
+  { cadre: 'cristal', motif: 'oracle' },
+  { cadre: 'eclipse', motif: 'cristal' },
+  { cadre: 'astral', motif: 'phenix' },
+] as const;
+
+function SceauDeJoute({ cote, grand = false }: { cote: number; grand?: boolean }) {
+  const insigne = INSIGNES_DE_LIGUE[ligueDe(cote, REGLES).rang] ?? INSIGNES_DE_LIGUE[0];
+  return <span className={`sceau-joute${grand ? ' sceau-joute--grand' : ''}`} aria-hidden="true">
+    {grand && <span className="sceau-joute__armes"><ArmesDeJoute /></span>}
+    <span className="sceau-joute__coeur"><Embleme motif={insigne.motif} /></span>
+    <CadreGrave modele={insigne.cadre} />
+  </span>;
+}
 
 // « 4 communes, 3 peu communes, 2 rares, 1 épique » : on montre la force d'un deck, pas ses mots.
 function raretesDuDeck(deck: readonly string[], cartes: ReadonlyMap<string, CarteIndex>): string {
@@ -91,7 +122,6 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   const formulaire = (
     <form className="joute__saisie" onSubmit={(e) => void validerLePseudo(e)}>
       <label htmlFor="pseudo"><strong>Pseudo public</strong><span className="texte-doux petit">{LONGUEUR_DU_PSEUDO.minimum}–{LONGUEUR_DU_PSEUDO.maximum} caractères : lettres, chiffres, espaces ou tirets.</span></label>
-      <p className="texte-doux petit">Le même pseudo est utilisé sur ton profil et dans les joutes.</p>
       <input id="pseudo" type="text" value={saisie ?? ''} maxLength={LONGUEUR_DU_PSEUDO.maximum + 4} autoComplete="off" autoCapitalize="words" spellCheck={false} aria-invalid={refus !== null} aria-describedby={refus ? 'pseudo-refus' : undefined} onChange={(e) => { setSaisie(e.target.value); setRefus(null); }} />
       {refus && <p id="pseudo-refus" className="joute__refus" role="alert">{refus}</p>}
       <div className="rangee-de-boutons">
@@ -119,44 +149,61 @@ export function PanneauDesJoutes({ sauvegarde, enPreparation, onDefier }: { sauv
   }
 
   return (
-    <div className="panneaux joutes">
-      <section className="rubrique">
-        <p className="entete__surtitre">Ligue {ligue.nom}</p>
+    <div className="joutes joutes--arene">
+      <section className="joutes__champion" data-ligue={ligue.nom} aria-label="Ton rang dans les joutes">
+        <SceauDeJoute cote={cote} grand />
+        <p className="joutes__ligue">Ligue {ligue.nom}</p>
         {saisie === null ? (
           <>
-            <h2>{pseudo || '…'} <small className="joute__cote">cote {cote}</small></h2>
-            <p className="texte-doux petit">
-              {rang && <>{rang.rang === 1 ? '1ᵉʳ' : `${rang.rang}ᵉ`} sur {rang.joueurs} · </>}
-              {jouees === 0 ? 'Première joute' : `${gagnees} victoire${gagnees > 1 ? 's' : ''} · ${jouees} joute${jouees > 1 ? 's' : ''}`}
-              {ligue.suivante && <> · ligue {ligue.suivante.nom} à {ligue.suivante.aPartirDe}</>}
-            </p>
-            {ligue.suivante && (
-              <span className="progression__barre" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, ((cote - bas) / (ligue.suivante.aPartirDe - bas)) * 100))}%` }} /></span>
-            )}
+            <h2 className="joutes__nom">{pseudo || '…'}</h2>
+            <p className="joutes__cote"><strong>{cote.toLocaleString('fr-FR')}</strong><span>Cote</span></p>
+            <div className="joutes__bilan">
+              {rang && <span><strong>{rang.rang === 1 ? '1ᵉʳ' : `${rang.rang}ᵉ`}</strong> / {rang.joueurs}</span>}
+              <span>{jouees === 0 ? 'Première joute' : <><strong>{gagnees}</strong> victoire{gagnees > 1 ? 's' : ''} / {jouees}</>}</span>
+            </div>
+            {ligue.suivante && <div className="joutes__progression">
+              <div><span>{ligue.suivante.nom}</span><span>{cote} / {ligue.suivante.aPartirDe}</span></div>
+              <span className="progression__barre" role="progressbar" aria-label={`Progression vers la ligue ${ligue.suivante.nom}`} aria-valuemin={bas} aria-valuemax={ligue.suivante.aPartirDe} aria-valuenow={cote}><span style={{ width: `${Math.min(100, Math.max(0, ((cote - bas) / (ligue.suivante.aPartirDe - bas)) * 100))}%` }} /></span>
+            </div>}
             {publication.etat === 'erreur' && <p className="joute__refus" role="alert">{publication.message}</p>}
-            <button type="button" className="bouton bouton--discret joute__pseudo" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Modifier le pseudo</button>
+            <div className="joutes__liens">
+              <a href={lien({ ecran: 'classement' })}>Voir le classement</a>
+              <button type="button" onClick={() => { setSaisie(pseudo); setRefus(null); }}>Modifier le pseudo</button>
+            </div>
           </>
         ) : formulaire}
       </section>
 
-      <section className="rubrique">
-        <h2>Choisis ton adversaire</h2>
+      <div className="joutes__confrontation" aria-hidden="true"><ArmesDeJoute /><span>VS</span></div>
+
+      <section className="joutes__defis" aria-labelledby="titre-adversaires" aria-busy={enPreparation}>
+        <header className="joutes__entete"><h2 id="titre-adversaires">Choisis ton adversaire</h2><span aria-hidden="true">✦</span></header>
         {adversaires.etat === 'erreur' && <p className="joute__refus" role="alert">{adversaires.message}</p>}
         {(adversaires.etat === 'en cours' || publication.etat === 'en cours') && <p className="texte-doux">Recherche d'adversaires…</p>}
         {adversaires.etat === 'pret' && publie && adversaires.donnees.length === 0 && <p className="texte-doux">Aucun adversaire disponible pour l'instant.</p>}
         {adversaires.etat === 'pret' && publie && (
-          <div className="niveaux">
+          <div className="joutes__adversaires">
             {adversaires.donnees.map((profil) => (
-              <button key={profil.id} type="button" className="niveau" disabled={enPreparation} onClick={() => onDefier(profil)}>
-                <strong>{profil.pseudo} <small className="joute__cote">cote {profil.cote} · {ligueDe(profil.cote, REGLES).nom}</small></strong>
-                <BadgeJoueurSimule maison={profil.maison} />
-                {cartes && <span className="texte-doux petit">{raretesDuDeck(profil.deck, cartes)}</span>}
-                <span className="niveau__gain">Victoire {signe(coteApres(cote, profil.cote, 'victoire', REGLES) - cote)} · Défaite {signe(coteApres(cote, profil.cote, 'defaite', REGLES) - cote)} · +{REGLES.encreParVictoire} Encre</span>
+              <button key={profil.id} type="button" className="defi-joute" data-ligue={ligueDe(profil.cote, REGLES).nom} disabled={enPreparation} onClick={() => onDefier(profil)}>
+                <SceauDeJoute cote={profil.cote} />
+                <span className="defi-joute__identite">
+                  <span className="defi-joute__ligue">{ligueDe(profil.cote, REGLES).nom}</span>
+                  <strong className="defi-joute__nom">{profil.pseudo}</strong>
+                  <BadgeJoueurSimule maison={profil.maison} />
+                </span>
+                <span className="defi-joute__cote"><strong>{profil.cote.toLocaleString('fr-FR')}</strong><span>Cote</span></span>
+                {cartes && <span className="defi-joute__deck">{raretesDuDeck(profil.deck, cartes)}</span>}
+                <span className="defi-joute__enjeux">
+                  <span>Victoire <b>{signe(coteApres(cote, profil.cote, 'victoire', REGLES) - cote)}</b></span>
+                  <span>Défaite <b>{signe(coteApres(cote, profil.cote, 'defaite', REGLES) - cote)}</b></span>
+                  <span className="defi-joute__encre">+{REGLES.encreParVictoire} Encre</span>
+                </span>
+                <span className="defi-joute__action">Défier <span aria-hidden="true">↗</span></span>
               </button>
             ))}
           </div>
         )}
-        <button type="button" className="bouton bouton--discret" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}>{enPreparation ? 'Préparation…' : 'Autres adversaires'}</button>
+        <button type="button" className="bouton bouton--discret joutes__renouveler" disabled={enPreparation || !publie} onClick={() => setTirage((t) => t + 1)}><span aria-hidden="true">↻</span> {enPreparation ? 'Préparation…' : 'Autres adversaires'}</button>
       </section>
 
 

@@ -4,6 +4,11 @@
 .revelation__face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; }
 .revelation__dos { transform:translateZ(.5px); }
 .revelation__recto { transform:rotateY(180deg) translateZ(.5px); }
+/* La 3D ne sert que pendant le retournement, pas pendant la lecture. */
+.revelation[data-au-repos=true] { perspective:none; }
+.revelation[data-au-repos=true] .revelation__rotation { transform:none; transform-style:flat; transition:none; }
+.revelation[data-au-repos=true] .revelation__recto { transform:none; backface-visibility:visible; -webkit-backface-visibility:visible; }
+.revelation[data-au-repos=true] .revelation__dos { display:none; }
 .revelation__dos .tim--dos { transform:none; }
 .revelation__ouvrir { position:absolute; inset:0; width:100%; height:100%; border:0; padding:0; background:transparent; cursor:pointer; touch-action:pan-y; }
 .revelation__ouvrir:focus-visible { outline:2px solid #d8e5e2; outline-offset:6px; }

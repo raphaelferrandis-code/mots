@@ -1,6 +1,8 @@
 /* Le sachet est réutilisé sur l'accueil ; la scène et ses mouvements restent
    isolés des timbres. Les durées viennent de rythme.ts via des variables CSS. */
-.paquet-scelle { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 20px 18px #0006); }
+.paquet-scelle { display: block; width: 100%; height: auto; overflow: visible; }
+/* L'ombre ne rasterise plus les lettres et les gravures du sachet. */
+.paquet-scelle__papier { filter: var(--ombre-paquet, drop-shadow(0 20px 18px #0006)); }
 .accueil-pole__illustration .paquet-scelle { height: var(--hauteur-illustration); width: calc(var(--hauteur-illustration) * 0.73); max-width: 100%; transform: rotate(-7deg); pointer-events: none; }
 .scene-paquet { position: relative; isolation: isolate; display: grid; justify-items: center; align-content: center; gap: 24px; min-height: 460px; padding: 24px 16px; overflow: clip; background: radial-gradient(ellipse at 50% 44%, #25486744, transparent 65%); }
 .scene-paquet__halo { position: absolute; z-index: -1; top: 50%; left: 50%; width: min(640px, 95%); aspect-ratio: 1; border: 1px solid #aac7df12; border-radius: 50%; transform: translate(-50%, -55%); }

@@ -47,8 +47,8 @@
 .vestiaire__objet .identite__texte small { display:none; }
 .vestiaire__objet .titre-grave { font-size:.86rem; }
 .vestiaire__objet--paquet,.vestiaire__objet--dos { display:grid; place-items:center; }
-.vestiaire__objet > .paquet-scelle { width:205px; height:282px; filter:drop-shadow(0 22px 18px #0008); }
-.vestiaire__objet > .tim { width:185px; filter:drop-shadow(0 22px 18px #0008); }
+.vestiaire__objet > .paquet-scelle { width:205px; height:282px; --ombre-paquet:drop-shadow(0 22px 18px #0008); }
+.vestiaire__objet > .tim { width:185px; --ombre-timbre:0 22px 18px #0008; }
 .vestiaire__signature { position:absolute; bottom:14px; color:#637d99; font:500 .54rem var(--police-texte); letter-spacing:.16em; }
 .vestiaire__signature span { margin:0 12px; color:var(--selection); }
 .vestiaire__fiche { padding:24px 24px 20px; border-top:1px solid #26374c; text-align:center; }
@@ -112,8 +112,8 @@
 .cosmetique__visuel::before { content:''; position:absolute; z-index:-1; bottom:9px; left:22%; width:56%; height:12px; border-radius:50%; background:#030b1766; filter:blur(4px); pointer-events:none; }
 .cosmetique__visuel .portrait { width:116px; max-width:100%; filter:drop-shadow(0 4px 2px #020a1255); }
 .cosmetique__visuel > .embleme-grave { width:80px; height:80px; filter:drop-shadow(0 3px 2px #020a1299); }
-.cosmetique__visuel .paquet-scelle { width:85px; height:117px; filter:drop-shadow(3px 5px 3px #020a1288); }
-.cosmetique__visuel .tim { width:72px; pointer-events:none; filter:drop-shadow(2px 4px 2px #020a1288); }
+.cosmetique__visuel .paquet-scelle { width:85px; height:117px; --ombre-paquet:drop-shadow(3px 5px 3px #020a1288); }
+.cosmetique__visuel .tim { width:72px; pointer-events:none; --ombre-timbre:2px 4px 2px #020a1288; }
 .cosmetique__cartouche {
   position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;
   width:100%; margin-top:7px; padding:8px 5px; min-height:72px;

@@ -161,16 +161,16 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   // La zone imprimée, et la hauteur de chaque bande (les mêmes proportions que la grille de timbre.css).
   const cx = x0 + U(0.75), cy = y0 + U(0.75), cw = w0 - U(1.5), ch = h0 - U(1.5);
   const bordure = U(0.5);
-  const hautH = U(14.1);
+  const hautH = U(15);
   const tailleMot = U(tailleDuMot(carte.mot));
   const motH = U(0.9 + 1.5 + 1.1 + 0.9) + tailleMot * 1.05;
-  const tailleDef = U(4.2);
-  const interligne = tailleDef * 1.33;
-  police(ctx, 'italic', 400, tailleDef, SERIF);
-  const lignesDef = couperEnLignes(carte.definition, cw - U(12), (t) => ctx.measureText(t).width, 6);
+  const tailleDef = U(4.6);
+  const interligne = tailleDef * 1.35;
+  police(ctx, '', 400, tailleDef, SERIF);
+  const lignesDef = couperEnLignes(carte.definition, cw - U(12), (t) => ctx.measureText(t).width, 4);
   const defH = U(2) + lignesDef.length * interligne + U(2.2);
-  const registreH = carte.registre.length > 0 ? U(4) : 0;
-  const basH = U(5.64);
+  const registreH = carte.registre.length > 0 ? U(5.5) : 0;
+  const basH = U(7.2);
   police(ctx, '', 700, U(2.9), MENTION);
   const lignesRecord = carte.record ? couperEnLignes(carte.record.toUpperCase(), cw - U(4), (t) => largeurEspacee(ctx, t, U(2.9) * 0.12), 3) : [];
   const recordH = lignesRecord.length > 0 ? U(2.6) + lignesRecord.length * U(2.9 * 1.2) : 0;
@@ -189,24 +189,24 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
     ctx.fillStyle = metal ? degrade(ctx, metal, x, cy, vw, hautH, angleMetal) : encre;
     ctx.fillRect(x, cy, vw, hautH);
     ctx.fillStyle = metal ? texteSurMetal : papier;
-    police(ctx, '', 600, U(2.3), MENTION);
-    texteEspace(ctx, nom.toUpperCase(), x + vw / 2, cy + U(1.2 + 1.38), U(2.3) * 0.18, 'center');
+    police(ctx, '', 600, U(3), MENTION);
+    texteEspace(ctx, nom.toUpperCase(), x + vw / 2, cy + U(1.2 + 1.8), U(3) * 0.08, 'center');
     police(ctx, '', 700, U(9.6), SERIF);
     ctx.textAlign = 'center';
-    ctx.fillText(String(valeur), x + vw / 2, cy + U(1.2 + 2.76 + 4.56 + 0.5));
+    ctx.fillText(String(valeur), x + vw / 2, cy + U(1.2 + 3.6 + 4.56 + 0.5));
   }
   ctx.fillStyle = encre;
-  police(ctx, '', 700, U(3.7), SERIF);
-  const lignesFaction = couperEnLignes(carte.faction.toUpperCase(), cw - 2 * vw - U(3), (t) => largeurEspacee(ctx, t, U(3.7) * 0.1));
-  const blocFaction = U(2.3 * 1.2 + 0.5) + lignesFaction.length * U(3.7 * 1.1);
+  police(ctx, '', 700, U(4.1), SERIF);
+  const lignesFaction = couperEnLignes(carte.faction.toUpperCase(), cw - 2 * vw - U(3), (t) => largeurEspacee(ctx, t, U(4.1) * 0.04));
+  const blocFaction = U(3 * 1.2 + 0.5) + lignesFaction.length * U(4.1 * 1.15);
   let y = cy + (hautH - blocFaction) / 2;
-  ctx.globalAlpha = 0.75;
-  police(ctx, '', 600, U(2.3), MENTION);
-  texteEspace(ctx, 'ORIGINE', cx + cw / 2, y + U(1.38), U(2.3) * 0.18, 'center');
-  ctx.globalAlpha = 1;
-  y += U(2.3 * 1.2 + 0.5);
-  police(ctx, '', 700, U(3.7), SERIF);
-  for (const ligne of lignesFaction) { texteEspace(ctx, ligne, cx + cw / 2, y + U(3.7 * 0.55), U(3.7) * 0.1, 'center'); y += U(3.7 * 1.1); }
+  ctx.fillStyle = texte;
+  police(ctx, '', 600, U(3), MENTION);
+  texteEspace(ctx, 'ORIGINE', cx + cw / 2, y + U(1.8), U(3) * 0.08, 'center');
+  ctx.fillStyle = encre;
+  y += U(3 * 1.2 + 0.5);
+  police(ctx, '', 700, U(4.1), SERIF);
+  for (const ligne of lignesFaction) { texteEspace(ctx, ligne, cx + cw / 2, y + U(4.1 * 0.575), U(4.1) * 0.04, 'center'); y += U(4.1 * 1.15); }
   ctx.fillStyle = encre;
   ctx.fillRect(cx, cy + hautH, cw, bordure);
 
@@ -235,7 +235,7 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
     ctx.fillStyle = niveau === 3 ? melange(contraste, 0.22, papier) : melange(papier, 0.8, '#ffffff');
   }
   ctx.fillRect(vx, vy, vwid, vh);
-  hachures(ctx, vx, vy, vwid, vh, U(0.95), U(0.22), horsSerie ? 'rgba(255,255,255,0.07)' : niveau === 5 ? 'rgba(166,124,26,0.22)' : voile(encre, 0.16));
+  hachures(ctx, vx, vy, vwid, vh, U(niveau >= 5 ? 0.95 : 1.5), U(niveau >= 5 ? 0.22 : 0.2), horsSerie ? 'rgba(255,255,255,0.07)' : niveau === 5 ? 'rgba(166,124,26,0.22)' : voile(encre, 0.1));
   const cote = Math.min(vwid, vh);
   const ox = vx + (vwid - cote) / 2, oy = vy + (vh - cote) / 2;
   if (illustration) {
@@ -247,7 +247,7 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
     ctx.scale(echelle, echelle);
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.lineWidth = horsSerie ? 0.8 : 0.34;
+    ctx.lineWidth = horsSerie ? 0.8 : 0.42;
     motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2).forEach((d, i) => {
       ctx.strokeStyle = horsSerie ? '#fff6dc' : i % 2 === 1 ? seconde : encre;
       ctx.stroke(new Path2D(d));
@@ -258,7 +258,7 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
         ? degrade(ctx, [[0, '#fff9e500'], [.35, '#fff9e500'], [.48, '#fff9e5'], [.6, '#fff9e500'], [1, '#fff9e500']], 0, 0, 60, 60, 115)
         : degrade(ctx, [[0, '#fff8d5'], [.3, '#82dedf'], [.5, '#fffef5'], [.7, '#ca9fde'], [1, '#efbf80']], 0, 0, 60, 60, 135);
       ctx.globalAlpha = finition === 'Brillante' ? .9 : .8;
-      ctx.lineWidth = finition === 'Brillante' ? .48 : .34;
+      ctx.lineWidth = finition === 'Brillante' ? .48 : .42;
       motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2).forEach((d) => ctx.stroke(new Path2D(d)));
     }
     ctx.restore();
@@ -285,10 +285,8 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   // Le registre, puis la bande du bas : type, rareté, date du cachet.
   if (carte.registre.length > 0) {
     ctx.fillStyle = encre;
-    ctx.globalAlpha = 0.8;
-    police(ctx, '', 600, U(2.5), MENTION);
-    texteEspace(ctx, carte.registre.join(' · ').toUpperCase(), cx + cw / 2, y + U(1.5), U(2.5) * 0.2, 'center');
-    ctx.globalAlpha = 1;
+    police(ctx, '', 600, U(3), MENTION);
+    texteEspace(ctx, carte.registre.join(' · ').toUpperCase(), cx + cw / 2, y + U(1.8), U(3) * 0.08, 'center');
     y += registreH;
   }
   ctx.fillStyle = encre;
@@ -297,11 +295,11 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   const basMetal = metal && !horsSerie;
   if (basMetal) { ctx.fillStyle = degrade(ctx, metal, cx, y, cw, basH, angleMetal); ctx.fillRect(cx, y, cw, basH); }
   ctx.fillStyle = basMetal ? texteSurMetal : encre;
-  police(ctx, '', 600, U(2.7), MENTION);
-  const yBas = y + U(1.3 + 1.62);
-  texteEspace(ctx, carte.type.toUpperCase(), cx + U(2.4), yBas, U(2.7) * 0.16, 'left');
-  texteEspace(ctx, carte.rarete.toUpperCase(), cx + cw / 2, yBas, U(2.7) * 0.16, 'center');
-  texteEspace(ctx, anneeDuCachet(carte.attestation), cx + cw - U(2.4), yBas, U(2.7) * 0.16, 'right');
+  police(ctx, '', 600, U(3.2), MENTION);
+  const yBas = y + U(1.3 + 1.92);
+  texteEspace(ctx, carte.type.toUpperCase(), cx + U(2.4), yBas, U(3.2) * 0.06, 'left');
+  texteEspace(ctx, carte.rarete.toUpperCase(), cx + cw / 2, yBas, U(3.2) * 0.06, 'center');
+  texteEspace(ctx, anneeDuCachet(carte.attestation), cx + cw - U(2.4), yBas, U(3.2) * 0.06, 'right');
   y += basH;
   if (lignesRecord.length > 0) {
     ctx.fillStyle = degrade(ctx, IRISE, cx, y, cw, recordH, 115);
@@ -333,7 +331,7 @@ export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Ha
   // La définition, toujours au-dessus du reflet pour rester lisible.
   ctx.fillStyle = texte;
   ctx.textAlign = 'center';
-  police(ctx, 'italic', 400, tailleDef, SERIF);
+  police(ctx, '', 400, tailleDef, SERIF);
   if (finition === 'Holographique' || finition === 'Prismatique') { ctx.shadowColor = papier; ctx.shadowBlur = U(0.8); }
   lignesDef.forEach((ligne, i) => ctx.fillText(ligne, cx + cw / 2, yDefinition + i * interligne + interligne / 2));
   ctx.shadowBlur = 0;
@@ -425,7 +423,7 @@ const LARGEUR_TIMBRE = 780;
 
 async function chargerLesPolices(): Promise<void> {
   if (typeof document === 'undefined' || !('fonts' in document)) return;
-  await Promise.all(['700 40px "Playfair Display"', 'italic 400 40px "Playfair Display"', '600 40px "Barlow Condensed"'].map((p) => document.fonts.load(p).catch(() => [])));
+  await Promise.all(['700 40px "Playfair Display"', '400 40px "Playfair Display"', '600 40px "Barlow Condensed"', '700 40px "Barlow Condensed"'].map((p) => document.fonts.load(p).catch(() => [])));
 }
 
 function chargerUneImage(source: string): Promise<HTMLImageElement> {

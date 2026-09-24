@@ -30,6 +30,23 @@ function fauxMonde(reponses: (appel: Appel) => { statut: number; corps?: unknown
 const JETONS = { access_token: 'acces-1', refresh_token: 'renouvellement-1', expires_in: 3600 };
 
 describe('le client Supabase', () => {
+  it('deux onglets qui repartent en invité partagent une seule création de session', async () => {
+    let gardee: Session | null = null;
+    let file: Promise<unknown> = Promise.resolve();
+    let creations = 0;
+    const io = {
+      maintenant: () => 1000, lireLaSession: () => gardee, ecrireLaSession: (s: Session | null) => { gardee = s; },
+      sessionExclusive: <T>(action: () => Promise<T>): Promise<T> => { const r = file.then(action); file = r.catch(() => {}); return r; },
+      requete: (async (adresse: string) => {
+        if (adresse.includes('/signup')) { creations++; return Response.json(JETONS); }
+        return Response.json({});
+      }) as typeof fetch,
+    };
+    const a = creerLeClient('https://projet.supabase.co', 'publique', io);
+    const b = creerLeClient('https://projet.supabase.co', 'publique', io);
+    await Promise.all([a.appeler('mon_compte'), b.appeler('mon_compte')]);
+    assert.equal(creations, 1);
+  });
   it('renouvelle un combat avec exactement la même commande et conserve les conflits explicites', async () => {
     const corps={type:'agir',requete:'commande-unique',revision:2,action:{type:'repondre',choisie:1}};
     const monde=fauxMonde(a => a.adresse.includes('/auth/') ? {statut:200,corps:JETONS}

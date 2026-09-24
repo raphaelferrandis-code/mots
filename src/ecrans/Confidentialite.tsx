@@ -38,7 +38,7 @@ export function Confidentialite() {
         <h2>En bref</h2>
         <ul className="regles">
           {collectionSurLeServeur
-            ? <><li>Ta collection et ta progression sont gardées par le serveur du jeu, sous un compte anonyme : ni nom, ni e-mail, ni mot de passe.</li><li>Tes réglages restent sur ton appareil. Le serveur vérifie tes duels et permet de les reprendre.</li></>
+            ? <><li>Ta collection et ta progression sont gardées par le serveur du jeu. Tu peux jouer en invité ou créer un compte avec Google ou ton adresse e-mail.</li><li>Tes réglages restent sur ton appareil. Le serveur vérifie tes duels et permet de les reprendre.</li></>
             : <><li>Ta partie reste sur ton appareil.</li><li>Rien n'est envoyé à un serveur tant que tu n'as pas rejoint les joutes classées.</li></>}
           <li>Pas de publicité, pas de mesure d'audience, pas de pistage.</li>
           <li>Tu peux tout effacer à tout moment, ici même.</li>
@@ -75,7 +75,7 @@ export function Confidentialite() {
             <li>l'empreinte de ton code de secours, si tu en as créé un — jamais le code lui-même.</li>
           </ul>
           <p>
-            Tout cela est attaché au même compte anonyme que les joutes : un simple numéro, lié à ce navigateur. La
+            Tout cela est attaché au même compte que les joutes : invité, ou relié à Google ou à ton adresse e-mail. La
             collection est synchronisée depuis le serveur. Une ancienne collection locale peut être transférée après
             validation ; ensuite, c'est le serveur qui fait foi.
           </p>
@@ -93,8 +93,8 @@ export function Confidentialite() {
           <li>la date et le résultat de chacune de tes joutes.</li>
         </ul>
         <p>
-          Ces données sont attachées à un compte anonyme créé automatiquement : un simple numéro, sans nom, sans adresse
-          e-mail, sans mot de passe. Le code de secours permet de retrouver ce compte, sa progression et son combat sur un autre appareil.
+          Ces données sont attachées à ton compte. En mode invité, il s’agit d’un simple numéro, sans adresse e-mail.
+          Google, un code de connexion envoyé par e-mail ou ton code de secours permettent de retrouver ta collection sur un autre appareil.
         </p>
         <p>
           <strong>Ce que voient les autres joueurs :</strong> ton pseudonyme, ta cote, ta ligue et les raretés de ton deck.
@@ -102,6 +102,12 @@ export function Confidentialite() {
           jouer ton double ; ils ne sont pas affichés.
         </p>
         <p className="texte-doux petit">Un conseil : ne mets pas ton vrai nom dans ton pseudonyme.</p>
+      </section>
+
+      <section className="rubrique">
+        <h2>Connexion avec Google ou par e-mail</h2>
+        <p>Si tu crées un compte, Supabase conserve ton adresse e-mail et les informations nécessaires à la connexion. Avec Google, il reçoit aussi l’identifiant et les informations de profil autorisées par Google. Le jeu ne reçoit jamais ton mot de passe Google. La connexion par e-mail utilise un code à usage unique.</p>
+        <p>Ces informations servent à retrouver ton compte et ne sont pas affichées aux autres joueurs. Une session est conservée dans ton navigateur jusqu’à sa déconnexion ou son expiration.</p>
       </section>
 
       <section className="rubrique">
@@ -128,7 +134,7 @@ export function Confidentialite() {
         {suppression.etat === 'erreur' && <p className="joute__refus" role="alert">{suppression.message} Rien n'a été effacé : réessaie dans un moment.</p>}
         <p className="texte-doux petit">
           Pour effacer aussi ta partie sur cet appareil, utilise « Effacer ma partie » dans les <a href={lien({ ecran: 'reglages' })}>réglages</a> :
-          ton profil de joute{collectionSurLeServeur && ', ta collection'} et ton compte anonyme sont alors supprimés en même temps.
+          ton profil de joute{collectionSurLeServeur && ', ta collection'} et ton compte sont alors supprimés en même temps.
         </p>
       </section>
 

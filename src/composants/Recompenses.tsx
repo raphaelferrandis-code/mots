@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { FAMILLES_SUCCES, titreDuSucces } from '../jeu/catalogueSucces.ts';
+import { FAMILLES_SUCCES } from '../jeu/catalogueSucces.ts';
 import { ORNEMENTS } from '../jeu/personnalisation.ts';
-import { nouvellesRecompenses } from '../jeu/recompenses.ts';
+import { nouvellesRecompenses, resumerLesRecompenses } from '../jeu/recompenses.ts';
 import type { Recompense } from '../jeu/recompenses.ts';
 import type { ProfilPersonnel } from '../jeu/personnalisation.ts';
 import type { Resultat } from '../jeu/progression.ts';
@@ -46,10 +46,12 @@ export function CarteRecompense({ recompense, pseudo, equipe, onEquiper }: { rec
   </div>;
 }
 
-export function Recompenses({ children, profil, onEquiper }: { children: ReactNode; profil: ProfilPersonnel | null; onEquiper: (id: string) => void }) {
+export function Recompenses({ children, profil }: { children: ReactNode; profil: ProfilPersonnel | null }) {
   const precedent = useRef<Pick<ProfilPersonnel, 'xp' | 'succes'> | null>(null);
   const [attente, setAttente] = useState<Recompense[]>([]);
   const [suspensions, setSuspensions] = useState(0);
+  const [survolee, setSurvolee] = useState(false);
+  const [focusDedans, setFocusDedans] = useState(false);
   const retenir = useCallback(() => {
     setSuspensions(n => n + 1);
     return () => setSuspensions(n => n - 1);
@@ -65,22 +67,35 @@ export function Recompenses({ children, profil, onEquiper }: { children: ReactNo
       precedent.current = { xp: Math.max(precedent.current.xp, profil.xp), succes: [...new Set([...precedent.current.succes, ...profil.succes])] };
     } else precedent.current = { xp: profil.xp, succes: [...profil.succes] };
   }, [profil]);
-  const actuelle = suspensions === 0 ? attente[0] : undefined;
+  const visible = suspensions === 0 && attente.length > 0;
   useEffect(() => {
-    if (actuelle && !panneau.current?.contains(document.activeElement)) origineFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  }, [actuelle]);
-  const fermer = () => {
-    if (attente.length === 1 && panneau.current?.contains(document.activeElement)) {
+    if (visible && !panneau.current?.contains(document.activeElement)) origineFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!visible) { setSurvolee(false); setFocusDedans(false); }
+  }, [visible]);
+  const fermer = useCallback(() => {
+    if (panneau.current?.contains(document.activeElement)) {
       if (origineFocus.current?.isConnected) origineFocus.current.focus({ preventScroll: true });
       else { const main = document.querySelector('main'); if (main) { main.tabIndex = -1; main.focus({ preventScroll: true }); } }
     }
-    setAttente(liste => liste.slice(1));
-  };
+    setAttente([]);
+  }, []);
+  // Un seul résumé, même après une ouverture ou un duel riche en récompenses.
+  // Laisser le temps de le lire au clavier ou au survol, sans prendre le focus.
+  useEffect(() => {
+    if (!visible || survolee || focusDedans) return;
+    const minuterie = window.setTimeout(fermer, 5000);
+    return () => window.clearTimeout(minuterie);
+  }, [visible, attente, survolee, focusDedans, fermer]);
+  const resume = resumerLesRecompenses(attente);
   return <Suspension.Provider value={retenir}>{children}
-    {actuelle && profil && <aside ref={panneau} className="recompenses" aria-label="Récompenses débloquées">
-      <div className="visuellement-cache" role="status">{actuelle.type === 'niveau' ? `Niveau ${actuelle.niveau} atteint` : `Succès ${actuelle.succes.nom}. Titre ${actuelle.succes.titre} débloqué.`}</div>
-      <CarteRecompense key={actuelle.type === 'niveau' ? `niveau-${actuelle.niveau}` : actuelle.succes.id} recompense={actuelle} pseudo={profil.pseudo} equipe={actuelle.type === 'titre' && profil.titre === titreDuSucces(actuelle.succes.id)} onEquiper={actuelle.type === 'titre' && profil.succes.includes(actuelle.succes.id) ? () => onEquiper(titreDuSucces(actuelle.succes.id)) : undefined} />
-      <div className="recompenses__suite"><span>{attente.length > 1 ? `${attente.length - 1} autre${attente.length > 2 ? 's' : ''} récompense${attente.length > 2 ? 's' : ''}` : ''}</span><button type="button" className="bouton" onClick={fermer}>{attente.length > 1 ? 'Suivante' : 'Fermer'}</button></div>
+    <div className="visuellement-cache" role="status" aria-atomic="true">{visible && resume ? `${resume.titre}. ${resume.detail}` : ''}</div>
+    {visible && profil && resume && <aside ref={panneau} className="recompenses" aria-label="Récompenses débloquées"
+      onMouseEnter={() => setSurvolee(true)} onMouseLeave={() => setSurvolee(false)}
+      onFocus={() => setFocusDedans(true)} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setFocusDedans(false); }}
+      onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); fermer(); } }}>
+      <span className="recompenses__icone" aria-hidden="true">✧</span>
+      <div className="recompenses__texte"><strong>{resume.titre}</strong><span>{resume.detail}</span></div>
+      <button type="button" className="recompenses__fermer" onClick={fermer} aria-label="Fermer la notification">×</button>
     </aside>}
   </Suspension.Provider>;
 }

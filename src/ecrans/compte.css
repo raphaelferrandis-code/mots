@@ -1,0 +1,15 @@
+.compte__carte { width: min(100%, 500px); align-self: center; display: grid; gap: 20px; padding: clamp(20px, 4vw, 36px); margin-block: 16px; }
+.compte__carte p { overflow-wrap: anywhere; }
+.compte__sceau { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font: 30px var(--police-titre); }
+.compte__modes { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--filet); border-radius: 10px; }
+.compte__modes button { flex: 1; padding: 12px 8px; border: 0; border-radius: 6px; background: transparent; font-size: .9rem; }
+.compte__modes button[aria-pressed="true"] { background: var(--papier-fonce); color: var(--accent); }
+.compte__google { background: var(--encre); color: var(--papier); border-color: var(--encre); gap: 12px; }
+.compte__google span { font: bold 22px var(--police-texte); }
+.compte__separation { display: flex; align-items: center; gap: 12px; font-size: .85rem; color: var(--encre-douce); }
+.compte__separation::before, .compte__separation::after { content: ''; height: 1px; background: var(--filet); flex: 1; }
+.compte__formulaire { display: grid; gap: 12px; }
+.compte__formulaire input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; background: var(--papier); color: var(--encre); border: 1px solid var(--filet-fort); border-radius: 8px; font: inherit; }
+.compte__formulaire label { font-weight: 600; }
+.compte__erreur { padding: 12px; border: 1px solid var(--accent); border-radius: 8px; }
+.compte__retour { text-align: center; }

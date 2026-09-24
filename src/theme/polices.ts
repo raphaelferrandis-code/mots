@@ -10,3 +10,4 @@ import '@fontsource/playfair-display/latin-400-italic.css';
 import '@fontsource/playfair-display/latin-700.css';
 import '@fontsource/barlow-condensed/latin-500.css';
 import '@fontsource/barlow-condensed/latin-600.css';
+import '@fontsource/barlow-condensed/latin-700.css';

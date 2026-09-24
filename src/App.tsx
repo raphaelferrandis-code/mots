@@ -1,6 +1,6 @@
 import { Profil } from './ecrans/Profil.tsx';
+import { Compte } from './ecrans/Compte.tsx';
 import { Recompenses } from './composants/Recompenses.tsx';
-import { personnaliser } from './services/partie.ts';
 import { Classement } from './ecrans/Classement.tsx';
 import { useEffect, useRef } from 'react';
 import { Navigation } from './composants/Navigation.tsx';
@@ -22,6 +22,7 @@ import type { Route } from './navigation/routes.ts';
 
 function Ecran({ route }: { route: Route }) {
   switch (route.ecran) {
+    case 'compte': return <Compte />;
     case 'classement': return <Classement />;
     case 'profil': return <Profil />;
     case 'accueil': return <Accueil />;
@@ -73,7 +74,7 @@ export function App() {
   useEffect(() => { document.documentElement.toggleAttribute('data-animations-reduites', animationsReduites); }, [animationsReduites]);
 
   return (
-    <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null} onEquiper={id => personnaliser('titre', id)}><div className="application">
+    <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} />
       <Ecran key={cle} route={route} />

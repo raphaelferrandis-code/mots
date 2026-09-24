@@ -21,21 +21,21 @@ export function PaquetScelle({ modele }: { modele?: string } = {}) {
           <stop stopColor={design.clair} /><stop offset="0.45" stopColor={design.fond} /><stop offset="1" stopColor={design.ombre} />
         </linearGradient>
         <linearGradient id={`${id}-cuivre`}><stop stopColor={design.metal} stopOpacity=".6" /><stop offset="0.45" stopColor={design.metal} /><stop offset="1" stopColor={design.metal} stopOpacity=".7" /></linearGradient>
-        <pattern id={`${id}-grain`} width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 1h4M1 0v4" stroke="#b1d0e9" strokeWidth="0.3" opacity="0.12" /></pattern>
+        <pattern id={`${id}-grain`} width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 1h6M1 0v6" stroke="#b1d0e9" strokeWidth="0.4" opacity="0.08" /></pattern>
         <pattern id={`${id}-pli`} width="7" height="8" patternUnits="userSpaceOnUse"><path d="M2 0v8" stroke="#8cabc3" opacity="0.35" /></pattern>
         <clipPath id={`${id}-bas`}><path d={`${dechirure}L320 103V440H0V103Z`} /></clipPath>
         <clipPath id={`${id}-haut`}><path d={`${dechirure}L320 103V0H0V103Z`} /></clipPath>
         <linearGradient id={`${id}-interieur`} x2="0" y2="1"><stop stopColor="#050e1b" /><stop offset="1" stopColor={design.ombre} /></linearGradient>
         <g id={`${id}-dessin`}>
           <g>
-            <path d={`M22 20H298V418${Array.from({ length: 39 }, (_, i) => `l-7 ${i % 2 === 0 ? 7 : -7}`).join('')}L22 418Z`} fill={`url(#${id}-papier)`} stroke="#6385a0" />
+            <path className="paquet-scelle__papier" d={`M22 20H298V418${Array.from({ length: 39 }, (_, i) => `l-7 ${i % 2 === 0 ? 7 : -7}`).join('')}L22 418Z`} fill={`url(#${id}-papier)`} stroke="#6385a0" />
             <path d="M34 47h252v350H34Z" fill="none" stroke="#a9c5dc" strokeOpacity="0.45" />
             <path d="M42 55h236v334H42Z" fill="none" stroke="#a9c5dc" strokeOpacity="0.2" />
             <rect x="23" y="22" width="274" height="394" fill={`url(#${id}-grain)`} />
             <rect x="23" y="402" width="274" height="16" fill={`url(#${id}-pli)`} />
-            <text x="160" y="82" textAnchor="middle" fill="#bdd2e3" fontSize="10" letterSpacing="3">LE BUREAU DU COLLECTIONNEUR</text>
+            <text x="160" y="82" textAnchor="middle" fill="#dce8f1" fontFamily="var(--police-mention)" fontSize="13" fontWeight="600" letterSpacing="1.5">LE BUREAU DU COLLECTIONNEUR</text>
             <text x="160" y="143" textAnchor="middle" fill="#f2e9d7" fontFamily="var(--police-serif)" fontSize="38" fontWeight="700" letterSpacing="-1.5">{SITE.nomEnCapitales}</text>
-            <g fill="none" stroke="#a2c3dc" strokeWidth="0.65" opacity="0.6">
+            <g fill="none" stroke="#b6d2e6" strokeWidth="0.85" opacity="0.75">
               {design.motif === 'rosace' && Array.from({ length: 12 }, (_, i) => <ellipse key={i} cx="160" cy="242" rx="67" ry="29" transform={`rotate(${i * 15} 160 242)`} />)}
               {design.motif === 'feuilles' && <g strokeWidth="1.4"><path d="M160 310V178" />{Array.from({ length: 5 }, (_, i) => <g key={i} transform={`translate(160 ${190 + i * 23})`}><path d="M0 15Q-65 5-47-18Q-12-20 0 15ZM0 15Q65 5 47-18Q12-20 0 15Z" /></g>)}</g>}
               {design.motif === 'etoiles' && <g strokeWidth="1.5"><path d="m160 173 14 49 49 20-49 14-14 49-14-49-49-14 49-20Z" /><circle cx="160" cy="242" r="52" strokeDasharray="2 8" />{[[-55,-48],[59,-35],[-47,52],[51,53]].map(([x,y],i)=><path key={i} transform={`translate(${160+x} ${242+y})`} d="M-6 0H6M0-6V6" />)}</g>}
@@ -44,14 +44,14 @@ export function PaquetScelle({ modele }: { modele?: string } = {}) {
               <path d="M61 170h198M61 337h198" />
             </g>
             {['papillon', 'cristal', 'vagues', 'dragon'].includes(design.motif) && <svg x="98" y="180" width="124" height="124" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1" style={{ color: design.metal }}><Motif nom={design.motif} /></svg>}
-            <text x="160" y="250" textAnchor="middle" fill="#f4dfbf" fontFamily="var(--police-serif)" fontSize="23" fontStyle="italic">{design.motif === 'rosace' ? 'À découvrir' : ''}</text>
-            <text x="160" y="363" textAnchor="middle" fill="#f2e9d7" fontSize="16" letterSpacing="4">{EQUILIBRAGE.paquets.emplacements.length} TIMBRES</text>
-            <text x="160" y="382" textAnchor="middle" fill="#bdd2e3" fontSize="8" letterSpacing="2.5">DES MOTS À COLLECTIONNER</text>
+            <text x="160" y="250" textAnchor="middle" fill="#f4dfbf" stroke={design.fond} strokeWidth="3" strokeLinejoin="round" paintOrder="stroke fill" fontFamily="var(--police-serif)" fontSize="23" fontStyle="italic">{design.motif === 'rosace' ? 'À découvrir' : ''}</text>
+            <text x="160" y="363" textAnchor="middle" fill="#f2e9d7" fontFamily="var(--police-mention)" fontSize="20" fontWeight="600" letterSpacing="3">{EQUILIBRAGE.paquets.emplacements.length} TIMBRES</text>
+            <text x="160" y="383" textAnchor="middle" fill="#dce8f1" fontFamily="var(--police-mention)" fontSize="12" fontWeight="600" letterSpacing="1.8">DES MOTS À COLLECTIONNER</text>
           </g>
           <g className="paquet-scelle__bande">
             <rect x="19" y="16" width="282" height="31" rx="2" fill={`url(#${id}-cuivre)`} />
             <path d="M28 40h264" stroke="#653c2a" strokeDasharray="3 4" opacity="0.65" />
-            <text x="160" y="33" textAnchor="middle" fill="#382920" fontSize="9" fontWeight="700" letterSpacing="2">{SITE.nomEnCapitales} · {design.nom.toLocaleUpperCase('fr')}</text>
+            <text x="154" y="34" textAnchor="middle" fill="#382920" fontFamily="var(--police-mention)" fontSize="12" fontWeight="700" letterSpacing="1">{SITE.nomEnCapitales} · {design.nom.toLocaleUpperCase('fr')}</text>
             <path d="m286 25 7 5-7 5" fill="none" stroke="#382920" />
           </g>
           <g className="paquet-scelle__sceau">

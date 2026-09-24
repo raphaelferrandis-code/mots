@@ -28,16 +28,16 @@ it('contient 50 succès et 50 titres distincts, tous atteignables avec l’édit
 
 it('attribue les titres exactement au seuil et conserve les acquis après une vente', () => {
   const s = nouvelleSauvegarde(0, 0);
-  s.cartes = Object.fromEntries(edition.cartes.slice(0, 9).map(c => [c.id, possession()]));
+  s.cartes = Object.fromEntries(edition.cartes.slice(0, 24).map(c => [c.id, possession()]));
   const avant = actualiserLesSucces(s, index);
   assert.ok(!avant.profil.succes.includes('dix-mots'));
-  avant.cartes[edition.cartes[9].id] = possession();
+  avant.cartes[edition.cartes[24].id] = possession();
   const apres = actualiserLesSucces(avant, index);
   assert.ok(apres.profil.succes.includes('dix-mots'));
   assert.deepEqual(actualiserLesSucces(apres, index), apres);
   const vendu = actualiserLesSucces({ ...apres, cartes: {} }, index);
   assert.deepEqual(vendu.profil.succes, apres.profil.succes);
-  assert.equal(vendu.profil.progressionSucces.collection, 10);
+  assert.equal(vendu.profil.progressionSucces.collection, 25);
   assert.equal(vendu.encre, s.encre);
   assert.equal(vendu.profil.xp, s.profil.xp);
 });
@@ -49,12 +49,38 @@ it('ne compte pas les doublons comme des mots distincts et attend l’édition p
   const sans = actualiserLesSucces(s);
   assert.ok(!sans.profil.succes.includes('premier-rare'));
   const avec = actualiserLesSucces(sans, index);
-  assert.ok(avec.profil.succes.includes('premier-rare'));
+  assert.ok(!avec.profil.succes.includes('premier-rare'));
   assert.equal(avec.profil.progressionSucces.rares, 1);
   assert.equal(avec.profil.progressionSucces.brillantes, 1);
   assert.equal(avec.profil.progressionSucces.holographiques, 1);
   assert.equal(avec.profil.progressionSucces.triptyques, 1);
   assert.equal(avec.profil.progressionSucces.collection, 1);
+  for (const c of edition.cartes.filter(c => c.rarete === 'Rare' && c.id !== rare.id).slice(0, 4)) avec.cartes[c.id] = possession();
+  assert.ok(!actualiserLesSucces(avec).profil.succes.includes('premier-rare'));
+  assert.ok(actualiserLesSucces(avec, index).profil.succes.includes('premier-rare'));
+});
+
+it('espace les succès courants pendant les trois paquets de départ et le premier duel', () => {
+  const s = nouvelleSauvegarde(0, 0);
+  const modele = edition.cartes[0];
+  const cartes: CarteIndex[] = Array.from({ length: 15 }, (_, i) => ({ ...modele, id: `depart-${i}`, mot: 'histoire', rarete: i < 3 ? 'Rare' : 'Commune', faction: 'Latin', type: 'Nom' }));
+  s.cartes = Object.fromEntries(cartes.map((c, i) => [c.id, { ...possession(i === 0 ? { Brillante: 1 } : { Normale: 1 }), reussites: i < 5 ? 1 : 0 }]));
+  s.paquets.ouverts = 3;
+  s.duels.joues = 1; s.duels.gagnes = 1;
+  s.parades.Rare = { posees: 3, reussies: 3 };
+  assert.deepEqual(actualiserLesSucces(s, new Map(cartes.map(c => [c.id, c]))).profil.succes, ['premier-mot']);
+});
+
+it('conserve les anciens titres équipés malgré le relèvement des seuils', () => {
+  const s = nouvelleSauvegarde(0, 0);
+  s.profil.succes = ['premier-mot', 'dix-mots', 'premier-paquet', 'premier-rare'];
+  s.profil.titre = titreDuSucces('dix-mots');
+  s.profil.progressionSucces = { collection: 10, paquets: 1, rares: 1 };
+  const relu = relireSauvegarde(JSON.parse(JSON.stringify(s)), 0);
+  const actuel = actualiserLesSucces(relu, index);
+  assert.deepEqual(actuel.profil.succes, s.profil.succes);
+  assert.equal(actuel.profil.titre, s.profil.titre);
+  assert.equal(estDisponible(actuel.profil, ornement(s.profil.titre)!), true);
 });
 
 it('compte les lettres sans les tirets, les origines et les natures distinctes', () => {

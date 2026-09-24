@@ -1,4 +1,3 @@
-import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { Partie } from '../../services/partie.ts';
 import { enMinutesEtSecondes, useStockDePaquets } from '../usePartie.ts';
@@ -10,7 +9,7 @@ export function PaquetsAccueil({ partie }: { partie: Extract<Partie, { etat: 'pr
   const disponible = paquets.stock > 0;
   return (
     <section className="accueil-pole" aria-labelledby="titre-paquets">
-      <header className="accueil-pole__entete"><h2 id="titre-paquets">Les paquets</h2><p>{EQUILIBRAGE.paquets.emplacements.length} timbres par paquet</p></header>
+      <header className="accueil-pole__entete"><h2 id="titre-paquets">Les paquets</h2></header>
       <div className="accueil-pole__illustration"><PaquetScelle /></div>
       <p className="accueil-pole__bilan"><strong>{paquets.stock}</strong> / {paquets.maximum} en réserve</p>
       {disponible

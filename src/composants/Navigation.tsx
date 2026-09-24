@@ -22,7 +22,9 @@ const ONGLETS: Onglet[] = [
 export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: number | null }) {
   return (
     <header className="entete-application">
-      <a className="marque" href={lien({ ecran: 'accueil' })} aria-label={`${SITE.nom} — accueil`}>{SITE.nom}</a>
+      <a className="marque" href={lien({ ecran: 'accueil' })} aria-label={`${SITE.nom} — accueil`}>
+        <img src={`${import.meta.env.BASE_URL}identite/philamots-clair.svg`} alt="" className="marque__logo" />
+      </a>
       <nav className="navigation" aria-label="Navigation principale">
         <ul className="navigation__liste">
           {ONGLETS.map((onglet) => (
@@ -37,6 +39,7 @@ export function Navigation({ ecran, encre }: { ecran: Route['ecran']; encre: num
         </ul>
       </nav>
       <div className="navigation__personnel">
+      <a className="lien-compte" href={lien({ ecran: 'compte' })} aria-label="Mon compte — inscription et connexion" title="Mon compte" aria-current={ecran === 'compte' ? 'page' : undefined}><svg viewBox="0 0 24 24" {...trait} aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg><span>Mon compte</span></a>
       <a className="lien-reglages" href={lien({ ecran: 'reglages' })} aria-current={ecran === 'reglages' || ecran === 'confidentialite' ? 'page' : undefined}>Réglages</a>
       <a className="lien-formules" href={lien({ ecran: 'formules' })} aria-label="Les formules" title="Les formules" aria-current={ecran === 'formules' ? 'page' : undefined}>
         <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="navigation-eclat" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffe1a1" /><stop offset=".5" stopColor="#e1b7ff" /><stop offset="1" stopColor="#8ce4eb" /></linearGradient></defs><path d="m15 4 3.5 8.5L27 16l-8.5 3.5L15 28l-3.5-8.5L3 16l8.5-3.5Z" fill="url(#navigation-eclat)" /><path d="m26 2 1.3 3.7L31 7l-3.7 1.3L26 12l-1.3-3.7L21 7l3.7-1.3Z" fill="#f9e9bd" /></svg>

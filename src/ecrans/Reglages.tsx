@@ -14,8 +14,8 @@ import { changerUnReglage, definirUnCodeDeSecours, exporterLaSauvegarde, importe
 // Les réglages à cocher (ceux qui valent « oui » ou « non »).
 type ReglageACocher = { [C in keyof ReglagesDuJoueur]: ReglagesDuJoueur[C] extends boolean ? C : never }[keyof ReglagesDuJoueur];
 
-const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string; aide?: string }[] = [
-  { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers', aide: 'Inclut les mots populaires, argotiques et vulgaires.' },
+const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string }[] = [
+  { cle: 'masquerFamiliers', nom: 'Masquer les mots familiers' },
   { cle: 'masquerInjurieux', nom: 'Masquer les mots injurieux' },
 ];
 const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
@@ -107,7 +107,7 @@ export function Reglages() {
           {OPTIONS_CONFORT.map((option) => (
             <label key={option.cle} className="option">
               <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
-              <span><strong>{option.nom}</strong>{option.aide && <span className="texte-doux petit">{option.aide}</span>}</span>
+              <strong>{option.nom}</strong>
             </label>
           ))}
           <label className="option option--liste">
@@ -122,11 +122,10 @@ export function Reglages() {
 
         <section className="rubrique">
           <h2>Les mots de ta collection</h2>
-          <p className="texte-doux petit">Les mots masqués sont exclus des paquets et cachés dans l'album, sans être perdus.</p>
           {OPTIONS_CONTENU.map((option) => (
             <label key={option.cle} className="option">
               <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />
-              <span><strong>{option.nom}</strong>{option.aide && <span className="texte-doux petit">{option.aide}</span>}</span>
+              <strong>{option.nom}</strong>
             </label>
           ))}
         </section>
@@ -135,16 +134,15 @@ export function Reglages() {
       <div className="reglages__gestion">
         <section className="rubrique">
           <h2>Ta sauvegarde</h2>
-          {sauvegarde.progressionServeur && <p className="petit">Ton expérience et ta maîtrise des mots sont synchronisées avec ton compte.</p>}
           {sauvegarde.ancienneProgression && <p className="bloc petit">Ton ancienne progression locale ({sauvegarde.ancienneProgression.xp} XP) est conservée dans le fichier exporté, dans « ancienneProgression ». Elle reste disponible pour une reprise après validation.</p>}
           <p className="petit">
             {partie.serveur.etat !== 'appareil'
-              ? 'Ta collection est gardée par le serveur du jeu, sous le compte anonyme de ce navigateur. Le fichier exporté n’en est qu’une copie : il ne peut plus être importé.'
+              ? 'Le fichier exporté ne peut pas être réimporté.'
               : partie.emplacement === 'mémoire seulement'
                 ? 'Ta partie sera perdue à la fermeture de la page. Exporte-la pour la conserver.'
-                : <>Ta partie est enregistrée uniquement sur cet appareil. Exporte une copie : le navigateur peut effacer ses données.{partie.stockageDurable && ' Le stockage actuel est protégé contre le nettoyage automatique.'}</>}
+                : 'Sauvegarde sur cet appareil uniquement.'}
           </p>
-          <p className="texte-doux petit">{dernierExport ? `Dernier export : ${dernierExport}.` : 'Aucun export pour le moment.'}</p>
+          {dernierExport && <p className="texte-doux petit">Dernier export : {dernierExport}.</p>}
           <div className="rangee-de-boutons">
             <button type="button" className="bouton" onClick={exporter}>Exporter ma sauvegarde</button>
             {partie.serveur.etat === 'appareil' && <button type="button" className="bouton bouton--discret" onClick={() => fichier.current?.click()}>Importer une sauvegarde</button>}
@@ -157,6 +155,7 @@ export function Reglages() {
         {partie.serveur.etat !== 'appareil' && (
           <section className="rubrique">
             <h2>Ton compte</h2>
+            <a className="bouton" href={lien({ ecran: 'compte' })}>Créer un compte ou se connecter</a>
             {partie.compte && nomDeLaFormule(partie.compte.formule) && (
               <p className="petit">
                 <strong>Formule « {nomDeLaFormule(partie.compte.formule)} ».</strong>
@@ -165,7 +164,6 @@ export function Reglages() {
                 {' '}<a href={lien({ ecran: 'formules' })}>Voir ce que donne chaque formule</a>
               </p>
             )}
-            <p className="petit">Ta collection est attachée au compte anonyme de ce navigateur. Un code de secours permet de la retrouver sur un autre appareil, ou après un changement de navigateur.</p>
             {code ? (
               <div className="code-de-secours" role="status">
                 <p className="petit"><strong>Note ce code quelque part de sûr : il ne sera plus affiché.</strong></p>
@@ -177,11 +175,7 @@ export function Reglages() {
               </div>
             ) : (
               <>
-                <p className="texte-doux petit">
-                  {partie.compte?.codeDeSecoursLe
-                    ? `Un code a été créé le ${new Date(partie.compte.codeDeSecoursLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}. En créer un nouveau annule l'ancien.`
-                    : "Aucun code pour l'instant : sans lui, perdre ce navigateur, c'est perdre ta collection."}
-                </p>
+                {partie.compte?.codeDeSecoursLe && <p className="texte-doux petit">Code créé le {new Date(partie.compte.codeDeSecoursLe).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.</p>}
                 <div className="rangee-de-boutons">
                   <button type="button" className="bouton" disabled={occupe} onClick={() => void creerUnCode()}>{partie.compte?.codeDeSecoursLe ? 'Créer un nouveau code' : 'Créer mon code de secours'}</button>
                   {!recuperation && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => { setRecuperation(true); setMessageDuCompte(null); }}>Retrouver ma collection avec un code</button>}
@@ -190,7 +184,7 @@ export function Reglages() {
             )}
             {recuperation && (
               <form className="joute__saisie" onSubmit={(e) => void recuperer(e)}>
-                <label htmlFor="code-de-secours"><strong>Code de secours</strong><span className="texte-doux petit">La collection attachée à ce code remplacera celle de cet appareil.</span></label>
+                <label htmlFor="code-de-secours"><strong>Code de secours</strong></label>
                 <input id="code-de-secours" type="text" value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="PHIL-XXXXX-XXXXX-XXXXX-XXXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
                 <div className="rangee-de-boutons">
                   <button type="submit" className="bouton" disabled={occupe}>{occupe ? 'Recherche…' : 'Retrouver ma collection'}</button>

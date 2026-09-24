@@ -10,6 +10,7 @@ export type Exterieur = {
   lireLaSession: () => Session | null;
   ecrireLaSession: (session: Session | null) => void;
   maintenant: () => number;
+  sessionExclusive?: <T>(action: () => Promise<T>) => Promise<T>;
 };
 
 // Une erreur que l'on peut montrer au joueur : soit le refus motivé d'une fonction de la base
@@ -49,19 +50,20 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
   // Un renouvellement refusé ne doit jamais remplacer silencieusement la collection.
   // Seule la récupération explicitement demandée peut créer une session de destination.
   function session(forcerLeRenouvellement = false, conserverCompte = false, recuperation = false): Promise<Session> {
-    ouverture ??= (async () => {
-      const gardee = enMemoire ?? exterieur.lireLaSession();
+    const obtenir = async () => {
+      const gardee = exterieur.lireLaSession() ?? enMemoire;
       if (gardee && !forcerLeRenouvellement && gardee.expireLe - exterieur.maintenant() > MARGE_AVANT_EXPIRATION) return gardee;
       if (gardee) {
         const renouvelee = await demanderUneSession('token?grant_type=refresh_token', { refresh_token: gardee.renouvellement });
         if (renouvelee !== 'refusee') return renouvelee;
-        if (!recuperation) throw new ErreurDuServeur('Session expirée. Récupère ton compte avec ton code de secours.', true, 401);
+        if (!recuperation) throw new ErreurDuServeur('Session expirée. Reconnecte-toi depuis Mon compte, ou utilise ton code de secours dans les Réglages.', true, 401);
       }
       if (conserverCompte) throw new ErreurDuServeur('Recharge ton compte avant de reprendre le duel.', true, 401);
       const nouvelle = await demanderUneSession('signup', { data: {}, gotrue_meta_security: {} });
       if (nouvelle === 'refusee') throw new ErreurDuServeur("Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant.", false);
       return nouvelle;
-    })().finally(() => { ouverture = null; });
+    };
+    ouverture ??= (exterieur.sessionExclusive ? exterieur.sessionExclusive(obtenir) : obtenir()).finally(() => { ouverture = null; });
     return ouverture;
   }
 
@@ -125,7 +127,9 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     return resultat as T;
   }
 
-  return { appeler, appelerPaiement, appelerCombat, aUneSession, oublierLaSession };
+  // L'authentification utilise la même session que les collections et les achats.
+  const lireSession = () => session(false, true);
+  return { appeler, appelerPaiement, appelerCombat, aUneSession, oublierLaSession, lireSession };
 }
 
 export type ClientSupabase = ReturnType<typeof creerLeClient>;

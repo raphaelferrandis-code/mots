@@ -84,10 +84,10 @@ export function Galerie() {
 function EssaiRecompenses() {
   const [profil, setProfil] = useState(() => ({ ...nouveauProfil(), pseudo: 'Collectionneur', xp: 90 }));
   const [pause, setPause] = useState(false);
-  return <Recompenses profil={profil} onEquiper={titre => setProfil(p => ({ ...p, titre }))}>
+  return <Recompenses profil={profil}>
     <SuspensionEssai active={pause} />
     <div className="rangee-de-boutons" style={{ marginTop: 12 }}>
-      <button className="bouton" disabled={profil.xp > 90} onClick={() => setProfil(p => ({ ...p, xp: 260, succes: [SUCCES[1].id] }))}>Simuler les déblocages</button>
+      <button className="bouton" disabled={profil.xp > 90} onClick={() => setProfil(p => ({ ...p, xp: 260, succes: [SUCCES[1].id, SUCCES[8].id, SUCCES[13].id] }))}>Simuler les déblocages</button>
       <button className="bouton" aria-pressed={pause} onClick={() => setPause(p => !p)}>{pause ? 'Libérer les annonces' : 'Simuler une épreuve en cours'}</button>
     </div>
   </Recompenses>;

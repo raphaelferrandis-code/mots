@@ -50,11 +50,11 @@ export function OuverturePaquet() {
 
   return (
     <main className="ecran ecran--large atelier-paquets" style={rythme}>
-      <Entete titre={cartesVisibles ? ouverture.cartes.length === 1 ? 'Ta Hors-série' : 'Ton paquet' : 'Les paquets'}>
-        {cartesVisibles
-          ? toutEstRetourne ? `+${(ouverture?.cartes.length === 1 ? 0 : XP.paquet) + nouvelles * XP.decouverte} XP · ${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : null
-          : `${EQUILIBRAGE.paquets.emplacements.length} timbres, encore secrets.`}
-      </Entete>
+      {cartesVisibles ? (
+        <Entete titre={ouverture.cartes.length === 1 ? 'Ta Hors-série' : 'Ton paquet'}>
+          {toutEstRetourne ? `+${(ouverture.cartes.length === 1 ? 0 : XP.paquet) + nouvelles * XP.decouverte} XP · ${nouvelles} nouveau${nouvelles > 1 ? 'x' : ''} timbre${nouvelles > 1 ? 's' : ''}${encreGagnee > 0 ? ` · +${encreGagnee} Encre` : ''}` : null}
+        </Entete>
+      ) : <h1 className="visuellement-cache">Les paquets · {EQUILIBRAGE.paquets.emplacements.length} timbres par paquet</h1>}
 
       {!cartesVisibles ? (
         <section className="scene-paquet" data-phase={phase} aria-label="Ouverture du paquet">

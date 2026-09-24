@@ -6,6 +6,10 @@ import { creerLeClient } from './supabase.ts';
 import type { ClientSupabase, Session } from './supabase.ts';
 
 const CLE_DE_SESSION = 'mots.session';
+export const CLE_IDENTITE = 'mots.identite-locale';
+export function lireIdentiteLocale(): string | undefined {
+  try { return localStorage.getItem(CLE_IDENTITE) ?? undefined; } catch { return undefined; }
+}
 
 // Pendant le développement (« npm run dev »), le jeu ne touche pas au vrai serveur : chaque essai y créerait un vrai
 // joueur, visible dans le classement de tout le monde. Pour l'essayer quand même, dans la console du navigateur :
@@ -22,11 +26,21 @@ export const serveurUtilise = serveurRegle && vraiServeurPermis();
 
 let client: ClientSupabase | undefined;
 export function clientDuServeur(): ClientSupabase {
+  // Les modules du jeu sont chargés avant le retour OAuth. Fixer l'identité
+  // seulement au premier appel réseau, après le traitement de ce retour.
+  let identiteInitiale: string | undefined;
+  let identiteFixee = false;
   client ??= creerLeClient(SERVEUR.adresse, SERVEUR.clePublique, {
-    requete: (...args) => fetch(...args),
+    requete: (...args) => {
+      if (!identiteFixee) { identiteInitiale = lireIdentiteLocale(); identiteFixee = true; }
+      if (lireIdentiteLocale() !== identiteInitiale) return Promise.reject(new Error('Le compte a changé. Recharge la page.'));
+      return fetch(...args);
+    },
     maintenant: () => Date.now(),
+    sessionExclusive: action => typeof navigator !== 'undefined' && navigator.locks
+      ? navigator.locks.request('mots.session', action) : action(),
     lireLaSession: () => { try { return JSON.parse(localStorage.getItem(CLE_DE_SESSION) ?? 'null') as Session | null; } catch { return null; } },
-    ecrireLaSession: (session) => { try { if (session) localStorage.setItem(CLE_DE_SESSION, JSON.stringify(session)); else localStorage.removeItem(CLE_DE_SESSION); } catch { /* stockage indisponible : la session vaut pour cette visite */ } },
+    ecrireLaSession: (session) => { if (identiteFixee && lireIdentiteLocale() !== identiteInitiale) return; try { if (session) localStorage.setItem(CLE_DE_SESSION, JSON.stringify(session)); else localStorage.removeItem(CLE_DE_SESSION); } catch { /* stockage indisponible : la session vaut pour cette visite */ } },
   });
   return client;
 }

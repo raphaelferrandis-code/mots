@@ -20,7 +20,8 @@ import type { Reserve } from '../jeu/paquets.ts';
 import type { Niveau } from '../jeu/duel.ts';
 import { mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
 import type { RequeteCombat, ReponseServeurCombat } from '../jeu/combat.ts';
-import { chacunSonTour, clientDuServeur } from './compte.ts';
+import { chacunSonTour, clientDuServeur, lireIdentiteLocale } from './compte.ts';
+import { sauvegardeDuCompte } from '../jeu/changementCompte.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
@@ -72,6 +73,7 @@ let partie: Partie = { etat: 'chargement' };
 let generationIdentite = 0;
 const abonnes = new Set<() => void>();
 let ecritures: Promise<unknown> = Promise.resolve();
+let identiteLocale: string | undefined;
 
 export const lirePartie = (): Partie => partie;
 export function abonner(prevenir: () => void): () => void {
@@ -87,7 +89,7 @@ function publier(nouvelle: Partie): void {
 // Enregistre la sauvegarde. Les écritures se suivent une à une, pour que la dernière gagne toujours.
 function enregistrer(sauvegarde: Sauvegarde): void {
   if (partie.etat !== 'prete') return;
-  sauvegarde = actualiserLesSucces(sauvegarde, editionDesSucces);
+  sauvegarde = { ...actualiserLesSucces(sauvegarde, editionDesSucces), identiteLocale };
   publier({ ...partie, sauvegarde });
   ecritures = ecritures.then(() => ecrireLaSauvegarde(sauvegarde)).then((emplacement) => {
     if (partie.etat === 'prete' && partie.emplacement !== emplacement) publier({ ...partie, emplacement });
@@ -110,7 +112,8 @@ export function demarrerLaPartie(): Promise<void> {
     try {
       const { contenu, emplacement } = await lireLaSauvegarde();
       const lue = contenu === undefined ? nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart) : relireSauvegarde(contenu, maintenant());
-      const sauvegarde = mettreAJour(lue, maintenant(), EQUILIBRAGE);
+      identiteLocale = lireIdentiteLocale();
+      const sauvegarde = mettreAJour(sauvegardeDuCompte(lue, identiteLocale, maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart), maintenant(), EQUILIBRAGE);
       publier({ etat: 'prete', sauvegarde, emplacement, stockageDurable: false, serveur: etatDuServeurAuDepart(), compte: null });
       enregistrer(sauvegarde);
       void chargerLesSucces().catch(() => { /* La page Succès proposera de réessayer. */ });

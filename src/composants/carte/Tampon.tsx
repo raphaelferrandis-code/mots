@@ -24,6 +24,8 @@ export function CachetDeMaitrise({ idCarte, le }: { idCarte: string; le: number 
       <g filter={`url(#${id}f)`}>
         <rect x="2" y="2" width="96" height="42" rx="3" className="tampon__trait tampon__trait--fort" />
         <rect x="5.5" y="5.5" width="89" height="35" rx="1.5" className="tampon__trait tampon__trait--fin" />
+      </g>
+      <g>
         <text x="50" y="23" textAnchor="middle" className="tampon__maitrise">MAÎTRISÉ</text>
         <text x="50" y="35.5" textAnchor="middle" className="tampon__date">{jour}</text>
       </g>
@@ -50,6 +52,8 @@ export function Tampon({ idCarte, faction, date }: { idCarte: string; faction: s
         <circle cx="50" cy="50" r="46" className="tampon__trait" />
         <circle cx="50" cy="50" r="42.5" className="tampon__trait tampon__trait--fin" />
         <circle cx="50" cy="50" r="27" className="tampon__trait tampon__trait--fin" />
+      </g>
+      <g>
         <text className="tampon__tour"><textPath href={`#${id}c`} startOffset="0" textLength="220" lengthAdjust="spacing">{`★ ORIGINE CONTRÔLÉE ★ ${faction.toUpperCase()}`}</textPath></text>
         <text x="50" y="47" textAnchor="middle" className="tampon__centre">{NOM_COURT[faction] ?? faction.toUpperCase()}</text>
         <text x="50" y="59" textAnchor="middle" className="tampon__date">{date}</text>

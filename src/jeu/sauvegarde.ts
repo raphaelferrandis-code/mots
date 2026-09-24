@@ -58,6 +58,7 @@ export type Joutes = {
 };
 
 export type Sauvegarde = {
+  identiteLocale?: string; // Sépare les copies locales lors d'un changement de compte.
   version: number;
   profil: ProfilPersonnel;
   creeLe: number;
@@ -176,6 +177,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
   return {
     version: VERSION_DE_SAUVEGARDE,
     profil: relireProfil(brut.profil),
+    ...(typeof brut.identiteLocale === 'string' ? { identiteLocale: brut.identiteLocale } : {}),
     ...(estUnObjet(brut.progressionServeur) && brut.progressionServeur.version === 1 && typeof brut.progressionServeur.id === 'string'
       ? { progressionServeur: { id: brut.progressionServeur.id, version: 1 as const } } : {}),
     ...(estUnObjet(brut.ancienneProgression) ? { ancienneProgression: { le: entierPositif(brut.ancienneProgression.le, maintenant),

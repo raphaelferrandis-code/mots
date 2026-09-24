@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { Carte, DosDeCarte } from '../carte/Carte.tsx';
@@ -11,13 +11,21 @@ export function TimbreAReveler({ carte, finition, retournee, onRetourner, etique
 }) {
   const recto = useRef<HTMLDivElement>(null);
   const rendreLeFocus = useRef(false);
+  const [auRepos, setAuRepos] = useState(retournee);
+  useEffect(() => {
+    // Une fois retourné, le recto retrouve un rendu 2D à sa taille réelle.
+    setAuRepos(false);
+    if (!retournee) return;
+    const delai = window.setTimeout(() => setAuRepos(true), RYTHME_PAQUET.retournement);
+    return () => window.clearTimeout(delai);
+  }, [retournee]);
   useEffect(() => {
     if (retournee && rendreLeFocus.current) {
       recto.current?.querySelector('a')?.focus({ preventScroll: true });
       rendreLeFocus.current = false;
     }
   }, [retournee]);
-  return <div className="revelation" style={{ '--retournement': `${RYTHME_PAQUET.retournement}ms` } as CSSProperties} data-retournee={retournee} data-finition={finition} data-rarete={carte.rarete}>
+  return <div className="revelation" style={{ '--retournement': `${RYTHME_PAQUET.retournement}ms` } as CSSProperties} data-retournee={retournee} data-au-repos={retournee && auRepos} data-finition={finition} data-rarete={carte.rarete}>
     <div className="revelation__rotation">
       <div className="revelation__face revelation__dos" aria-hidden="true"><DosDeCarte etiquette="Dos du timbre" modele={modele} /></div>
       <div ref={recto} className="revelation__face revelation__recto" aria-hidden={!retournee} inert={!retournee}>

@@ -394,8 +394,7 @@ export function Duel() {
           <>
             <section className="rubrique duel__tour" aria-live="polite">
               <h2>Ta main</h2>
-              <p className="texte-doux petit">{joueur.main.length + joueur.pioche.length} cartes encore disponibles · {joueur.pioche.length} dans la pioche. Chaque carte ne se joue qu’une fois.</p>
-              <p className="texte-doux petit">Connaître ton mot, choisir le bon type, garder une carte pour la suite : à toi de décider.</p>
+              <p className="texte-doux petit">{joueur.main.length + joueur.pioche.length} cartes disponibles · {joueur.pioche.length} dans la pioche</p>
               {joueur.derniere && <p className="texte-doux petit">Ton mot précédent : <strong>{joueur.derniere.mot}</strong> · {joueur.derniere.faction}.</p>}
               {adversaire.derniere && <p className="texte-doux petit">Son mot précédent : <strong>{adversaire.derniere.mot}</strong> · {adversaire.derniere.faction}.</p>}
               <div className="duel__main">
@@ -410,7 +409,6 @@ export function Duel() {
                 <div className="duel__action">
                   <p className="duel__engagement">
                     <strong>Jouer « {choisie.mot} » ?</strong>
-                    <span className="texte-doux petit">Cette carte sera épuisée pour le reste du duel, même si tu rates sa définition.</span>
                   </p>
                   <button type="button" className="bouton" disabled={enLigne.bloque} onClick={() => { sons.preparer(); sons.poser(); if (enLigne.actif) { void enLigne.agir({type:'choisir',carte:choisie.id}); return; } changerDEtape({ nom: 'attaque', adverse: etape.adverse, carte: choisie, epreuve: poserLEpreuve(terrain, choisie, etape.adverse), debut: Date.now() }); }}>Jouer</button>
                 </div>
