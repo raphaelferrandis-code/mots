@@ -1,0 +1,5 @@
+# Les moteurs de recherche sont les bienvenus sur tout le site.
+User-agent: *
+Allow: /
+
+Sitemap: https://philamots.fr/sitemap.xml

@@ -50,7 +50,8 @@ const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
 };
 export function titreDeLaRoute(route: Route): string {
   const nom = route.ecran === 'carte' ? route.id.replace(/-(?:nom|verbe|adj|adv)$/, '') : TITRES[route.ecran];
-  return nom ? `${nom} — ${SITE.nom}` : SITE.nom;
+  // L'accueil porte une phrase qui dit ce qu'est le jeu : c'est le titre des résultats de recherche.
+  return nom ? `${nom} — ${SITE.nom}` : `${SITE.nom} — ${SITE.accroche}`;
 }
 
 export function lien(route: Route): string {

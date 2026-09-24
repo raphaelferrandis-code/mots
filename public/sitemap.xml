@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Le plan du site pour les moteurs de recherche. Les écrans du jeu vivent après le « # » de l'adresse,
+     que les moteurs ne suivent pas : seule la page d'accueil est à déclarer. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://philamots.fr/</loc>
+    <lastmod>2026-09-24</lastmod>
+  </url>
+</urlset>
