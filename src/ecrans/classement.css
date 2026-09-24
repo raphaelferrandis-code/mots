@@ -41,6 +41,7 @@
 }
 
 .palmares { gap: 24px; }
+.palmares__contenu { display: grid; gap: 20px; }
 .palmares__suite { width: min(100%, 820px); margin: 0 auto; }
 .palmares__effectif { color: var(--encre-douce); font-size: .8rem; text-align: right; padding: 0 24px 16px; }
 .palmares__liste { list-style: none; margin: 0; padding: 0; }

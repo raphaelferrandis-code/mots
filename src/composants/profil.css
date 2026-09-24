@@ -21,6 +21,7 @@
 
 .ecran.vestiaire { max-width:1380px; padding:40px 32px 60px; gap:0; --selection:#b8a1ff; }
 .vestiaire button,.vestiaire a { -webkit-tap-highlight-color:transparent; }
+.vestiaire__liens { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
 .vestiaire__entete { display:flex; justify-content:space-between; align-items:center; gap:28px; margin-bottom:32px; }
 .vestiaire__surtitre { display:block; color:#8196af; font:500 .7rem var(--police-texte); letter-spacing:.21em; margin-bottom:9px; }
 .vestiaire h1 { font:500 clamp(26px,3vw,38px)/1.2 var(--police-serif); letter-spacing:-.035em; }
@@ -164,7 +165,7 @@
 @media(max-width:1100px) { .vestiaire__atelier { gap:24px; grid-template-columns:minmax(270px,.85fr) minmax(0,1.5fr); } .vestiaire__grille { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:767px) {
   .entete-application { gap:12px; flex-wrap:wrap; padding-block:10px; } .lien-reglages { font-size:.85rem; }
-  .ecran.vestiaire { padding:24px 16px 32px; } .vestiaire__entete { align-items:start; flex-direction:column; gap:14px; margin-bottom:24px; }
+  .ecran.vestiaire { padding:24px 16px calc(var(--hauteur-navigation) + 32px + env(safe-area-inset-bottom)); } .vestiaire__entete { align-items:start; flex-direction:column; gap:14px; margin-bottom:24px; }
   .vestiaire__compte { text-align:left; } .vestiaire__surtitre { font-size:.58rem; }
   .vestiaire__atelier { grid-template-columns:1fr; gap:20px; }
   .vestiaire__essayage { position:static; display:grid; grid-template-columns:1fr; }

@@ -26,7 +26,8 @@
 .direct__reponse:focus-visible { outline:3px solid var(--focus); }
 .direct__salon,.direct__attente,.direct__resultat { padding:28px; margin-block:24px; }
 .direct__inscription { display:grid; gap:16px; }
-.direct__inscription input { display:block; padding:12px; font:inherit; max-width:100%; }
+.direct__inscription label { display:grid; gap:8px; max-width:420px; }
+.direct__inscription input { width:100%; min-width:0; min-height:44px; padding:10px; color:var(--encre); background:var(--papier); border:1px solid var(--filet-fort); border-radius:6px; font:inherit; }
 .direct__abandon { margin-top:28px; }
 .direct .modes { flex-wrap:wrap; }
 @media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main .tim { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }
