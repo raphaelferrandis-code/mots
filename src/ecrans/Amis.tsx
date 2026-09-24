@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Entete } from '../composants/Entete.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
@@ -69,8 +68,8 @@ export function Amis() {
   };
 
   return <main className="ecran amis" aria-busy={occupe}>
-    <Entete titre="Mes amis" actions={disponible && <button className="bouton outil" disabled={occupe} onClick={() => setTour(t => t + 1)}>Actualiser</button>} />
-    <p className="amis__introduction">Retrouve tes compagnons de collection, échange des timbres et défie leur double.</p>
+    <h1 className="visuellement-cache">Amis</h1>
+    {disponible && <div className="amis__outils"><button className="bouton outil" disabled={occupe} onClick={() => setTour(t => t + 1)}>Actualiser</button></div>}
     {message && <p className="bloc" role="status">{message}</p>}
     {erreur && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
     {!amisDisponibles ? <section className="etat-vide"><h2>Retrouvons-nous en ligne</h2><p>Les amis, échanges et défis nécessitent une connexion au serveur du jeu.</p></section>
@@ -79,19 +78,19 @@ export function Amis() {
         {carnet.etat === 'erreur' && <section className="bloc bloc--alerte" role="alert"><p>{carnet.message}</p><button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></section>}
         {carnet.etat === 'en cours' && !donnees && <p role="status">Chargement du carnet…</p>}
         {donnees && !donnees.moi && <section className="rubrique"><h2>Choisis ton pseudonyme public</h2>
-          <p>Il permettra aux autres joueurs de te retrouver. Ce profil sera aussi visible au classement.</p>
+          <p>Visible par tes amis et au classement.</p>
           <form className="amis__recherche" onSubmit={e => { e.preventDefault(); void agir(() => rejoindreLesJoutes((monPseudo ?? partie.sauvegarde.profil.pseudo).trim()), 'Ton profil est prêt.'); }}>
             <label>Pseudonyme<input required minLength={LONGUEUR_DU_PSEUDO.minimum} maxLength={LONGUEUR_DU_PSEUDO.maximum} value={monPseudo ?? partie.sauvegarde.profil.pseudo} onChange={e => setMonPseudo(e.target.value)} /></label>
             <button className="bouton" disabled={occupe}>Publier mon pseudonyme</button>
           </form></section>}
         {donnees?.moi && <>
           <section className="rubrique amis__invitation"><h2>Ajouter un ami</h2>
-            <p>Ton pseudo : <strong>{donnees.moi.pseudo}</strong>. Donne-le à tes amis pour qu’ils te retrouvent.</p>
-            <form className="amis__recherche" onSubmit={e => { e.preventDefault(); void agir(() => demanderUnAmi(pseudo), 'Demande envoyée. Ton ami doit maintenant l’accepter.').then(ok => { if (ok) setPseudo(''); }); }}>
+            <p>Ton pseudo : <strong>{donnees.moi.pseudo}</strong></p>
+            <form className="amis__recherche" onSubmit={e => { e.preventDefault(); void agir(() => demanderUnAmi(pseudo), 'Demande envoyée.').then(ok => { if (ok) setPseudo(''); }); }}>
               <label>Pseudonyme de ton ami<input required maxLength={24} placeholder="Son pseudonyme exact" value={pseudo} onChange={e => setPseudo(e.target.value)} /></label>
               <button className="bouton" disabled={occupe || !pseudo.trim()}>Envoyer une demande</button>
             </form>
-            <p className="texte-doux petit">En devenant amis, vous partagez la liste de vos timbres et de leurs finitions pour préparer vos échanges.</p>
+            <p className="texte-doux petit">Vos collections seront visibles l’une pour l’autre.</p>
           </section>
           {demandes.length > 0 && <section className="rubrique"><h2>Demandes d’amitié <small>({demandes.length})</small></h2><ul className="liste-nue amis__liste">
             {demandes.map(a => <li key={a.id} className="amis__ligne"><div><strong>{a.pseudo}</strong><p className="texte-doux">{a.etat === 'recue' ? 'Souhaite t’ajouter à ses amis' : 'Demande envoyée'}</p></div><div className="rangee-de-boutons">
@@ -99,10 +98,10 @@ export function Amis() {
               <button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(() => repondreAUnAmi(a.id, a.etat === 'recue' ? 'refuser' : 'annuler'), 'Demande retirée.')}>{a.etat === 'recue' ? 'Refuser' : 'Annuler'}</button>
             </div></li>)}
           </ul></section>}
-          <section className="rubrique"><h2>Mes compagnons <small>({amis.length})</small></h2>
-            <p className="texte-doux">Les défis se jouent contre le double automatisé de ton ami, même en son absence, sans modifier vos cotes. Une partie déjà en cours sera reprise.</p>
+          <section className="rubrique"><h2>Amis <small>({amis.length})</small></h2>
+            {amis.length > 0 && <p className="texte-doux">Défie leur double, sans effet sur le classement.</p>}
             {!pret && <p><a href={lien({ ecran: 'deck' })}>Compose un deck de {EQUILIBRAGE.duel.tailleDuDeck} timbres pour lancer un défi.</a></p>}
-            {amis.length === 0 ? <p className="etat-vide">Ton carnet attend ses premiers amis. Envoie une demande avec leur pseudo.</p> : <ul className="liste-nue amis__liste">
+            {amis.length === 0 ? <p className="etat-vide">Aucun ami pour le moment.</p> : <ul className="liste-nue amis__liste">
               {amis.map(a => <li key={a.id} className="amis__ligne"><div><strong>{a.pseudo}</strong>{!a.defiable && <p className="texte-doux petit">Son deck n’est pas encore prêt.</p>}</div>
                 <div className="rangee-de-boutons"><button className="bouton" disabled={occupe} onClick={() => { setAmiChoisi(a); setMessage(''); setErreur(''); }}>Échanger</button>
                   <button className="bouton bouton--discret" disabled={occupe || !pret || !a.defiable} onClick={() => void defier(a)}>Défier son double</button>
@@ -114,8 +113,8 @@ export function Amis() {
           </section>
         </>}
         {amiChoisi && <ComposerEchange key={amiChoisi.id} ami={amiChoisi} cartes={cartes} monAlbum={Object.entries(partie.sauvegarde.cartes).map(([carte, p]) => ({ carte, finitions: p.finitions }))} occupe={occupe} agir={agir} fermer={() => setAmiChoisi(null)} />}
-        {donnees?.moi && <section className="rubrique"><h2>Nos échanges</h2>
-          <p className="texte-doux">Un timbre contre un timbre, sans Encre ni commission. Les propositions expirent après sept jours ; les timbres restent disponibles jusqu’à l’acceptation.</p>
+        {donnees?.moi && <section className="rubrique"><h2>Échanges</h2>
+          <p className="texte-doux">Un timbre contre un timbre, sans frais.</p>
           {edition.etat === 'erreur' && <p role="alert">{edition.message}</p>}
           {donnees.echanges.length === 0 ? <p className="etat-vide">Aucun échange pour le moment.</p> : <ul className="liste-nue amis__liste">
             {donnees.echanges.map(e => <li key={e.id} className="amis__echange"><div className="amis__ligne"><strong>{e.envoye ? 'Proposé à' : 'Proposé par'} {e.pseudo}</strong><span>{STATUTS[e.etat]}</span></div>
@@ -161,7 +160,7 @@ function ComposerEchange({ ami, monAlbum, cartes, occupe, agir, fermer }: { ami:
   const panneau = useRef<HTMLElement>(null);
   useEffect(() => { panneau.current?.scrollIntoView({ block: 'start' }); panneau.current?.focus({ preventScroll: true }); }, []);
   return <section className="rubrique amis__composition" ref={panneau} tabIndex={-1} aria-label={`Échange avec ${ami.pseudo}`}><h2>Échanger avec {ami.pseudo}</h2>
-    <p>Choisis précisément le mot et la finition de chaque côté. Ton ami pourra accepter ou refuser.</p>
+    <p>Choisis les deux timbres. Proposition valable 7 jours.</p>
     {album.etat === 'en cours' && <p role="status">Lecture de sa collection…</p>}
     {album.etat === 'erreur' && <p role="alert">{album.message} <button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></p>}
     {album.etat === 'pret' && <form onSubmit={e => { e.preventDefault(); if (!offerte || !demandee) return;

@@ -1,5 +1,5 @@
 .amis { max-width: 1060px; }
-.amis__introduction { color: var(--encre-douce); margin-bottom: 28px; }
+.amis__outils { display: flex; justify-content: flex-end; }
 .amis .rubrique { margin-block: 24px; }
 .amis__invitation { border-top: 2px solid var(--accent); }
 .amis__recherche { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-block: 20px; }
