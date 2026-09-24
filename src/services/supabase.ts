@@ -127,9 +127,24 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     return resultat as T;
   }
 
+  async function appelerDirect<T>(corps: object, renouveler = false): Promise<T> {
+    const { acces } = await session(renouveler, true);
+    let reponse: Response;
+    try {
+      reponse = await exterieur.requete(`${base}/functions/v1/joutes-direct`, {
+        method:'POST', headers:{...enTetes,Authorization:`Bearer ${acces}`}, body:JSON.stringify(corps), signal:AbortSignal.timeout(20_000),
+      });
+    } catch { throw new ErreurDuServeur(PANNE,false); }
+    if (reponse.status === 401 && !renouveler) return appelerDirect<T>(corps,true);
+    const resultat = await reponse.json().catch(() => null);
+    if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Joutes en direct indisponibles.',reponse.status<500,reponse.status);
+    if (!resultat || !('partie' in resultat) || typeof resultat.maintenant !== 'number') throw new ErreurDuServeur(PANNE,false);
+    return resultat as T;
+  }
+
   // L'authentification utilise la même session que les collections et les achats.
   const lireSession = () => session(false, true);
-  return { appeler, appelerPaiement, appelerCombat, aUneSession, oublierLaSession, lireSession };
+  return { appeler, appelerPaiement, appelerCombat, appelerDirect, aUneSession, oublierLaSession, lireSession };
 }
 
 export type ClientSupabase = ReturnType<typeof creerLeClient>;

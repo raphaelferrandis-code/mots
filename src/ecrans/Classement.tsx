@@ -1,13 +1,16 @@
-import { useState } from 'react';
 import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
 import { CadreGrave } from '../composants/cosmetiques/Gravures.tsx';
-import { useChargement } from '../composants/useChargement.ts';
-import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { ligueDe } from '../jeu/joute.ts';
-import { lien } from '../navigation/routes.ts';
-import { serveurDeJoutes } from '../services/joutes.ts';
 import type { LigneDeClassement } from '../services/joutes.ts';
+import { useState } from 'react';
+import { useChargement } from '../composants/useChargement.ts';
+import { usePartie } from '../composants/usePartie.ts';
+import { choisirAuxFleches } from '../composants/fleches.ts';
+import { clientDuServeur, serveurUtilise } from '../services/compte.ts';
+import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
+import type { ClassementDirect, ModeDirect } from '../jeu/direct.ts';
+import { lien } from '../navigation/routes.ts';
 import './classement.css';
 
 function Podium({ lignes }: { lignes: LigneDeClassement[] }) {
@@ -41,47 +44,28 @@ function Podium({ lignes }: { lignes: LigneDeClassement[] }) {
   </section>;
 }
 
-function SuiteDuClassement({ lignes, joueurs }: { lignes: LigneDeClassement[]; joueurs: number }) {
-  return <section className="palmares__suite" aria-label="Suite du classement">
-    <p className="palmares__effectif">{joueurs.toLocaleString('fr-FR')} joueurs en lice</p>
-    <ol className="palmares__liste">
-      {lignes.map((ligne, index) => <li key={ligne.rang} value={ligne.rang} data-moi={ligne.moi} data-intervalle={ligne.rang > (lignes[index - 1]?.rang ?? 3) + 1}>
-        <span className="palmares__rang"><span className="visuellement-cache">Rang </span>{ligne.rang}</span>
-        <div className="palmares__identite">
-          <span className="palmares__pseudo">{ligne.pseudo}{ligne.moi && <small> · toi</small>}</span>
-          <span className="palmares__ligue">{ligueDe(ligne.cote, EQUILIBRAGE.joute).nom}</span>
-          <BadgeJoueurSimule maison={ligne.maison} />
-        </div>
-        <span className="palmares__cote">{ligne.cote.toLocaleString('fr-FR')}<span className="visuellement-cache"> de cote</span></span>
-      </li>)}
-    </ol>
-  </section>;
-}
-
 export function Classement() {
   const partie = usePartie();
-  const [tour, actualiser] = useState(0);
-  const joutes = partie.etat === 'prete' ? partie.sauvegarde.joutes : null;
-  const pseudo = joutes?.pseudo ?? '';
-  const cote = joutes?.cote ?? EQUILIBRAGE.joute.coteDeDepart;
-  const resultat = useChargement(async () => pseudo ? serveurDeJoutes.classement(pseudo, cote) : null, `${pseudo}:${cote}:${tour}`);
+  const [mode,setMode] = useState<ModeDirect>('solo');
+  const [tour,setTour] = useState(0);
+  const pret = partie.etat === 'prete' && serveurUtilise;
+  const resultat = useChargement(async () => pret ? clientDuServeur().appeler<ClassementDirect>('classement_direct',{p_mode:mode}) : null,`${mode}:${tour}:${pret}`);
   const classement = resultat.etat === 'pret' ? resultat.donnees : null;
-  const suite = classement ? [...classement.tete, ...classement.voisins.filter((ligne) => !classement.tete.some((premier) => premier.rang === ligne.rang))].filter((ligne) => ligne.rang > 3).sort((a, b) => a.rang - b.rang) : [];
-
   return <main className="ecran palmares">
-    <h1 className="visuellement-cache">Le classement</h1>
-    {partie.etat === 'erreur' ? <p role="alert">{partie.message}</p> : partie.etat !== 'prete' ? <p role="status">Chargement…</p> : !pseudo ? <section className="rubrique">
-      <h2>Prends ta place dans les joutes</h2>
-      <p>Pour consulter le classement et y figurer, choisis ton pseudo dans l’onglet « Joutes classées » des duels.</p>
-      <a className="bouton" href={lien({ ecran: 'duel' })}>Accéder aux duels</a>
-    </section> : <>
-      {resultat.etat === 'en cours' && <p role="status">Chargement du classement…</p>}
-      {resultat.etat === 'erreur' && <div className="palmares__erreur"><p role="alert">Le classement est indisponible. {resultat.message}</p><button className="bouton bouton--discret" onClick={() => actualiser((n) => n + 1)}>Réessayer</button></div>}
+    <h1>Les classements</h1>
+    <div className="modes" role="tablist" aria-label="Classement" onKeyDown={choisirAuxFleches([...MODES_DIRECTS],mode,setMode)}>{MODES_DIRECTS.map(m => <button type="button" key={m} role="tab" id={`classement-${m}`} aria-controls="classement-contenu" aria-selected={mode===m} tabIndex={mode===m ? 0 : -1} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
+    <section role="tabpanel" id="classement-contenu" aria-labelledby={`classement-${mode}`}>
+      <p className="texte-doux">{mode==='solo' ? 'Les joutes entre deux joueurs en direct.' : mode==='duo_solo' ? 'La cote personnelle des joueurs inscrits avec un partenaire aléatoire.' : 'Les équipes enregistrées : une cote commune pour chaque duo.'}</p>
+      {!serveurUtilise ? <p>Connecte-toi au serveur pour consulter les classements.</p> : resultat.etat==='en cours' ? <p role="status">Chargement…</p> : null}
+      {resultat.etat==='erreur' && <div role="alert"><p>{resultat.message}</p><button className="bouton" onClick={() => setTour(t=>t+1)}>Réessayer</button></div>}
       {classement && <>
-        <Podium lignes={classement.tete} />
-        {suite.length > 0 && <SuiteDuClassement lignes={suite} joueurs={classement.joueurs} />}
-        {classement.tete.length === 0 && <p>Aucun joueur classé pour l’instant.</p>}
+        <Podium lignes={classement.lignes.filter(l => l.rang <= 3).map(l => ({rang:l.rang,pseudo:l.nom,cote:l.cote,moi:l.moi}))} /><p>{classement.total} {mode==='duo_equipe' ? 'équipes classées' : 'joueurs classés'}</p>
+        {classement.lignes.length===0 ? <p>Aucune partie terminée pour l’instant. Prends la première place !</p> : <ol className="palmares__liste">{classement.lignes.filter(l => l.rang > 3).map(l => <li key={l.rang} value={l.rang} data-moi={l.moi}>
+          <span className="palmares__rang">{l.rang}</span><div className="palmares__identite"><strong className="palmares__pseudo">{l.nom}{l.moi && <small> · {mode==='duo_equipe' ? 'ton équipe' : 'toi'}</small>}</strong><span>{l.gagnees} victoires · {l.jouees} parties</span></div><strong className="palmares__cote">{l.cote}</strong>
+        </li>)}</ol>}
+        <button className="bouton bouton--discret" onClick={() => setTour(t=>t+1)}>Actualiser</button>
       </>}
-    </>}
+    </section>
+    <a className="bouton" href={lien({ecran:'joutes'})}>Jouer en direct</a>
   </main>;
 }

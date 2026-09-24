@@ -1,10 +1,11 @@
 import { ErreurCombat, gestionnaireCombat } from './api-combat.ts';
 import type { CatalogueCombat } from './moteur-combat.ts';
 import { hasardDuSysteme } from '../src/jeu/hasard.ts';
+import { gestionnaireDirect } from './api-direct.ts';
 
-export function creerRuntimeCombat(adresse: string, cleService: string, catalogue: CatalogueCombat, requete: typeof fetch = fetch) {
+export function creerRuntimeCombat(adresse: string, cleService: string, catalogue: CatalogueCombat, requete: typeof fetch = fetch, direct = false) {
   const base = adresse.replace(/\/+$/, '');
-  return gestionnaireCombat({
+  return (direct ? gestionnaireDirect : gestionnaireCombat)({
     catalogue, hasard: hasardDuSysteme, maintenant: Date.now, identifiant: () => crypto.randomUUID(),
     async authentifier(jeton) {
       const r = await requete(`${base}/auth/v1/user`, { headers: { apikey: cleService, Authorization: `Bearer ${jeton}` }, signal: AbortSignal.timeout(15_000) });

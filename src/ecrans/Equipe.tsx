@@ -60,7 +60,7 @@ export function Equipe() {
         </ul></section>}
         <section className="rubrique"><h2>Créer une équipe</h2><p className="texte-doux">Un nom, deux joueurs. Invite un ami pour former votre duo.</p><IdentiteEquipe occupe={occupe} agir={agir} /></section>
       </>}
-    <a href={lien({ ecran: 'amis' })}>Voir mes amis</a>
+    <div className="rangee-de-boutons"><a className="bouton" href={lien({ecran:'joutes'})}>Jouer en 2v2 équipe</a><a href={lien({ ecran: 'amis' })}>Voir mes amis</a></div>
   </main>;
 }
 

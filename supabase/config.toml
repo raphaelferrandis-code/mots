@@ -14,3 +14,6 @@ verify_jwt = false
 # Chaque requête est authentifiée par /auth/v1/user avant toute lecture du combat.
 [functions.combats]
 verify_jwt = false
+
+[functions.joutes-direct]
+verify_jwt = false

@@ -13,7 +13,7 @@ const ONGLETS: Onglet[] = [
   { route: { ecran: 'accueil' }, nom: 'Accueil', actifPour: ['accueil', 'paquet'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M4 11 12 4l8 7" /><path d="M6 10v9h12v-9" /></svg> },
   { route: { ecran: 'collection' }, nom: 'Collection', actifPour: ['collection', 'carte'], icone: <svg viewBox="0 0 24 24" {...trait}><rect x="4" y="6" width="11" height="14" rx="2" /><path d="M8 3h10a2 2 0 0 1 2 2v12" /></svg> },
   { route: { ecran: 'deck' }, nom: 'Deck', actifPour: ['deck'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="m12 4 8 4-8 4-8-4z" /><path d="m4 12 8 4 8-4" /><path d="m4 16 8 4 8-4" /></svg> },
-  { route: { ecran: 'duel' }, nom: 'Duel', actifPour: ['duel'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="m5 4 10 10" /><path d="m19 4-10 10" /><path d="m4 17 3 3" /><path d="m20 17-3 3" /><path d="m6 15 3 3" /><path d="m18 15-3 3" /></svg> },
+  { route: { ecran: 'duel' }, nom: 'Duel', actifPour: ['duel', 'joutes'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="m5 4 10 10" /><path d="m19 4-10 10" /><path d="m4 17 3 3" /><path d="m20 17-3 3" /><path d="m6 15 3 3" /><path d="m18 15-3 3" /></svg> },
   { route: { ecran: 'classement' }, nom: 'Classement', actifPour: ['classement'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M3 20V11h6v9M9 20V5h6v15M15 20v-6h6v6M2 20h20" /></svg> },
   { route: { ecran: 'marche' }, nom: 'Marché', actifPour: ['marche'], icone: <svg viewBox="0 0 24 24" {...trait}><path d="M4 4h7l9 9-7 7-9-9z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg> },
   { route: { ecran: 'profil' }, nom: 'Profil', actifPour: ['profil'], icone: <svg viewBox="0 0 24 24" {...trait}><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg> },

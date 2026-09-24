@@ -1,6 +1,7 @@
 import { Profil } from './ecrans/Profil.tsx';
 import { Amis } from './ecrans/Amis.tsx';
 import { Equipe } from './ecrans/Equipe.tsx';
+import { JoutesDirectes } from './ecrans/JoutesDirectes.tsx';
 import { Compte } from './ecrans/Compte.tsx';
 import { Recompenses } from './composants/Recompenses.tsx';
 import { Classement } from './ecrans/Classement.tsx';
@@ -24,6 +25,7 @@ import type { Route } from './navigation/routes.ts';
 
 function Ecran({ route }: { route: Route }) {
   switch (route.ecran) {
+    case 'joutes': return <JoutesDirectes />;
     case 'equipe': return <Equipe />;
     case 'amis': return <Amis />;
     case 'compte': return <Compte />;

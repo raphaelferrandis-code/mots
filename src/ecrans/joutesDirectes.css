@@ -1,0 +1,32 @@
+.direct { max-width:1120px; }
+.direct__entete,.direct__phase { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.direct__entete { margin-bottom:28px; }
+.direct__scores,.direct__table,.direct__questions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-block:24px; }
+.direct__scores h2 { font-size:1.2rem; overflow-wrap:anywhere; }
+.direct__scores strong { font-size:2.5rem; }
+.direct__scores small { font-size:.8rem; }
+.direct__scores [data-moi=true] { border-color:var(--accent); }
+.direct__phase { padding:16px; border-block:1px solid var(--filet-fort); position:sticky; top:70px; z-index:5; background:var(--papier); }
+.direct__questions { scroll-margin-top:145px; }
+.direct__phase>span { font-size:1.6rem; font-variant-numeric:tabular-nums; }
+.direct__voie { display:grid; gap:12px; min-width:0; }
+.direct__voie h3 { text-align:center; }
+.direct__position { padding:16px; border:1px solid var(--filet); display:grid; justify-items:center; min-width:0; }
+.direct__position .tim { width:min(100%,230px); }
+.direct__vide { min-height:120px; display:grid; place-content:center; text-align:center; }
+.direct__main { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.direct__main>div { min-width:0; display:flex; flex-direction:column; gap:10px; }
+.direct__main .tim { width:100%; }
+.direct__main .bouton { white-space:normal; font-size:.9rem; }
+.direct__propositions { display:grid; gap:12px; }
+.direct__reponse { display:grid; gap:8px; text-align:left; background:var(--papier); color:var(--encre); font:inherit; border:1px solid var(--filet-fort); padding:16px; min-height:64px; cursor:pointer; }
+.direct__reponse[aria-pressed=true] { outline:2px solid var(--accent); background:var(--papier-haut); }
+.direct__reponse small { color:var(--accent); min-height:1em; }
+.direct__reponse:disabled { cursor:default; }
+.direct__reponse:focus-visible { outline:3px solid var(--focus); }
+.direct__salon,.direct__attente,.direct__resultat { padding:28px; margin-block:24px; }
+.direct__inscription { display:grid; gap:16px; }
+.direct__inscription input { display:block; padding:12px; font:inherit; max-width:100%; }
+.direct__abandon { margin-top:28px; }
+.direct .modes { flex-wrap:wrap; }
+@media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main .tim { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }

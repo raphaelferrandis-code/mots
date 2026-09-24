@@ -5,6 +5,7 @@
 import { SITE } from '../config/site.ts';
 
 export type Route =
+  | { ecran: 'joutes' }
   | { ecran: 'equipe' }
   | { ecran: 'amis' }
   | { ecran: 'compte' }
@@ -22,7 +23,7 @@ export type Route =
   | { ecran: 'formules' }
   | { ecran: 'galerie' }; // contrôle visuel des timbres, pendant le développement seulement
 
-const ECRANS_SIMPLES = ['equipe', 'amis', 'compte', 'classement', 'profil', 'paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'formules', 'galerie'] as const;
+const ECRANS_SIMPLES = ['joutes', 'equipe', 'amis', 'compte', 'classement', 'profil', 'paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'formules', 'galerie'] as const;
 
 export function lireRoute(hash: string): Route {
   const [premier = '', second = ''] = hash.replace(/^#\/?/, '').split('/');
@@ -40,6 +41,7 @@ export function lireRoute(hash: string): Route {
 // Le titre de l'onglet du navigateur. Il change avec l'écran : on s'y retrouve dans l'historique, et un lecteur
 // d'écran annonce où l'on arrive. (Pour une carte, le mot se lit dans son identifiant : « callipyge-adj ».)
 const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
+  joutes: 'Joutes en direct',
   equipe: 'Mon équipe',
   amis: 'Amis',
   compte: 'Mon compte',

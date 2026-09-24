@@ -63,3 +63,4 @@
   .palmares__liste li[data-intervalle='true']::before { left: 16px; }
   .palmares__effectif { padding-right: 10px; }
 }
+.palmares .modes { flex-wrap: wrap; }
