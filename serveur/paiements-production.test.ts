@@ -3,10 +3,24 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { baseDeTest } from './test-base.ts';
 import { creerPaiements } from '../supabase/functions/_shared/paiements.ts';
-import { creerStripe, PRIX, PRIX_PRODUCTION, verifierPrix } from '../supabase/functions/_shared/stripe.ts';
+import { creerStripe, PRIX, PRIX_PRODUCTION, verifierPrix, VERSION_STRIPE } from '../supabase/functions/_shared/stripe.ts';
 import { configuration } from '../supabase/functions/_shared/configuration.ts';
 
 const config = { mode: 'production' as const, supabase: 'https://supabase.invalid', service: 'service', stripe: 'sk_live_factice', signature: 'whsec_live', site: 'https://philamots.fr', testeurs: [] };
+
+it('Stripe : clés restreintes acceptées sans mélange des environnements ni clé publique', async () => {
+  for (const mode of ['test', 'production'] as const) {
+    const environnement = mode === 'production' ? 'live' : 'test';
+    const cle = `rk_${environnement}_factice`;
+    const stripe = creerStripe(cle, async (_url, options) => {
+      assert.equal(new Headers(options?.headers).get('authorization'), `Bearer ${cle}`);
+      return Response.json({ livemode: mode === 'production' });
+    }, mode);
+    await stripe('account');
+    assert.throws(() => creerStripe(`rk_${mode === 'production' ? 'test' : 'live'}_factice`, fetch, mode), /incompatible/);
+    assert.throws(() => creerStripe(`pk_${environnement}_factice`, fetch, mode), /incompatible/);
+  }
+});
 
 it('production : achats fermés par défaut, sans création de client ni écriture', async () => {
   const appels: string[] = [];
@@ -45,6 +59,39 @@ it('configuration : secrets distincts et aucune ouverture implicite de la produc
     delete env.STRIPE_LIVE_SECRET_KEY;
     assert.throws(() => configuration('production'), /STRIPE_LIVE_SECRET_KEY/);
   } finally { if (ancien) globalDeno.Deno = ancien; else delete globalDeno.Deno; }
+});
+
+it('webhook : instantanés récents et données anciennes ne remplacent pas les lectures API épinglées', async () => {
+  const liaison = { id: 'liaison', client_stripe: 'cus_live', verrou: 'verrou', sessions: {} };
+  let applications = 0;
+  const app = creerPaiements(config, async (input, options) => {
+    const url = new URL(String(input));
+    if (url.hostname === 'api.stripe.com') {
+      assert.equal(new Headers(options?.headers).get('stripe-version'), VERSION_STRIPE);
+      if (url.pathname === '/v1/charges/ch_live') return Response.json({ customer: 'cus_live', livemode: true });
+      if (url.pathname === '/v1/customers/cus_live') return Response.json({ livemode: true, metadata: { application: 'philamots-production', compte: 'liaison' } });
+      assert.ok(['/v1/checkout/sessions', '/v1/subscriptions'].includes(url.pathname));
+      return Response.json({ data: [], has_more: false });
+    }
+    if (url.pathname === '/rest/v1/paiements_production') return Response.json([liaison]);
+    if (url.pathname === '/rest/v1/rpc/verrouiller_paiement_production') return Response.json(liaison);
+    if (url.pathname === '/rest/v1/rpc/appliquer_paiement_production') {
+      assert.deepEqual(JSON.parse(String(options?.body)), { p_id: 'liaison', p_verrou: 'verrou', p_album: false, p_fin: null, p_ouvert: false });
+      applications++;
+    } else assert.equal(url.pathname, '/rest/v1/rpc/liberer_paiement_production');
+    return Response.json(null);
+  });
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(config.signature), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  for (const type of ['checkout.session.completed', 'invoice.paid', 'customer.subscription.updated', 'charge.refunded', 'charge.dispute.closed']) {
+    const objet = type.startsWith('charge.dispute.') ? { charge: 'ch_live' } : { customer: 'cus_live', status: 'paid', amount_paid: 499, period_end: 9999999999 };
+    const corps = JSON.stringify({ api_version: '2026-08-26.dahlia', livemode: true, type, data: { object: objet } });
+    const t = Math.floor(Date.now() / 1000);
+    const hash = Buffer.from(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${t}.${corps}`))).toString('hex');
+    const r = await app.webhook(new Request('https://edge.invalid', { method: 'POST', headers: { 'stripe-signature': `t=${t},v1=${hash}` }, body: corps }));
+    assert.equal(r.status, 200);
+    assert.deepEqual(await r.json(), { recu: true });
+  }
+  assert.equal(applications, 5);
 });
 
 it('production fermée : portail existant accessible ; webhook signé du mauvais mode refusé', async () => {

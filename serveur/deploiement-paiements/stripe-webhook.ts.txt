@@ -44,7 +44,7 @@ var PRIX_PRODUCTION = {
 };
 var prixDuMode = (mode) => mode === "production" ? PRIX_PRODUCTION : PRIX;
 function creerStripe(secret, requete = fetch, mode = "test") {
-	if (!secret.startsWith(mode === "production" ? "sk_live_" : "sk_test_")) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
+	if (!(mode === "production" ? /^(sk|rk)_live_/ : /^(sk|rk)_test_/).test(secret)) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
 	return async (path, body, key) => {
 		const r = await requete(`https://api.stripe.com/v1/${path}`, {
 			method: body ? "POST" : "GET",

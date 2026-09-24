@@ -15,7 +15,8 @@ export type Objet = Record<string, any>; // Objets REST validés aux frontières
 export type Stripe = (path: string, body?: Record<string, string>, key?: string) => Promise<Objet>;
 
 export function creerStripe(secret: string, requete: typeof fetch = fetch, mode: ModePaiement = 'test'): Stripe {
-  if (!secret.startsWith(mode === 'production' ? 'sk_live_' : 'sk_test_')) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
+  const prefixe = mode === 'production' ? /^(sk|rk)_live_/ : /^(sk|rk)_test_/;
+  if (!prefixe.test(secret)) throw new Error(`Clé Stripe incompatible avec le mode ${mode}.`);
   return async (path, body, key) => {
     const r = await requete(`https://api.stripe.com/v1/${path}`, {
       method: body ? 'POST' : 'GET', signal: AbortSignal.timeout(15_000),

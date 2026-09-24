@@ -2,7 +2,8 @@
 
 24 septembre 2026 — **Code publié, fonctions et migration installées, achats réels fermés.**
 Les secrets Stripe de production, la destination webhook et le réglage JWT des deux
-fonctions restent à terminer. Voir `ACTIVATION-paiements.md` pour la reprise précise.
+fonctions sont installés. Sonde signée sans effet : HTTP 200 ; état public : achats
+fermés. Voir `ACTIVATION-paiements.md` pour les preuves et les conditions de reprise.
 Les essais effectués avec Raphi concernent le sandbox. Les tests automatiques du
 mode production simulent Stripe : aucun débit réel n'a été effectué.
 
@@ -14,7 +15,7 @@ mode production simulent Stripe : aucun débit réel n'a été effectué.
 | Collectionneur | 4,99 EUR par mois | `price_1UJ6tHK2IFab5EhcHMwpkEsQ` |
 
 Le serveur vérifie le mode, montant, devise, état actif et périodicité avant un nouveau
-Checkout. Ces tarifs n'ont pas encore été vérifiés via une requête API réelle.
+Checkout. Les deux fiches de tarifs ont été vérifiées dans le Dashboard de production.
 
 ## Isolation
 
@@ -37,7 +38,7 @@ Une collection ne peut pas être liée aux deux tables : les comptes ayant servi
 tests restent réservés aux tests. La récupération par code conserve cette séparation.
 Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droits réels.
 
-## Installation ultérieure, achats fermés
+## Installation effectuée, procédure reproductible achats fermés
 
 État détaillé et reprise de la tâche : `ACTIVATION-paiements.md`.
 
@@ -51,10 +52,14 @@ Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droit
 3. Dans Stripe production, créer le webhook :
    `https://cgubfyxyivgufslpwlld.supabase.co/functions/v1/stripe-webhook-production`
    Sélectionner les 12 événements décrits dans `GUIDE-paiements-test.md`.
-4. Saisir dans Supabase uniquement `STRIPE_LIVE_SECRET_KEY` (`sk_live_…`),
+4. Saisir dans Supabase uniquement `STRIPE_LIVE_SECRET_KEY` (`rk_live_…` ou `sk_live_…`),
    `STRIPE_LIVE_WEBHOOK_SECRET` (`whsec_…`) et `SITE_URL_PRODUCTION=https://philamots.fr`.
    Les secrets doivent provenir du même compte réel que les tarifs. Supabase fournit
-   déjà `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`.
+  déjà `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`.
+   La clé dédiée actuelle est restreinte : écriture Customers, Checkout Sessions et
+   Customer Portal ; lecture Accounts, Charges and Refunds, Invoices, Prices,
+   Subscriptions et Webhook Endpoints. Les clés publiables et celles de l'autre
+   environnement sont refusées.
 5. Garder `PAIEMENTS_PRODUCTION_OUVERTS=false` (absent = fermé également).
    La publication GitHub Pages prépare maintenant l'interface de production.
    L'interface consulte l'état du serveur au chargement, au retour dans l'onglet et
@@ -73,11 +78,12 @@ npm run paiements:activer
 npm run paiements:fermer
 ```
 
-La commande utilise `SUPABASE_ACCESS_TOKEN`, `STRIPE_LIVE_SECRET_KEY` et
+La commande peut utiliser `SUPABASE_ACCESS_TOKEN`, `STRIPE_LIVE_SECRET_KEY` et
 `STRIPE_LIVE_WEBHOOK_SECRET` depuis l'environnement ou `.env.paiements.local`
 (ignoré par Git). Ne jamais les mettre dans le chat, dans un argument de commande,
 dans un journal ou dans `VITE_…`. Un accès navigateur connecté ne fournit pas
-automatiquement ces accès API. En l'absence d'accès API, effectuer les contrôles
+automatiquement ces accès API. L'autorisation actuelle porte sur un stockage
+uniquement dans Supabase : aucun fichier local de secrets n'a été créé. En l'absence d'accès API, effectuer les contrôles
 dans les Dashboards puis changer le même secret d'ouverture dans Supabase.
 
 La vérification contrôle l'activation du compte Stripe, les deux prix, les empreintes
@@ -103,6 +109,13 @@ Signature vérifiée sur le corps brut, tolérance de cinq minutes. Les droits p
 des paiements actuels et sont appliqués sous verrou, pas du contenu ancien d'un événement.
 Les doublons ne réattribuent pas le cadeau. Échec de synchronisation = HTTP 503 pour
 permettre à Stripe de réessayer. Remboursement puis rachat conserve le cadeau déjà reçu.
+
+La destination utilise des événements instantanés `2026-08-26.dahlia`. Le récepteur
+utilise seulement l'identifiant `customer` (ou `charge` pour un litige) avant de relire
+l'état courant avec `Stripe-Version: 2025-02-24.acacia`. Il ne dépend pas des champs
+de facture modifiés dans les versions récentes. Ce comportement est couvert par un test.
+Référence : https://docs.stripe.com/webhooks et les objets Event, Invoice, Session,
+Subscription et Dispute de la documentation Stripe.
 
 ## Limites avant ouverture publique
 
