@@ -2,6 +2,23 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — les points secondaires de l'audit.** Décisions de Raphaël : le compteur d'Encre mène **au
+> marché** (le « + » explique comment en gagner et mène aux paquets et au marché, sans les formules) ; le fil d'activité
+> ne montre plus que **les paquets** ; les confirmations sont **aux couleurs du jeu** ; les documents sont **rangés dans
+> `docs/`**. D'office : paquet, cadeau et mise en vente portent un identifiant de demande (`src/services/demandes.ts`,
+> table `demandes_traitees`) — redemandés après une coupure, ils ne sont servis qu'une fois ; l'état du compte ne
+> recule plus à l'écran ; deux onglets restent d'accord (BroadcastChannel) ; un jeton refusé est vraiment renouvelé ;
+> une page HTML d'un intermédiaire devient une panne lisible ; 1,5 s de marge pour le réseau en parade et en direct ;
+> code de secours unique et à l'alphabet du jeu ; vieux essais de récupération purgés ; vente conclue gardée sans son
+> vendeur ; histoire des prix fermée aux comptes inconnus ; cote 2v2 d'une équipe dissoute effacée ; les écrans se
+> chargent à la demande (premier fichier de 794 à 296 Ko), mais leurs feuilles de style restent chargées d'emblée
+> dans l'ordre d'avant (`src/theme/stylesDesEcrans.ts`, vérifié par un test) ; fenêtre de confirmation commune
+> (`Confirmation.tsx`) ; page inerte derrière la parade et la fin du duel ; « réduire les animations » partout
+> (`mouvement.ts`) ; recherche du marché après 300 ms ; album qui se souvient ; écran d'attente dans `index.html` ;
+> fichiers de l'édition versionnés (`?v=`) ; CSP dans le site construit ; actions GitHub figées par empreinte ; code
+> mort retiré (dont les anciens appels du duel local au serveur) ; tris et messages d'erreur partagés. **Script 20 et
+> fonctions `combats` et `joutes-direct` à installer** (étape 12). La dernière migration est désormais la 20.
+
 > **25 septembre 2026 — plus de définition vide dans la parade.** En duel, la parade proposait parfois « Définition
 > manquante ou à compléter. (Ajouter) » : un sens que le Wiktionnaire n'a pas encore rédigé, resté dans 8 cartes
 > (speeder, galop, fantasmagorie, recourber, ronronnement, zakouski, incorporation, morne). Le pipeline écarte

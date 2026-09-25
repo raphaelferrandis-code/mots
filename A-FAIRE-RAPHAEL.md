@@ -69,6 +69,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
 | Paiements : suppression par le joueur, mois et année de naissance, reprises après une panne de Stripe | **En ligne** (étape 11 faite), achats toujours fermés |
 | Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | Jeu en ligne ; **étape 12 à faire** pour les duels joués sur le serveur |
+| Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | Jeu en ligne ; **étape 12 à faire** (script 20 et les deux mêmes fonctions) |
 
 ---
 
@@ -225,20 +226,33 @@ Détails : [docs/GUIDE-paiements-production.md](docs/GUIDE-paiements-production.
 - [ ] Six requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE : elles
       peuvent être supprimées.
 
-### Étape 12 — Redéployer les deux fonctions du combat (définitions vides)
+### Étape 12 — Coller le script 20, puis redéployer les deux fonctions du combat (points secondaires, définitions vides)
 
-Pourquoi : en duel, la parade proposait parfois « Définition manquante ou à compléter. (Ajouter) » comme réponse. Les
-8 cartes concernées sont corrigées dans le jeu, mais les duels et les joutes sont joués sur le serveur, qui garde sa
-propre copie des définitions : tant que les deux fonctions ne sont pas redéployées, ce texte peut encore sortir.
-**Aucun script SQL à coller**, aucune carte ne change (ni rareté, ni attaque, ni défense). Ce redéploiement emporte
-aussi la marge du réseau du script 20 (une réponse partie à temps compte encore si elle arrive jusqu'à 1,5 s en retard).
+Pourquoi, le script 20 (les points secondaires de l'audit) : un paquet, un cadeau ou une mise en vente redemandés
+après une coupure de réseau ne sont plus servis deux fois ; le fil d'activité ne montre plus que les trouvailles des
+paquets ; un code de secours est unique et n'utilise que les signes que le jeu tire ; une vente conclue reste visible
+de l'acheteur même si le vendeur efface son compte ; la cote 2v2 d'une équipe dissoute s'efface. Le jeu en ligne
+s'en passe en attendant (il refait l'appel sans l'identifiant de demande) : rien ne casse avant le collage. Vérifié
+en lecture seule par l'assistant : la base de production est prête (aucun code de secours en double).
 
+Pourquoi, les deux fonctions : en duel, la parade proposait parfois « Définition manquante ou à compléter. (Ajouter) »
+comme réponse. Les 8 cartes concernées sont corrigées dans le jeu, mais les duels et les joutes sont joués sur le
+serveur, qui garde sa propre copie des définitions : tant que les deux fonctions ne sont pas redéployées, ce texte peut
+encore sortir. Aucune carte ne change (ni rareté, ni attaque, ni défense). Ce redéploiement emporte aussi la marge du
+réseau (une réponse partie à temps compte encore si elle arrive jusqu'à 1,5 s en retard) et, en direct, l'attaque
+annoncée d'un mot face cachée avec son bonus d'enchaînement.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/20-points-secondaires.sql → **Copy raw file** →
+      Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
+      attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected » s'il apparaît).
 - [ ] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
       `serveur/deploiement-combats/combats.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
 - [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
       `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
-- [ ] Dire à l'assistant que c'est fait : il vérifie, en lecture seule, que le code déployé est identique aux fichiers.
-      Un joueur qui avait le jeu ouvert pendant le redéploiement doit recharger la page.
+- [ ] Dire à l'assistant que c'est fait : il vérifie, en lecture seule, le script et que le code déployé est identique
+      aux fichiers. Un joueur qui avait le jeu ouvert pendant le redéploiement doit recharger la page.
+- [ ] Une requête « Untitled query » de vérification (lecture seule) est dans l'éditeur SQL, rubrique PRIVATE : elle
+      peut être supprimée.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

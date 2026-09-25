@@ -24,7 +24,16 @@ Les audits précédents (`docs/ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `docs/AUD
 > compte (un clic sans paiement ne bloque plus ; le joueur supprime seul, abonnement résilié d'abord), achat plus jamais
 > bloqué après une panne de Stripe, vérification limitée à une fois toutes les 20 s, âge au mois près et figé, messages
 > d'erreur. Sept erreurs glissées exprès dans ces règles : toutes attrapées par les tests.
-> Le reste de ce document est toujours à faire.
+> **Corrigé le 25/09 (points secondaires ; script 20 et fonctions `combats` et `joutes-direct` à installer, le
+> reste en ligne) :** n° 9 à 15 ; toute la partie « Interface, accessibilité, vitesse » (sauf la fluidité de l'album
+> au-delà de 300 timbres sur un téléphone modeste, à mesurer) ; les « Petits points de sécurité et de données » (le fil
+> ne montre plus que les paquets ; CSP dans le site construit) ; le « Rangement du dépôt » (anciens scripts marqués
+> « ne pas rejouer », actions GitHub figées par empreinte, code mort, doublons, documents dans `docs/`, `filesduel.zip`
+> décompressé dans `docs/duel/`).
+> **Restent, volontairement :** le défi amical contre le joueur maison le plus faible (gain borné par le plafond
+> quotidien) ; les robots de parade (limite déjà acceptée) ; l'empreinte des fonctions Supabase vérifiée
+> automatiquement (l'assistant la vérifie à la main, à chaque déploiement) ; n° 6 pour le Marché et le comptoir des
+> paquets.
 
 ## En bref
 
