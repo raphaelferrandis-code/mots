@@ -56,6 +56,10 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Contrôle anti-robot Cloudflare | Construit, **éteint** (étape 3) |
 | Adversaire de secours des joutes en direct | **En ligne** (étape 2 faite) |
 | Parrainage (3 paquets chacun) | **En ligne** (étape 2 faite) |
+| Nouveaux cadres et avatars de portrait (une récompense par niveau jusqu'au 50) | En ligne |
+| Nouveau timbre, cérémonie d'ouverture des paquets, nouvel accueil | En ligne |
+| Fil d'activité de l'accueil (script 14 installé par Raphaël) | En ligne ; il apparaît au premier événement |
+| Lien « Amis » retiré de la barre du haut | En ligne ; les Amis restent dans Profil → **Mes amis** |
 
 ---
 
@@ -76,7 +80,9 @@ Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
 
 - [ ] Créer un compte gratuit chez Cloudflare (https://dash.cloudflare.com/sign-up), puis **Turnstile** →
       **Add widget** : nom `Philamots`, domaines `philamots.fr` et `www.philamots.fr`, mode **Managed**.
-- [ ] Envoyer à l'assistant la **Site Key** (publique). **Ne jamais lui envoyer la Secret Key.**
+- [ ] Après **Create**, Cloudflare affiche deux clés. Envoyer à l'assistant la **Site Key** (publique, commence
+      souvent par `0x4AAAA…`). **Ne jamais lui envoyer la Secret Key.** Pour la retrouver plus tard : Cloudflare →
+      **Turnstile** → widget `Philamots` → **Settings**.
 - [ ] L'assistant l'écrit dans `src/config/serveur.ts` (`cleAntiRobot`) et publie.
 - [ ] **Seulement ensuite** : Supabase → Authentication → Attack Protection → **Enable Captcha protection**,
       fournisseur **Turnstile by Cloudflare**, coller la **Secret Key**, **Save**.
@@ -99,8 +105,8 @@ Détails : [GUIDE-google.md](GUIDE-google.md).
       navigateur. Ces deux parcours n'ont jamais été faits avec un vrai compte.
 - [ ] Partager `philamots.fr` dans WhatsApp (à soi-même) : l'image doit apparaître. WhatsApp peut garder l'ancien
       aperçu quelques heures.
-- [ ] Une fois l'étape 2 faite : envoyer son lien d'invitation (page **Amis**) à un proche, et vérifier que chacun
-      reçoit 3 paquets après son premier duel.
+- [ ] Envoyer son lien d'invitation (Profil → **Mes amis**) à un proche, et vérifier que chacun reçoit 3 paquets
+      après le premier duel du proche.
 - [ ] Créer son **code de secours** (Profil → Ton compte), si ce n'est pas déjà fait.
 
 ---
@@ -144,7 +150,7 @@ Avant une vraie campagne auprès d'inconnus : l'étape 3 (anti-robot) doit être
 - Ne jamais ouvrir les paiements sans demande explicite, ne jamais lire, copier ni afficher une clé secrète
   (Supabase, Stripe, Cloudflare).
 - Changement du serveur : modifier `serveur/*.ts`, lancer `npm run serveur:script`, ajouter une **nouvelle**
-  migration numérotée (la dernière est la 13) ; ne jamais recoller une ancienne migration.
+  migration numérotée (la dernière est la 14) ; ne jamais recoller une ancienne migration.
 - Bancs locaux sans compte distant : `node serveur/apercu-direct.mjs` (joutes en direct à quatre) et
   `node serveur/apercu-secours-parrainage.mjs` (parrainage et adversaire de secours).
 - Ne committer que ses propres fichiers, par leur nom ; tenir à jour l'en-tête d'`ETAT-DU-PROJET.md` et cette page.
