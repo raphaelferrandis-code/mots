@@ -16,6 +16,10 @@ Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2
 > page Formules n'interroge plus le serveur de paiement quand l'onglet est caché).
 > **Corrigé le 25/09 (script 18, installé) :** n° 4 (filtres normalisés, 3 rencontres classées par jour, cote retrouvée en
 > recréant son profil, nombres du jeu et cote minimale 100, gagnant d'un abandon récompensé, 5 parties pour être classé).
+> **Corrigé le 25/09 (tests seulement, rien à installer) :** n° 5 — `serveur/tirage.test.ts` éprouve le tirage SQL du
+> serveur sur toute l'édition (paquets de départ, garantie de Légendaire, Encre des doublons, finitions, raretés par
+> emplacement sur 3 000 paquets, Hors-série, plafond quotidien d'Encre) ; sept erreurs glissées exprès dans le SQL ont
+> toutes été attrapées.
 > Le reste de ce document est toujours à faire.
 
 ## En bref

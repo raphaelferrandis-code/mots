@@ -2,6 +2,10 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — le tirage du serveur est testé** (`serveur/tirage.test.ts`, point 5 de l'audit) : les mêmes
+> réglages que le navigateur, sur une vraie base PostgreSQL avec toute l'édition. Rien à installer. Les cinq priorités
+> de l'audit sont traitées ; restent ses points secondaires, dont les paiements à régler avant d'ouvrir les achats.
+
 > **25 septembre 2026 — le classement contre la triche : EN LIGNE.** `serveur/18-classement.sql` collé par Raphaël,
 > vérifié par l'assistant en lecture seule.
 > Décisions de Raphaël : contre les mêmes adversaires, 3 parties classées par jour (heure de Paris) ; le gagnant d'un
