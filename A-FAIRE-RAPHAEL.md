@@ -64,7 +64,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Refonte des écrans Duel (préparation, partie, parade, combat animé, fin) | En ligne |
 | Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
 | Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
-| Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | Jeu en ligne ; **script 16 à coller (étape 8)** |
+| Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
 
 ---
 
@@ -146,7 +146,7 @@ Détails : [GUIDE-portraits-et-presence.md](GUIDE-portraits-et-presence.md).
 - [ ] Vérifier sur philamots.fr : Profil → **Mes amis** → la fiche d'un ami montre son portrait, son niveau, « En
       ligne » ou « Passage il y a… » et ses plus beaux timbres.
 
-### Étape 8 — Installer le script 16 (parrainage confirmé et comptes neufs)
+### Étape 8 — Installer le script 16 (parrainage confirmé et comptes neufs) — FAIT le 25 septembre
 
 Pourquoi : l'audit du 25 septembre a montré qu'on pouvait créer des comptes jetables, se parrainer soi-même, puis
 faire remonter leurs paquets vers son vrai compte par les échanges et le marché. Tes décisions du 25 septembre :
@@ -159,12 +159,14 @@ faire remonter leurs paquets vers son vrai compte par les échanges et le march�
 Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md). **Aucune fonction serveur à redéployer.**
 Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas collé, rien ne change pour les joueurs.
 
-- [ ] Ouvrir https://github.com/raphaelferrandis-code/mots/blob/main/serveur/16-parrainage-confirme.sql → icône
-      **Copy raw file** (deux carrés superposés, en haut à droite).
-- [ ] Supabase → **SQL Editor** → **New query** ; vérifier que le petit menu à gauche de **Save** indique
-      **Database** ; coller ; **Run**. Réponse attendue : **Success. No rows returned** (un avertissement « Potential
-      issue detected » peut apparaître : le confirmer).
-- [ ] Le dire à l'assistant : il vérifie avec un joueur d'essai jetable, puis le supprime.
+- [x] Script `serveur/16-parrainage-confirme.sql` collé dans Supabase par Raphaël.
+- [x] Vérifié par l'assistant en lecture seule dans l'éditeur SQL (voir le guide) : tout est en place. Pas de joueur
+      d'essai : l'anti-robot empêche désormais d'en créer par programme, et c'est voulu.
+- À savoir : presque tous les comptes actuels ont moins de 3 jours (le site est tout neuf). Leurs échanges et leur
+  marché s'ouvrent d'eux-mêmes entre le 26 septembre et le **28 septembre à 14 h 45** au plus tard. Personne n'avait
+  encore utilisé ni le marché ni les échanges : cela ne gêne personne.
+- [ ] Une requête « Untitled query » (la vérification, en lecture seule) est restée dans l'éditeur SQL, rubrique
+      PRIVATE : elle peut être supprimée.
 
 ---
 

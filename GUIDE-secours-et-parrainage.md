@@ -66,7 +66,28 @@ Raphaël était connecté : « Success. No rows returned ». Contrôles faits en
 
 L'interrupteur `secoursEtParrainage` est passé à `true` et le jeu publié le même jour.
 
-## Pour mémoire : comment le script a été installé
+## Script 16 installé le 25 septembre 2026
+
+Collé par Raphaël. Vérifié par l'assistant le soir même, en lecture seule dans l'éditeur SQL de Supabase :
+- les 11 fonctions sont en place, toutes `security definer` avec un `search_path` vide ;
+- les joueurs connectés peuvent appeler `mon_parrainage`, `declarer_mon_parrain`, `proposer_echange`,
+  `repondre_echange`, `mettre_en_vente` et `encherir` ; les aides internes (`vrai_compte`,
+  `confirmer_le_parrainage`, `valider_le_parrainage`, `verser_les_paquets_de_parrainage`,
+  `exiger_un_compte_etabli`) sont fermées à tous ;
+- les quatre fonctions d'échange et du marché contiennent bien le blocage des comptes neufs ;
+- `mon_parrainage` et `valider_le_parrainage` sont les nouvelles versions ; la table `parrainages` a ses deux
+  nouvelles colonnes ; les deux déclencheurs sont en place ; `auth.users.is_anonymous` existe ;
+- aucun parrainage n'existait encore : rien à reprendre.
+
+Pas de joueur d'essai : l'anti-robot (étape 3) empêche désormais de créer un compte par programme, et c'est voulu.
+Le comportement lui-même est vérifié par les tests sur une vraie base PostgreSQL (`serveur/parrainage.test.ts`,
+`serveur/amis.test.ts`).
+
+À savoir : 65 des 66 comptes avaient moins de 3 jours à l'installation (le site est tout neuf). Leurs échanges et leur
+marché s'ouvrent d'eux-mêmes, au plus tard le 28 septembre à 14 h 45. Aucune enchère, aucun échange ni aucune amitié
+n'existaient encore.
+
+## Pour mémoire : comment le script 13 a été installé
 
 Tant que ce n'est pas fait, les joueurs ne voient rien de nouveau : un interrupteur (`secoursEtParrainage` dans
 `src/config/serveur.ts`) garde ces écrans fermés.

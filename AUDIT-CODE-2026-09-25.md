@@ -8,7 +8,7 @@ Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2
 > **Corrigé le 25/09 (lot « joueur bloqué ») :** n° 2 (filet d'erreur et fond animé), n° 6 en partie (album et deck ont
 > « Réessayer » ; une partie illisible est expliquée une seule fois dans `App.tsx` au lieu de « Chargement… » sur chaque
 > écran), n° 7 (déconnexion) et n° 8 (paquet).
-> **Corrigé le 25/09 (script 16, à coller) :** n° 1 (parrain payé à la confirmation du filleul ; comptes de moins de
+> **Corrigé le 25/09 (script 16, installé) :** n° 1 (parrain payé à la confirmation du filleul ; comptes de moins de
 > 3 jours sans échange, enchère ni vente ; l'anti-robot est allumé) et le plafond mensuel du parrain, désormais
 > verrouillé. Le reste de ce document est toujours à faire.
 
