@@ -4,6 +4,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { SceauDuel } from '../../composants/SceauDuel.tsx';
+import { useRacineInerte } from '../../composants/useRacineInerte.ts';
 import type { SonsDuDuel } from '../../services/sonsDuDuel.ts';
 import type { Jaillissement } from '../../composants/ceremonie/effets.ts';
 
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function IntroDuDuel({ adversaire, joueur, sons, jaillir, onFin }: Props) {
+  useRacineInerte();
   const tampon = useRef<HTMLDivElement>(null);
   const fin = useRef(onFin);
   fin.current = onFin;

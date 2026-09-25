@@ -3,6 +3,7 @@ import { usePartie } from './usePartie.ts';
 import { nomDeLaFormule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { definirUnCodeDeSecours, recupererAvecUnCode } from '../services/partie.ts';
+import { demanderConfirmation } from './Confirmation.tsx';
 import '../ecrans/reglages.css';
 
 export function CompteDuProfil() {
@@ -16,7 +17,9 @@ export function CompteDuProfil() {
 
   if (partie.etat !== 'prete' || partie.serveur.etat === 'appareil') return null;
   const creerUnCode = async (): Promise<void> => {
-    if (partie.etat === 'prete' && partie.compte?.codeDeSecoursLe && !window.confirm("Un nouveau code annule l'ancien. Continuer ?")) return;
+    if (partie.etat === 'prete' && partie.compte?.codeDeSecoursLe && !(await demanderConfirmation({
+      titre: 'Tirer un nouveau code ?', message: 'Un nouveau code annule l’ancien : seul celui qui va s’afficher permettra de retrouver ta collection.', confirmer: 'Tirer un nouveau code',
+    }))) return;
     setOccupe(true);
     setMessageDuCompte(null);
     try { setCode(await definirUnCodeDeSecours()); } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
@@ -29,7 +32,9 @@ export function CompteDuProfil() {
 
   const recuperer = async (evenement: React.FormEvent): Promise<void> => {
     evenement.preventDefault();
-    if (!window.confirm('La collection attachée à ce code remplacera celle de cet appareil. Continuer ?')) return;
+    if (!(await demanderConfirmation({
+      titre: 'Retrouver cette collection ?', message: 'La collection attachée à ce code remplacera celle de cet appareil.', confirmer: 'Remplacer par ma collection', danger: true,
+    }))) return;
     setOccupe(true);
     setMessageDuCompte(null);
     try {

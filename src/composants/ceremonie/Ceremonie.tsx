@@ -13,6 +13,7 @@ import { Timbre } from '../timbre/Timbre.tsx';
 import { PaquetDeCeremonie, MASQUE_DU_PAQUET } from './PaquetDeCeremonie.tsx';
 import { Particules, SONS } from './effets.ts';
 import { ABREGE_DE_LA_NATURE, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, titreDuResume } from './eclats.ts';
+import { useRacineInerte } from '../useRacineInerte.ts';
 import './ceremonie.css';
 
 type Phase = 'ouverture' | 'dechirure' | 'sortie' | 'revelation' | 'retournement' | 'revelee' | 'envoi' | 'resume' | 'fermeture';
@@ -41,6 +42,7 @@ const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 const entre = (a: number, b: number): number => a + Math.random() * (b - a);
 
 export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
+  useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
   const [cartes, setCartes] = useState<CarteObtenue[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -78,10 +80,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
 
   useEffect(() => { SONS.muet = !sons; }, [sons]);
 
-  // ── Mise en place : page inerte derrière, particules, clavier, suivi du pointeur ──
+  // ── Mise en place : particules, clavier, suivi du pointeur (la page derrière est inerte : useRacineInerte) ──
   useEffect(() => {
-    const page = document.getElementById('racine');
-    if (page) page.inert = true;
     document.body.classList.add('ceremonie-ouverte');
     if (toile.current) particules.current = new Particules(toile.current, reduit);
     const ajuster = (): void => particules.current?.ajuster();
@@ -95,7 +95,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
     void Promise.resolve().then(() => demarrer(depuis, premier));
     return () => {
       jeton.current++;
-      if (page) page.inert = false;
       document.body.classList.remove('ceremonie-ouverte');
       window.removeEventListener('resize', ajuster);
       window.removeEventListener('pointermove', suivre);

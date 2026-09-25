@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMaintenant } from '../../composants/usePartie.ts';
+import { useRacineInerte } from '../../composants/useRacineInerte.ts';
 import type { Epreuve } from '../../jeu/epreuve.ts';
 import type { Nature } from '../../partage/types.ts';
 
@@ -30,6 +31,7 @@ type Props = {
 };
 
 export function Parade({ epreuve, nature, debut, secondes, correction, bloque, onRepondre, onTic }: Props) {
+  useRacineInerte(); // au clavier, Tab reste dans la parade
   const [choisie, setChoisie] = useState<number | null>(null);
   const titre = useRef<HTMLHeadingElement>(null);
   const repondu = choisie !== null || correction !== null;

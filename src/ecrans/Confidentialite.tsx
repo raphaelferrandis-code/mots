@@ -9,6 +9,7 @@ import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { serveurDesCollections } from '../services/collections.ts';
 import { supprimerMonProfilDeJoute } from '../services/joutes.ts';
+import { demanderConfirmation } from '../composants/Confirmation.tsx';
 
 type Suppression = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'faite' } | { etat: 'erreur'; message: string };
 
@@ -21,7 +22,11 @@ export function Confidentialite() {
   const collectionSurLeServeur = serveurDesCollections.actif;
 
   const supprimer = async (): Promise<void> => {
-    if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, tes joutes, tes amis et tes propositions d’échange seront effacés du serveur. Ta cote reste attachée à ton compte, sans être visible : tu la retrouveras si tu recrées un profil. Cette action est définitive.')) return;
+    if (!(await demanderConfirmation({
+      titre: 'Supprimer ton profil de joute ?',
+      message: 'Ton pseudonyme, tes joutes, tes amis et tes propositions d’échange seront effacés du serveur. Ta cote reste attachée à ton compte, sans être visible : tu la retrouveras si tu recrées un profil.',
+      confirmer: 'Supprimer mon profil', danger: true,
+    }))) return;
     setSuppression({ etat: 'en cours' });
     try {
       await supprimerMonProfilDeJoute();

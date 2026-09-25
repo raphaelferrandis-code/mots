@@ -15,6 +15,7 @@ import type { Enchere } from '../jeu/marche.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { decalageDuServeur, encherir, lireLeMarche, lireMesEncheres, retirerDeLaVente } from '../services/partie.ts';
+import { demanderConfirmation } from '../composants/Confirmation.tsx';
 
 const REGLES = EQUILIBRAGE.marche;
 const messageDe = (erreur: unknown): string => (erreur instanceof Error ? erreur.message : String(erreur));
@@ -105,13 +106,15 @@ function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere:
     if (valeur > disponible) { void onAgir(async () => { throw new Error(`Il te manque ${valeur - disponible} Encre pour cette mise.`); }); return; }
     lancer(async () => { const e = await encherir(enchere.id, valeur); return e.etat === 'vendue' ? `« ${carte?.mot ?? enchere.carte} » est à toi pour ${e.prixFinal} Encre.` : `Mise de ${valeur} Encre enregistrée : tu es en tête.`; });
   };
-  const acheter = (): void => {
+  const acheter = async (): Promise<void> => {
     if (enchere.achatImmediat === null) return;
-    if (!window.confirm(`Acheter « ${carte?.mot ?? enchere.carte} » tout de suite pour ${enchere.achatImmediat} Encre ?`)) return;
+    if (!(await demanderConfirmation({
+      titre: `Acheter « ${carte?.mot ?? enchere.carte} » ?`, message: `Tout de suite, pour ${enchere.achatImmediat} Encre : l’enchère s’arrête et le timbre entre dans ton album.`, confirmer: `Acheter pour ${enchere.achatImmediat} Encre`,
+    }))) return;
     lancer(async () => { await encherir(enchere.id, enchere.achatImmediat!); return `« ${carte?.mot ?? enchere.carte} » est à toi pour ${enchere.achatImmediat} Encre.`; });
   };
-  const retirer = (): void => {
-    if (!window.confirm('Retirer cette vente ? Le timbre revient dans ton album.')) return;
+  const retirer = async (): Promise<void> => {
+    if (!(await demanderConfirmation({ titre: 'Retirer cette vente ?', message: 'Le timbre revient dans ton album.', confirmer: 'Retirer la vente' }))) return;
     lancer(async () => { await retirerDeLaVente(enchere.id); return 'Vente retirée : le timbre est revenu dans ton album.'; });
   };
 
@@ -138,7 +141,7 @@ function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere:
             {!ouvert
               ? <div className="rangee-de-boutons">
                   {!enchere.enTete && <button type="button" className="bouton" disabled={occupe} onClick={() => { setMontant(String(minimum)); setOuvert(true); }}>Miser</button>}
-                  {enchere.achatImmediat !== null && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={acheter}>Acheter {enchere.achatImmediat} Encre</button>}
+                  {enchere.achatImmediat !== null && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => void acheter()}>Acheter {enchere.achatImmediat} Encre</button>}
                 </div>
               : <form className="enchere__mise" onSubmit={miser}>
                   <label htmlFor={`mise-${enchere.id}`} className="petit">Ta mise (au moins {minimum} Encre)</label>
@@ -150,7 +153,7 @@ function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere:
                 </form>}
           </div>
         )}
-        {enCours && enchere.mienne && enchere.meilleureMise === null && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" disabled={occupe} onClick={retirer}>Retirer de la vente</button></div>}
+        {enCours && enchere.mienne && enchere.meilleureMise === null && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => void retirer()}>Retirer de la vente</button></div>}
       </div>
     </li>
   );

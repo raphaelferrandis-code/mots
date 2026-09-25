@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SceauDuel } from '../../composants/SceauDuel.tsx';
+import { useRacineInerte } from '../../composants/useRacineInerte.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 import type { Duel } from '../../jeu/duel.ts';
 import { ligueDe } from '../../jeu/joute.ts';
@@ -32,6 +33,7 @@ type Props = {
 };
 
 export function FinDuDuel(p: Props) {
+  useRacineInerte(); // les onglets derrière le voile ne quittent pas le duel par erreur
   const { duel, resultat } = p;
   const moi = duel.camps.joueur.pv;
   const lui = duel.camps.adversaire.pv;

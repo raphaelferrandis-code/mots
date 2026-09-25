@@ -13,6 +13,7 @@ import type { CartePossedee } from '../jeu/sauvegarde.ts';
 import { FINITIONS } from '../partage/types.ts';
 import type { CarteIndex, Finition } from '../partage/types.ts';
 import { mettreEnVente } from '../services/partie.ts';
+import { demanderConfirmation } from './Confirmation.tsx';
 
 const REGLES = EQUILIBRAGE.marche;
 const entier = (texte: string): number | null => (texte.trim() === '' ? null : Number(texte));
@@ -35,7 +36,9 @@ export function MiseEnVente({ carte, possedee, dansLeDeck, cotes = null, onVendu
     const demande = { rarete: carte.rarete, mise: entier(mise) ?? 0, achatImmediat: entier(achat), heures };
     const probleme = verifierLaMiseEnVente(demande, REGLES);
     if (probleme) { setEtat({ etat: 'erreur', message: probleme }); return; }
-    if (!window.confirm(`Mettre « ${carte.mot} » en vente pendant ${heures} h, à partir de ${demande.mise} Encre ? Le timbre quitte ton album le temps de la vente.`)) return;
+    if (!(await demanderConfirmation({
+      titre: `Mettre « ${carte.mot} » en vente ?`, message: `Pendant ${heures} h, à partir de ${demande.mise} Encre. Le timbre quitte ton album le temps de la vente.`, confirmer: 'Mettre en vente',
+    }))) return;
     setEtat({ etat: 'en cours' });
     try {
       onVendu(await mettreEnVente(carte.id, finition, demande.mise, demande.achatImmediat, heures));

@@ -8,6 +8,7 @@ import { achatsEnCours } from '../jeu/formule.ts';
 import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
 import { telechargerUnFichier } from '../services/partage.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
+import { demanderConfirmation } from '../composants/Confirmation.tsx';
 
 import './reglages.css';
 
@@ -41,7 +42,9 @@ export function Reglages() {
     if (!choisi) return;
     try {
       const texte = await choisi.text();
-      if (!window.confirm('Importer ce fichier remplacera ta partie actuelle sur cet appareil. Continuer ?')) return;
+      if (!(await demanderConfirmation({
+        titre: 'Importer cette sauvegarde ?', message: 'Ce fichier remplacera ta partie actuelle sur cet appareil.', confirmer: 'Importer', danger: true,
+      }))) return;
       importerUneSauvegarde(texte);
       setMessage('Sauvegarde importée : ta collection est restaurée.');
     } catch (erreur) {
@@ -58,7 +61,10 @@ export function Reglages() {
     // abonnement qui se renouvelle encore se résilie d'abord : le serveur le rappelle s'il le faut.
     const achats = partie.etat === 'prete' && partie.compte !== null && achatsEnCours(partie.compte.formule)
       ? ' Tu perdras aussi ce que tu as acheté (« Mon album », ton abonnement).' : '';
-    if (!window.confirm(`Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ?${achats} Cette action est définitive.`)) return;
+    if (!(await demanderConfirmation({
+      titre: 'Effacer toute ta partie ?', message: `Ta collection, ton Encre et tes paquets sur cet appareil, et ton profil de joutes classées.${achats}`,
+      confirmer: 'Tout effacer', danger: true,
+    }))) return;
     try {
       await effacerLaPartieEtLeProfil();
       setMessage('Partie effacée : tu repars de zéro, avec trois paquets.');

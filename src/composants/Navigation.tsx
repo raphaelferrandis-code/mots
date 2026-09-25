@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
+import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import type { Route } from '../navigation/routes.ts';
@@ -52,6 +53,9 @@ const ESPACE_DU_JOUEUR: { route: Route; nom: string; detail: string; icone: Reac
   { route: { ecran: 'reglages' }, nom: 'Réglages', detail: 'Préférences', icone: DESSINS.reglages, actifPour: ['reglages', 'confidentialite'] },
 ];
 
+// Le meilleur gain d'une victoire en duel, pour le menu de l'Encre.
+const ENCRE_PAR_VICTOIRE = Math.max(...Object.values(EQUILIBRAGE.duel.encreParVictoire));
+
 // L'anneau d'XP autour de l'avatar : il se remplit vers le niveau suivant.
 const TOUR = 2 * Math.PI * 21;
 
@@ -101,7 +105,8 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
       <nav className="navigation" aria-label="Navigation principale">
         <ul className="navigation__liste">
           {ONGLETS.map((onglet) => <li key={onglet.nom}>
-            <a className="navigation__lien" href={lien(onglet.route)} aria-label={onglet.nom} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
+            {/* Pas d'aria-label : le nom lu est celui qui s'affiche (« Album » sur téléphone, « Collection » ailleurs). */}
+            <a className="navigation__lien" href={lien(onglet.route)} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
               <span className="navigation__icone" aria-hidden="true">{onglet.icone}</span>
               <span className="navigation__nom-long">{onglet.nom}</span>
               <span className="navigation__nom-court">{onglet.nomCourt ?? onglet.nom}</span>
@@ -112,18 +117,25 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
 
       <div className="navigation__personnel">
         <div className="encre">
-          <a className="reserve-encre" href={lien({ ecran: 'paquet' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encreEnClair} Encre — voir les paquets`}>
+          {/* L'Encre ne sert qu'aux enchères : le compteur mène au marché (décision du 25/09/2026). */}
+          <a className="reserve-encre" href={lien({ ecran: 'marche' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encreEnClair} Encre — aller au marché`}>
             <span className="reserve-encre__flacon"><Icone nom="encre" /></span>
             <strong>{encreEnClair}</strong><span className="reserve-encre__mot"> Encre</span>
           </a>
-          <button type="button" className="encre__plus" aria-expanded={ouvert === 'encre'} aria-controls="menu-encre" aria-label="Encre et paquets" onClick={() => basculer('encre')}>{DESSINS.plus}</button>
+          <button type="button" className="encre__plus" aria-expanded={ouvert === 'encre'} aria-controls="menu-encre" aria-label="Gagner de l’Encre" onClick={() => basculer('encre')}>{DESSINS.plus}</button>
           {ouvert === 'encre' && <div id="menu-encre" className="menu-flottant menu-encre" onClick={fermerSurLien}>
             <div className="menu-encre__reserve">
               <span className="menu-encre__flacon" aria-hidden="true"><Icone nom="encre" /></span>
               <p><span className="menu-flottant__surtitre">Ta réserve</span><strong>{encreEnClair} <em>Encre</em></strong></p>
             </div>
+            <p className="menu-encre__usage">L’Encre sert à enchérir sur les timbres des autres joueurs, au marché.</p>
+            <p className="menu-flottant__surtitre">Pour en gagner</p>
+            <ul className="menu-encre__gains">
+              <li><span className="menu-encre__icone" aria-hidden="true">{ICONES_DUEL.duel}</span><span><strong>Gagne des duels</strong>jusqu’à {ENCRE_PAR_VICTOIRE} Encre par victoire</span></li>
+              <li><span className="menu-encre__icone" aria-hidden="true">{DESSINS.paquet}</span><span><strong>Ouvre des paquets</strong>chaque doublon se change en Encre</span></li>
+            </ul>
             <a className="bouton-menu bouton-menu--plein" href={lien({ ecran: 'paquet' })}>{DESSINS.paquet}Ouvrir un paquet</a>
-            <a className="bouton-menu bouton-menu--eclat" href={lien({ ecran: 'formules' })}><Eclat id="eclat-encre" />Voir les formules</a>
+            <a className="bouton-menu bouton-menu--trait" href={lien({ ecran: 'marche' })}>{DESSINS.marche}Aller au marché</a>
           </div>}
         </div>
 

@@ -41,6 +41,9 @@
   background: var(--accent); color: var(--accent-texte); cursor: pointer; box-shadow: 0 0 14px rgb(241 138 75 / 45%); transition: background-color .15s;
 }
 .encre__plus svg { width: 17px; height: 17px; }
+/* Une cible de 44 px pour le doigt, sans grossir le bouton : la zone cliquable déborde autour de lui. */
+.encre__plus { position: relative; }
+.encre__plus::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
 
 .navigation__separateur { width: 1px; height: 28px; background: var(--filet); }
 
@@ -89,7 +92,15 @@
 .bouton-menu { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 14px; text-decoration: none; font-size: 1rem; }
 .bouton-menu svg { width: 20px; height: 20px; }
 .bouton-menu--plein { background: var(--accent); color: var(--accent-texte); font-weight: 600; box-shadow: 0 8px 22px rgb(241 138 75 / 35%); }
-.bouton-menu--eclat, .menu-profil__formules {
+.bouton-menu--trait { border: 1.5px solid var(--filet); color: var(--encre); }
+.menu-encre__usage { margin: 0; color: var(--encre-douce); font-size: 0.9rem; line-height: 1.45; }
+.menu-encre__gains { list-style: none; margin: -4px 0 4px; padding: 0; display: grid; gap: 10px; }
+.menu-encre__gains li { display: flex; align-items: center; gap: 12px; }
+.menu-encre__gains li > span:last-child { display: grid; gap: 2px; font-size: 0.85rem; color: var(--encre-douce); }
+.menu-encre__gains strong { color: var(--encre); font-size: 0.95rem; font-weight: 600; }
+.menu-encre__icone { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgb(241 138 75 / 12%); color: var(--accent); }
+.menu-encre__icone svg { width: 19px; height: 19px; }
+.menu-profil__formules {
   border: 1.5px solid transparent; color: var(--encre);
   background: linear-gradient(var(--carte-fond), var(--carte-fond)) padding-box, linear-gradient(120deg, #ffe1a1, #e1b7ff 50%, #8ce4eb) border-box;
 }
@@ -150,7 +161,6 @@
 .menu-profil__sortie:disabled { cursor: progress; opacity: .7; }
 .menu-profil__pied p { margin: 4px 10px 0; font-size: 0.8rem; color: #ffb4a0; }
 .eclat { flex-shrink: 0; width: 34px; height: 34px; animation: navigation-scintille 4s ease-in-out infinite; }
-.bouton-menu .eclat { width: 20px; height: 20px; }
 @keyframes navigation-scintille { 0%, 100% { filter: drop-shadow(0 0 3px #e3bdf555); } 50% { filter: drop-shadow(0 0 7px #f0d7bbaa); } }
 .voile { display: none; }
 
@@ -160,6 +170,7 @@
   .encre__plus:hover { background: var(--accent-survol); }
   .bouton-joueur:hover { color: var(--encre); }
   .menu-profil__liens a:hover { background: rgb(173 195 218 / 7%); }
+  .bouton-menu--trait:hover { border-color: var(--accent); }
   .menu-profil__sortie:not(:disabled):hover { color: var(--encre); background: rgb(173 195 218 / 7%); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -202,8 +213,8 @@
   .reserve-encre__flacon svg { width: 17px; height: 17px; }
   .reserve-encre strong { font-size: 0.95rem; }
   .reserve-encre__mot, .navigation__separateur, .bouton-joueur__chevron { display: none; }
-  .encre__plus { width: 28px; height: 28px; }
-  .encre__plus svg { width: 15px; height: 15px; }
+  .encre__plus { width: 32px; height: 32px; }
+  .encre__plus svg { width: 16px; height: 16px; }
   .bouton-joueur { padding: 0; background: none; border-radius: 50%; }
   .avatar__niveau { border-color: var(--papier); }
 
