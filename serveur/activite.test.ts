@@ -46,7 +46,9 @@ it('ignore les joueurs sans pseudonyme et les joueurs maison, et note victoires 
   await b.db.query("insert into public.profils(utilisateur,pseudo,pseudo_cle) values ($1,'Nouvelle','nouvelle')", [b.ids[2]]);
   await b.db.query('update public.profils set gagnees = gagnees + 1, cote = 1016 where utilisateur = $1', [b.ids[0]]);
   const fil = await b.fil();
-  assert.deepEqual(fil.map((e) => [e.genre, e.pseudo, e.cote]), [['victoire', 'lecteur0', 1016], ['arrivee', 'Nouvelle', null]]);
+  // Les deux événements peuvent tomber dans la même microseconde (c'est arrivé sur GitHub) : leur ordre n'est pas vérifié.
+  const lignes = fil.map((e) => [e.genre, e.pseudo, e.cote]).sort((x, y) => String(x[0]).localeCompare(String(y[0])));
+  assert.deepEqual(lignes, [['arrivee', 'Nouvelle', null], ['victoire', 'lecteur0', 1016]]);
 });
 
 it('suit les changements de pseudonyme et efface un joueur qui retire son profil', async () => {
