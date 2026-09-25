@@ -222,7 +222,7 @@
 .partie__attente { color: var(--p-texte-doux); font-style: italic; }
 .ring__timbre { position: relative; }
 
-/* Le mot adverse arrive face cachée (nature, attaque, défense), puis se retourne. */
+/* Le mot adverse arrive face cachée (nature, attaque, défense), et se retourne à l'ouverture de la parade. */
 .ring__place[data-camp='adversaire'] .tb[data-face='verso'] { animation: timbre-arrive .38s cubic-bezier(.2, .9, .3, 1) both; }
 .ring__place[data-camp='adversaire'] .tb[data-face='recto'] { animation: timbre-retourne .32s cubic-bezier(.2, 1.4, .4, 1) both; }
 @keyframes timbre-arrive { from { opacity: 0; transform: translateY(-60px) scale(.8) rotate(-6deg); } }

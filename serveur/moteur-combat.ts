@@ -1,6 +1,7 @@
 // Exécuté par la fonction serveur. Aucun état privé ni tirage ne vient du navigateur.
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
-import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, taillesDesFactions } from '../src/jeu/duel.ts';
+import { bonusDEnchainement, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, faceCachee, jouerLaManche, poseLePremier, taillesDesFactions } from '../src/jeu/duel.ts';
+import type { TaillesDesFactions } from '../src/jeu/duel.ts';
 import { composerLEpreuve } from '../src/jeu/epreuve.ts';
 import type { Definitions } from '../src/jeu/epreuve.ts';
 import type { Hasard } from '../src/jeu/hasard.ts';
@@ -8,11 +9,12 @@ import { chancesDuDouble } from '../src/jeu/joute.ts';
 import type { ProfilDeJoute } from '../src/jeu/joute.ts';
 import type { ActionCombat, AdversaireCombat, ChoixCombat, EtapeCombat, ReponseCombat, VueCombat } from '../src/jeu/combat.ts';
 import type { Apprentissage } from '../src/jeu/sauvegarde.ts';
-import type { CarteIndex, Rarete, Registre } from '../src/partage/types.ts';
+import type { CarteIndex, Nature, Rarete, Registre } from '../src/partage/types.ts';
 import type { Resultat } from '../src/jeu/progression.ts';
 
 export class RefusCombat extends Error {}
-export const VERSION_MOTEUR = 2;
+// 3 : le mot adverse reste face cachée jusqu'à la parade, et la pose alterne (les combats en version 1 ou 2 continuent).
+export const VERSION_MOTEUR = 3;
 export const DUREE_COMBAT = 24 * 60 * 60 * 1000; // y compris le temps illimité d'accessibilité
 const R = EQUILIBRAGE.duel;
 export type CatalogueCombat = { cartes: CarteIndex[]; definitions: Definitions };
@@ -31,8 +33,13 @@ function visibles(catalogue: CatalogueCombat, masques: Registre[]): CarteIndex[]
   return catalogue.cartes.filter(c => !c.registre.some(r => masques.includes(r))
     && (catalogue.definitions.get(c.id)?.some(d => !d.registre?.some(r => masques.includes(r))) ?? true));
 }
-function adverse(duel: VueCombat['duel'], adversaire: AdversaireCombat, catalogue: CatalogueCombat, hasard: Hasard): CarteIndex {
-  return choisirPourLOrdinateur(duel, adversaire.type === 'joute' ? 'Normal' : adversaire.niveau, hasard, taillesDesFactions(catalogue.cartes), R);
+const niveauDe = (adversaire: AdversaireCombat) => adversaire.type === 'joute' ? 'Normal' : adversaire.niveau;
+function adverse(duel: VueCombat['duel'], adversaire: AdversaireCombat, catalogue: CatalogueCombat, hasard: Hasard, enFace: Nature | null = null): CarteIndex {
+  return choisirPourLOrdinateur(duel, niveauDe(adversaire), hasard, taillesDesFactions(catalogue.cartes), R, enFace);
+}
+// Début de manche : l'adversaire pose son mot, ou attend celui du joueur.
+function debutDeManche(duel: VueCombat['duel'], adversaire: AdversaireCombat, catalogue: CatalogueCombat, hasard: Hasard): EtapeCombat {
+  return { nom: 'choix', adverse: poseLePremier(duel.manche, niveauDe(adversaire)) === 'adversaire' ? adverse(duel, adversaire, catalogue, hasard) : null, choisie: null };
 }
 export function creerCombat(choix: ChoixCombat, compte: { deck: string[]; possedees: string[]; apprentissages: Record<string, Apprentissage> }, profil: ProfilDeJoute | null, catalogue: CatalogueCombat, hasard: Hasard, maintenant: number): EtatCombatPrive {
   const disponibles = visibles(catalogue, choix.masques);
@@ -48,7 +55,7 @@ export function creerCombat(choix: ChoixCombat, compte: { deck: string[]; possed
   return {
     versionMoteur: VERSION_MOTEUR, duel, adversaire, masques: choix.masques, temps: choix.temps,
     possedees: compte.possedees, deckDepart: compte.deck, apprentissages: structuredClone(compte.apprentissages),
-    etape: { nom: 'choix', adverse: adverse(duel, adversaire, catalogue, hasard), choisie: null },
+    etape: debutDeManche(duel, adversaire, catalogue, hasard),
     creeLe: maintenant, expireLe: maintenant + DUREE_COMBAT, termine: false, resultat: null, abandonne: false, archive: false,
     bilan: { attaques: 0, attaquesReussies: 0, parades: 0, paradesReussies: 0, maitrises: [] },
   };
@@ -65,19 +72,21 @@ export function avancerCombat(avant: EtatCombatPrive, action: ActionCombat, cata
     return { etat };
   }
   if (action.type === 'quitter' && etat.termine) { etat.archive = true; return { etat }; }
-  if (etat.versionMoteur !== 1 && etat.versionMoteur !== VERSION_MOTEUR) throw new RefusCombat('Cette ancienne partie doit être abandonnée avant de continuer.');
+  if (![1, 2, VERSION_MOTEUR].includes(etat.versionMoteur)) throw new RefusCombat('Cette ancienne partie doit être abandonnée avant de continuer.');
   etat.versionMoteur = VERSION_MOTEUR;
   const question = (carte: CarteIndex, autre: CarteIndex) => composerLEpreuve(carte, catalogue.definitions, visibles(catalogue, etat.masques).filter(c => c.id !== autre.id), etat.masques, hasard);
   if (action.type === 'choisir' && e.nom === 'choix') {
     const carte = etat.duel.camps.joueur.main.find(c => c.id === action.carte);
     if (!carte) throw new RefusCombat('Cette carte ne figure pas dans ta main.');
-    etat.etape = { nom: 'parade', carte, adverse: e.adverse, epreuve: question(e.adverse, carte), debut: maintenant };
+    // Quand le joueur a posé le premier, l'adversaire répond en ne voyant que la nature de son mot.
+    const enFace = e.adverse ?? adverse(etat.duel, etat.adversaire, catalogue, hasard, carte.type);
+    etat.etape = { nom: 'parade', carte, adverse: enFace, epreuve: question(enFace, carte), debut: maintenant };
   } else if (action.type === 'continuer' && (e.nom === 'attaque' || e.nom === 'echappe')) {
     etat.etape = { nom: 'parade', carte: e.carte, adverse: e.adverse, epreuve: question(e.adverse, e.carte), debut: maintenant };
   } else if (action.type === 'continuer' && e.nom === 'bilan') {
     etat.duel = e.apres;
     etat.etape = etat.resultat ? { nom: 'fin', resultat: etat.resultat, abandonne: false, expire: false }
-      : { nom: 'choix', adverse: adverse(e.apres, etat.adversaire, catalogue, hasard), choisie: null };
+      : debutDeManche(e.apres, etat.adversaire, catalogue, hasard);
   } else if (action.type === 'repondre' && e.nom === 'parade') {
     if (action.choisie !== null && (!Number.isInteger(action.choisie) || action.choisie < 0 || action.choisie >= e.epreuve.propositions.length)) throw new RefusCombat('Réponse invalide.');
     const secondes = etat.temps === 'illimite' ? Infinity : R.secondesPourRepondre * (etat.temps === 'double' ? 2 : 1);
@@ -101,9 +110,11 @@ export function avancerCombat(avant: EtatCombatPrive, action: ActionCombat, cata
   return { etat };
 }
 
-export function vueCombat(etat: EtatCombatPrive): VueCombat {
+export function vueCombat(etat: EtatCombatPrive, tailles: TaillesDesFactions): VueCombat {
   let etape: EtapeCombat = etat.etape.nom === 'attaque' || etat.etape.nom === 'echappe' ? { nom: 'reprise' } : structuredClone(etat.etape);
-  if (etape.nom === 'parade') etape = { ...etape, epreuve: { ...etape.epreuve, bonne: -1 } };
+  // Avant la parade, le mot adverse n'est vu que face cachée ; pendant la parade, sans sa définition ni la bonne réponse.
+  if (etape.nom === 'choix' && etape.adverse) etape = { ...etape, adverse: faceCachee(etape.adverse, bonusDEnchainement(etat.duel.camps.adversaire.derniere, etape.adverse, tailles, R)) };
+  if (etape.nom === 'parade') etape = { ...etape, adverse: { ...etape.adverse, definition: '' }, epreuve: { ...etape.epreuve, bonne: -1 } };
   // Aucun ordre de pioche, main adverse cachée ou statistique privée n'est transmis.
   const dos: CarteIndex = { id: 'cachee', mot: '', definition: '', type: 'Nom', rarete: 'Commune', faction: '', attaque: 0, defense: 0, registre: [] };
   const cacher = (duel: VueCombat['duel']) => ({ ...duel, camps: {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useJouteDirecte } from '../composants/useJouteDirecte.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { Carte } from '../composants/carte/Carte.tsx';
+import { Timbre } from '../composants/timbre/Timbre.tsx';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { serveurEquipes } from '../services/equipes.ts';
@@ -11,6 +12,7 @@ import { ErreurDuServeur } from '../services/supabase.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
+import { ID_FACE_CACHEE } from '../jeu/duel.ts';
 import type { ModeDirect } from '../jeu/direct.ts';
 import { lien } from '../navigation/routes.ts';
 import './joutesDirectes.css';
@@ -101,11 +103,11 @@ export function JoutesDirectes() {
           <div className="direct__phase" role="status"><strong>Manche {v.manche} · {v.phase==='pose' ? `${v.joueurs[poseur]?.pseudo} pose une carte` : v.phase==='reponses' ? 'Retrouvez les définitions adverses' : v.phase==='arbitrage' ? 'Les derniers poseurs tranchent' : v.phase==='bilan' ? 'Résultat de la manche' : 'Partie terminée'}</strong>{v.phase!=='fin' && <span aria-label={`${secondes} secondes restantes`}>{secondes} s</span>}</div>
           <div className="direct__table">{Array.from({length:v.joueurs.length/2},(_,voie) => <section className="direct__voie" key={voie}><h3>Face-à-face {voie+1}</h3>{[0,1].map(camp => {
             const pose = v.poses.find(p => p.voie===voie && v.joueurs[p.joueur].equipe===camp);
-            return <div className="direct__position" key={camp}>{pose ? <><p>{v.joueurs[pose.joueur].pseudo}</p><Carte carte={pose.carte} sansDefinition cliquable={false} /></> : <p className="direct__vide">{v.noms[camp]} · carte à venir</p>}</div>;
+            return <div className="direct__position" key={camp}>{pose ? <><p>{v.joueurs[pose.joueur].pseudo}</p>{pose.carte.id === ID_FACE_CACHEE ? <Timbre carte={pose.carte} oblitere cliquable={false} verso dosRenseigne montrerVerso /> : <Carte carte={pose.carte} sansDefinition cliquable={false} />}</> : <p className="direct__vide">{v.noms[camp]} · carte à venir</p>}</div>;
           })}</section>)}</div>
           {v.phase==='pose' && poseur===v.moi && <section className="bloc"><h2>À toi de poser</h2><div className="direct__main">{moi.main.map(c => <div key={c.id}><Carte carte={c} sansDefinition cliquable={false} />{voies.map(voie => {
             const face = v.poses.find(p => p.voie===voie && v.joueurs[p.joueur].equipe!==moi.equipe);
-            return <button key={voie} className="bouton" disabled={bloque || secondes===0} onClick={() => void direct.agir({type:'poser',carte:c.id,voie})}>Poser {c.mot} · {face ? `face à ${face.carte.mot}` : `voie ${voie+1} libre`}</button>;
+            return <button key={voie} className="bouton" disabled={bloque || secondes===0} onClick={() => void direct.agir({type:'poser',carte:c.id,voie})}>Poser {c.mot} · {face ? face.carte.mot ? `face à ${face.carte.mot}` : `face à son ${face.carte.type.toLowerCase()}` : `voie ${voie+1} libre`}</button>;
           })}</div>)}</div></section>}
           {v.phase==='pose' && v.joueurs.length===4 && <details className="bloc"><summary>La main de ton partenaire</summary><div className="direct__main">{v.joueurs.filter((j,i) => j.equipe===moi.equipe && i!==v.moi).flatMap(j => j.main).map(c => <Carte key={c.id} carte={c} sansDefinition cliquable={false} />)}</div></details>}
           {(v.phase==='reponses' || v.phase==='arbitrage') && <div className="direct__questions">{v.questions.map(q => <section key={q.cible} className="bloc"><h2>{q.mot}</h2><p>{v.phase==='reponses' ? (v.mode==='solo' ? 'Retrouve la définition pour parer.' : 'Propose une définition. Ton partenaire voit ta proposition.') : q.desaccord ? `${v.joueurs[v.arbitres[moi.equipe]].pseudo} tranche le désaccord.` : 'Votre réponse est retenue.'}</p>

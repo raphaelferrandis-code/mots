@@ -100,8 +100,8 @@ export const EQUILIBRAGE = {
   },
 
   // ── Duel ──────────────────────────────────────────────────────────────────
-  // Une manche : l'ordinateur pose un mot, le joueur lui répond par une carte ; le joueur doit retrouver la définition
-  // du mot adverse pour parer. Les attaques sont automatiques ; le joueur frappe le premier.
+  // Une manche : l'un pose un mot face cachée, l'autre lui répond par une carte (en Facile, l'ordinateur pose le premier ;
+  // sinon chacun son tour) ; le joueur doit retrouver la définition du mot adverse, révélé à la parade, pour parer. Les attaques sont automatiques ; le joueur frappe le premier.
   // Duels courts : chaque carte ne se joue qu'une fois par combat.
   // Vérification de la durée avec « npm run simulation:duel » (rapport : data/simulation-duel.md).
   duel: {
@@ -134,9 +134,10 @@ export const EQUILIBRAGE = {
     // Son deck répond carte pour carte à celui du joueur. Aux niveaux élevés, ses mots sont plus rares que ceux du
     // joueur, de ce nombre de crans (Commune → Peu commune → Rare → Épique → Légendaire) : plus forts, et surtout plus
     // difficiles à parer. C'est le réglage qui pèse le plus sur la difficulté. (1,5 = un cran ou deux, au hasard.)
-    // Victoires mesurées, avec une collection moyenne, en Facile / Normal / Difficile :
-    //   joueur hésitant 92 % / 57 % / 9 % · bon lecteur 99 % / 88 % / 43 % · expert 100 % / 95 % / 77 %
-    //   · bon lecteur qui connaît son deck par cœur 100 % / 92 % / 72 %.
+    // Victoires mesurées le 25/09/2026, avec une collection moyenne, en Facile / Normal / Difficile, depuis que le mot
+    // adverse reste face cachée jusqu'à la parade, que la pose alterne et que l'ordinateur Difficile contre le type du
+    // joueur quand il répond : joueur hésitant 91 % / 63 % / 40 % · bon lecteur 98 % / 78 % / 58 % · expert 100 % / 91 % / 78 %
+    // (avant : 91 / 69 / 48 · 98 / 82 / 64 · 100 / 94 / 82).
     cransDeRareteDeLOrdinateur: { 'Facile': 0, 'Normal': 1, 'Difficile': 2 },
     // Dans cette rareté, il reçoit des cartes de force comparable à celles du joueur (force = attaque + défense).
     // Écart visé, carte par carte : positif = un peu plus fortes. Pèse surtout face aux débutants, dont les cartes sont faibles.

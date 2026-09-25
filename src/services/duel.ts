@@ -3,7 +3,7 @@
 // contre un serveur, seul ce fichier changera.
 
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, taillesDesFactions } from '../jeu/duel.ts';
+import { chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, jouerLaManche, poseLePremier, taillesDesFactions } from '../jeu/duel.ts';
 import type { Duel, Niveau, TaillesDesFactions } from '../jeu/duel.ts';
 import { composerLEpreuve } from '../jeu/epreuve.ts';
 import type { Definitions, Epreuve } from '../jeu/epreuve.ts';
@@ -12,7 +12,7 @@ import { chancesDuDouble } from '../jeu/joute.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { cartesDuDeck } from '../jeu/progression.ts';
-import type { CarteIndex, Registre } from '../partage/types.ts';
+import type { CarteIndex, Nature, Registre } from '../partage/types.ts';
 import { chargerEdition, chargerLesDefinitions } from './cartes.ts';
 import { lirePartie } from './partie.ts';
 
@@ -62,8 +62,14 @@ export async function preparerUnDuel(adversaire: Adversaire): Promise<{ terrain:
   };
 }
 
-// Début de manche : l'adversaire pose son mot. (Le double d'un joueur pose toujours sa carte la plus solide.)
-export const motDeLOrdinateur = (terrain: Terrain, duel: Duel): CarteIndex => choisirPourLOrdinateur(duel, terrain.adversaire.type === 'entrainement' ? terrain.adversaire.niveau : 'Normal', hasardDuSysteme, terrain.tailles, REGLES);
+// Le double d'un joueur choisit comme l'ordinateur en Normal.
+const niveauDe = (terrain: Terrain): Niveau => terrain.adversaire.type === 'entrainement' ? terrain.adversaire.niveau : 'Normal';
+
+// L'adversaire choisit son mot : au début de la manche s'il pose le premier, sinon en voyant la nature du mot du joueur.
+export const motDeLOrdinateur = (terrain: Terrain, duel: Duel, enFace: Nature | null = null): CarteIndex => choisirPourLOrdinateur(duel, niveauDe(terrain), hasardDuSysteme, terrain.tailles, REGLES, enFace);
+
+// Début de manche : l'adversaire pose son mot, ou attend celui du joueur (null).
+export const debutDeManche = (terrain: Terrain, duel: Duel): CarteIndex | null => poseLePremier(duel.manche, niveauDe(terrain)) === 'adversaire' ? motDeLOrdinateur(terrain, duel) : null;
 
 // L'épreuve de parade. Le mot joué est écarté des leurres.
 export function poserLEpreuve(terrain: Terrain, carte: CarteIndex, autreMotDeLaManche: CarteIndex): Epreuve {

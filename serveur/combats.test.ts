@@ -11,6 +11,7 @@ import type { CarteIndex, Definition, IndexEdition } from '../src/partage/types.
 import type { ActionCombat, RequeteCombat, ReponseServeurCombat } from '../src/jeu/combat.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { XP } from '../src/jeu/personnalisation.ts';
+import { taillesDesFactions } from '../src/jeu/duel.ts';
 
 const brut = JSON.parse(readFileSync(new URL('../supabase/functions/_shared/catalogue-combat.json',import.meta.url),'utf8')) as { cartes: CarteIndex[]; definitions: [string, Definition[]][] };
 const catalogue = { cartes: brut.cartes, definitions: new Map(brut.definitions) };
@@ -164,7 +165,7 @@ it('le temps serveur décide des réponses, le temps illimité reste jouable et 
     if(question.etape.nom!=='parade') throw Error('attaque attendue');
     const suite=avancerCombat(question,{type:'repondre',choisie:question.etape.epreuve.bonne},catalogue,()=>0.999,3_600_000);
     assert.equal(suite.etat.etape.nom,'bilan');
-    assert.equal(vueCombat(suite.etat).etape.nom,'bilan');
+    assert.equal(vueCombat(suite.etat,taillesDesFactions(catalogue.cartes)).etape.nom,'bilan');
   } finally {await l.db.close();}
 });
 

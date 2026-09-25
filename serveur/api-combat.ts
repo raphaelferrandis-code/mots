@@ -3,6 +3,7 @@ import type { ProfilDeJoute } from '../src/jeu/joute.ts';
 import type { Apprentissage } from '../src/jeu/sauvegarde.ts';
 import type { EtatDuCompte } from '../src/jeu/synchronisation.ts';
 import type { Hasard } from '../src/jeu/hasard.ts';
+import { taillesDesFactions } from '../src/jeu/duel.ts';
 import { avancerCombat, creerCombat, vueCombat, RefusCombat } from './moteur-combat.ts';
 import type { CatalogueCombat, EtatCombatPrive } from './moteur-combat.ts';
 
@@ -56,9 +57,9 @@ export type ContexteCombat = { ligne: LigneCombat | null; profil: ProfilDeJoute 
 export type RpcCombat = <T>(nom: string, parametres: Record<string, unknown>) => Promise<T>;
 export type OutilsCombat = { rpc: RpcCombat; catalogue: CatalogueCombat; hasard: Hasard; maintenant(): number; identifiant(): string };
 const canonique = (v: unknown): string => JSON.stringify(v, (_cle, valeur) => objet(valeur) ? Object.fromEntries(Object.keys(valeur).sort().map(k => [k, valeur[k]])) : valeur);
-function publique(c: ContexteCombat): ReponseServeurCombat {
+function publique(c: ContexteCombat, catalogue: CatalogueCombat): ReponseServeurCombat {
   const b = c.ligne;
-  return { etat: c.compte, combat: b && !b.archive ? { id: b.id, revision: b.revision, vue: vueCombat(b.etat), xp: b.xp, recompense: b.recompense } : null };
+  return { etat: c.compte, combat: b && !b.archive ? { id: b.id, revision: b.revision, vue: vueCombat(b.etat, taillesDesFactions(catalogue.cartes)), xp: b.xp, recompense: b.recompense } : null };
 }
 
 export async function executerCombat(utilisateur: string, requete: RequeteCombat, outils: OutilsCombat): Promise<ReponseServeurCombat> {
@@ -70,7 +71,7 @@ export async function executerCombat(utilisateur: string, requete: RequeteCombat
   const action = requete.type === 'agir' ? requete.action : requete.type === 'commencer' ? { type: requete.type, choix: requete.choix } : null;
   if (requete.type !== 'lire' && b?.commandes[requete.requete]) {
     if (canonique(b.commandes[requete.requete]) !== canonique(action)) throw new ErreurCombat('Identifiant de commande déjà utilisé.');
-    return publique(contexte);
+    return publique(contexte, outils.catalogue);
   }
   const maintenant = outils.maintenant();
   const expirer = b && !b.termine && maintenant >= b.etat.expireLe;
@@ -82,13 +83,13 @@ export async function executerCombat(utilisateur: string, requete: RequeteCombat
     return outils.rpc('combat_appliquer', {
       p_utilisateur: utilisateur, p_id: b.id, p_revision: b.revision,
       p_requete: expirer ? outils.identifiant() : (requete as Extract<RequeteCombat,{type:'agir'}>).requete,
-      p_action: commande, p_etat: transition.etat, p_vue: vueCombat(transition.etat), p_reponse: transition.reponse ?? null,
+      p_action: commande, p_etat: transition.etat, p_vue: vueCombat(transition.etat, taillesDesFactions(outils.catalogue.cartes)), p_reponse: transition.reponse ?? null,
     });
   }
-  if (requete.type === 'lire' || (b && !b.termine && !b.archive)) return publique(contexte);
+  if (requete.type === 'lire' || (b && !b.termine && !b.archive)) return publique(contexte, outils.catalogue);
   if (!contexte.compte.progression) throw new ErreurCombat('La migration des combats doit être installée avant de jouer.', 503);
   const etat = creerCombat(requete.choix, { deck: contexte.compte.deck, possedees: Object.keys(contexte.compte.cartes), apprentissages: contexte.compte.progression.apprentissages }, contexte.profil, outils.catalogue, outils.hasard, maintenant);
-  return outils.rpc('combat_creer', { p_utilisateur: utilisateur, p_requete: requete.requete, p_action: action, p_etat: etat, p_vue: vueCombat(etat) });
+  return outils.rpc('combat_creer', { p_utilisateur: utilisateur, p_requete: requete.requete, p_action: action, p_etat: etat, p_vue: vueCombat(etat, taillesDesFactions(outils.catalogue.cartes)) });
 }
 
 export function gestionnaireCombat(outils: OutilsCombat & { authentifier(jeton: string): Promise<string | null> }) {

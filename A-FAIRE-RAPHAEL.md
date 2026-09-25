@@ -60,6 +60,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Nouveau timbre, cérémonie d'ouverture des paquets, nouvel accueil | En ligne |
 | Fil d'activité de l'accueil (script 14 installé par Raphaël) | En ligne ; il apparaît au premier événement |
 | Lien « Amis » retiré de la barre du haut | En ligne ; les Amis restent dans Profil → **Mes amis** |
+| Mot adverse caché jusqu'à la parade, pose alternée (anti-triche) | Prêt ; **à redéployer par Raphaël** (étape 6) |
 
 ---
 
@@ -110,6 +111,27 @@ Détails : [GUIDE-google.md](GUIDE-google.md).
 - [ ] Envoyer son lien d'invitation (Profil → **Mes amis**) à un proche, et vérifier que chacun reçoit 3 paquets
       après le premier duel du proche.
 - [ ] Créer son **code de secours** (Profil → Ton compte), si ce n'est pas déjà fait.
+
+### Étape 6 — Redéployer les deux fonctions du serveur (mot adverse caché)
+
+Pourquoi : jusqu'ici, le serveur envoyait au navigateur le mot adverse **et sa définition** dès le début de la
+manche ; un joueur pouvait les lire. Désormais, avant la parade, on ne voit que la nature, l'attaque et la défense.
+Détails : [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) et [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md).
+**Aucun script SQL à coller.**
+
+- [ ] **D'abord le jeu** : l'assistant publie (push sur `main`). Attendre que la mise en ligne soit finie (GitHub →
+      onglet **Actions** → « mise-en-ligne » en vert). Dans cet ordre, rien ne casse : le nouveau jeu sait lire
+      l'ancien serveur, l'inverse non.
+- [ ] Supabase → **Edge Functions** → `combats` → remplacer tout le code par le contenu de
+      `serveur/deploiement-combats/combats.ts.txt` → **Deploy**.
+      (Ou, avec la CLI : `supabase functions deploy combats --no-verify-jwt`.)
+- [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+      `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
+      (Ou : `supabase functions deploy joutes-direct --no-verify-jwt`.)
+- [ ] Vérifier sur philamots.fr, avec son compte : duel d'entraînement en **Normal** → à la manche 1, « À toi de poser
+      le premier » ; à la manche 2, le timbre de l'ordinateur arrive face cachée et ne se retourne qu'à la parade.
+      Les duels déjà commencés se terminent normalement. Un joueur qui avait le jeu ouvert pendant le
+      redéploiement doit recharger la page.
 
 ---
 

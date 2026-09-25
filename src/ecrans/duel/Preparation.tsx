@@ -48,8 +48,8 @@ const TITRES: Record<ModeDuSalon, [string, string]> = {
 // Ce que chaque niveau change vraiment (jeu/duel.ts et la section « L'ordinateur » de l'équilibrage).
 const NIVEAUX_DECRITS: Record<Niveau, string> = {
   Facile: 'Ses mots ont la même rareté que les tiens. Il les pose au hasard, pare moins souvent, et le jeu t’affiche les dégâts prévus.',
-  Normal: 'Ses mots ont un cran de rareté de plus que les tiens, et il pose toujours sa carte la plus solide.',
-  Difficile: 'Ses mots ont deux crans de rareté de plus : ils frappent plus fort et sont plus durs à parer.',
+  Normal: 'Ses mots ont un cran de rareté de plus que les tiens, et il joue toujours sa carte la plus solide.',
+  Difficile: 'Ses mots ont deux crans de rareté de plus, et quand tu poses le premier, il contre ton type.',
 };
 
 const TEMPS: Record<TempsDeReponse, string> = {
@@ -255,7 +255,7 @@ export function Preparation(props: Props) {
             <summary>Règles du duel</summary>
             <ul>
               <li><strong>Format :</strong> {REGLES.pointsDeVie} points de vie, {REGLES.tailleDuDeck} timbres, {REGLES.cartesEnMain} en main. Chaque timbre se joue une fois.</li>
-              <li><strong>Manche :</strong> l’adversaire pose son mot, tu lui opposes le tien. Tu frappes le premier ; s’il survit, il riposte.</li>
+              <li><strong>Manche :</strong> l’un pose son mot face cachée (nature, attaque, défense), l’autre lui oppose le sien ; le mot se retourne à la parade. En Facile, l’ordinateur pose le premier ; sinon, chacun son tour. Tu frappes le premier ; s’il survit, il riposte.</li>
               <li><strong>Parade :</strong> retrouve la définition de son mot pour diviser par deux les dégâts qu’il t’inflige.</li>
               <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse (au moins {REGLES.degatsMinimum}).</li>
               <li><strong>Bonus :</strong> +{REGLES.bonusDeType} pour l’avantage de type ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>

@@ -1,4 +1,5 @@
-// Contrat public du combat. Les réponses correctes ne sont présentes qu'après correction.
+// Contrat public du combat. Les réponses correctes ne sont présentes qu'après correction. Avant la parade, le mot
+// adverse n'est transmis que face cachée (nature, attaque, défense) ; pendant la parade, sans sa définition.
 import type { CarteIndex, Registre } from '../partage/types.ts';
 import type { Duel, Niveau } from './duel.ts';
 import type { Epreuve } from './epreuve.ts';
@@ -10,7 +11,7 @@ import type { EtatDuCompte } from './synchronisation.ts';
 export type AdversaireCombat = { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute; amical?: boolean };
 export type ReponseCombat = { epreuve: Epreuve; choisie: number | null; juste: boolean; maitrise: boolean };
 export type EtapeCombat =
-  | { nom: 'choix'; adverse: CarteIndex; choisie: string | null }
+  | { nom: 'choix'; adverse: CarteIndex | null; choisie: string | null } // null : le joueur pose le premier
   | { nom: 'reprise' } // une ancienne manche doit passer à la nouvelle épreuve de parade
   | { nom: 'parade'; adverse: CarteIndex; carte: CarteIndex; epreuve: Epreuve; debut: number }
   | { nom: 'bilan'; adverse: CarteIndex; carte: CarteIndex; parade: ReponseCombat; apres: Duel }

@@ -1,5 +1,5 @@
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
-import { melanger, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
+import { faceCachee, melanger, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
 import type { Duel } from '../src/jeu/duel.ts';
 import { composerLEpreuve } from '../src/jeu/epreuve.ts';
 import type { Epreuve } from '../src/jeu/epreuve.ts';
@@ -136,9 +136,12 @@ export function avancerDirect(initial: EtatDirect, catalogue: CatalogueCombat, h
 export function vueDirect(e: EtatDirect, utilisateur: string): VueDirect {
   const moi = e.joueurs.findIndex(j => j.utilisateur === utilisateur);
   if (moi < 0) throw new RefusDirect('Tu ne participes pas à cette partie.');
+  // Pendant la pose, les mots de l'autre équipe ne se voient que face cachée (nature, attaque, défense) ; tous se
+  // retournent à l'ouverture des réponses. Aucune définition n'est transmise avant le bilan.
+  const voir = (p: PoseDirect): CarteIndex => e.phase === 'pose' && e.joueurs[p.joueur].equipe !== e.joueurs[moi].equipe ? faceCachee(p.carte) : { ...p.carte, definition: '' };
   return { mode: e.mode, manche: e.manche, phase: e.phase, echeance: e.echeance, moi,
     joueurs: e.joueurs.map(j => ({ pseudo: j.pseudo, equipe: j.equipe, main: j.equipe === e.joueurs[moi].equipe ? j.main.map(c => ({ ...c, definition: '' })) : [], restantes: j.pioche.length + j.main.length, derniere: j.derniere && { ...j.derniere, definition: '' } })),
-    noms: e.noms, pv: e.pv, ordre: e.ordre, arbitres: e.arbitres, poses: e.poses.map(p => ({ ...p, carte: { ...p.carte, definition: '' } })),
+    noms: e.noms, pv: e.pv, ordre: e.ordre, arbitres: e.arbitres, poses: e.poses.map(p => ({ ...p, carte: voir(p) })),
     questions: e.questions.filter(q => e.joueurs[q.cible].equipe !== e.joueurs[moi].equipe).map(q => ({ cible: q.cible, mot: q.epreuve.mot, propositions: q.epreuve.propositions, reponses: q.reponses, decision: q.decision, desaccord: desaccord(q) })),
     bilan: e.bilan, vainqueur: e.vainqueur, raison: e.raison };
 }

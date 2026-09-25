@@ -7,10 +7,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
-import { NIVEAUX, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, forceDeLaCarte, jouerLaManche, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
+import { NIVEAUX, bonusDEnchainement, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, faceCachee, forceDeLaCarte, jouerLaManche, poseLePremier, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
 import type { Niveau, ReglesDuDuel } from '../src/jeu/duel.ts';
 import { choisir, hasardReproductible } from '../src/jeu/hasard.ts';
 import type { Hasard } from '../src/jeu/hasard.ts';
+import { attaqueEnJeu, defenseEnJeu } from '../src/config/equilibrage.ts';
 import { contientUneLegendaire, ouvrirPaquet, preparerReserve } from '../src/jeu/paquets.ts';
 import type { CarteIndex, IndexEdition, Rarete } from '../src/partage/types.ts';
 
@@ -38,6 +39,8 @@ const JOUEURS: Joueur[] = [
   { nom: 'Expert des mots', adverses: EXPERT },
 ];
 const BON_LECTEUR = JOUEURS[1];
+// Ce qu'un joueur espère parer d'un mot dont il ne voit pas la rareté : sa moyenne sur les raretés ordinaires.
+const PARADE_ESPEREE = new Map(JOUEURS.map((j) => [j, (['Commune', 'Peu commune', 'Rare', 'Épique', 'Légendaire'] as const).reduce((s, r) => s + j.adverses[r], 0) / 5]));
 
 // ── Les decks ───────────────────────────────────────────────────────────────
 // Le joueur fictif ouvre de vrais paquets, puis aligne ses dix cartes les plus fortes.
@@ -77,18 +80,31 @@ function simulerUnDuel(paquets: number, joueur: Joueur, niveau: Niveau, regles: 
   let parades = 0, attaquesSubies = 0;
   while (duel.vainqueur === null) {
     const etat = duel;
-    const adverse = choisirPourLOrdinateur(etat, niveau, hasard, TAILLES, regles);
-    // Le joueur répond par la carte qui lui promet le meilleur échange : ce qu'il espère infliger, moins ce qu'il s'attend à subir.
+    const main = etat.camps.joueur.main;
+    let carte: CarteIndex, adverse: CarteIndex;
+    if (poseLePremier(etat.manche, niveau) === 'adversaire') {
+      adverse = choisirPourLOrdinateur(etat, niveau, hasard, TAILLES, regles);
+      // Le joueur répond par la carte qui lui promet le meilleur échange : ce qu'il espère infliger, moins ce qu'il
+      // s'attend à subir. Il ne voit que la face cachée du mot adverse (nature, attaque, défense), pas sa rareté.
+      const vu = faceCachee(adverse, bonusDEnchainement(etat.camps.adversaire.derniere, adverse, TAILLES, regles));
+      const saParade = PARADE_ESPEREE.get(joueur)!;
+      const promesse = (c: CarteIndex): number => {
+        const ordinateur = chancesDeLOrdinateur(niveau, c, regles);
+        const mienne = prevoirLAttaque(etat, 'joueur', c, vu, TAILLES, regles);
+        const sienne = prevoirLAttaque(etat, 'adversaire', vu, c, TAILLES, regles);
+        const inflige = (ordinateur.parer * mienne.degatsSiParee + (1 - ordinateur.parer) * mienne.degats);
+        const subi = (saParade * sienne.degatsSiParee + (1 - saParade) * sienne.degats);
+        return inflige - subi;
+      };
+      carte = main.reduce((a, b) => (promesse(b) > promesse(a) ? b : a));
+    } else {
+      // Le joueur pose le premier, sans rien savoir du mot adverse : sa carte la plus solide (comme l'ordinateur).
+      // L'ordinateur répond en voyant la nature de son mot.
+      const solidite = (c: CarteIndex): number => attaqueEnJeu(c.attaque, c.rarete) + bonusDEnchainement(etat.camps.joueur.derniere, c, TAILLES, regles) + defenseEnJeu(c.defense, c.rarete) * regles.partDeLaDefense;
+      carte = main.reduce((a, b) => (solidite(b) > solidite(a) ? b : a));
+      adverse = choisirPourLOrdinateur(etat, niveau, hasard, TAILLES, regles, carte.type);
+    }
     const saParade = joueur.adverses[adverse.rarete];
-    const promesse = (c: CarteIndex): number => {
-      const ordinateur = chancesDeLOrdinateur(niveau, c, regles);
-      const mienne = prevoirLAttaque(etat, 'joueur', c, adverse, TAILLES, regles);
-      const sienne = prevoirLAttaque(etat, 'adversaire', adverse, c, TAILLES, regles);
-      const inflige = (ordinateur.parer * mienne.degatsSiParee + (1 - ordinateur.parer) * mienne.degats);
-      const subi = (saParade * sienne.degatsSiParee + (1 - saParade) * sienne.degats);
-      return inflige - subi;
-    };
-    const carte = etat.camps.joueur.main.reduce((a, b) => (promesse(b) > promesse(a) ? b : a));
     const ordinateur = chancesDeLOrdinateur(niveau, carte, regles);
     const savoirs = { joueurPare: hasard() < saParade, adversairePare: hasard() < ordinateur.parer };
     duel = jouerLaManche(etat, carte.id, adverse.id, savoirs, hasard, TAILLES, regles);
@@ -157,7 +173,7 @@ const variantes = VARIANTES.map((v) => ligne(v.nom, MOYENNE.paquets, BON_LECTEUR
 const rapport = [
   '# Simulation de duel',
   '',
-  `*Généré par \`npm run simulation:duel\`. ${DUELS_PAR_LIGNE.toLocaleString('fr-FR')} duels simulés par ligne, avec les vraies cartes de l'édition. À chaque manche, l'ordinateur pose un mot, le joueur lui répond, et les deux attaques sont réglées ensemble. Le joueur fictif aligne les dix meilleures cartes de sa collection et répond par la carte qui lui promet le meilleur échange ; les attaques sont automatiques et ses chances de parer baissent avec la rareté du mot adverse (hypothèses en tête de \`simulateurs/duel.ts\`). L'ordinateur reçoit un deck des mêmes raretés et de force comparable, selon le niveau. Les réglages sont dans \`src/config/equilibrage.ts\`.*`,
+  `*Généré par \`npm run simulation:duel\`. ${DUELS_PAR_LIGNE.toLocaleString('fr-FR')} duels simulés par ligne, avec les vraies cartes de l'édition. À chaque manche, l'un pose un mot face cachée (en Facile, toujours l'ordinateur ; sinon chacun son tour, le joueur d'abord), l'autre lui répond, et les deux attaques sont réglées ensemble. Le joueur fictif aligne les dix meilleures cartes de sa collection ; quand il répond, il joue la carte qui lui promet le meilleur échange contre la face cachée adverse, et quand il pose le premier, sa carte la plus solide. En Difficile, l'ordinateur qui répond joue une carte dont le type bat celui du joueur, s'il en a une ; les attaques sont automatiques et ses chances de parer baissent avec la rareté du mot adverse (hypothèses en tête de \`simulateurs/duel.ts\`). L'ordinateur reçoit un deck des mêmes raretés et de force comparable, selon le niveau. Les réglages sont dans \`src/config/equilibrage.ts\`.*`,
   '',
   `**Format actuel :** ${REGLES.pointsDeVie} PV, ${REGLES.manchesMaximum} manches maximum. Chaque carte ne se joue qu’une fois ; à épuisement d’un camp, les PV restants départagent les joueurs.`,
   '',

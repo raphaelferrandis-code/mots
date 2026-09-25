@@ -13,6 +13,7 @@ Validation locale : 342 tests réussis, compilation de production réussie et pa
 - **2v2 équipe** : deux duos enregistrés. Chaque membre se déclare prêt ; aucune réservation sans son partenaire. Une cote par équipe, départ à 1 000. Aucun effet sur les deux cotes personnelles.
 - Dix cartes par joueur, main de trois cartes, vingt PV en solo et quarante PV communs par équipe en 2v2. Les mains sont visibles uniquement dans son propre camp ; la pioche est privée.
 - Manche impaire : A1, B1, B2, A2. B1 choisit l'opposition ; B2 prend la voie restante. Manche paire : B2, A2, A1, B1. Le dernier poseur de chaque camp arbitre.
+- Pendant la pose, une carte de l'autre camp ne se voit que face cachée : nature, attaque, défense (règle du 25/09/2026, `vueDirect`). Tous les mots se retournent à l'ouverture des réponses ; aucune définition n'est transmise avant le bilan.
 - Huit secondes par pose, trente secondes pour les définitions, cinq secondes en cas de désaccord, quatre secondes pour le bilan. Les deux équipes répondent simultanément. Unanimité complète : résolution anticipée.
 - Une proposition seule est retenue. Deux propositions différentes : l'arbitre choisit entre elles ; sans choix, sa proposition est retenue. Aucune réponse : pas de parade.
 - Les attaques sont automatiques et simultanées, calculées contre la carte de la même voie. Les bonus de faction suivent la carte précédente de chaque joueur. Une parade réduit les dégâts selon les règles existantes.

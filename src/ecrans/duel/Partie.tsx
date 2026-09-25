@@ -15,6 +15,7 @@ import { Timbre } from '../../composants/timbre/Timbre.tsx';
 import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { aidesPermises, enchainement, indiceSurLeMot, pluralDe, prevoirLaManche, rapportDeType } from '../../jeu/aidesDuDuel.ts';
 import type { PrevisionDeLaManche } from '../../jeu/aidesDuDuel.ts';
+import { faceCachee } from '../../jeu/duel.ts';
 import type { Attaque, Cote, Duel, TaillesDesFactions } from '../../jeu/duel.ts';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
@@ -68,7 +69,12 @@ export function Partie(p: Props) {
   const { etape, duel, affiche, sauvegarde, tailles } = p;
   const aides = aidesPermises(p.adversaire);
   const { joueur } = affiche.camps;
-  const adverse = 'adverse' in etape ? etape.adverse : null;
+  // Avant la parade, le mot adverse n'est montré que face cachée : nature, attaque et défense. (Le serveur des combats
+  // ne transmet que cela ; en local, la face cachée est tirée ici de la carte.)
+  const revele = etape.nom !== 'choix';
+  const adverse = etape.nom === 'choix'
+    ? etape.adverse && faceCachee(etape.adverse, enchainement(duel, 'adversaire', etape.adverse, tailles, REGLES))
+    : 'adverse' in etape ? etape.adverse : null;
   const choisie = etape.nom === 'choix' ? joueur.main.find((c) => c.id === etape.choisie) ?? null : null;
   const jouee = etape.nom === 'parade' || etape.nom === 'bilan' ? etape.carte : null;
   const manche = etape.nom === 'bilan' ? etape.apres.manches.at(-1) : undefined;
@@ -90,8 +96,8 @@ export function Partie(p: Props) {
   // L'intro, au tout début d'un duel : le premier mot adverse attend qu'elle soit finie pour arriver.
   const [intro, setIntro] = useState(() => !reduit && etape.nom === 'choix' && duel.manche === 1 && duel.manches.length === 0);
 
-  // La chronologie de la manche : retournement du mot adverse, puis correction, bouclier, élan, choc, récapitulatif.
-  const { temps, revele } = useDeroulement({ etape, duel, reduit, sons: p.sons, eclater, enAttente: intro });
+  // La chronologie de la manche : arrivée du mot adverse, puis correction, bouclier, élan, choc, récapitulatif.
+  const { temps, arrive } = useDeroulement({ etape, duel, reduit, sons: p.sons, eclater, enAttente: intro });
   const enCorrection = etape.nom === 'bilan' && temps === 'correction';
   const apresLeChoc = etape.nom === 'bilan' && (temps === 'choc' || temps === 'recap');
   const recap = etape.nom === 'bilan' && temps === 'recap';
@@ -109,7 +115,7 @@ export function Partie(p: Props) {
   // Les touches 1 à 3 choisissent un timbre de la main (hors champ de saisie).
   const main = joueur.main;
   useEffect(() => {
-    if (etape.nom !== 'choix' || !revele) return;
+    if (etape.nom !== 'choix' || !arrive) return;
     const touche = (e: KeyboardEvent): void => {
       if (e.ctrlKey || e.metaKey || e.altKey || (e.target instanceof HTMLElement && e.target.closest('input, textarea, select'))) return;
       const carte = main[Number(e.key) - 1];
@@ -117,7 +123,7 @@ export function Partie(p: Props) {
     };
     window.addEventListener('keydown', touche);
     return () => window.removeEventListener('keydown', touche);
-  }, [etape.nom, main, revele, p.onChoisir]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [etape.nom, main, arrive, p.onChoisir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const habiller = (carte: CarteIndex) => {
     const possedee = sauvegarde.cartes[carte.id];
@@ -141,14 +147,15 @@ export function Partie(p: Props) {
   let phrase: ReactNode = null;
   let detail: ReactNode = null;
   let bouton: ReactNode = null;
-  if (etape.nom === 'choix' && adverse && !revele) {
+  if (etape.nom === 'choix' && adverse && !arrive) {
     phrase = <>{nomAdverse} pose son mot…</>;
-  } else if (etape.nom === 'choix' && adverse) {
+  } else if (etape.nom === 'choix') {
+    const enFace = adverse && <>son <b>{article(adverse.type)}</b></>;
     if (!choisie) {
-      phrase = <>À toi. Quel mot opposes-tu à <b>« {adverse.mot} »</b> ?</>;
+      phrase = enFace ? <>À toi. Quel mot opposes-tu à {enFace} ?</> : <>À toi de poser le premier.</>;
       bouton = <button type="button" className="btn-primary sm" disabled>Choisis un timbre dans ta main</button>;
     } else {
-      phrase = prevision ? <PhraseDePrevision prevision={prevision} /> : <>Prêt à opposer <b>« {choisie.mot} »</b> à « {adverse.mot} » ?</>;
+      phrase = prevision ? <PhraseDePrevision prevision={prevision} /> : enFace ? <>Prêt à opposer <b>« {choisie.mot} »</b> à {enFace} ?</> : <>Prêt à poser <b>« {choisie.mot} »</b> ?</>;
       detail = prevision && <DetailDuCalcul carte={choisie} prevision={prevision} />;
       bouton = <button type="button" className="btn-primary sm" disabled={p.bloque} onClick={() => p.onJouer(choisie)}>Jouer « {choisie.mot} »</button>;
     }
@@ -167,7 +174,7 @@ export function Partie(p: Props) {
 
   // ── Sous le médaillon (Facile) : l'indice sur son mot, puis le rapport de type une fois ton timbre choisi ──
   let indice: ReactNode = null;
-  if (aides && adverse && etape.nom === 'choix' && revele) {
+  if (aides && adverse && etape.nom === 'choix' && arrive) {
     if (choisie) {
       const rapport = rapportDeType(choisie.type, adverse.type);
       indice = rapport === 'pour' ? <p className="ring__indice" data-ton="bon">Ton {article(choisie.type)} bat son {article(adverse.type)} : <b>+{REGLES.bonusDeType} pour toi</b></p>
@@ -216,7 +223,7 @@ export function Partie(p: Props) {
         <figure className="ring__place" data-camp="adversaire">
           <figcaption>Son mot</figcaption>
           <div className="ring__timbre" {...(adverse && revele ? survoler({ carte: adverse, finition: 'Normale', maitriseeLe: null }, etape.nom !== 'bilan') : {})}>
-            {adverse && !intro ? <Timbre key={`${adverse.id}-${revele}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} /> : <span className="ring__vide" />}
+            {adverse && !intro ? <Timbre key={`${adverse.id}-${duel.manche}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} /> : <span className="ring__vide" />}
             {etape.nom === 'bilan' && manche && (temps === 'bouclier' || temps === 'elan' || temps === 'choc') && <Garde paree={manche.joueur.paree} />}
             {etape.nom === 'bilan' && manche && apresLeChoc && <DegatsVolants key={`lui-${manche.numero}`} attaque={manche.joueur} />}
           </div>
@@ -251,7 +258,7 @@ export function Partie(p: Props) {
                   const pressee = etape.nom === 'choix' && carte.id === etape.choisie;
                   return (
                     <li key={carte.id}>
-                      <button type="button" className="main-du-joueur__timbre" aria-pressed={pressee} disabled={etape.nom !== 'choix' || !revele || p.bloque}
+                      <button type="button" className="main-du-joueur__timbre" aria-pressed={pressee} disabled={etape.nom !== 'choix' || !arrive || p.bloque}
                         aria-label={`${carte.mot}, ${carte.type}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${pressee ? ' — touche encore pour le jouer' : ''}`}
                         onClick={() => (pressee ? p.onJouer(carte) : p.onChoisir(carte.id))} {...survoler(habiller(carte))}>
                         <Carte {...habiller(carte)} cliquable={false} />

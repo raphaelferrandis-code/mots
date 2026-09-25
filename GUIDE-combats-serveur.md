@@ -34,6 +34,8 @@ Les travaux de paiements de test utilisent séparément `8-paiements-test.sql`. 
 - Les statistiques d’un double humain proviennent uniquement des réponses vérifiées. Les paramètres de statistiques envoyés par un ancien navigateur ne font plus foi. Les joueurs maison gardent leurs statistiques simulées.
 - Les combats archivés vieux de plus de 30 jours sont purgés lors d’un nouveau départ du même compte. Il ne s’agit pas d’une suppression quotidienne automatique. La progression agrégée reste conservée.
 
+- Avant la parade, le mot adverse ne quitte le serveur que face cachée : nature, attaque et défense (bonus de rareté et d’enchaînement compris), sans mot, origine ni définition. Pendant la parade, le mot est transmis sans sa définition ; celle-ci n’arrive qu’au bilan. En Facile, l’ordinateur pose le premier ; en Normal, en Difficile et contre un double, la pose alterne (le joueur à la manche 1), et l’adversaire qui répond ne voit que la nature du mot du joueur. Moteur version 3, du 25/09/2026 : les combats commencés en version 1 ou 2 continuent.
+
 Le moteur partage les règles pures du jeu. `VERSION_MOTEUR` doit évoluer lors d’un changement incompatible ; prévoir alors la fin ou la migration des parties existantes avant publication. Le catalogue embarqué doit être régénéré à chaque nouvelle édition.
 
 Cette vérification empêche l’envoi direct de résultats inventés. Elle ne prouve pas qu’une personne répond sans aide : le vocabulaire et les définitions sont publics, et un robot peut les consulter. Aucun résultat de simulation n’est présenté comme une mesure de résistance aux robots.

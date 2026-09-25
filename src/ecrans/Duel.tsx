@@ -1,8 +1,9 @@
 import { useRecompensesSuspendues } from '../composants/Recompenses.tsx';
 // Le duel : à l'entraînement contre l'ordinateur, ou en joute classée contre le « double » d'un autre joueur.
 // L'écran ne contient aucune règle : il affiche l'état du duel et passe par src/services/ pour chaque action.
-// Une manche : l'adversaire pose un mot, le joueur lui répond par une
-// carte de sa main, puis il retrouve uniquement la définition du mot ADVERSE pour parer.
+// Une manche : l'un pose un mot face cachée (nature, attaque, défense), l'autre lui répond par une carte de sa main
+// (en Facile, l'ordinateur pose toujours le premier ; sinon chacun son tour), puis le mot adverse se retourne et le
+// joueur retrouve uniquement sa définition pour parer.
 // Les attaques sont automatiques. Les deux attaques sont alors réglées, et l'on passe à la manche suivante.
 
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +21,7 @@ import type { Resultat } from '../jeu/progression.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
-import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
+import { debutDeManche, deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
 import { serveurDeJoutes } from '../services/joutes.ts';
 import { abandonnerLeDuel, commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
@@ -40,7 +41,7 @@ type Reponse = { epreuve: Epreuve; choisie: number | null; juste: boolean; maitr
 export type Etape =
   | { nom: 'accueil' }
   | { nom: 'preparation' }
-  | { nom: 'choix'; adverse: CarteIndex; choisie: string | null }
+  | { nom: 'choix'; adverse: CarteIndex | null; choisie: string | null } // null : le joueur pose le premier
   | { nom: 'reprise' }
   | { nom: 'parade'; adverse: CarteIndex; carte: CarteIndex; epreuve: Epreuve; debut: number }
   | { nom: 'bilan'; adverse: CarteIndex; carte: CarteIndex; parade: Reponse; apres: EtatDuDuel }
@@ -148,7 +149,7 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
       setTerrain(pret.terrain);
       setDuel(pret.duel);
       setBilan(BILAN_VIDE);
-      changerDEtape({ nom: 'choix', adverse: motDeLOrdinateur(pret.terrain, pret.duel), choisie: null });
+      changerDEtape({ nom: 'choix', adverse: debutDeManche(pret.terrain, pret.duel), choisie: null });
     } catch (e) {
       setErreur(e instanceof Error ? e.message : String(e));
       changerDEtape({ nom: 'accueil' });
@@ -171,13 +172,14 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     changerDEtape({ ...enCours, choisie: id }, false);
   };
 
-  // Jouer le timbre choisi : il est posé, puis vient la parade.
+  // Jouer le timbre choisi : il est posé (l'adversaire répond s'il ne l'a pas encore fait), puis vient la parade.
   const jouer = (carte: CarteIndex): void => {
     const enCours = etapeActuelle.current;
-    if (!terrain || enCours.nom !== 'choix' || enLigne.bloque) return;
+    if (!terrain || !duel || enCours.nom !== 'choix' || enLigne.bloque) return;
     sons.preparer(); sons.poser();
     if (enLigne.actif) { void enLigne.agir({ type: 'choisir', carte: carte.id }); return; }
-    changerDEtape({ nom: 'parade', adverse: enCours.adverse, carte, epreuve: poserLEpreuve(terrain, enCours.adverse, carte), debut: Date.now() });
+    const adverse = enCours.adverse ?? motDeLOrdinateur(terrain, duel, carte.type);
+    changerDEtape({ nom: 'parade', adverse, carte, epreuve: poserLEpreuve(terrain, adverse, carte), debut: Date.now() });
   };
 
   // Une seule réponse par manche : la définition du mot adverse pour parer.
@@ -208,12 +210,12 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     return () => clearTimeout(minuterie);
   }, [etape, duree]);
 
-  // Après le bilan d'une manche : le duel est fini, ou l'ordinateur pose son mot suivant.
+  // Après le bilan d'une manche : le duel est fini, ou la manche suivante commence.
   const continuer = async (apres: EtatDuDuel): Promise<void> => {
     if (enLigne.actif) { await enLigne.agir({type:'continuer'}); return; }
     if (!terrain || !sauvegarde || enregistrementEnCours.current) return;
     setDuel(apres);
-    if (apres.vainqueur === null) { changerDEtape({ nom: 'choix', adverse: motDeLOrdinateur(terrain, apres), choisie: null }); return; }
+    if (apres.vainqueur === null) { changerDEtape({ nom: 'choix', adverse: debutDeManche(terrain, apres), choisie: null }); return; }
 
     const resultat: Resultat = apres.vainqueur === 'joueur' ? 'victoire' : apres.vainqueur === 'nul' ? 'nul' : 'defaite';
     enregistrementEnCours.current = true;

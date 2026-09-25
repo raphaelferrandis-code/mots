@@ -7,6 +7,7 @@ import { cartes } from './collections.ts';
 import { avancerDirect, creerDirect, voiesDisponibles, vueDirect } from './moteur-direct.ts';
 import { executerDirect, gestionnaireDirect, lireRequeteDirect } from './api-direct.ts';
 import type { EtatDirect } from './moteur-direct.ts';
+import { ID_FACE_CACHEE } from '../src/jeu/duel.ts';
 import type { OutilsCombat } from './api-combat.ts';
 import type { CarteIndex, Definition, IndexEdition } from '../src/partage/types.ts';
 import type { ActionDirect, ModeDirect, ReponseDirect } from '../src/jeu/direct.ts';
@@ -57,6 +58,18 @@ it('direct : pas de mains adverses, pioche, solution ou identité privée dans l
   assert.ok(vue.joueurs.slice(2).every(j=>j.main.length===0));assert.ok(vue.joueurs[1].main.length>0);
   assert.equal('bonne' in vue.questions[0],false);assert.equal(JSON.stringify(vue).includes('utilisateur'),false);
   assert.ok(vue.poses.every(p=>p.carte.definition===''));assert.throws(()=>vueDirect(e,'intrus'));
+});
+it('direct : pendant la pose, les mots de l’autre équipe restent face cachée ; tous se retournent aux réponses',()=>{
+  let e=debut();
+  const premier=e.joueurs[0].main[0];
+  e=agir(e,0,{type:'poser',carte:premier.id,voie:0});
+  const adverse=vueDirect(e,'u2').poses[0].carte;
+  assert.equal(adverse.id,ID_FACE_CACHEE);assert.equal(adverse.mot,'');assert.equal(adverse.faction,'');assert.equal(adverse.type,premier.type);
+  // (Les decks de ce test sont identiques : le mot figure aussi dans la main de celui qui regarde.)
+  assert.equal(JSON.stringify(vueDirect(e,'u2').poses).includes(premier.mot),false);
+  assert.equal(vueDirect(e,'u1').poses[0].carte.mot,premier.mot,'le partenaire voit le mot posé');
+  e=poserToutes(e);assert.equal(e.phase,'reponses');
+  assert.ok(vueDirect(e,'u2').poses.every(p=>p.carte.mot!=='' && p.carte.definition===''));
 });
 it('direct : échéances serveur, reprise, double absence et commandes tardives',()=>{
   const e=debut('solo');const tardif=avancerDirect(e,catalogue,hasard,e.echeance,{joueur:0,manche:1,phase:'pose',action:{type:'poser',carte:e.joueurs[0].main[0].id,voie:0}});

@@ -1,9 +1,10 @@
 // Les règles du duel. Fonctions pures : pas d'écran, pas de sauvegarde, et le hasard est fourni par l'appelant.
 //
 // Le duel se joue en manches, mot contre mot. À chaque manche :
-//   1. l'ordinateur pose un mot de sa main, face visible ;
-//   2. le joueur lui répond par une carte de la sienne ;
-//   3. le joueur retrouve la définition du mot ADVERSE pour réduire les dégâts reçus ;
+//   1. l'un pose un mot de sa main face cachée : on n'en voit que la nature, l'attaque et la défense ;
+//      en Facile, l'ordinateur pose toujours le premier ; sinon chacun son tour, le joueur à la première manche ;
+//   2. l'autre lui répond par une carte de la sienne ;
+//   3. le mot adverse se retourne, et le joueur retrouve sa définition pour réduire les dégâts reçus ;
 //   4. les attaques sont automatiques. Le joueur frappe le premier ; si l'adversaire survit, il riposte.
 // L'ordinateur pare selon son niveau et la rareté du mot. Chaque carte ne sert qu'une fois.
 
@@ -85,12 +86,16 @@ export function commencerLeDuel(deckDuJoueur: readonly CarteIndex[], deckAdverse
 // Nombre de cartes de chaque faction dans l'édition : il décide quelles factions sont « petites ».
 export type TaillesDesFactions = ReadonlyMap<string, number>;
 
+// Le bonus d'enchaînement : la carte précédente du même camp était de la même origine (plus fort pour une petite langue).
+export function bonusDEnchainement(precedente: CarteIndex | null, carte: CarteIndex, tailles: TaillesDesFactions, regles: ReglesDuDuel): number {
+  if (precedente === null || precedente.faction !== carte.faction) return 0;
+  return (tailles.get(carte.faction) ?? Infinity) <= regles.petiteFactionJusquA ? regles.bonusDePetiteFaction : regles.bonusDeFaction;
+}
+
 // L'attaque de « carte », jouée par « cote », contre la carte d'en face.
 export function prevoirLAttaque(duel: Duel, cote: Cote, carte: CarteIndex, enFace: CarteIndex, tailles: TaillesDesFactions, regles: ReglesDuDuel): Prevision {
-  const precedente = duel.camps[cote].derniere;
   const bonusDeType = BAT[carte.type] === enFace.type ? regles.bonusDeType : 0;
-  const memeFaction = precedente !== null && precedente.faction === carte.faction;
-  const bonusDeFaction = !memeFaction ? 0 : (tailles.get(carte.faction) ?? Infinity) <= regles.petiteFactionJusquA ? regles.bonusDePetiteFaction : regles.bonusDeFaction;
+  const bonusDeFaction = bonusDEnchainement(duel.camps[cote].derniere, carte, tailles, regles);
   const bloques = Math.round(defenseEnJeu(enFace.defense, enFace.rarete) * regles.partDeLaDefense);
   const degats = Math.max(regles.degatsMinimum, attaqueEnJeu(carte.attaque, carte.rarete) + bonusDeType + bonusDeFaction - bloques);
   return { degats, degatsSiParee: Math.floor(degats * regles.partDesDegatsApresParade), bonusDeRarete: attaqueEnJeu(carte.attaque, carte.rarete) - carte.attaque, bonusDeType, bonusDeFaction, bloques };
@@ -143,17 +148,32 @@ export function jouerLaManche(duel: Duel, idDuJoueur: string, idAdverse: string,
 // La force d'une carte : ce qu'on lit dans les coins du timbre (bonus de rareté compris).
 export const forceDeLaCarte = (carte: CarteIndex): number => attaqueEnJeu(carte.attaque, carte.rarete) + defenseEnJeu(carte.defense, carte.rarete);
 
-// L'ordinateur pose son mot le premier, sans savoir ce que le joueur répondra : au hasard en Facile,
-// sa carte la plus solide sinon (son attaque, son éventuel bonus de même origine, et ce que bloque sa défense).
-export function choisirPourLOrdinateur(duel: Duel, niveau: Niveau, hasard: Hasard, tailles: TaillesDesFactions, regles: ReglesDuDuel): CarteIndex {
+// Qui pose son mot le premier à cette manche : l'ordinateur en Facile ; sinon chacun son tour, le joueur aux
+// manches impaires. (Le double d'un joueur suit le niveau Normal.)
+export function poseLePremier(manche: number, niveau: Niveau): Cote {
+  return niveau === 'Facile' || manche % 2 === 0 ? 'adversaire' : 'joueur';
+}
+
+// Ce qu'on voit d'un mot posé face cachée, avant la parade : sa nature, son attaque et sa défense (bonus de rareté
+// compris), rien qui permette de chercher sa définition. Son origine restant cachée, son éventuel bonus
+// d'enchaînement est compté dans l'attaque montrée : les calculs faits sur la face cachée restent justes.
+export const ID_FACE_CACHEE = 'face-cachee';
+export function faceCachee(carte: CarteIndex, enchainement = 0): CarteIndex {
+  if (carte.id === ID_FACE_CACHEE) return carte;
+  return { id: ID_FACE_CACHEE, mot: '', definition: '', type: carte.type, rarete: 'Commune', faction: '', registre: [],
+    attaque: attaqueEnJeu(carte.attaque, carte.rarete) + enchainement, defense: defenseEnJeu(carte.defense, carte.rarete) };
+}
+
+// L'ordinateur choisit son mot : au hasard en Facile, sa carte la plus solide sinon (son attaque, son éventuel bonus
+// de même origine, et ce que bloque sa défense). Quand le joueur a posé le premier, l'ordinateur voit la nature de
+// son mot (« enFace ») : en Difficile, il lui oppose sa carte la plus solide parmi celles qui la battent, s'il en a.
+export function choisirPourLOrdinateur(duel: Duel, niveau: Niveau, hasard: Hasard, tailles: TaillesDesFactions, regles: ReglesDuDuel, enFace: Nature | null = null): CarteIndex {
   const { main, derniere } = duel.camps.adversaire;
   if (niveau === 'Facile') return choisir(main, hasard);
-  const valeur = (carte: CarteIndex): number => {
-    const enchaine = derniere !== null && derniere.faction === carte.faction;
-    const bonus = !enchaine ? 0 : (tailles.get(carte.faction) ?? Infinity) <= regles.petiteFactionJusquA ? regles.bonusDePetiteFaction : regles.bonusDeFaction;
-    return attaqueEnJeu(carte.attaque, carte.rarete) + bonus + defenseEnJeu(carte.defense, carte.rarete) * regles.partDeLaDefense;
-  };
-  return main.reduce((meilleure, carte) => (valeur(carte) > valeur(meilleure) ? carte : meilleure));
+  const valeur = (carte: CarteIndex): number =>
+    attaqueEnJeu(carte.attaque, carte.rarete) + bonusDEnchainement(derniere, carte, tailles, regles) + defenseEnJeu(carte.defense, carte.rarete) * regles.partDeLaDefense;
+  const quiBattent = niveau === 'Difficile' && enFace !== null ? main.filter((c) => BAT[c.type] === enFace) : [];
+  return (quiBattent.length > 0 ? quiBattent : main).reduce((meilleure, carte) => (valeur(carte) > valeur(meilleure) ? carte : meilleure));
 }
 
 // Le deck de l'ordinateur : pour chaque carte du joueur, une carte de la même rareté et de force comparable

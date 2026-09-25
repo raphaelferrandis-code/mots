@@ -8,7 +8,7 @@ import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.t
 import { nomDuLot } from '../partage/lots.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition, Nature, Rarete } from '../partage/types.ts';
 import { contientLeMot, masquerLeMot, trahitLeMot } from '../partage/famille.ts';
-import { NIVEAUX, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, forceDeLaCarte, jouerLaManche, meilleurDeck, prevoirLAttaque, taillesDesFactions } from './duel.ts';
+import { ID_FACE_CACHEE, NIVEAUX, bonusDEnchainement, chancesDeLOrdinateur, choisirPourLOrdinateur, commencerLeDuel, deckDeLOrdinateur, faceCachee, forceDeLaCarte, jouerLaManche, meilleurDeck, poseLePremier, prevoirLAttaque, taillesDesFactions } from './duel.ts';
 import type { Duel } from './duel.ts';
 import { composerLEpreuve } from './epreuve.ts';
 import { hasardReproductible } from './hasard.ts';
@@ -301,6 +301,40 @@ describe("l'ordinateur", () => {
     assert.equal(choisirPourLOrdinateur(duel, 'Difficile', hasardReproductible(1), TAILLES, REGLES).mot, 'fort');
     const choix = new Set(Array.from({ length: 60 }, (_, i) => choisirPourLOrdinateur(duel, 'Facile', hasardReproductible(i), TAILLES, REGLES).mot));
     assert.equal(choix.size, 3);
+  });
+
+  it('en Difficile, répond au mot du joueur par sa carte la plus solide parmi celles qui le battent', () => {
+    const main = [carte('fort', { attaque: 9, defense: 8 }), carte('contre', { type: 'Verbe', attaque: 3, defense: 3 }), carte('contre-fort', { type: 'Verbe', attaque: 6, defense: 3 })];
+    const duel = situation([carte('x')], main);
+    // Le verbe bat le nom ; rien ne bat un adverbe ; en Normal, l'ordinateur garde sa carte la plus solide.
+    assert.equal(choisirPourLOrdinateur(duel, 'Difficile', hasardReproductible(1), TAILLES, REGLES, 'Nom').mot, 'contre-fort');
+    assert.equal(choisirPourLOrdinateur(duel, 'Difficile', hasardReproductible(1), TAILLES, REGLES, 'Adverbe').mot, 'fort');
+    assert.equal(choisirPourLOrdinateur(duel, 'Difficile', hasardReproductible(1), TAILLES, REGLES, 'Adjectif').mot, 'fort');
+    assert.equal(choisirPourLOrdinateur(duel, 'Normal', hasardReproductible(1), TAILLES, REGLES, 'Nom').mot, 'fort');
+  });
+
+  it('alterne qui pose le premier, le joueur d’abord ; en Facile, l’ordinateur commence toujours', () => {
+    assert.deepEqual([1, 2, 3, 4].map((m) => poseLePremier(m, 'Normal')), ['joueur', 'adversaire', 'joueur', 'adversaire']);
+    assert.deepEqual([1, 2, 3, 4].map((m) => poseLePremier(m, 'Difficile')), ['joueur', 'adversaire', 'joueur', 'adversaire']);
+    assert.deepEqual([1, 2, 3, 4].map((m) => poseLePremier(m, 'Facile')), ['adversaire', 'adversaire', 'adversaire', 'adversaire']);
+  });
+
+  it('ne laisse voir d’un mot face cachée que sa nature, son attaque et sa défense, et les calculs restent justes', () => {
+    const secret = carte('secret', { type: 'Verbe', rarete: 'Rare', faction: 'Arabe', registre: ['Familier'], definition: 'Ce qu’on ne doit pas lire.', attestation: '1850' });
+    const avant = carte('avant', { faction: 'Arabe' });
+    const bonus = bonusDEnchainement(avant, secret, TAILLES, REGLES);
+    assert.equal(bonus, REGLES.bonusDePetiteFaction);
+    const vu = faceCachee(secret, bonus);
+    assert.deepEqual(vu, { id: ID_FACE_CACHEE, mot: '', definition: '', type: 'Verbe', rarete: 'Commune', faction: '', registre: [],
+      attaque: attaqueEnJeu(secret.attaque, 'Rare') + bonus, defense: defenseEnJeu(secret.defense, 'Rare') });
+    assert.equal(faceCachee(vu), vu, 'une face cachée reste telle quelle');
+    const moi = carte('moi', { type: 'Adjectif' });
+    const duel = situation([moi], [secret], { adversaire: avant });
+    const paires = [
+      [prevoirLAttaque(duel, 'joueur', moi, secret, TAILLES, REGLES), prevoirLAttaque(duel, 'joueur', moi, vu, TAILLES, REGLES)],
+      [prevoirLAttaque(duel, 'adversaire', secret, moi, TAILLES, REGLES), prevoirLAttaque(duel, 'adversaire', vu, moi, TAILLES, REGLES)],
+    ];
+    for (const [a, b] of paires) assert.deepEqual([a.degats, a.degatsSiParee, a.bonusDeType, a.bloques], [b.degats, b.degatsSiParee, b.bonusDeType, b.bloques]);
   });
 
   it('« Composer pour moi » retient les cartes les plus fortes', () => {

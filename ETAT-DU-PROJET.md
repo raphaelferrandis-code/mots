@@ -2,6 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — mot adverse caché jusqu'à la parade (anti-triche).** Le serveur des combats envoyait au
+> navigateur le mot adverse et sa définition dès le début de la manche : corrigé. Avant la parade, on ne voit plus que
+> la nature, l'attaque et la défense (timbre face cachée), partout, Facile compris ; le mot se retourne à l'ouverture
+> de la parade, sa définition n'arrive qu'au bilan. En Normal, en Difficile et contre un double, la pose alterne (le
+> joueur à la manche 1) ; l'ordinateur Difficile qui répond joue une carte qui bat le type du joueur, s'il en a une.
+> En direct, les mots de l'autre camp restent face cachée pendant la pose. Victoires simulées (bon lecteur, collection
+> moyenne) : Normal 82 → 78 %, Difficile 64 → 58 % (`data/simulation-duel.md`). Moteur des combats en version 3 (les
+> combats en cours continuent). **À faire par Raphaël : redéployer `combats` et `joutes-direct`** (A-FAIRE, étape 6).
+
 > **25 septembre 2026 — nouveaux cadres et avatars de portrait : publiés.** Choisis par Raphaël sur une planche de tri en
 > trois passes : 34 cadres et 26 avatars (gratuits gravés, débloqués en métal, premium animés), une récompense par niveau
 > jusqu'au 50 avec la courbe d'XP inchangée (le niveau 12 était atteint en un ou deux jours). Trois pièces premium sont
