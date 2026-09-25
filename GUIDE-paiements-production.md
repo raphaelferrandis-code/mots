@@ -87,6 +87,11 @@ Et d'office (audit du 25/09) :
 - une demande mal formée reçoit un 400, et une panne un message général (le détail reste dans les journaux de
   Supabase).
 
+**Installé le 25/09/2026**, vérifié par l'assistant en lecture seule : colonnes et fonctions du script 19 en place, droits
+corrects ; les quatre fonctions déployées identiques aux fichiers de `serveur/deploiement-paiements/` (même empreinte
+SHA-256, au saut de ligne final près — la copie depuis GitHub l'enlève) ; « Verify JWT with legacy secret » désactivé sur
+les quatre ; `paiement-production?action=etat` répond `achatsOuverts: false`.
+
 Installation : **d'abord** `serveur/19-paiements.sql` (SQL Editor), **puis** redéployer les quatre fonctions
 `paiement`, `paiement-production`, `stripe-webhook` et `stripe-webhook-production` avec les fichiers de
 `serveur/deploiement-paiements/`. Dans l'autre ordre, les paiements échoueraient jusqu'au collage du script (les

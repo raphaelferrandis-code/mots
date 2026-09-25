@@ -2,8 +2,9 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **25 septembre 2026 — les paiements (achats toujours FERMÉS) : jeu publié ; `serveur/19-paiements.sql` À COLLER, PUIS
-> les quatre fonctions de paiement à redéployer (étape 11).** Décisions de Raphaël : un joueur qui a payé supprime
+> **25 septembre 2026 — les paiements (achats toujours FERMÉS) : EN LIGNE.** `serveur/19-paiements.sql` collé et les
+> quatre fonctions de paiement redéployées par Raphaël, vérifiés par l'assistant en lecture seule (empreintes du code
+> déployé, « Verify JWT » désactivé, production « achats fermés »). Décisions de Raphaël : un joueur qui a payé supprime
 > lui-même son compte (un abonnement qui se renouvelle se résilie d'abord) ; mois et année de naissance déclarés une fois
 > pour toutes, paiement à partir du mois qui suit les 18 ans. D'office : un clic sur « acheter » ne bloque plus la
 > suppression, une collection avec des achats n'est pas écrasée par une récupération par code, client ou session Stripe
