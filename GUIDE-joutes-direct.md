@@ -37,6 +37,16 @@ Déploiement : **d'abord** la fonction `joutes-direct` (`serveur/deploiement-dir
 l'ancienne fonction lancerait seulement les parties sans attendre que chacun accepte. Un joueur qui avait le jeu ouvert
 avant la mise à jour doit recharger la page pour voir le bouton « J'y vais ! ». La fonction `combats` ne change pas.
 
+### Installé le 25 septembre 2026
+
+Fonction `joutes-direct` redéployée et script 17 collé par Raphaël. Vérifié par l'assistant le soir même, en lecture
+seule : le code déployé est identique à `serveur/deploiement-direct/joutes-direct.ts.txt` (même empreinte SHA-256) et
+« Verify JWT with legacy secret » reste désactivé ; dans la base, les 26 fonctions concernées sont en place avec le bon
+verrou (direct pour le salon, les propositions et les équipes ; marché pour les enchères ; les deux, dans l'ordre, pour
+l'effacement d'un compte et la récupération par code), les droits sont corrects (fonctions internes fermées aux
+joueurs), les trois colonnes et les six déclencheurs sont là, `direct_signaux` est toujours publié en temps réel.
+Aucune partie ni proposition en cours à ce moment-là. Reste à l'essayer à deux (étape 9 d'`A-FAIRE-RAPHAEL.md`).
+
 ## Règles
 
 - **Solo** : deux humains présents. La cote solo existante sert de point de départ ; les anciennes données ne sont pas effacées.

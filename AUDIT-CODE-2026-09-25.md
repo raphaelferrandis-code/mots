@@ -11,7 +11,7 @@ Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2
 > **Corrigé le 25/09 (script 16, installé) :** n° 1 (parrain payé à la confirmation du filleul ; comptes de moins de
 > 3 jours sans échange, enchère ni vente ; l'anti-robot est allumé) et le plafond mensuel du parrain, désormais
 > verrouillé.
-> **Corrigé le 25/09 (script 17 et fonction joutes-direct, à installer) :** n° 3 (un verrou par domaine, ordre imposé,
+> **Corrigé le 25/09 (script 17 et fonction joutes-direct, installés) :** n° 3 (un verrou par domaine, ordre imposé,
 > écran des joutes et clôture des enchères sans verrou inutile, lectures au bon moment au lieu de toutes les 2,5 s ; la
 > page Formules n'interroge plus le serveur de paiement quand l'onglet est caché). Le reste de ce document est toujours
 > à faire.

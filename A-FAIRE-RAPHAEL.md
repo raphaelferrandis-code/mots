@@ -65,7 +65,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
 | Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
-| Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | Jeu en ligne ; **fonction et script 17 à installer (étape 9)** |
+| Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
 
 ---
 
@@ -166,23 +166,24 @@ Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas c
 - À savoir : presque tous les comptes actuels ont moins de 3 jours (le site est tout neuf). Leurs échanges et leur
   marché s'ouvrent d'eux-mêmes entre le 26 septembre et le **28 septembre à 14 h 45** au plus tard. Personne n'avait
   encore utilisé ni le marché ni les échanges : cela ne gêne personne.
-- [ ] Une requête « Untitled query » (la vérification, en lecture seule) est restée dans l'éditeur SQL, rubrique
-      PRIVATE : elle peut être supprimée.
 
-### Étape 9 — Redéployer la fonction joutes-direct, puis coller le script 17 (tenue du serveur et match à accepter)
+### Étape 9 — Redéployer la fonction joutes-direct, puis coller le script 17 (tenue du serveur et match à accepter) — FAIT le 25 septembre
 
 Pourquoi : l'écran des joutes interrogeait le serveur toutes les 2,5 secondes, et tous les joueurs attendaient les uns
 après les autres le même verrou. Tes décisions du 25 septembre : un match trouvé s'accepte avec **« J'y vais ! » en
 20 secondes**, ne pas accepter **ne coûte rien**, et un onglet caché **reste dans la file** avec une alerte. Détails :
 [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). Le jeu est déjà publié et s'adapte tout seul.
 
-- [ ] **D'abord la fonction** : Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+- [x] **D'abord la fonction** : Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
       `serveur/deploiement-direct/joutes-direct.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
       La fonction `combats` ne change pas.
-- [ ] **Puis le script** : https://github.com/raphaelferrandis-code/mots/blob/main/serveur/17-tenue-du-serveur.sql →
+- [x] **Puis le script** : https://github.com/raphaelferrandis-code/mots/blob/main/serveur/17-tenue-du-serveur.sql →
       **Copy raw file** → Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller →
       **Run**. Réponse attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
-- [ ] Le dire à l'assistant : il vérifie en lecture seule, comme pour le script 16.
+- [x] Vérifié par l'assistant en lecture seule : fonction déployée identique au fichier du dépôt (même empreinte), script 17
+      en place (26 fonctions, verrous, droits, colonnes, déclencheurs). Voir [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md).
+- [ ] Deux requêtes « Untitled query » (les vérifications des scripts 16 et 17, en lecture seule) sont restées dans
+      l'éditeur SQL, rubrique PRIVATE : elles peuvent être supprimées.
 - [ ] Essayer avec quelqu'un : chacun lance « Chercher une partie » en Solo ; « Adversaire trouvé ! » apparaît ; la partie
       ne commence que quand les deux ont pressé « J'y vais ! ».
 

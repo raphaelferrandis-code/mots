@@ -2,8 +2,9 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **25 septembre 2026 — tenue du serveur et match à accepter : jeu publié ; fonction `joutes-direct` à redéployer PUIS
-> `serveur/17-tenue-du-serveur.sql` à coller (étape 9).** Décisions de Raphaël : « J'y vais ! » pour tous, 20 s pour
+> **25 septembre 2026 — tenue du serveur et match à accepter : EN LIGNE.** Fonction `joutes-direct` redéployée et
+> `serveur/17-tenue-du-serveur.sql` collé par Raphaël, vérifiés par l'assistant en lecture seule (code déployé identique au
+> dépôt, 26 fonctions, verrous, droits). Décisions de Raphaël : « J'y vais ! » pour tous, 20 s pour
 > accepter, sans défaite si le match n'est pas accepté (ceux qui avaient accepté gardent leur rang dans la file) ; un
 > onglet caché reste dans la file (150 s sans nouvelles), avec titre d'onglet et sonnette ; **Supabase reste gratuit**
 > (passer à Pro avant une grosse campagne ou à 70 % d'une limite ; surveillance hebdomadaire dans A-FAIRE-RAPHAEL.md).
