@@ -2,6 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — tenue du serveur et match à accepter : jeu publié ; fonction `joutes-direct` à redéployer PUIS
+> `serveur/17-tenue-du-serveur.sql` à coller (étape 9).** Décisions de Raphaël : « J'y vais ! » pour tous, 20 s pour
+> accepter, sans défaite si le match n'est pas accepté (ceux qui avaient accepté gardent leur rang dans la file) ; un
+> onglet caché reste dans la file (150 s sans nouvelles), avec titre d'onglet et sonnette ; **Supabase reste gratuit**
+> (passer à Pro avant une grosse campagne ou à 70 % d'une limite ; surveillance hebdomadaire dans A-FAIRE-RAPHAEL.md).
+> Côté technique : un verrou par domaine (`serveur/verrous.ts`, ordre marché → direct → joueur), écran des joutes sans
+> verrou, clôture des enchères sans verrou quand rien n'est échu, lectures au bon moment (`prochaineLecture`) au lieu
+> de toutes les 2,5 s. La dernière migration est désormais la 17.
+
 > **25 septembre 2026 — parrainage confirmé et comptes neufs : EN LIGNE.** `serveur/16-parrainage-confirme.sql` collé
 > par Raphaël, vérifié par l'assistant en lecture seule (fonctions, droits, blocage, colonnes, déclencheurs). Décisions de Raphaël : le filleul reçoit ses 3 paquets dès son premier duel ;
 > le parrain reçoit les siens quand le filleul a relié un compte Google ou e-mail ET terminé un duel un autre jour

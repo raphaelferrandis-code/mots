@@ -305,6 +305,7 @@ declare
   e public.encheres%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
@@ -356,6 +357,7 @@ declare
   precedente public.mises%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;

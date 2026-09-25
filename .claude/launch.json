@@ -11,6 +11,14 @@
       "port": 5173
     },
     {
+      "name": "banc-direct",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "serveur/apercu-direct.mjs"
+      ],
+      "port": 5190
+    },
+    {
       "name": "banc-secours-parrainage",
       "runtimeExecutable": "node",
       "runtimeArgs": [

@@ -7,6 +7,8 @@ export class SortieSonore {
   private sortie: GainNode | null = null;
   private sources = new Set<AudioScheduledSourceNode>();
   private actif = true;
+  // Onglet caché : silence, sauf pour une alerte qui doit justement faire revenir le joueur (sonsDuDirect.ts).
+  protected seTaitEnArrierePlan = true;
 
   constructor(fabriquerContexte: () => AudioContext = () => new AudioContext()) {
     this.fabriquerContexte = fabriquerContexte;
@@ -34,7 +36,7 @@ export class SortieSonore {
   // La sortie, si un son peut être joué maintenant (son coupé, onglet caché, audio indisponible : silence).
   private pret(): { contexte: AudioContext; sortie: GainNode } | null {
     const c = this.contexte;
-    if (!this.actif || !c || !this.sortie || c.state === 'closed' || (typeof document !== 'undefined' && document.hidden)) return null;
+    if (!this.actif || !c || !this.sortie || c.state === 'closed' || (this.seTaitEnArrierePlan && typeof document !== 'undefined' && document.hidden)) return null;
     return { contexte: c, sortie: this.sortie };
   }
 

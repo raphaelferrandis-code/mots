@@ -1,4 +1,6 @@
--- Après 11-equipes.sql. Nouvelle fonction joutes-direct requise avant le client.
+-- La tenue du serveur et le match à accepter. Après 16-parrainage-confirme.sql.
+-- Redéployer d’abord la fonction joutes-direct (elle sait lire l’ancien serveur). Dans l’autre ordre, rien ne casse :
+-- l’ancienne fonction lancerait seulement les parties sans attendre que chacun accepte.
 begin;
 
 create table if not exists public.direct_parties (
@@ -347,5 +349,383 @@ grant execute on function public.direct_accepter(uuid,uuid,boolean) to service_r
 revoke all on function public.direct_signaler(uuid[]),public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb),public.direct_proteger_membre(),public.direct_proteger_profil(),public.direct_refuser_double(),public.classement_direct(text) from public,anon,authenticated;
 grant execute on function public.classement_direct(text) to authenticated;
 grant execute on function public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb) to service_role;
+
+create table if not exists public.equipes (
+  id uuid primary key,
+  nom text not null,
+  nom_cle text not null unique,
+  embleme text not null check(embleme in ('plume','etoile','feuille','eclair','lune','soleil')),
+  cree_le timestamptz not null default now()
+);
+create table if not exists public.equipiers (
+  profil uuid primary key references public.profils(id) on delete cascade,
+  equipe uuid not null references public.equipes(id) on delete cascade,
+  place integer not null check(place in (1,2)),
+  rejoint_le timestamptz not null default now(),
+  unique(equipe,place)
+);
+create table if not exists public.invitations_equipe (
+  id uuid primary key default gen_random_uuid(),
+  equipe uuid not null unique references public.equipes(id) on delete cascade,
+  destinataire uuid not null references public.profils(id) on delete cascade,
+  expire_le timestamptz not null default now()+interval '7 days'
+);
+create index if not exists invitations_equipe_destinataire on public.invitations_equipe(destinataire);
+alter table public.equipes enable row level security;
+alter table public.equipiers enable row level security;
+alter table public.invitations_equipe enable row level security;
+revoke all on public.equipes,public.equipiers,public.invitations_equipe from public,anon,authenticated;
+
+create or replace function public.apres_depart_equipier() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform pg_advisory_xact_lock(20260924);
+  if not exists(select 1 from public.equipes where id=old.equipe) then return old; end if;
+  delete from public.invitations_equipe where equipe=old.equipe;
+  if not exists(select 1 from public.equipiers where equipe=old.equipe) then
+    delete from public.equipes where id=old.equipe;
+  elsif old.place=1 then
+    update public.equipiers set place=1 where equipe=old.equipe;
+  end if;
+  return old;
+end $$;
+drop trigger if exists depart_equipier on public.equipiers;
+create trigger depart_equipier after delete on public.equipiers for each row execute function public.apres_depart_equipier();
+
+create or replace function public.mon_equipe() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid; mon_equipe uuid; cote integer;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  select id into moi from public.profils where utilisateur=auth.uid();
+  select equipe into mon_equipe from public.equipiers where profil=moi;
+  -- La cote 2v2 vient des joutes en direct (12-joutes-direct.sql), absentes d'une installation sans elles.
+  if mon_equipe is not null and to_regclass('public.direct_cotes') is not null then
+    execute 'select cote from public.direct_cotes where mode=''duo_equipe'' and sujet=$1' into cote using mon_equipe;
+  end if;
+  return jsonb_build_object('moi',moi,
+    'equipe',(select jsonb_build_object('id',e.id,'nom',e.nom,'embleme',e.embleme,'cote',cote,
+      'membres',(select jsonb_agg(jsonb_build_object('id',p.id,'pseudo',p.pseudo,'capitaine',m.place=1,
+          'xp',public.xp_du_profil(p.utilisateur),'avatar',p.avatar,'cadre',p.cadre,'vu_le',(extract(epoch from p.vu_le)*1000)::bigint) order by m.place)
+        from public.equipiers m join public.profils p on p.id=m.profil where m.equipe=e.id),
+      'invitation',(select jsonb_build_object('id',i.id,'pseudo',p.pseudo,'expire_le',extract(epoch from i.expire_le)*1000)
+        from public.invitations_equipe i join public.profils p on p.id=i.destinataire where i.equipe=e.id and i.expire_le>now()))
+      from public.equipes e where e.id=mon_equipe),
+    'invitations',(select coalesce(jsonb_agg(jsonb_build_object('id',i.id,'nom',e.nom,'embleme',e.embleme,'capitaine',p.pseudo,
+      'expire_le',extract(epoch from i.expire_le)*1000) order by e.nom),'[]')
+      from public.invitations_equipe i join public.equipes e on e.id=i.equipe
+      join public.equipiers m on m.equipe=e.id and m.place=1 join public.profils p on p.id=m.profil
+      where i.destinataire=moi and i.expire_le>now() and mon_equipe is null and public.sont_amis(moi,p.id)),
+    'amis',(select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'pseudo',p.pseudo) order by p.pseudo),'[]')
+      from public.amities a join public.profils p on p.id=case when a.demandeur=moi then a.destinataire else a.demandeur end
+      where a.acceptee and moi in (a.demandeur,a.destinataire) and not exists(select 1 from public.equipiers where profil=p.id)));
+end $$;
+
+create or replace function public.creer_equipe(p_id uuid,p_nom text,p_embleme text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid; refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  select id into moi from public.profils where utilisateur=auth.uid() and not maison;
+  if moi is null then raise exception 'Choisis d''abord ton pseudonyme dans les amis.'; end if;
+  if exists(select 1 from public.equipiers where profil=moi and equipe=p_id and place=1) then return; end if;
+  if exists(select 1 from public.equipiers where profil=moi) then raise exception 'Tu fais déjà partie d''une équipe.'; end if;
+  refus:=public.pseudo_refuse(propre);
+  if refus is not null then raise exception '%',refus; end if;
+  if p_embleme is null or p_embleme not in ('plume','etoile','feuille','eclair','lune','soleil') then raise exception 'Choisis un emblème.'; end if;
+  if p_id is null then raise exception 'Identifiant manquant.'; end if;
+  if exists(select 1 from public.equipes where nom_cle=public.cle_du_pseudo(propre)) then raise exception 'Ce nom d''équipe est déjà pris.'; end if;
+  insert into public.equipes(id,nom,nom_cle,embleme) values(p_id,propre,public.cle_du_pseudo(propre),p_embleme);
+  insert into public.equipiers(profil,equipe,place) values(moi,p_id,1);
+  delete from public.invitations_equipe where destinataire=moi;
+end $$;
+
+create or replace function public.modifier_equipe(p_equipe uuid,p_nom text,p_embleme text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
+    where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut modifier l''équipe.'; end if;
+  refus:=public.pseudo_refuse(propre);
+  if refus is not null then raise exception '%',refus; end if;
+  if p_embleme is null or p_embleme not in ('plume','etoile','feuille','eclair','lune','soleil') then raise exception 'Choisis un emblème.'; end if;
+  if exists(select 1 from public.equipes where nom_cle=public.cle_du_pseudo(propre) and id<>p_equipe) then raise exception 'Ce nom d''équipe est déjà pris.'; end if;
+  update public.equipes set nom=propre,nom_cle=public.cle_du_pseudo(propre),embleme=p_embleme where id=p_equipe;
+end $$;
+
+create or replace function public.inviter_equipier(p_equipe uuid,p_ami uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  select p.id into moi from public.equipiers m join public.profils p on p.id=m.profil
+    where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1;
+  if moi is null then raise exception 'Seul le capitaine peut inviter un ami.'; end if;
+  if not public.sont_amis(moi,p_ami) then raise exception 'Choisis un ami pour ton équipe.'; end if;
+  if (select count(*) from public.equipiers where equipe=p_equipe)>=2 then raise exception 'L''équipe est complète.'; end if;
+  if exists(select 1 from public.equipiers where profil=p_ami) then raise exception 'Cet ami fait déjà partie d''une équipe.'; end if;
+  delete from public.invitations_equipe where equipe=p_equipe and expire_le<=now();
+  if exists(select 1 from public.invitations_equipe where equipe=p_equipe and destinataire=p_ami) then return; end if;
+  if exists(select 1 from public.invitations_equipe where equipe=p_equipe) then raise exception 'Annule d''abord l''invitation en attente.'; end if;
+  if (select count(*) from public.invitations_equipe where destinataire=p_ami and expire_le>now())>=10 then raise exception 'Cet ami a trop d''invitations en attente.'; end if;
+  insert into public.invitations_equipe(equipe,destinataire) values(p_equipe,p_ami);
+end $$;
+
+create or replace function public.repondre_invitation_equipe(p_id uuid,p_action text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid; invitation public.invitations_equipe%rowtype; capitaine uuid;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  select id into moi from public.profils where utilisateur=auth.uid();
+  select * into invitation from public.invitations_equipe where id=p_id;
+  if not found then raise exception 'Cette invitation n''est plus disponible.'; end if;
+  select profil into capitaine from public.equipiers where equipe=invitation.equipe and place=1;
+  if (p_action='refuser' and invitation.destinataire=moi) or (p_action='annuler' and capitaine=moi) then
+    delete from public.invitations_equipe where id=p_id; return;
+  end if;
+  if p_action is distinct from 'accepter' or invitation.destinataire is distinct from moi then raise exception 'Cette action n''est pas permise.'; end if;
+  if invitation.expire_le<=now() then raise exception 'Cette invitation a expiré.'; end if;
+  if not public.sont_amis(moi,capitaine) then raise exception 'Vous devez être amis pour former une équipe.'; end if;
+  if exists(select 1 from public.equipiers where profil=moi) then raise exception 'Tu fais déjà partie d''une équipe.'; end if;
+  if (select count(*) from public.equipiers where equipe=invitation.equipe)>=2 then raise exception 'L''équipe est complète.'; end if;
+  insert into public.equipiers(profil,equipe,place) values(moi,invitation.equipe,2);
+  delete from public.invitations_equipe where destinataire=moi or equipe=invitation.equipe;
+end $$;
+
+create or replace function public.quitter_equipe(p_equipe uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  delete from public.equipiers where equipe=p_equipe and profil in (select id from public.profils where utilisateur=auth.uid());
+end $$;
+
+create or replace function public.dissoudre_equipe(p_equipe uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260924);
+  if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
+    where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut dissoudre l''équipe.'; end if;
+  delete from public.equipes where id=p_equipe;
+end $$;
+
+revoke execute on function public.apres_depart_equipier() from public,anon,authenticated;
+revoke execute on function public.mon_equipe(),public.creer_equipe(uuid,text,text),public.modifier_equipe(uuid,text,text),
+  public.inviter_equipier(uuid,uuid),public.repondre_invitation_equipe(uuid,text),public.quitter_equipe(uuid),public.dissoudre_equipe(uuid) from public,anon;
+grant execute on function public.mon_equipe(),public.creer_equipe(uuid,text,text),public.modifier_equipe(uuid,text,text),
+  public.inviter_equipier(uuid,uuid),public.repondre_invitation_equipe(uuid,text),public.quitter_equipe(uuid),public.dissoudre_equipe(uuid) to authenticated;
+create or replace function public.cloturer_les_encheres() returns void
+language plpgsql set search_path = '' as $$
+declare e record;
+begin
+  -- Le plus souvent, aucune enchère n'est échue : on ne prend pas le verrou du marché, et personne n'attend
+  -- (mon_compte passe ici à chaque visite). Les fonctions qui transfèrent des timbres le prennent elles-mêmes.
+  if exists (select 1 from public.encheres where etat = 'ouverte' and ferme_le <= now()) then
+    perform pg_advisory_xact_lock(20260923);
+    for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit 50 for update skip locked loop
+      perform public.cloturer_une_enchere(e.id);
+    end loop;
+  end if;
+  -- Au passage, les cotes du jour (une fois par jour).
+  perform public.calculer_les_cotes();
+end $$;
+
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  possession public.possessions%rowtype;
+  rarete text;
+  plancher integer;
+  restantes jsonb;
+  e public.encheres%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
+  if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
+  if p_finition is null or p_finition not in ('Normale', 'Brillante', 'Holographique') then raise exception 'Finition inconnue.'; end if;
+  -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
+  if (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 10 then
+    raise exception 'Tu as déjà 10 ventes en cours : attends qu''elles se terminent.';
+  end if;
+  select k.rarete into rarete from public.cartes k where k.id = p_carte;
+  if not found then raise exception 'Cette carte est inconnue.'; end if;
+  plancher := case rarete when 'Commune' then 5 when 'Peu commune' then 10 when 'Rare' then 30 when 'Épique' then 100 when 'Légendaire' then 300 when 'Hors-série' then 1000 else 1 end;
+  if p_mise is null or p_mise < plancher then raise exception 'La mise de départ d''un timbre % est d''au moins % Encre.', lower(rarete), plancher; end if;
+  if p_achat_immediat is not null and p_achat_immediat < p_mise then raise exception 'Le prix d''achat immédiat ne peut pas être plus bas que la mise de départ.'; end if;
+  if p_mise > 1000000 or coalesce(p_achat_immediat, 0) > 1000000 then raise exception 'Ce prix est déraisonnable.'; end if;
+
+  select * into possession from public.possessions where utilisateur = moi and carte = p_carte for update;
+  if not found or coalesce((possession.finitions ->> p_finition)::integer, 0) < 1 then raise exception 'Tu ne possèdes pas ce timbre dans cette finition.'; end if;
+  -- Le timbre sort de l'album : une finition de moins, ou la carte entière s'il ne reste rien.
+  restantes := case when (possession.finitions ->> p_finition)::integer > 1
+    then jsonb_set(possession.finitions, array[p_finition], to_jsonb((possession.finitions ->> p_finition)::integer - 1))
+    else possession.finitions - p_finition end;
+  if restantes = '{}'::jsonb then
+    delete from public.possessions where utilisateur = moi and carte = p_carte;
+    update public.comptes set deck = (select coalesce(jsonb_agg(d) filter (where d <> p_carte), '[]'::jsonb) from jsonb_array_elements_text(deck) d), maj_le = now() where utilisateur = moi;
+  else
+    update public.possessions set finitions = restantes where utilisateur = moi and carte = p_carte;
+  end if;
+
+  insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
+  values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
+  returning * into e;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
+create or replace function public.retirer_de_la_vente(p_enchere bigint) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  e public.encheres%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
+  perform public.cloturer_les_encheres();
+  select * into e from public.encheres where id = p_enchere and vendeur = moi for update;
+  if not found then raise exception 'Cette vente n''existe pas.'; end if;
+  if e.etat <> 'ouverte' then raise exception 'Cette vente est déjà terminée.'; end if;
+  if e.meilleure_mise is not null then raise exception 'Quelqu''un a déjà misé : la vente ne peut plus être retirée.'; end if;
+  perform public.rendre_un_timbre(moi, e.carte, e.finition, e.obtenue_le, null);
+  update public.encheres set etat = 'retiree', cloturee_le = now() where id = e.id;
+  return public.etat_du_compte(moi);
+end $$;
+
+create or replace function public.encherir(p_enchere bigint, p_montant integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  e public.encheres%rowtype;
+  minimum integer;
+  montant integer := p_montant;
+  achats integer;
+  pris_achetee integer;
+  precedente public.mises%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verra le vendeur.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf n'achète rien (serveur/parrainage.ts)
+  select * into e from public.encheres where id = p_enchere for update;
+  if not found or e.etat <> 'ouverte' or e.ferme_le <= now() then raise exception 'Cette enchère est terminée.'; end if;
+  if e.vendeur = moi then raise exception 'C''est ta propre vente.'; end if;
+  -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
+  if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
+  -- Les joueurs gratuits : 10 achats par jour au plus (les mises en tête comptent comme des achats en cours).
+  if true then
+    select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
+      or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
+    if achats >= 10 then raise exception 'Tu as déjà 10 achats aujourd''hui : reviens demain.'; end if;
+  end if;
+  minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * 0.05)::integer) end;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat;
+  elsif montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum;
+  end if;
+  -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
+  if c.encre + c.encre_achetee + (case when e.meilleur_encherisseur = moi then e.meilleure_mise else 0 end) < montant then
+    raise exception 'Pas assez d''Encre : il te faut % Encre.', montant;
+  end if;
+
+  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
+  if e.meilleur_encherisseur is not null then
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
+    update public.comptes
+      set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
+      where utilisateur = e.meilleur_encherisseur;
+  end if;
+  select * into c from public.comptes where utilisateur = moi;
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
+  insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
+  update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
+    -- Une mise dans les 5 dernières minutes prolonge l'enchère d'autant.
+    ferme_le = case when e.achat_immediat is not null and montant >= e.achat_immediat then now()
+                    when e.ferme_le - now() < interval '5 minutes' then now() + interval '5 minutes'
+                    else e.ferme_le end
+    where id = e.id;
+  -- Un achat immédiat se règle sur-le-champ.
+  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_une_enchere(e.id); end if;
+  select * into e from public.encheres where id = p_enchere;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
+create or replace function public.supprimer_mon_profil() returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare en_cours boolean;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  -- Le verrou du direct d'abord (le retrait du profil le demande), puis celui du joueur : dans l'ordre (serveur/verrous.ts).
+  perform pg_advisory_xact_lock(20260924);
+  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
+  perform 1 from public.comptes where utilisateur=auth.uid() for update;
+  if to_regclass('public.combats') is not null then
+    execute 'select exists(select 1 from public.combats where utilisateur=$1 and not termine)' into en_cours using auth.uid();
+    if en_cours then raise exception 'Termine ou abandonne ton combat avant de retirer ton profil.'; end if;
+  end if;
+  delete from public.profils where utilisateur = auth.uid();
+end $$;
+
+create or replace function public.supprimer_mon_compte() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924); -- l'effacement retire aussi le profil : dans l'ordre (serveur/verrous.ts)
+  delete from auth.users where id = auth.uid();
+end $$;
+
+create or replace function public.recuperer_par_code(p_code text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  ancien uuid;
+  p public.profils%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(moi::text, 2));
+  if (select count(*) from public.tentatives_de_recuperation where utilisateur = moi and quand > now() - interval '1 hour') >= 10 then
+    return jsonb_build_object('refus', 'Trop d''essais : attends une heure.');
+  end if;
+  insert into public.tentatives_de_recuperation (utilisateur) values (moi);
+  select utilisateur into ancien from public.comptes where code_hache is not null and code_hache = public.empreinte_du_code(p_code);
+  if not found then return jsonb_build_object('refus', 'Ce code ne correspond à aucune collection.'); end if;
+  if ancien <> moi then
+    perform pg_advisory_xact_lock(20260923);
+    perform pg_advisory_xact_lock(20260924); -- le profil change de main : dans l'ordre (serveur/verrous.ts)
+    perform 1 from public.comptes where utilisateur = ancien for update;
+    delete from public.comptes where utilisateur = moi;
+    delete from public.profils where utilisateur = moi;
+    update public.comptes set utilisateur = moi, maj_le = now() where utilisateur = ancien; -- les timbres et les duels suivent
+    update public.profils set utilisateur = moi, maj_le = now() where utilisateur = ancien;
+    delete from public.tentatives_de_recuperation where utilisateur in (moi, ancien);
+    delete from auth.users where id = ancien;
+  end if;
+  select * into p from public.profils where utilisateur = moi;
+  return public.etat_du_compte(moi) || jsonb_build_object('profil', case when p.id is null then null else jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) end);
+end $$;
 
 commit;

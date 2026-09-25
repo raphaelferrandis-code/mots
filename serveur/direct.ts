@@ -1,6 +1,10 @@
 // État privé, files distinctes et cotes atomiques. Aucune écriture client directe.
+// Une partie trouvée est d'abord « proposée » : elle ne commence que quand chacun a pressé « J'y vais ! » à temps
+// (EQUILIBRAGE.direct). Sinon elle tombe sans défaite pour personne, et ceux qui avaient accepté reprennent leur rang.
 import { XP } from '../src/jeu/personnalisation.ts';
+import { VERROU_DU_DIRECT } from './verrous.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
+const D = EQUILIBRAGE.direct;
 export function direct(): string { return String.raw`
 create table if not exists public.direct_parties (
   id uuid primary key default gen_random_uuid(), mode text not null check(mode in ('solo','duo_solo','duo_equipe')),
@@ -16,6 +20,10 @@ create table if not exists public.direct_places (
   primary key(partie,utilisateur), unique(partie,place)
 );
 create unique index if not exists direct_une_place on public.direct_places(utilisateur) where not archive;
+-- Le match à accepter (25/09/2026) : une partie naît « proposée » ; elle ne commence que quand chacun a accepté.
+alter table public.direct_parties add column if not exists accepter_avant timestamptz;
+alter table public.direct_places add column if not exists accepte_le timestamptz;
+alter table public.direct_places add column if not exists en_file_depuis timestamptz; -- son rang dans la file, rendu si le match n'a pas lieu
 create table if not exists public.direct_file (
   utilisateur uuid primary key references auth.users(id) on delete cascade, profil uuid not null references public.profils(id) on delete cascade,
   mode text not null check(mode in ('solo','duo_solo','duo_equipe')), equipe uuid references public.equipes(id) on delete cascade,
@@ -52,17 +60,54 @@ language sql security definer set search_path='' as $$
   on conflict(utilisateur) do update set version=public.direct_signaux.version+1;
 $$;
 
+-- Remet dans la file, à leur rang d'origine, les joueurs d'une proposition qui n'aura pas lieu, puis la supprime :
+-- ceux qui avaient accepté quand le délai est écoulé, ou tous sauf celui qui refuse. Ni défaite ni cote pour personne.
+create or replace function public.direct_defaire_la_proposition(p_id uuid,p_refus uuid) returns void
+language plpgsql security definer set search_path='' as $$
+declare joueurs uuid[];
+begin
+  joueurs:=array(select utilisateur from public.direct_places where partie=p_id);
+  insert into public.direct_file(utilisateur,profil,mode,equipe,depart,cree_le,present_le)
+    select s.utilisateur,s.profil,d.mode,s.equipe,s.depart-'equipe',coalesce(s.en_file_depuis,now()),now()
+    from public.direct_places s join public.direct_parties d on d.id=s.partie
+    where s.partie=p_id and case when p_refus is null then s.accepte_le is not null else s.utilisateur<>p_refus end
+      and exists(select 1 from public.profils x where x.id=s.profil)
+      and (s.equipe is null or exists(select 1 from public.equipes e where e.id=s.equipe))
+    on conflict(utilisateur) do nothing;
+  delete from public.direct_parties where id=p_id and etat is null;
+  perform public.direct_signaler(joueurs);
+end $$;
+
+-- Les propositions dont le délai est passé. Appelée sous le verrou du direct.
+create or replace function public.direct_expirer_propositions() returns void
+language plpgsql security definer set search_path='' as $$
+declare d record;
+begin
+  for d in select id from public.direct_parties where etat is null and accepter_avant<now() for update skip locked loop
+    perform public.direct_defaire_la_proposition(d.id,null);
+  end loop;
+end $$;
+
 create or replace function public.direct_salon(p_utilisateur uuid,p_action text,p_mode text,p_masques jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare moi public.profils%rowtype; compte public.comptes%rowtype; ma_file public.direct_file%rowtype;
   mon_equipe uuid; candidats uuid[]; equipes uuid[]; identifiant uuid; f public.direct_file%rowtype;
   idx integer:=0; camp integer; sujet uuid; n integer; attente jsonb;
 begin
-  -- Même verrou que les adhésions : aucun changement de duo pendant la réservation.
-  perform pg_advisory_xact_lock(20260923);
+  -- Le plus fréquent : un joueur qui regarde l'écran des joutes sans chercher, ou qui joue une partie commencée.
+  -- Rien à réserver : pas de verrou, personne n'attend personne.
+  if p_action='lire' and not exists(select 1 from public.direct_file where utilisateur=p_utilisateur)
+    and not exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie
+      where s.utilisateur=p_utilisateur and not s.archive and p.etat is null) then
+    if not exists(select 1 from public.profils where utilisateur=p_utilisateur and not maison) then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
+    return jsonb_build_object('attente',null);
+  end if;
+  -- Le verrou du direct, commun avec les adhésions : aucun changement de duo pendant la réservation.
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
   select * into moi from public.profils where utilisateur=p_utilisateur and not maison;
   if not found then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
-  delete from public.direct_file where present_le < now()-interval '45 seconds';
+  delete from public.direct_file where present_le < now()-interval '${D.secondesDePresenceDansLaFile} seconds';
+  perform public.direct_expirer_propositions();
   select partie into identifiant from public.direct_places where utilisateur=p_utilisateur and not archive;
   if p_action='quitter' and identifiant is not null then
     if not (select termine from public.direct_parties where id=identifiant) then raise exception 'Abandonne la partie avant de quitter.'; end if;
@@ -115,12 +160,13 @@ begin
         delete from public.direct_file where utilisateur=any(candidats);
         perform public.direct_signaler(candidats);
       else
-        insert into public.direct_parties(mode) values(ma_file.mode) returning id into identifiant;
+        -- Une proposition : chacun doit l'accepter à temps (direct_accepter) pour que la partie commence.
+        insert into public.direct_parties(mode,accepter_avant) values(ma_file.mode,now()+interval '${D.secondesPourAccepter} seconds') returning id into identifiant;
         foreach sujet in array candidats loop
           select * into f from public.direct_file where utilisateur=sujet;
           camp:=case when idx<cardinality(candidats)/2 then 0 else 1 end;
-          insert into public.direct_places(partie,profil,utilisateur,place,camp,equipe,sujet,depart)
-            values(identifiant,f.profil,f.utilisateur,idx,camp,f.equipe,coalesce(f.equipe,f.profil),f.depart||jsonb_build_object('equipe',camp));
+          insert into public.direct_places(partie,profil,utilisateur,place,camp,equipe,sujet,depart,en_file_depuis)
+            values(identifiant,f.profil,f.utilisateur,idx,camp,f.equipe,coalesce(f.equipe,f.profil),f.depart||jsonb_build_object('equipe',camp),f.cree_le);
           insert into public.direct_cotes(mode,sujet,cote) values(ma_file.mode,coalesce(f.equipe,f.profil),
             case when ma_file.mode='solo' then (select cote from public.profils where id=f.profil) else 1000 end) on conflict do nothing;
           idx:=idx+1;
@@ -141,10 +187,33 @@ create or replace function public.direct_contexte(p_utilisateur uuid) returns js
 language sql security definer set search_path='' as $$
 select jsonb_build_object('maintenant',public.en_millisecondes(clock_timestamp()),'partie',(
   select to_jsonb(p)||jsonb_build_object('places',(select jsonb_agg(to_jsonb(s)||jsonb_build_object('nomEquipe',e.nom) order by s.place)
-    from public.direct_places s left join public.equipes e on e.id=s.equipe where s.partie=p.id))
+    from public.direct_places s left join public.equipes e on e.id=s.equipe where s.partie=p.id),
+    -- Le temps qu'il reste pour accepter, mesuré ici : le compte à rebours ne dépend d'aucune autre horloge.
+    'accepter_dans',case when p.accepter_avant is null then null
+      else greatest(0,public.en_millisecondes(p.accepter_avant)-public.en_millisecondes(clock_timestamp())) end)
   from public.direct_parties p join public.direct_places m on m.partie=p.id where m.utilisateur=p_utilisateur and not m.archive
 ))
 $$;
+
+-- « J'y vais ! » (p_accepte) ou « Refuser », dans le délai. Quand le dernier accepte, la fonction joutes-direct crée
+-- l'état de départ et la partie commence. Refuser ne coûte rien : les autres reprennent leur place dans la file.
+create or replace function public.direct_accepter(p_utilisateur uuid,p_id uuid,p_accepte boolean) returns void
+language plpgsql security definer set search_path='' as $$
+declare d public.direct_parties%rowtype;
+begin
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform public.direct_expirer_propositions();
+  select * into d from public.direct_parties x where x.id=p_id
+    and exists(select 1 from public.direct_places s where s.partie=x.id and s.utilisateur=p_utilisateur and not s.archive) for update;
+  if not found then raise exception 'Cette proposition de match a expiré.'; end if;
+  if d.etat is not null or d.accepter_avant is null then return; end if; -- tous ont déjà accepté : la partie commence
+  if not p_accepte then perform public.direct_defaire_la_proposition(p_id,p_utilisateur); return; end if;
+  update public.direct_places set accepte_le=coalesce(accepte_le,now()) where partie=p_id and utilisateur=p_utilisateur;
+  if not exists(select 1 from public.direct_places where partie=p_id and accepte_le is null) then
+    update public.direct_parties set accepter_avant=null where id=p_id;
+  end if;
+  perform public.direct_signaler(array(select utilisateur from public.direct_places where partie=p_id));
+end $$;
 
 create or replace function public.direct_annuler_preparation(p_utilisateur uuid,p_id uuid) returns void
 language plpgsql security definer set search_path='' as $$
@@ -239,7 +308,8 @@ end $$;
 create or replace function public.direct_proteger_membre() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform public.direct_expirer_propositions();
   if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.profil=old.profil and not p.termine)
     then raise exception 'Termine ou abandonne la joute en direct avant de changer d’équipe ou de supprimer ton profil.'; end if;
   delete from public.direct_file where equipe=old.equipe;
@@ -251,7 +321,8 @@ create trigger direct_membre before delete on public.equipiers for each row exec
 create or replace function public.direct_proteger_profil() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform public.direct_expirer_propositions();
   if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.profil=old.id and not p.termine)
     then raise exception 'Termine ou abandonne la joute en direct avant de supprimer ou transférer ton profil.'; end if;
   delete from public.direct_file where profil=old.id;
@@ -268,13 +339,16 @@ begin
   if new.etat->'adversaire'->>'type'='joute' and not coalesce((new.etat->'adversaire'->>'amical')::boolean,false) then
     raise exception 'Les joutes classées se jouent maintenant en direct. Recharge le jeu.';
   end if;
-  if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.utilisateur=new.utilisateur and not p.termine)
+  if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.utilisateur=new.utilisateur and not p.termine
+      and not (p.etat is null and coalesce(p.accepter_avant<now(),false)))
     or exists(select 1 from public.direct_file where utilisateur=new.utilisateur) then raise exception 'Quitte la recherche ou termine ta joute en direct avant de lancer un entraînement.'; end if;
   return new;
 end $$;
 drop trigger if exists direct_pas_de_double on public.combats;
 create trigger direct_pas_de_double before insert on public.combats for each row execute function public.direct_refuser_double();
 
+revoke all on function public.direct_defaire_la_proposition(uuid,uuid),public.direct_expirer_propositions(),public.direct_accepter(uuid,uuid,boolean) from public,anon,authenticated;
+grant execute on function public.direct_accepter(uuid,uuid,boolean) to service_role;
 revoke all on function public.direct_signaler(uuid[]),public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb),public.direct_proteger_membre(),public.direct_proteger_profil(),public.direct_refuser_double(),public.classement_direct(text) from public,anon,authenticated;
 grant execute on function public.classement_direct(text) to authenticated;
 grant execute on function public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb) to service_role;

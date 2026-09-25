@@ -1,4 +1,5 @@
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
+import { VERROU_DU_MARCHE } from './verrous.ts';
 // Relations entre profils : elles suivent une récupération de compte et disparaissent avec le profil.
 export function amis(): string { return String.raw`
 create table if not exists public.amities (
@@ -62,7 +63,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; autre uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   select id into moi from public.profils where utilisateur=auth.uid();
   if moi is null then raise exception 'Publie d''abord ton pseudonyme.'; end if;
   select id into autre from public.profils where pseudo_cle=public.cle_du_pseudo(p_pseudo) and not maison and utilisateur is not null;
@@ -83,7 +84,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; a public.amities%rowtype;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   select id into moi from public.profils where utilisateur=auth.uid();
   select * into a from public.amities where (demandeur=moi and destinataire=p_ami) or (demandeur=p_ami and destinataire=moi) for update;
   if not found then raise exception 'Cette relation n''existe plus. Actualise la liste.'; end if;
@@ -114,7 +115,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; autre uuid; ancien public.echanges%rowtype;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   select id into moi from public.profils where utilisateur=auth.uid();
   select * into ancien from public.echanges where id=p_id;
   if found then
@@ -157,7 +158,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; e public.echanges%rowtype; a uuid; b uuid; voulu text;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923); -- même ordre que le marché et la récupération de compte
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE}); -- même ordre que le marché et la récupération de compte
   select id into moi from public.profils where utilisateur=auth.uid();
   select * into e from public.echanges where id=p_id and moi in (expediteur,destinataire) for update;
   if not found then raise exception 'Échange introuvable.'; end if;

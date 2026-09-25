@@ -11,7 +11,7 @@ import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -34,6 +34,7 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('10-amis.sql'), migrationAmis());
     assert.equal(lire('13-secours-et-parrainage.sql'), migrationSecoursEtParrainage());
     assert.equal(lire('16-parrainage-confirme.sql'), migrationParrainageConfirme());
+    assert.equal(lire('17-tenue-du-serveur.sql'), migrationTenueDuServeur());
   });
 
   it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {

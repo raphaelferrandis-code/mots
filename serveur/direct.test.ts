@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { baseDeTest } from './test-base.ts';
 import { direct } from './direct.ts';
+import { migrationTenueDuServeur } from './fabriquer-le-script.ts';
+import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { cartes } from './collections.ts';
 import { avancerDirect, creerDirect, voiesDisponibles, vueDirect } from './moteur-direct.ts';
 import { executerDirect, gestionnaireDirect, lireRequeteDirect } from './api-direct.ts';
@@ -104,7 +106,17 @@ export async function laboratoireDirect() {
   const appel=(i:number,req:unknown)=>executerDirect(b.ids[i],lireRequeteDirect(req),outils);
   const chercher=(i:number,mode:ModeDirect)=>appel(i,{type:'chercher',mode,masques:[]});
   const commande=(r:ReponseDirect,action:import('../src/jeu/direct.ts').ActionDirect)=>({type:'agir',partie:r.partie!.id,requete:crypto.randomUUID(),manche:r.partie!.vue.manche,phase:r.partie!.vue.phase,action});
-  return {...b,outils,appel,chercher,commande,avancer:(ms:number)=>{heure+=ms;}};
+  // Le match à accepter : chacun presse « J'y vais ! » ; le dernier reçoit la partie commencée.
+  const accepterTous=async(indices:number[])=>{
+    let r:ReponseDirect|undefined;
+    for(const i of indices) {
+      const lu=await appel(i,{type:'lire'});assert.ok(lu.proposition,`le joueur ${i} a une proposition`);
+      r=await appel(i,{type:'accepter',partie:lu.proposition!.id});
+    }
+    assert.ok(r!.partie,'la partie commence quand tous ont accepté');
+    return r!;
+  };
+  return {...b,outils,appel,chercher,commande,accepterTous,avancer:(ms:number)=>{heure+=ms;}};
 }
 it('direct SQL : migration répétable, files séparées, authentification et permissions',async()=>{
   const l=await laboratoireDirect();try {
@@ -112,7 +124,8 @@ it('direct SQL : migration répétable, files séparées, authentification et pe
     const avant=(await l.db.query('select sum(encre)::int n from public.comptes')).rows;
     assert.ok((await l.chercher(0,'solo')).attente);
     assert.ok((await l.chercher(1,'duo_solo')).attente);
-    const r=await l.chercher(2,'solo');assert.ok(r.partie);assert.equal(r.partie!.vue.joueurs.length,2);
+    const trouve=await l.chercher(2,'solo');assert.ok(trouve.proposition);assert.equal(trouve.partie,null);
+    const r=await l.accepterTous([0,2]);assert.equal(r.partie!.vue.joueurs.length,2);
     await l.joueur(0);
     for(const table of ['direct_parties','direct_places','direct_file','direct_cotes']) await assert.rejects(l.db.query(`select * from public.${table}`),/permission denied/);
     await assert.rejects(l.db.query('select public.direct_contexte($1)',[l.ids[1]]),/permission denied/);
@@ -125,7 +138,7 @@ it('direct SQL : migration répétable, files séparées, authentification et pe
 it('direct SQL : quatre joueurs, résultat exactement une fois et cote 2v2 solo isolée',async()=>{
   const l=await laboratoireDirect();try {
     for(let i=0;i<4;i++) await l.chercher(i,'duo_solo');
-    const r=await l.appel(0,{type:'lire'});assert.equal(r.partie!.vue.joueurs.length,4);
+    const r=await l.accepterTous([0,1,2,3]);assert.equal(r.partie!.vue.joueurs.length,4);
     const c=l.commande(r,{type:'abandonner'});
     const fin=await l.appel(0,c);assert.equal(fin.partie!.vue.phase,'fin');assert.deepEqual(fin.partie!.cotes,{avant:1000,apres:984});
     assert.deepEqual((await l.appel(0,c)).partie!.cotes,fin.partie!.cotes);
@@ -145,7 +158,8 @@ it('direct SQL : les équipes sont des entités, les deux membres doivent être 
       for(let j=0;j<2;j++) await l.db.query('insert into public.equipiers(profil,equipe,place) values($1,$2,$3)',[ids[c*2+j],equipes[c],j+1]);
     }
     for(let i=0;i<3;i++) assert.equal((await l.chercher(i,'duo_equipe')).partie,null);
-    const r=await l.chercher(3,'duo_equipe');assert.ok(r.partie);assert.equal(new Set(r.partie!.vue.noms).size,2);
+    assert.ok((await l.chercher(3,'duo_equipe')).proposition);
+    const r=await l.accepterTous([0,1,2,3]);assert.equal(new Set(r.partie!.vue.noms).size,2);
     await l.joueur(0);await assert.rejects(l.db.query('select public.quitter_equipe($1)',[equipes[0]]),/Termine/);
     await l.appel(3,l.commande(r,{type:'abandonner'}));
     await l.admin();const cotes=(await l.db.query<{mode:string;sujet:string;jouees:number}>('select * from public.direct_cotes')).rows;
@@ -156,7 +170,7 @@ it('direct SQL : les équipes sont des entités, les deux membres doivent être 
 it('direct SQL : réponses concurrentes et partie solo complète, cote historique conservée',async()=>{
   const l=await laboratoireDirect();try {
     await l.admin();await l.db.query('update public.profils set cote=1200 where utilisateur=$1',[l.ids[0]]);
-    await l.chercher(0,'solo');let r=await l.chercher(1,'solo');
+    await l.chercher(0,'solo');await l.chercher(1,'solo');let r=await l.accepterTous([0,1]);
     const vus=new Set<string>();
     for(let tour=0;tour<60 && r.partie!.vue.phase!=='fin';tour++) {
       const v=r.partie!.vue;
@@ -184,11 +198,13 @@ it('direct SQL : réponses concurrentes et partie solo complète, cote historiqu
 it('direct SQL : recherche expirée, deck invalide, changements de profil et accès aux autres parties refusés',async()=>{
   const l=await laboratoireDirect();try {
     await l.chercher(0,'solo');
-    await l.admin();await l.db.query("update public.direct_file set present_le=now()-interval '1 minute' where utilisateur=$1",[l.ids[0]]);
+    await l.admin();await l.db.query("update public.direct_file set present_le=now()-interval '2 minutes' where utilisateur=$1",[l.ids[0]]);
+    assert.ok((await l.appel(0,{type:'lire'})).attente,'deux minutes sans nouvelles : encore dans la file (onglet caché)');
+    await l.admin();await l.db.query("update public.direct_file set present_le=now()-interval '3 minutes' where utilisateur=$1",[l.ids[0]]);
     assert.ok((await l.chercher(1,'solo')).attente);assert.equal((await l.appel(0,{type:'lire'})).attente,null);
     await l.admin();await l.db.query("update public.comptes set deck='[]' where utilisateur=$1",[l.ids[2]]);
     await assert.rejects(l.chercher(2,'solo'),/dix cartes/);
-    const r=await l.chercher(0,'solo');assert.ok(r.partie);
+    assert.ok((await l.chercher(0,'solo')).proposition);const r=await l.accepterTous([0,1]);
     assert.equal((await l.appel(3,{type:'lire'})).partie,null);
     await assert.rejects(l.appel(3,l.commande(r,{type:'abandonner'})),/plus active/);
     await l.admin();await assert.rejects(l.db.query('delete from public.profils where utilisateur=$1',[l.ids[0]]),/Termine/);
@@ -197,5 +213,70 @@ it('direct SQL : recherche expirée, deck invalide, changements de profil et acc
     await l.admin();await l.db.query('delete from public.profils where utilisateur=$1',[l.ids[0]]);
     await l.joueur(1);const classement=(await l.db.query<{r:{total:number}}>("select public.classement_direct('solo') r")).rows[0].r;
     assert.equal(classement.total,1,'un profil supprimé ne figure plus au classement');
+  } finally {await l.db.close();}
+});
+
+it('direct SQL : le match à accepter — rien ne commence avant que tous acceptent, et ne pas accepter ne coûte rien',async()=>{
+  const l=await laboratoireDirect();try {
+    await l.chercher(0,'solo');
+    const trouve=await l.chercher(1,'solo');
+    // Une proposition, sans noms ni cotes : on ne choisit pas ses adversaires en refusant les plus forts.
+    assert.deepEqual([trouve.partie,trouve.attente],[null,null]);
+    const pr=trouve.proposition!;
+    assert.deepEqual({...pr,id:'',accepterAvant:0},{id:'',mode:'solo',accepterAvant:0,acceptes:0,total:2,jAccepte:false});
+    assert.ok(Math.abs(pr.accepterAvant-Date.now()-EQUILIBRAGE.direct.secondesPourAccepter*1000)<5000,'le délai pour accepter');
+    // Personne ne peut jouer avant d'avoir accepté.
+    await assert.rejects(l.appel(0,{type:'agir',partie:pr.id,requete:crypto.randomUUID(),manche:1,phase:'pose',action:{type:'abandonner'}}),/pas encore commencé/);
+    // Le premier accepte et attend l'autre ; un second clic ne compte pas deux fois.
+    const a0=await l.appel(0,{type:'accepter',partie:pr.id});
+    assert.deepEqual([a0.proposition!.acceptes,a0.proposition!.jAccepte],[1,true]);
+    assert.equal((await l.appel(0,{type:'accepter',partie:pr.id})).proposition!.acceptes,1);
+    assert.equal((await l.appel(1,{type:'lire'})).proposition!.jAccepte,false);
+    // Le délai passe : la proposition tombe. Celui qui avait accepté reprend sa place, l'absent sort de la file.
+    await l.admin();await l.db.query("update public.direct_parties set accepter_avant=now()-interval '1 second'");
+    const apres0=await l.appel(0,{type:'lire'});
+    assert.deepEqual([apres0.proposition,apres0.partie,apres0.attente?.mode],[null,null,'solo']);
+    assert.deepEqual(Object.values(await l.appel(1,{type:'lire'})).slice(2),[null,null,null],'ni file, ni partie, ni proposition');
+    await assert.rejects(l.appel(1,{type:'accepter',partie:pr.id}),/expiré/,'accepter trop tard');
+    await l.admin();
+    assert.equal((await l.db.query<{n:number}>('select count(*)::int n from public.direct_parties')).rows[0].n,0);
+    assert.equal((await l.db.query<{n:number}>('select count(*)::int n from public.direct_cotes where jouees>0')).rows[0].n,0,'aucune cote ne bouge');
+    // Il garde son rang : face à deux nouveaux venus, c'est lui qui est choisi, et le dernier arrivé attend.
+    assert.ok((await l.chercher(2,'solo')).proposition);
+    assert.ok((await l.chercher(3,'solo')).attente);
+    // Le joueur 2 refuse : le joueur 0 reprend sa place, sans défaite, et retrouve aussitôt le joueur 3.
+    const lu2=await l.appel(2,{type:'lire'});
+    assert.deepEqual(Object.values(await l.appel(2,{type:'refuser',partie:lu2.proposition!.id})).slice(2),[null,null,null]);
+    assert.ok((await l.appel(0,{type:'lire'})).proposition,'une nouvelle proposition, avec le joueur 3');
+    const r=await l.accepterTous([0,3]);assert.deepEqual(r.partie!.vue.noms.slice().sort(),['lecteur0','lecteur3']);
+  } finally {await l.db.close();}
+});
+
+it('direct SQL : une proposition échue ne bloque ni l’entraînement, ni le retrait du profil',async()=>{
+  const l=await laboratoireDirect();try {
+    await l.chercher(0,'solo');assert.ok((await l.chercher(1,'solo')).proposition);
+    await l.admin();
+    const combat=(i:number)=>l.db.query("insert into public.combats(id,utilisateur,etat,vue) values($1,$2,'{}','{}')",[crypto.randomUUID(),l.ids[i]]);
+    await assert.rejects(combat(0),/Quitte la recherche/,'une proposition en cours bloque l’entraînement');
+    await l.db.query("update public.direct_parties set accepter_avant=now()-interval '1 second'");
+    await combat(0);
+    await l.db.query('delete from public.profils where utilisateur=$1',[l.ids[1]]);
+    assert.equal((await l.db.query<{n:number}>('select count(*)::int n from public.direct_parties')).rows[0].n,0,'la proposition échue est défaite en passant');
+  } finally {await l.db.close();}
+});
+
+it('direct SQL : regarder l’écran des joutes ne réserve rien',async()=>{
+  const l=await laboratoireDirect();try {
+    assert.deepEqual([(await l.appel(0,{type:'lire'})).attente,(await l.appel(0,{type:'lire'})).partie],[null,null]);
+    await l.admin();await l.db.query('delete from public.profils where utilisateur=$1',[l.ids[0]]);
+    await assert.rejects(l.appel(0,{type:'lire'}),/pseudonyme/);
+  } finally {await l.db.close();}
+});
+
+it('le script 17 s’applique par-dessus le direct installé, deux fois de suite sans erreur',async()=>{
+  const l=await laboratoireDirect();try {
+    await l.chercher(0,'solo');
+    await l.admin();await l.db.exec(migrationTenueDuServeur());await l.db.exec(migrationTenueDuServeur());
+    assert.ok((await l.chercher(1,'solo')).proposition,'la file d’avant est gardée');
   } finally {await l.db.close();}
 });

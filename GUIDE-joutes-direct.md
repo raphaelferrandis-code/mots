@@ -6,6 +6,37 @@ La fonction `joutes-direct` et la migration 12 sont déployées sur Supabase. Le
 
 Validation locale : 342 tests réussis, compilation de production réussie et parcours avec quatre navigateurs couvrant le placement 2v2, les propositions, l'arbitrage et les dégâts partagés. Les classements commencent à afficher un participant après sa première partie en direct. La vérification mobile complète et les essais de charge restent à faire.
 
+## Le match à accepter et la tenue du serveur (25 septembre 2026, script 17)
+
+Décisions de Raphaël :
+- **Un match trouvé doit être accepté.** Chaque joueur voit « Adversaire trouvé ! » avec un bouton **« J'y vais ! »** et
+  **20 secondes** pour le presser (`EQUILIBRAGE.direct.secondesPourAccepter`). La partie ne commence que quand tout le
+  monde a accepté. Ni noms ni cotes avant d'accepter : on ne peut pas refuser les adversaires les plus forts.
+- **Ne pas accepter ne coûte rien.** Délai écoulé : ceux qui avaient accepté reprennent leur place dans la file, **à leur
+  rang d'origine** ; les absents en sortent. « Refuser » : tous les autres reprennent leur place. Ni défaite, ni cote,
+  ni récompense.
+- **Un onglet caché reste dans la file.** Le jeu continue de donner signe de vie ; le joueur sort de la file après
+  **150 secondes** sans nouvelles (onglet fermé, téléphone en veille). Quand un adversaire est trouvé, le titre de
+  l'onglet devient « ⚔ Adversaire trouvé ! » et une sonnette retentit, même onglet caché (si les sons du jeu sont
+  allumés et que le joueur a touché la page avant). Le bouton « J'y vais ! » prend la main.
+
+Ce qui change pour la charge (audit du 25/09) :
+- **Chaque domaine a son verrou** (`serveur/verrous.ts`) : le direct et les équipes d'un côté, le marché, les échanges
+  et les comptes de l'autre. Ordre imposé : marché, puis direct, puis les données d'un joueur — plus d'interblocage
+  possible entre le retrait d'un profil et une enchère.
+- **Regarder l'écran des joutes ne verrouille plus rien** : seule une recherche ou une proposition en cours passe par le
+  verrou du direct. Et la clôture des enchères ne prend le verrou du marché que s'il y a vraiment une enchère échue (avant,
+  à chaque chargement du compte).
+- **Le jeu interroge le serveur au bon moment** (`prochaineLecture`, `src/jeu/direct.ts`) : quand le temps réel
+  prévient d'un changement, juste après chaque échéance, et sinon toutes les 15 s en file ou en partie, toutes les
+  60 s au repos (5 à 30 s sans temps réel). Avant : toutes les 2,5 s quoi qu'il arrive, soit 1 440 appels par heure pour
+  qui regardait l'écran. L'offre gratuite de Supabase en compte 500 000 par mois.
+
+Déploiement : **d'abord** la fonction `joutes-direct` (`serveur/deploiement-direct/joutes-direct.ts.txt`), **puis**
+`serveur/17-tenue-du-serveur.sql`. Le jeu, déjà publié, sait lire l'ancien serveur. Dans l'autre ordre, rien ne casse :
+l'ancienne fonction lancerait seulement les parties sans attendre que chacun accepte. Un joueur qui avait le jeu ouvert
+avant la mise à jour doit recharger la page pour voir le bouton « J'y vais ! ». La fonction `combats` ne change pas.
+
 ## Règles
 
 - **Solo** : deux humains présents. La cote solo existante sert de point de départ ; les anciennes données ne sont pas effacées.
@@ -25,9 +56,9 @@ Validation locale : 342 tests réussis, compilation de production réussie et pa
 
 `joutes-direct` authentifie chaque requête via Supabase Auth. Le moteur TypeScript conserve l'état privé en base et transmet une vue propre au joueur. Révisions SQL, identifiants de commande et verrouillage assurent les réponses concurrentes et l'absence de double résultat.
 
-Supabase Realtime diffuse uniquement une notification personnelle depuis `direct_signaux`, protégée par RLS. Le navigateur recharge ensuite sa vue authentifiée. Un contrôle toutes les 2,5 secondes assure la reprise et la progression des délais si le WebSocket tombe. L'horloge PostgreSQL fait foi. Après fermeture de tous les clients, le prochain appel rattrape les échéances ; ce mécanisme n'est pas un ordonnanceur permanent.
+Supabase Realtime diffuse uniquement une notification personnelle depuis `direct_signaux`, protégée par RLS. Le navigateur recharge ensuite sa vue authentifiée. Une lecture juste après chaque échéance fait progresser les délais ; une lecture de sécurité régulière assure la reprise, plus fréquente si le WebSocket tombe (voir plus haut). L'horloge PostgreSQL fait foi. Après fermeture de tous les clients, le prochain appel rattrape les échéances ; ce mécanisme n'est pas un ordonnanceur permanent.
 
-Les recherches expirent après 45 secondes sans présence. Le serveur groupe les joueurs ayant les mêmes filtres de contenu et prend les plus anciennes inscriptions ; il ne filtre pas encore les adversaires par écart de cote. Les decks sont vérifiés puis figés au lancement. Le mode équipe exige les deux membres actuels du duo ; quitter, dissoudre, supprimer ou transférer le profil est refusé pendant une partie active.
+Les recherches expirent après 150 secondes sans présence (45 avant le 25/09/2026). Le serveur groupe les joueurs ayant les mêmes filtres de contenu et prend les plus anciennes inscriptions ; il ne filtre pas encore les adversaires par écart de cote. Les decks sont vérifiés puis figés au lancement. Le mode équipe exige les deux membres actuels du duo ; quitter, dissoudre, supprimer ou transférer le profil est refusé pendant une partie active.
 
 Les définitions restent des données publiques du jeu : cette vérification interdit l'injection d'un résultat, sans prétendre empêcher la consultation d'un dictionnaire externe. Les accès directs aux états privés et aux fonctions administratives sont refusés aux joueurs.
 

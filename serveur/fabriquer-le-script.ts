@@ -24,6 +24,8 @@ import { comptesNeufs, parrainage } from './parrainage.ts';
 import { secours } from './secours.ts';
 import { activite } from './activite.ts';
 import { portraits } from './portraits.ts';
+import { direct } from './direct.ts';
+import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -359,6 +361,8 @@ as $$
 declare en_cours boolean;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  -- Le verrou du direct d'abord (le retrait du profil le demande), puis celui du joueur : dans l'ordre (serveur/verrous.ts).
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
   perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
   perform 1 from public.comptes where utilisateur=auth.uid() for update;
   if to_regclass('public.combats') is not null then
@@ -374,7 +378,8 @@ create or replace function public.supprimer_mon_compte() returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
+  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT}); -- l'effacement retire aussi le profil : dans l'ordre (serveur/verrous.ts)
   delete from auth.users where id = auth.uid();
 end $$;
 
@@ -447,17 +452,33 @@ export function migrationPortraits(): string {
 // Le parrainage confirmé et les comptes neufs (décisions du 25/09/2026). Après 15-portraits-et-presence.sql.
 // Seules les quatre fonctions qui font passer un timbre ou de l'Encre changent parmi celles du marché et des amis :
 // elles sont reprises telles quelles.
+// Une fonction SQL reprise telle quelle d'un script fabriqué, pour une migration qui ne change qu'elle.
+function reprise(source: string, nom: string): string {
+  const f = source.match(new RegExp(`create or replace function public\\.${nom}\\([\\s\\S]*?\\nend \\$\\$;`))?.[0];
+  if (!f) throw new Error(`${nom} introuvable`);
+  return f;
+}
+
 export function migrationParrainageConfirme(): string {
-  const reprise = (source: string, nom: string) => {
-    const f = source.match(new RegExp(`create or replace function public\\.${nom}\\([\\s\\S]*?\\nend \\$\\$;`))?.[0];
-    if (!f) throw new Error(`${nom} introuvable`);
-    return f;
-  };
   return '-- Le parrainage confirmé et les comptes neufs. Après 15-portraits-et-presence.sql.\n'
     + '-- Aucune fonction serveur (Edge) à redéployer : le client peut être publié avant ou après ce script.\nbegin;\n'
     + comptesNeufs() + parrainage()
     + ['proposer_echange', 'repondre_echange'].map((nom) => reprise(amis(), nom)).join('\n\n') + '\n\n'
     + ['mettre_en_vente', 'encherir'].map((nom) => reprise(marche(), nom)).join('\n\n') + '\n\ncommit;\n';
+}
+
+// La tenue du serveur et le match à accepter (décisions du 25/09/2026). Après 16-parrainage-confirme.sql.
+// Chaque domaine a son verrou (serveur/verrous.ts) ; la clôture des enchères ne verrouille plus rien quand rien n'est
+// échu ; une partie en direct doit être acceptée par tous. Le direct et les équipes sont repris en entier (scripts
+// rejouables), le reste fonction par fonction.
+export function migrationTenueDuServeur(): string {
+  return '-- La tenue du serveur et le match à accepter. Après 16-parrainage-confirme.sql.\n'
+    + '-- Redéployer d’abord la fonction joutes-direct (elle sait lire l’ancien serveur). Dans l’autre ordre, rien ne casse :\n'
+    + '-- l’ancienne fonction lancerait seulement les parties sans attendre que chacun accepte.\nbegin;\n'
+    + direct() + equipes()
+    + ['cloturer_les_encheres', 'mettre_en_vente', 'retirer_de_la_vente', 'encherir'].map((nom) => reprise(marche(), nom)).join('\n\n') + '\n\n'
+    + ['supprimer_mon_profil', 'supprimer_mon_compte'].map((nom) => reprise(structure(), nom)).join('\n\n') + '\n\n'
+    + reprise(recuperation(), 'recuperer_par_code') + '\n\ncommit;\n';
 }
 
 export function joueursMaison(edition: IndexEdition): string {
@@ -493,5 +514,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '14-fil-d-activite.sql'), migrationFilDActivite());
   writeFileSync(path.join(RACINE, 'serveur', '15-portraits-et-presence.sql'), migrationPortraits());
   writeFileSync(path.join(RACINE, 'serveur', '16-parrainage-confirme.sql'), migrationParrainageConfirme());
+  writeFileSync(path.join(RACINE, 'serveur', '17-tenue-du-serveur.sql'), migrationTenueDuServeur());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

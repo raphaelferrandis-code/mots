@@ -30,7 +30,7 @@ revoke all on public.equipes,public.equipiers,public.invitations_equipe from pub
 create or replace function public.apres_depart_equipier() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipes where id=old.equipe) then return old; end if;
   delete from public.invitations_equipe where equipe=old.equipe;
   if not exists(select 1 from public.equipiers where equipe=old.equipe) then
@@ -77,7 +77,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select id into moi from public.profils where utilisateur=auth.uid() and not maison;
   if moi is null then raise exception 'Choisis d''abord ton pseudonyme dans les amis.'; end if;
   if exists(select 1 from public.equipiers where profil=moi and equipe=p_id and place=1) then return; end if;
@@ -97,7 +97,7 @@ language plpgsql security definer set search_path = '' as $$
 declare refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut modifier l''équipe.'; end if;
   refus:=public.pseudo_refuse(propre);
@@ -112,7 +112,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select p.id into moi from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1;
   if moi is null then raise exception 'Seul le capitaine peut inviter un ami.'; end if;
@@ -131,7 +131,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; invitation public.invitations_equipe%rowtype; capitaine uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select id into moi from public.profils where utilisateur=auth.uid();
   select * into invitation from public.invitations_equipe where id=p_id;
   if not found then raise exception 'Cette invitation n''est plus disponible.'; end if;
@@ -152,7 +152,7 @@ create or replace function public.quitter_equipe(p_equipe uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   delete from public.equipiers where equipe=p_equipe and profil in (select id from public.profils where utilisateur=auth.uid());
 end $$;
 
@@ -160,7 +160,7 @@ create or replace function public.dissoudre_equipe(p_equipe uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut dissoudre l''équipe.'; end if;
   delete from public.equipes where id=p_equipe;

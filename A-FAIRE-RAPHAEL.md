@@ -65,6 +65,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
 | Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
+| Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | Jeu en ligne ; **fonction et script 17 à installer (étape 9)** |
 
 ---
 
@@ -168,6 +169,34 @@ Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas c
 - [ ] Une requête « Untitled query » (la vérification, en lecture seule) est restée dans l'éditeur SQL, rubrique
       PRIVATE : elle peut être supprimée.
 
+### Étape 9 — Redéployer la fonction joutes-direct, puis coller le script 17 (tenue du serveur et match à accepter)
+
+Pourquoi : l'écran des joutes interrogeait le serveur toutes les 2,5 secondes, et tous les joueurs attendaient les uns
+après les autres le même verrou. Tes décisions du 25 septembre : un match trouvé s'accepte avec **« J'y vais ! » en
+20 secondes**, ne pas accepter **ne coûte rien**, et un onglet caché **reste dans la file** avec une alerte. Détails :
+[GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). Le jeu est déjà publié et s'adapte tout seul.
+
+- [ ] **D'abord la fonction** : Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+      `serveur/deploiement-direct/joutes-direct.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
+      La fonction `combats` ne change pas.
+- [ ] **Puis le script** : https://github.com/raphaelferrandis-code/mots/blob/main/serveur/17-tenue-du-serveur.sql →
+      **Copy raw file** → Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller →
+      **Run**. Réponse attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
+- [ ] Le dire à l'assistant : il vérifie en lecture seule, comme pour le script 16.
+- [ ] Essayer avec quelqu'un : chacun lance « Chercher une partie » en Solo ; « Adversaire trouvé ! » apparaît ; la partie
+      ne commence que quand les deux ont pressé « J'y vais ! ».
+
+### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
+
+Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de
+promotion ou dès qu'une limite atteint **70 %**.
+
+- [ ] Ouvrir https://supabase.com/dashboard/org/cdvuvrtqkwkvdciffweo/usage et regarder surtout **Edge Function
+      Invocations** (limite 500 000 par mois), **Realtime Concurrent Peak Connections** (200), **Database Size** (0,5 Go)
+      et **Egress** (5 Go). Le 25 septembre : 204 appels, 3 connexions, 29 Mo.
+- Un projet gratuit est mis en pause après **7 jours sans aucune visite** : s'il l'est, le rouvrir depuis le tableau de
+  bord de Supabase (bouton « Restore »).
+
 ---
 
 ## 4. Faire connaître le jeu
@@ -209,7 +238,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 - Ne jamais ouvrir les paiements sans demande explicite, ne jamais lire, copier ni afficher une clé secrète
   (Supabase, Stripe, Cloudflare).
 - Changement du serveur : modifier `serveur/*.ts`, lancer `npm run serveur:script`, ajouter une **nouvelle**
-  migration numérotée (la dernière est la 16) ; ne jamais recoller une ancienne migration.
+  migration numérotée (la dernière est la 17) ; ne jamais recoller une ancienne migration.
 - Bancs locaux sans compte distant : `node serveur/apercu-direct.mjs` (joutes en direct à quatre) et
   `node serveur/apercu-secours-parrainage.mjs` (parrainage et adversaire de secours).
 - Ne committer que ses propres fichiers, par leur nom ; tenir à jour l'en-tête d'`ETAT-DU-PROJET.md` et cette page.

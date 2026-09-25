@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { RealtimeClient } from '@supabase/realtime-js';
 import { SERVEUR } from '../config/serveur.ts';
 import { clientDuServeur, serveurUtilise } from '../services/compte.ts';
+import { prochaineLecture } from '../jeu/direct.ts';
 import type { ActionDirect, ModeDirect, ReponseDirect } from '../jeu/direct.ts';
 import type { Registre } from '../partage/types.ts';
 import { ErreurDuServeur } from '../services/supabase.ts';
@@ -13,6 +14,8 @@ export function useJouteDirecte(actif: boolean) {
   const [occupe, setOccupe] = useState(false);
   const [reessayer, setReessayer] = useState(false);
   const [connecte, setConnecte] = useState(false);
+  // Chaque échange terminé avec le serveur (réussi ou non) : de quoi prévoir la lecture suivante.
+  const [echanges, setEchanges] = useState(0);
   const courant = useRef<ReponseDirect | null>(null);
   const decalage = useRef(0);
   const monte = useRef(false);
@@ -47,6 +50,7 @@ export function useJouteDirecte(actif: boolean) {
         }
       } finally {
         if (mutation) { verrou.current = false; if (monte.current) setOccupe(false); }
+        if (monte.current) setEchanges(n => n + 1);
       }
     });
     chaine.current = operation.catch(() => undefined);
@@ -60,10 +64,18 @@ export function useJouteDirecte(actif: boolean) {
   useEffect(() => {
     if (!actif || !serveurUtilise) return;
     monte.current = true; actualiser();
-    const timer = window.setInterval(actualiser, 2500);
-    window.addEventListener('online',actualiser); window.addEventListener('focus',actualiser);
-    return () => { monte.current = false; clearInterval(timer); window.removeEventListener('online',actualiser); window.removeEventListener('focus',actualiser); };
+    // Retour sur l'onglet : on relit tout de suite (une proposition a pu arriver pendant l'absence).
+    const retour = () => { if (document.visibilityState === 'visible') actualiser(); };
+    window.addEventListener('online',actualiser); window.addEventListener('focus',actualiser); document.addEventListener('visibilitychange',retour);
+    return () => { monte.current = false; window.removeEventListener('online',actualiser); window.removeEventListener('focus',actualiser); document.removeEventListener('visibilitychange',retour); };
   }, [actif,actualiser]);
+  // La lecture suivante, au bon moment (prochaineLecture) plutôt que toutes les 2,5 s : le temps réel prévient des
+  // changements, les échéances font avancer la partie. Replanifiée après chaque échange et quand le temps réel change.
+  useEffect(() => {
+    if (!actif || !serveurUtilise) return;
+    const minuterie = window.setTimeout(actualiser, prochaineLecture(courant.current, connecte, Date.now() + decalage.current));
+    return () => window.clearTimeout(minuterie);
+  }, [actif,echanges,connecte,actualiser]);
   const utilisateur = etat?.utilisateur;
   useEffect(() => {
     if (!actif || !serveurUtilise || !utilisateur) return;
@@ -94,6 +106,11 @@ export function useJouteDirecte(actif: boolean) {
     chercher: (mode:ModeDirect,masques:Registre[]) => envoyer({type:'chercher',mode,masques:[...masques].sort()},true),
     annuler: () => envoyer({type:'annuler'},true), quitter: () => envoyer({type:'quitter'},true),
     retenter: () => attente.current ? envoyer(attente.current,true) : envoyer({type:'lire'}),
+    // « J'y vais ! » ou « Refuser » la proposition en cours (le serveur ignore un second clic).
+    repondre: (accepte: boolean) => {
+      const proposition = courant.current?.proposition;
+      return proposition ? envoyer({type:accepte ? 'accepter' : 'refuser',partie:proposition.id},true) : Promise.resolve();
+    },
     agir: (action:ActionDirect) => {
       const p = courant.current?.partie;
       if (!p || attente.current) return Promise.resolve();

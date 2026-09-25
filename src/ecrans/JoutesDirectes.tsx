@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useJouteDirecte } from '../composants/useJouteDirecte.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { Carte } from '../composants/carte/Carte.tsx';
@@ -9,11 +9,12 @@ import { serveurEquipes } from '../services/equipes.ts';
 import { secoursEtParrainage, serveurUtilise } from '../services/compte.ts';
 import { commanderCombat, lireLesAdversairesDeSecours } from '../services/partie.ts';
 import { ErreurDuServeur } from '../services/supabase.ts';
+import { SonsDuDirect } from '../services/sonsDuDirect.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import { ID_FACE_CACHEE } from '../jeu/duel.ts';
-import type { ModeDirect } from '../jeu/direct.ts';
+import type { ModeDirect, PropositionDirecte } from '../jeu/direct.ts';
 import { lien } from '../navigation/routes.ts';
 import './joutesDirectes.css';
 
@@ -44,8 +45,8 @@ export function JoutesDirectes() {
       const adversaires = await lireLesAdversairesDeSecours(masques);
       if (adversaires.length === 0) throw new Error('Aucun joueur simulé n’est disponible avec tes filtres de contenu.');
       await direct.annuler();
-      // Un vrai joueur est peut-être arrivé entre-temps : la joute en direct passe avant.
-      if (direct.courant()?.partie) { setSecours({ etat: 'repos' }); return; }
+      // Un vrai joueur est peut-être arrivé entre-temps : la joute en direct (ou le match à accepter) passe avant.
+      if (direct.courant()?.partie || direct.courant()?.proposition) { setSecours({ etat: 'repos' }); return; }
       let refus: unknown;
       for (const adversaire of adversaires) {
         try {
@@ -65,6 +66,38 @@ export function JoutesDirectes() {
       setSecours({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
     }
   };
+  // Le match à accepter (décision de Raphaël du 25/09/2026) : « J'y vais ! » à temps, sinon la proposition tombe
+  // sans défaite. L'onglet change de titre et une sonnette retentit, même onglet caché, pour faire revenir le joueur.
+  const proposition = direct.etat?.proposition ?? null;
+  const [sons] = useState(() => new SonsDuDirect());
+  useEffect(() => { sons.activer(sauvegarde?.reglages.sonsPaquets ?? true); }, [sons, sauvegarde?.reglages.sonsPaquets]);
+  useEffect(() => () => sons.fermer(), [sons]);
+  const aRepondre = !!proposition && !proposition.jAccepte;
+  useEffect(() => {
+    if (!aRepondre) return;
+    sons.adversaireTrouve();
+    const titre = document.title;
+    document.title = `⚔ Adversaire trouvé ! · ${titre}`;
+    return () => { document.title = titre; };
+  }, [aRepondre, proposition?.id, sons]);
+  // Quand une proposition tombe, on dit pourquoi : les autres n'ont pas tous accepté (le joueur reprend sa place dans
+  // la file), ou lui-même n'a pas répondu à temps (sa recherche s'arrête, sans défaite).
+  const [avis, setAvis] = useState('');
+  const precedente = useRef<PropositionDirecte | null>(null);
+  const jaiRefuse = useRef(false);
+  useEffect(() => {
+    const avant = precedente.current;
+    precedente.current = proposition;
+    if (!direct.etat || proposition || !avant) return;
+    if (direct.etat.partie) setAvis('');
+    else if (direct.etat.attente) setAvis('Tout le monde n’a pas accepté : tu reprends ta place dans la file.');
+    else if (!jaiRefuse.current) setAvis('Tu n’as pas accepté à temps : ta recherche s’est arrêtée, sans défaite. Relance-la quand tu veux.');
+    jaiRefuse.current = false;
+  }, [direct.etat, proposition]);
+  const repondre = (accepte: boolean): void => {
+    sons.preparer(); jaiRefuse.current = !accepte; setAvis('');
+    void direct.repondre(accepte);
+  };
   const p = direct.etat?.partie; const v = p?.vue;
   const moi = v?.joueurs[v.moi];
   const monEquipe = equipe.etat === 'pret' ? equipe.donnees?.equipe : null;
@@ -83,12 +116,25 @@ export function JoutesDirectes() {
         {direct.erreur && <div className="bloc bloc--alerte" role="alert"><p>{direct.erreur}</p><button className="bouton" disabled={direct.occupe} onClick={() => void direct.retenter()}>Réessayer</button></div>}
         {!direct.etat && !direct.erreur && <p role="status">Connexion aux joutes…</p>}
         {direct.etat && <p className="texte-doux petit">{direct.connecte ? '● En direct' : 'Reconnexion au direct · la partie reste synchronisée régulièrement'}</p>}
-        {!v && !direct.etat?.attente && <>
+        {avis && !proposition && <p className="bloc" role="status">{avis}</p>}
+        {proposition && <section className="bloc direct__proposition" aria-labelledby="titre-proposition">
+          <h2 id="titre-proposition">Adversaire trouvé !</h2>
+          {/* Annoncé une fois aux lecteurs d'écran ; le compte à rebours, lui, n'est pas lu à chaque seconde. */}
+          {!proposition.jAccepte && <p className="visuellement-cache" role="alert">Adversaire trouvé : accepte dans les {EQUILIBRAGE.direct.secondesPourAccepter} secondes.</p>}
+          <p>{NOMS_DIRECTS[proposition.mode]} · {proposition.jAccepte ? `Tu es prêt. En attente des autres joueurs (${proposition.acceptes}/${proposition.total})…` : 'La partie commence quand tout le monde a accepté.'}</p>
+          <p className="direct__compte" role="timer" aria-live="off">{Math.max(0,Math.ceil((proposition.accepterAvant-maintenant)/1000))} s</p>
+          {!proposition.jAccepte && <div className="rangee-de-boutons">
+            <button type="button" className="btn-primary" autoFocus disabled={bloque} onClick={() => repondre(true)}>J’y vais !</button>
+            <button type="button" className="btn-tertiary" disabled={bloque} onClick={() => repondre(false)}>Refuser</button>
+          </div>}
+          <p className="texte-doux petit">Refuser, ou laisser passer le délai, ne compte pas comme une défaite.</p>
+        </section>}
+        {!v && !direct.etat?.attente && !proposition && <>
           <div className="modes" role="group" aria-label="Mode de joute">{MODES_DIRECTS.map(m => <button key={m} className="bouton" aria-pressed={mode===m} disabled={bloque} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
           <section className="bloc direct__salon"><h2>{mode === 'solo' ? 'Un adversaire, en face de toi' : mode === 'duo_solo' ? 'Un partenaire à découvrir' : monEquipe?.nom ?? 'Votre duo, votre classement'}</h2>
             <p>{mode === 'solo' ? 'Deux joueurs en direct. Chacun pose une carte ; retrouve la définition du mot adverse pour parer. Le premier à poser change à chaque manche.' : mode === 'duo_solo' ? 'Inscris-toi seul. Le jeu forme deux équipes de deux joueurs. Chaque résultat compte uniquement pour ta cote personnelle 2v2.' : 'Les deux membres de ton équipe doivent ouvrir ce mode et se déclarer prêts. Vos résultats font évoluer uniquement la cote de votre équipe.'}</p>
             {mode === 'duo_equipe' && (!monEquipe || monEquipe.membres.length !== 2) ? <a className="bouton" href={lien({ecran:'equipe'})}>Former mon équipe · inviter un ami</a>
-              : <button className="bouton bouton-presse" disabled={bloque || !direct.etat} onClick={() => void direct.chercher(mode,registresMasques(sauvegarde))}>{mode === 'duo_equipe' ? 'Je suis prêt avec mon équipe' : 'Chercher une partie'}</button>}
+              : <button className="bouton bouton-presse" disabled={bloque || !direct.etat} onClick={() => { sons.preparer(); setAvis(''); void direct.chercher(mode,registresMasques(sauvegarde)); }}>{mode === 'duo_equipe' ? 'Je suis prêt avec mon équipe' : 'Chercher une partie'}</button>}
             <p className="texte-doux petit">Deck de dix cartes requis. Les joueurs sont réunis avec les mêmes filtres de contenu.{secoursEtParrainage && mode !== 'duo_equipe' && ` Si personne n’est libre au bout de ${EQUILIBRAGE.secours.attenteAvantDeProposerEnSecondes} secondes, tu pourras jouer contre un joueur simulé, sans effet sur le classement.`}</p>
           </section>
           <details className="bloc"><summary>Les règles du 2v2</summary><p>PV communs, mains personnelles visibles entre partenaires. Ordre A1 → B1 → B2 → A2. B1 choisit son opposition ; B2 prend la place restante. À la manche suivante, B2 → A2 → A1 → B1.</p><p>8 s pour poser une carte, 30 s pour les deux définitions adverses. En cas de désaccord, le dernier poseur a 5 s pour choisir entre les propositions. Sans arbitrage, sa proposition est retenue. Une proposition seule compte. Sans proposition, la parade échoue. Les attaques sont simultanées.</p><p>Une pose manquée joue automatiquement la première carte ; deux poses manquées consécutives entraînent une défaite. Recharge la page pour reprendre une partie interrompue.</p></details>

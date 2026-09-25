@@ -5,6 +5,7 @@
 // Ce fichier est utilisé par fabriquer-le-script.ts ; les colonnes qu'il utilise sont créées dans collections.ts.
 
 import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
+import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
 
 export const ESSAIS_DE_RECUPERATION_PAR_HEURE = 10;
 
@@ -66,7 +67,8 @@ begin
   select utilisateur into ancien from public.comptes where code_hache is not null and code_hache = public.empreinte_du_code(p_code);
   if not found then return jsonb_build_object('refus', 'Ce code ne correspond à aucune collection.'); end if;
   if ancien <> moi then
-    perform pg_advisory_xact_lock(20260923);
+    perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
+    perform pg_advisory_xact_lock(${VERROU_DU_DIRECT}); -- le profil change de main : dans l'ordre (serveur/verrous.ts)
     perform 1 from public.comptes where utilisateur = ancien for update;
     delete from public.comptes where utilisateur = moi;
     delete from public.profils where utilisateur = moi;

@@ -16,7 +16,8 @@ export function useAchatsOuverts(): boolean {
       if (!fini) setOuverts(valeur);
     };
     void actualiser();
-    const intervalle = window.setInterval(() => void actualiser(), 30_000);
+    // Une question au serveur de paiement par minute au plus, et aucune quand l'onglet est caché.
+    const intervalle = window.setInterval(() => { if (!document.hidden) void actualiser(); }, 60_000);
     window.addEventListener('focus', actualiser);
     return () => { fini = true; window.clearInterval(intervalle); window.removeEventListener('focus', actualiser); };
   }, []);

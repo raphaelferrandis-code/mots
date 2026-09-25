@@ -316,6 +316,8 @@ as $$
 declare en_cours boolean;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  -- Le verrou du direct d'abord (le retrait du profil le demande), puis celui du joueur : dans l'ordre (serveur/verrous.ts).
+  perform pg_advisory_xact_lock(20260924);
   perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text, 0));
   perform 1 from public.comptes where utilisateur=auth.uid() for update;
   if to_regclass('public.combats') is not null then
@@ -332,6 +334,7 @@ language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924); -- l'effacement retire aussi le profil : dans l'ordre (serveur/verrous.ts)
   delete from auth.users where id = auth.uid();
 end $$;
 
@@ -1158,6 +1161,7 @@ begin
   if not found then return jsonb_build_object('refus', 'Ce code ne correspond à aucune collection.'); end if;
   if ancien <> moi then
     perform pg_advisory_xact_lock(20260923);
+    perform pg_advisory_xact_lock(20260924); -- le profil change de main : dans l'ordre (serveur/verrous.ts)
     perform 1 from public.comptes where utilisateur = ancien for update;
     delete from public.comptes where utilisateur = moi;
     delete from public.profils where utilisateur = moi;
@@ -1363,10 +1367,14 @@ create or replace function public.cloturer_les_encheres() returns void
 language plpgsql set search_path = '' as $$
 declare e record;
 begin
-  perform pg_advisory_xact_lock(20260923);
-  for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit 50 for update skip locked loop
-    perform public.cloturer_une_enchere(e.id);
-  end loop;
+  -- Le plus souvent, aucune enchère n'est échue : on ne prend pas le verrou du marché, et personne n'attend
+  -- (mon_compte passe ici à chaque visite). Les fonctions qui transfèrent des timbres le prennent elles-mêmes.
+  if exists (select 1 from public.encheres where etat = 'ouverte' and ferme_le <= now()) then
+    perform pg_advisory_xact_lock(20260923);
+    for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit 50 for update skip locked loop
+      perform public.cloturer_une_enchere(e.id);
+    end loop;
+  end if;
   -- Au passage, les cotes du jour (une fois par jour).
   perform public.calculer_les_cotes();
 end $$;
@@ -1387,6 +1395,7 @@ declare
   e public.encheres%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
@@ -1433,6 +1442,7 @@ declare
   e public.encheres%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into e from public.encheres where id = p_enchere and vendeur = moi for update;
   if not found then raise exception 'Cette vente n''existe pas.'; end if;
@@ -1459,6 +1469,7 @@ declare
   precedente public.mises%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
@@ -1851,7 +1862,7 @@ revoke all on public.equipes,public.equipiers,public.invitations_equipe from pub
 create or replace function public.apres_depart_equipier() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipes where id=old.equipe) then return old; end if;
   delete from public.invitations_equipe where equipe=old.equipe;
   if not exists(select 1 from public.equipiers where equipe=old.equipe) then
@@ -1898,7 +1909,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select id into moi from public.profils where utilisateur=auth.uid() and not maison;
   if moi is null then raise exception 'Choisis d''abord ton pseudonyme dans les amis.'; end if;
   if exists(select 1 from public.equipiers where profil=moi and equipe=p_id and place=1) then return; end if;
@@ -1918,7 +1929,7 @@ language plpgsql security definer set search_path = '' as $$
 declare refus text; propre text:=btrim(regexp_replace(coalesce(p_nom,''),'\s+',' ','g'));
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut modifier l''équipe.'; end if;
   refus:=public.pseudo_refuse(propre);
@@ -1933,7 +1944,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select p.id into moi from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1;
   if moi is null then raise exception 'Seul le capitaine peut inviter un ami.'; end if;
@@ -1952,7 +1963,7 @@ language plpgsql security definer set search_path = '' as $$
 declare moi uuid; invitation public.invitations_equipe%rowtype; capitaine uuid;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   select id into moi from public.profils where utilisateur=auth.uid();
   select * into invitation from public.invitations_equipe where id=p_id;
   if not found then raise exception 'Cette invitation n''est plus disponible.'; end if;
@@ -1973,7 +1984,7 @@ create or replace function public.quitter_equipe(p_equipe uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   delete from public.equipiers where equipe=p_equipe and profil in (select id from public.profils where utilisateur=auth.uid());
 end $$;
 
@@ -1981,7 +1992,7 @@ create or replace function public.dissoudre_equipe(p_equipe uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
   if not exists(select 1 from public.equipiers m join public.profils p on p.id=m.profil
     where p.utilisateur=auth.uid() and m.equipe=p_equipe and m.place=1) then raise exception 'Seul le capitaine peut dissoudre l''équipe.'; end if;
   delete from public.equipes where id=p_equipe;

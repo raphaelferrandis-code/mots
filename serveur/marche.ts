@@ -7,6 +7,7 @@
 // Les chiffres viennent de src/config/equilibrage.ts (marche). Ce fichier est utilisé par fabriquer-le-script.ts.
 
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
+import { VERROU_DU_MARCHE } from './verrous.ts';
 import { FINITIONS, RARETES } from '../src/partage/types.ts';
 import type { Rarete } from '../src/partage/types.ts';
 
@@ -106,7 +107,7 @@ create or replace function public.solder_compte_supprime() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare e public.encheres%rowtype; achetee integer;
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   for e in select * from public.encheres
     where etat = 'ouverte' and (vendeur = old.utilisateur or meilleur_encherisseur = old.utilisateur)
     order by id for update loop
@@ -177,7 +178,7 @@ declare
   e public.encheres%rowtype;
   vendeur_recoit integer;
 begin
-  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   select * into e from public.encheres where id = p_id and etat = 'ouverte' and ferme_le <= now() for update;
   if not found then return; end if;
     if e.meilleure_mise is null or e.meilleur_encherisseur is null then
@@ -196,10 +197,14 @@ create or replace function public.cloturer_les_encheres() returns void
 language plpgsql set search_path = '' as $$
 declare e record;
 begin
-  perform pg_advisory_xact_lock(20260923);
-  for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit ${M.cloturesParAppel} for update skip locked loop
-    perform public.cloturer_une_enchere(e.id);
-  end loop;
+  -- Le plus souvent, aucune enchère n'est échue : on ne prend pas le verrou du marché, et personne n'attend
+  -- (mon_compte passe ici à chaque visite). Les fonctions qui transfèrent des timbres le prennent elles-mêmes.
+  if exists (select 1 from public.encheres where etat = 'ouverte' and ferme_le <= now()) then
+    perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
+    for e in select id from public.encheres where etat = 'ouverte' and ferme_le <= now() order by ferme_le, id limit ${M.cloturesParAppel} for update skip locked loop
+      perform public.cloturer_une_enchere(e.id);
+    end loop;
+  end if;
   -- Au passage, les cotes du jour (une fois par jour).
   perform public.calculer_les_cotes();
 end $$;
@@ -220,6 +225,7 @@ declare
   e public.encheres%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE}); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
@@ -266,6 +272,7 @@ declare
   e public.encheres%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE}); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into e from public.encheres where id = p_enchere and vendeur = moi for update;
   if not found then raise exception 'Cette vente n''existe pas.'; end if;
@@ -292,6 +299,7 @@ declare
   precedente public.mises%rowtype;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(${VERROU_DU_MARCHE}); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;

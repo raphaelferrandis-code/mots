@@ -264,6 +264,16 @@ export const EQUILIBRAGE = {
   // enchère, ni vente. Sinon, des comptes jetables videraient leurs paquets de départ vers un compte principal.
   comptesNeufs: { joursAvantLesEchanges: 3 },
 
+  // ── Les joutes en direct : le match à accepter (décision de Raphaël du 25/09/2026) ─
+  // Quand des adversaires sont trouvés, chacun doit presser « J'y vais ! » à temps ; sinon la proposition tombe, sans
+  // défaite pour personne : ceux qui avaient accepté reprennent leur place dans la file, les absents en sortent.
+  // Un joueur qui passe sur un autre onglet reste dans la file tant que son navigateur donne signe de vie.
+  direct: {
+    secondesPourAccepter: 20,
+    // Sans nouvelles du navigateur pendant ce temps, le joueur sort de la file (onglet fermé, téléphone en veille).
+    secondesDePresenceDansLaFile: 150,
+  },
+
   // ── L'adversaire de secours des joutes en direct (décision de Raphaël du 24/09/2026) ─
   // Quand personne n'est libre, le jeu propose un duel contre un joueur simulé, sans effet sur le classement.
   secours: { attenteAvantDeProposerEnSecondes: 30 },

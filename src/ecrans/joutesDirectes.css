@@ -31,3 +31,7 @@
 @media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main :is(.tim, .tb) { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }
 /* L'adversaire de secours, sous la recherche en cours. */
 .direct__secours { display:grid; gap:12px; justify-items:start; margin-top:20px; padding-top:20px; border-top:1px solid var(--filet); }
+/* Le match à accepter : « Adversaire trouvé ! », le compte à rebours et « J'y vais ! ». */
+.direct__proposition .rangee-de-boutons { align-items:center; gap:16px; }
+.direct__proposition { display:grid; gap:12px; justify-items:start; padding:28px; margin-block:24px; border-color:var(--accent); }
+.direct__compte { font-size:2.4rem; font-variant-numeric:tabular-nums; line-height:1; color:var(--accent); margin:0; }

@@ -1,5 +1,5 @@
 import { MODES_DIRECTS } from '../src/jeu/direct.ts';
-import type { ActionDirect, ModeDirect, PhaseDirect, ReponseDirect } from '../src/jeu/direct.ts';
+import type { ActionDirect, ModeDirect, PhaseDirect, PropositionDirecte, ReponseDirect } from '../src/jeu/direct.ts';
 import type { Registre } from '../src/partage/types.ts';
 import { avancerDirect, creerDirect, RefusDirect, vueDirect } from './moteur-direct.ts';
 import type { EtatDirect } from './moteur-direct.ts';
@@ -8,10 +8,12 @@ import { ErreurCombat } from './api-combat.ts';
 
 type RequeteDirect = { type: 'lire' | 'annuler' | 'quitter' }
   | { type: 'chercher'; mode: ModeDirect; masques: Registre[] }
+  | { type: 'accepter' | 'refuser'; partie: string }
   | { type: 'agir'; partie: string; requete: string; manche: number; phase: PhaseDirect; action: ActionDirect };
-type Place = { utilisateur: string; place: number; camp: number; equipe: string | null; nomEquipe: string | null;
+type Place = { utilisateur: string; place: number; camp: number; equipe: string | null; nomEquipe: string | null; accepte_le?: string | null;
   depart: { utilisateur: string; pseudo: string; equipe: number; deck: string[]; masques: Registre[] }; cote_avant: number | null; cote_apres: number | null; xp: number; recompense: {encre:number;reduite:boolean} | null };
-type Partie = { id: string; mode: ModeDirect; etat: EtatDirect | null; revision: number; commandes: Record<string, unknown>; places: Place[] };
+// « accepter_avant » : une proposition que chacun doit encore accepter (absent d'un serveur d'avant le match à accepter).
+type Partie = { id: string; mode: ModeDirect; etat: EtatDirect | null; revision: number; commandes: Record<string, unknown>; places: Place[]; accepter_avant?: string | null; accepter_dans?: number | null };
 type Contexte = { maintenant: number; partie: Partie | null };
 const uuid = (v: unknown): v is string => typeof v === 'string' && /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(v);
 const objet = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -19,6 +21,7 @@ const champs = (v: Record<string, unknown>, liste: string[]) => { if (Object.key
 export function lireRequeteDirect(v: unknown): RequeteDirect {
   if (!objet(v)) throw new RefusDirect('Commande illisible.');
   if (v.type === 'lire' || v.type === 'annuler' || v.type === 'quitter') { champs(v, ['type']); return { type: v.type }; }
+  if ((v.type === 'accepter' || v.type === 'refuser') && uuid(v.partie)) { champs(v, ['type', 'partie']); return { type: v.type, partie: v.partie }; }
   if (v.type === 'chercher') {
     champs(v, ['type', 'mode', 'masques']);
     if (!MODES_DIRECTS.includes(v.mode as ModeDirect) || !Array.isArray(v.masques) || v.masques.length > 4
@@ -41,10 +44,17 @@ export function lireRequeteDirect(v: unknown): RequeteDirect {
   }
   throw new RefusDirect('Commande invalide.');
 }
+// Ce que voit un joueur d'une proposition : combien ont accepté, et lui-même. Ni noms ni cotes (voir PropositionDirecte).
+function propositionDe(p: Partie, utilisateur: string, maintenant: number): PropositionDirecte {
+  return { id: p.id, mode: p.mode, accepterAvant: maintenant + (p.accepter_dans ?? 0), total: p.places.length,
+    acceptes: p.places.filter(s => s.accepte_le).length, jAccepte: !!p.places.find(s => s.utilisateur === utilisateur)?.accepte_le };
+}
 const canonique = (v: unknown) => JSON.stringify(v, (_k, x) => objet(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
 export async function executerDirect(utilisateur: string, req: RequeteDirect, outils: OutilsCombat): Promise<ReponseDirect> {
   let attente: ReponseDirect['attente'] = null;
-  if (req.type !== 'agir') {
+  if (req.type === 'accepter' || req.type === 'refuser') {
+    await outils.rpc('direct_accepter', { p_utilisateur: utilisateur, p_id: req.partie, p_accepte: req.type === 'accepter' });
+  } else if (req.type !== 'agir') {
     const salon = await outils.rpc<{ attente: ReponseDirect['attente'] }>('direct_salon', {
       p_utilisateur: utilisateur, p_action: req.type, p_mode: req.type === 'chercher' ? req.mode : null, p_masques: req.type === 'chercher' ? req.masques : [],
     });
@@ -55,7 +65,12 @@ export async function executerDirect(utilisateur: string, req: RequeteDirect, ou
     const p = contexte.partie;
     if (!p) {
       if (req.type === 'agir') throw new RefusDirect('Cette partie n’est plus active.');
-      return { maintenant: contexte.maintenant, utilisateur, attente, partie: null };
+      return { maintenant: contexte.maintenant, utilisateur, attente, partie: null, proposition: null };
+    }
+    // Une proposition que tous n'ont pas encore acceptée : la partie ne commence pas.
+    if (!p.etat && p.accepter_avant) {
+      if (req.type === 'agir') throw new RefusDirect('La partie n’a pas encore commencé : chacun doit d’abord accepter.');
+      return { maintenant: contexte.maintenant, utilisateur, attente: null, partie: null, proposition: propositionDe(p, utilisateur, contexte.maintenant) };
     }
     if (req.type === 'agir' && req.partie !== p.id) throw new RefusDirect('Cette commande appartient à une autre partie.');
     const cle = req.type === 'agir' ? `${utilisateur}:${req.requete}` : null;
