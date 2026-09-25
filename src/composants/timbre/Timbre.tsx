@@ -4,7 +4,7 @@
 // n'importe quelle taille sans rien recalculer.
 //
 // Ce qui vient du jeu : l'attaque et la défense (les deux valeurs du haut), l'origine, la nature (couleur de
-// l'encre), la rareté (matière du cadre, rang et mention imprimée), la finition (reflets), la date
+// l'encre), la rareté (teinte du papier, filet, rang et mention imprimée), la finition (reflets), la date
 // d'obtention (cachet) et le cachet « Maîtrisé ». La définition n'est plus imprimée sur le timbre : elle se lit
 // à côté (fiche, cérémonie).
 
@@ -57,7 +57,7 @@ export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe
   const effet = horsSerie ? 'Prismatique' : finition;
   const attaque = attaqueEnJeu(carte.attaque, carte.rarete);
   const defense = defenseEnJeu(carte.defense, carte.rarete);
-  const suitLePointeur = reagir ?? (effet !== 'Normale' || niveau >= 3); // à partir de Rare, le cadre en métal miroite
+  const suitLePointeur = reagir ?? (effet !== 'Normale' || niveau >= 4);
 
   // Les reflets se déplacent avec le pointeur : --mx/--my pour le vernis, --gx/--gy pour la lueur.
   const eclairer = (e: PointerEvent<HTMLElement>): void => {

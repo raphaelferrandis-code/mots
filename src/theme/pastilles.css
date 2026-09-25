@@ -23,7 +23,7 @@
 
 .c-vignette { --losange: #8a96ad; --filet-vignette: rgba(31, 42, 68, .28); color: #1f2a44; background: var(--c-papier, #f1e7d0); }
 .c-vignette::before { content: ''; width: 5px; height: 5px; rotate: 45deg; background: var(--losange); flex-shrink: 0; }
-/* À partir de Rare, la pastille reprend la matière du cadre du timbre (timbre.css) : cuivre, violet, or, irisé. */
+/* À partir de Rare, la pastille reprend la couleur du filet du timbre (timbre.css) : cuivre, violet, or, irisé. */
 .c-vignette[data-rarete='Peu commune'] { --losange: #5f9a7c; }
 .c-vignette[data-rarete='Rare'] { --losange: var(--c-cuivre, #d89a5c); --filet-vignette: rgba(176, 106, 48, .5); }
 .c-vignette[data-rarete='Épique'] { --losange: #7a5bc4; --filet-vignette: rgba(122, 91, 196, .45); }

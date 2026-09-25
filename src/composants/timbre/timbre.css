@@ -107,41 +107,46 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 .tb .tampon__maitrise { font-size: 15px; letter-spacing: .08em; }
 .tb .tampon__date { font-size: 9.5px; }
 
-/* ── La rareté se voit au cadre ────────────────────────────────────────────────
-   Choix de Raphaël (25 septembre 2026) : le papier autour de l'impression change de matière avec la rareté.
-   Commune : papier crème. Peu commune : papier crème et liseré à l'encre du timbre. Rare : cuivre. Épique :
-   violet métallisé (l'argent se confondait avec le papier crème). Légendaire : or. Hors-série : papier noir
-   irisé. La finition (brillante, holographique) reste dans l'impression : le cadre ne dit que la rareté.
-   Le reflet du métal suit le pointeur ; le filet intérieur et le rang (losanges) prennent la teinte du cadre ;
-   les valeurs restent à l'encre claire, pour se lire d'un coup d'œil. */
-.tb[data-niveau='2'] .tb__papier::before { content: ''; position: absolute; inset: 1.22em; border: .3em solid var(--encre-timbre); opacity: .9; }
-.tb[data-niveau='3'] { --metal-cadre: linear-gradient(125deg, #6e3a18 0%, #c98652 18%, #f2c095 34%, #a3602f 50%, #e7ab7a 66%, #7d4520 84%, #c07a45 100%); --filet-cadre: #e7ab7a; --rang-cadre: #f2c095; --mention: rgba(55, 25, 5, .8); }
-.tb[data-niveau='4'] { --metal-cadre: linear-gradient(125deg, #4f2f93 0%, #9c7be0 18%, #e6dbff 34%, #7654c2 50%, #c6affa 66%, #5a3aa3 84%, #a488e6 100%); --filet-cadre: #c6affa; --rang-cadre: #e2d6ff; --mention: rgba(34, 12, 72, .82); }
-.tb[data-niveau='5'] { --metal-cadre: linear-gradient(125deg, #7a5410 0%, #d6ae4a 18%, #fff0b8 34%, #b8861f 50%, #f6dc86 66%, #8e6414 84%, #e2c060 100%); --filet-cadre: #efca8b; --rang-cadre: #f6dc86; --mention: rgba(60, 38, 4, .82); }
-.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier {
-  background: var(--metal-cadre); background-size: 180% 180%;
-  background-position: calc(var(--mx, .3) * 100%) calc(var(--my, .3) * 100%);
+/* ── La rareté se voit au cadre : une teinte de papier et un filet ─────────────
+   Choix de Raphaël (25 septembre 2026), après un cadre tout en métal jugé trop lourd : le papier est à peine teinté
+   et un filet fin court dans la marge, au même endroit pour toutes les raretés, comme sur les timbres anciens.
+   Commune : papier crème, sans filet. Peu commune : filet à l'encre du timbre. Rare : papier pêche, filet de cuivre.
+   Épique : papier lavande, filet violet (l'argent se confondait avec le crème). Légendaire : papier blond, filet
+   d'or. Hors-série : papier nacré, filet irisé. La finition (brillante, holographique) reste dans l'impression :
+   le cadre ne dit que la rareté. Le filet intérieur et le rang (losanges) prennent la teinte de la rareté ; les
+   valeurs restent à l'encre claire, pour se lire d'un coup d'œil. */
+.tb:is([data-niveau='2'], [data-niveau='3'], [data-niveau='4'], [data-niveau='5'], [data-niveau='6']) .tb__papier::before {
+  content: ''; position: absolute; inset: 1.24em; border: .28em solid var(--encre-timbre); border-image: var(--filet-rarete) 1;
 }
-.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier::after { opacity: .2; }
-/* Un filet gravé autour de l'impression, comme la bordure d'une dorure à chaud. */
-.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier::before { content: ''; position: absolute; inset: 1.62em; border: .1em solid rgba(0, 0, 0, .28); box-shadow: 0 0 0 .08em rgba(255, 255, 255, .35); }
+.tb[data-niveau='2'] .tb__papier::before { opacity: .9; }
+.tb[data-niveau='3'] {
+  --papier-rarete: radial-gradient(130% 100% at 25% 12%, #fbe9dc 0%, #efceb4 58%, #deac86 100%);
+  --filet-rarete: linear-gradient(125deg, #8a4f26, #e7ab7a 30%, #b56d38 55%, #f2c095 75%, #9a5a2c);
+  --filet-cadre: #e7ab7a; --rang-cadre: #f2c095; --mention: rgba(90, 45, 15, .7);
+}
+.tb[data-niveau='4'] {
+  --papier-rarete: radial-gradient(130% 100% at 25% 12%, #f3edfe 0%, #ddd0f5 58%, #c5b0ea 100%);
+  --filet-rarete: linear-gradient(125deg, #5a3aa3, #c6affa 30%, #7654c2 55%, #e6dbff 75%, #6546ac);
+  --filet-cadre: #c6affa; --rang-cadre: #e2d6ff; --mention: rgba(55, 25, 105, .7);
+}
+.tb[data-niveau='5'] {
+  --papier-rarete: radial-gradient(130% 100% at 25% 12%, #fcf2cc 0%, #efd98e 58%, #dab95a 100%);
+  --filet-rarete: linear-gradient(125deg, #8e6414, #f6dc86 30%, #b8861f 55%, #fff0b8 75%, #8e6414);
+  --filet-cadre: #efca8b; --rang-cadre: #f6dc86; --mention: rgba(90, 62, 8, .72);
+}
+.tb[data-niveau='6'] {
+  --papier-rarete: linear-gradient(125deg, #f3ebf3 0%, #e7eef6 25%, #f8f1e2 50%, #ece5f5 75%, #f3ede6 100%);
+  --filet-rarete: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f);
+}
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5'], [data-niveau='6']) .tb__papier { background: var(--papier-rarete); }
 .tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__impression::after { border-color: var(--filet-cadre); box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .42em var(--filet-cadre); opacity: .8; }
 .tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__rang { opacity: 1; }
-/* La petite rosace passe à une seconde encre, chaude (Peu commune, Rare), puis à la teinte du cadre. */
+/* La petite rosace passe à une seconde encre, chaude (Peu commune, Rare), puis à la teinte de la rareté. */
 .tb:is([data-niveau='2'], [data-niveau='3']) .tb__trait--second { stroke: #f3c9a0; opacity: .75; }
 .tb:is([data-niveau='4'], [data-niveau='5']) .tb__trait--second { stroke: var(--filet-cadre); opacity: .7; }
 
-/* Hors-série : papier noir au voile irisé (il suit le pointeur), impression noire, cadre irisé, illustration propre
-   au mot. Sur le noir, les cachets passent à l'encre claire. */
-.tb[data-niveau='6'] { --trait: #fff6dc; --mention: rgba(255, 238, 205, .72); }
-.tb[data-niveau='6'] .tb__papier { background: radial-gradient(130% 100% at 25% 12%, #3a3546 0%, #1c1a24 55%, #0c0b10 100%); }
-.tb[data-niveau='6'] .tb__papier::after {
-  background-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f, #ffd36b);
-  background-size: 300% 300%; background-position: calc(var(--mx, .4) * 100%) 50%; opacity: .32; mix-blend-mode: screen;
-}
-.tb[data-niveau='6'] .tb__cachet { color: #f3ecd8; mix-blend-mode: screen; }
-.tb[data-niveau='6'][data-oblitere] .tb__cachet { opacity: .55; }
-.tb[data-niveau='6'] .tim__maitrise { color: #c9b3ff; mix-blend-mode: screen; }
+/* Hors-série : papier nacré (plus haut), impression noire, cadre irisé, illustration propre au mot. */
+.tb[data-niveau='6'] { --trait: #fff6dc; }
 .tb[data-niveau='6'] .tb__impression::after { border: .14em solid transparent; border-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f) 1; }
 .tb[data-niveau='6'] .tb__disque { fill: rgba(255, 246, 220, .04); }
 .tb__illustration :is(path, circle, line, polyline, polygon, rect) { fill: none; stroke: var(--trait); stroke-width: .8; stroke-linejoin: round; stroke-linecap: round; }
