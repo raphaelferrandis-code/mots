@@ -13,8 +13,10 @@ Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2
 > verrouillé.
 > **Corrigé le 25/09 (script 17 et fonction joutes-direct, installés) :** n° 3 (un verrou par domaine, ordre imposé,
 > écran des joutes et clôture des enchères sans verrou inutile, lectures au bon moment au lieu de toutes les 2,5 s ; la
-> page Formules n'interroge plus le serveur de paiement quand l'onglet est caché). Le reste de ce document est toujours
-> à faire.
+> page Formules n'interroge plus le serveur de paiement quand l'onglet est caché).
+> **Corrigé le 25/09 (script 18, à coller) :** n° 4 (filtres normalisés, 3 rencontres classées par jour, cote retrouvée en
+> recréant son profil, nombres du jeu et cote minimale 100, gagnant d'un abandon récompensé, 5 parties pour être classé).
+> Le reste de ce document est toujours à faire.
 
 ## En bref
 

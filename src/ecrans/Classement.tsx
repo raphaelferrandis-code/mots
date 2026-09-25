@@ -74,9 +74,12 @@ export function Classement() {
       <p className="texte-doux">{DESCRIPTIONS[mode]}</p>
       {!serveurUtilise ? <p>Connecte-toi au serveur pour consulter les classements.</p> : resultat.etat==='en cours' ? <p role="status">Chargement…</p> : null}
       {resultat.etat==='erreur' && <div className="palmares__erreur" role="alert"><p>{resultat.message}</p><button type="button" className="btn-primary sm" onClick={() => setTour(t=>t+1)}>Réessayer</button></div>}
+      {classement?.moi && classement.minimum && classement.moi.jouees < classement.minimum && <p className="palmares__entree" role="status">
+        {equipes ? 'Cote de ton équipe' : 'Ta cote'} : <strong>{classement.moi.cote.toLocaleString('fr-FR')}</strong> · encore {accord(classement.minimum - classement.moi.jouees, 'partie classée', 'parties classées')} pour entrer au classement.
+      </p>}
       {classement && (classement.lignes.length===0 ? <section className="etat-vide">
         <h2>{equipes ? 'Aucune équipe classée' : 'Personne n’est encore classé'}</h2>
-        <p>Aucune partie terminée pour l’instant. Prends la première place !</p>
+        <p>{classement.minimum ? `On entre au classement après ${accord(classement.minimum, 'partie classée', 'parties classées')}.` : 'Aucune partie terminée pour l’instant.'} Prends la première place !</p>
       </section> : <>
         <Podium lignes={classement.lignes.filter(l => l.rang <= 3).map(l => ({rang:l.rang,pseudo:l.nom,cote:l.cote,moi:l.moi}))} libelleMoi={equipes ? 'Ton équipe' : 'C’est toi'} />
         <div className="palmares__suite">

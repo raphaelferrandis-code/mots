@@ -65,3 +65,5 @@
   .palmares__effectif { padding-right: 10px; }
 }
 .palmares .modes { flex-wrap: wrap; }
+/* Avant d'entrer au classement : sa cote, et le nombre de parties classées qui manquent. */
+.palmares__entree { width: min(100%, 820px); margin: 0 auto 18px; padding: 12px 18px; border: 1px solid var(--filet); border-radius: 3px; }

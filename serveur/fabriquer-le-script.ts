@@ -25,6 +25,7 @@ import { secours } from './secours.ts';
 import { activite } from './activite.ts';
 import { portraits } from './portraits.ts';
 import { direct } from './direct.ts';
+import { classement } from './classement.ts';
 import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -165,6 +166,7 @@ declare
   propre text := btrim(regexp_replace(coalesce(p_pseudo, ''), '\s+', ' ', 'g'));
   refus text;
   ma_cote integer;
+  precedent jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
@@ -199,9 +201,14 @@ begin
     where (value->>'reussies')::integer > (value->>'posees')::integer
   ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
 
+  -- Un profil recréé reprend l'identité et la cote du précédent (serveur/classement.ts) : on n'efface pas ses défaites
+  -- en recommençant. Les cotes des joutes en direct, rangées sous cette identité, reviennent avec elle.
+  select c.profil_precedent into precedent from public.comptes c where c.utilisateur = moi;
+  if exists (select 1 from public.profils where id = (precedent->>'id')::uuid) then precedent := null; end if;
   begin
-    insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
-    values (moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades)
+    insert into public.profils (id, utilisateur, pseudo, pseudo_cle, deck, savoirs, parades, cote, jouees, gagnees)
+    values (coalesce((precedent->>'id')::uuid, gen_random_uuid()), moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades,
+      coalesce((precedent->>'cote')::integer, ${J.coteDeDepart}), coalesce((precedent->>'jouees')::integer, 0), coalesce((precedent->>'gagnees')::integer, 0))
     on conflict (utilisateur) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.pseudo_cle, deck = excluded.deck, savoirs = excluded.savoirs, parades = excluded.parades, maj_le = now()
     returning cote into ma_cote;
   exception when unique_violation then
@@ -384,6 +391,7 @@ begin
 end $$;
 
 ${collections()}
+${classement()}
 ${recuperation()}
 ${comptesNeufs()}
 ${marche()}
@@ -481,6 +489,15 @@ export function migrationTenueDuServeur(): string {
     + reprise(recuperation(), 'recuperer_par_code') + '\n\ncommit;\n';
 }
 
+// Le classement (décisions du 25/09/2026). Après 17-tenue-du-serveur.sql. Filtres normalisés, rencontres limitées à
+// ${J.rencontresClasseesParJour} par jour, récompense du gagnant d'un abandon, cote retrouvée en recréant son profil, seuil d'entrée
+// au classement. Le direct est repris en entier (script rejouable), publier_mon_profil seule.
+export function migrationClassement(): string {
+  return '-- Le classement : filtres normalisés, rencontres limitées, récompense du gagnant, cote retrouvée, seuil d’entrée.\n'
+    + '-- Après 17-tenue-du-serveur.sql. Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après.\nbegin;\n'
+    + classement() + direct() + reprise(structure(), 'publier_mon_profil') + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -515,5 +532,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '15-portraits-et-presence.sql'), migrationPortraits());
   writeFileSync(path.join(RACINE, 'serveur', '16-parrainage-confirme.sql'), migrationParrainageConfirme());
   writeFileSync(path.join(RACINE, 'serveur', '17-tenue-du-serveur.sql'), migrationTenueDuServeur());
+  writeFileSync(path.join(RACINE, 'serveur', '18-classement.sql'), migrationClassement());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

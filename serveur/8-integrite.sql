@@ -121,6 +121,7 @@ declare
   propre text := btrim(regexp_replace(coalesce(p_pseudo, ''), '\s+', ' ', 'g'));
   refus text;
   ma_cote integer;
+  precedent jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
@@ -155,9 +156,14 @@ begin
     where (value->>'reussies')::integer > (value->>'posees')::integer
   ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
 
+  -- Un profil recréé reprend l'identité et la cote du précédent (serveur/classement.ts) : on n'efface pas ses défaites
+  -- en recommençant. Les cotes des joutes en direct, rangées sous cette identité, reviennent avec elle.
+  select c.profil_precedent into precedent from public.comptes c where c.utilisateur = moi;
+  if exists (select 1 from public.profils where id = (precedent->>'id')::uuid) then precedent := null; end if;
   begin
-    insert into public.profils (utilisateur, pseudo, pseudo_cle, deck, savoirs, parades)
-    values (moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades)
+    insert into public.profils (id, utilisateur, pseudo, pseudo_cle, deck, savoirs, parades, cote, jouees, gagnees)
+    values (coalesce((precedent->>'id')::uuid, gen_random_uuid()), moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades,
+      coalesce((precedent->>'cote')::integer, 1000), coalesce((precedent->>'jouees')::integer, 0), coalesce((precedent->>'gagnees')::integer, 0))
     on conflict (utilisateur) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.pseudo_cle, deck = excluded.deck, savoirs = excluded.savoirs, parades = excluded.parades, maj_le = now()
     returning cote into ma_cote;
   exception when unique_violation then
@@ -1103,6 +1109,22 @@ begin
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
+
+
+-- ── Le classement suit le compte ─────────────────────────────────────────────
+alter table public.comptes add column if not exists profil_precedent jsonb; -- { id, cote, jouees, gagnees } du dernier profil retiré
+
+create or replace function public.retenir_le_profil() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.comptes set profil_precedent = jsonb_build_object('id', old.id, 'cote', old.cote, 'jouees', old.jouees, 'gagnees', old.gagnees)
+    where utilisateur = old.utilisateur;
+  return null;
+end $$;
+drop trigger if exists retenir_le_profil on public.profils;
+create trigger retenir_le_profil after delete on public.profils
+  for each row when (old.utilisateur is not null) execute function public.retenir_le_profil();
+revoke execute on function public.retenir_le_profil() from public, anon, authenticated;
 
 
 -- ═════════════════════════════════════════════════════════════════════════════

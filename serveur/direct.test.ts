@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { baseDeTest } from './test-base.ts';
 import { direct } from './direct.ts';
-import { migrationTenueDuServeur } from './fabriquer-le-script.ts';
+import { migrationClassement, migrationTenueDuServeur } from './fabriquer-le-script.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { cartes } from './collections.ts';
 import { avancerDirect, creerDirect, voiesDisponibles, vueDirect } from './moteur-direct.ts';
@@ -145,7 +145,10 @@ it('direct SQL : quatre joueurs, résultat exactement une fois et cote 2v2 solo 
     await l.admin();
     const cotes=(await l.db.query<{mode:string;jouees:number;cote:number}>('select * from public.direct_cotes')).rows;
     assert.equal(cotes.length,4);assert.ok(cotes.every(c=>c.mode==='duo_solo'&&c.jouees===1));assert.equal(cotes.reduce((s,c)=>s+c.cote,0),4000);
-    await l.joueur(0);const classement=(await l.db.query<{r:any}>("select public.classement_direct('duo_solo') r")).rows[0].r;assert.equal(classement.total,4);
+    await l.joueur(0);let classement=(await l.db.query<{r:any}>("select public.classement_direct('duo_solo') r")).rows[0].r;
+    assert.deepEqual([classement.total,classement.minimum,classement.moi],[0,EQUILIBRAGE.joute.partiesPourEtreClasse,{cote:984,jouees:1}],'une partie ne suffit pas pour être classé');
+    await l.admin();await l.db.query(`update public.direct_cotes set jouees=${EQUILIBRAGE.joute.partiesPourEtreClasse}`);
+    await l.joueur(0);classement=(await l.db.query<{r:any}>("select public.classement_direct('duo_solo') r")).rows[0].r;assert.equal(classement.total,4);
     assert.throws(()=>l.appel(1,{...c,requete:crypto.randomUUID(),utilisateur:l.ids[0]}),/inconnue/);
   } finally {await l.db.close();}
 });
@@ -211,6 +214,7 @@ it('direct SQL : recherche expirée, deck invalide, changements de profil et acc
     await assert.rejects(l.db.query('update public.profils set utilisateur=$2 where utilisateur=$1',[l.ids[0],l.ids[2]]),/Termine/);
     const fin=await l.appel(0,l.commande(r,{type:'abandonner'}));assert.equal(fin.partie!.gains.encre,0);
     await l.admin();await l.db.query('delete from public.profils where utilisateur=$1',[l.ids[0]]);
+    await l.admin();await l.db.query(`update public.direct_cotes set jouees=${EQUILIBRAGE.joute.partiesPourEtreClasse}`);
     await l.joueur(1);const classement=(await l.db.query<{r:{total:number}}>("select public.classement_direct('solo') r")).rows[0].r;
     assert.equal(classement.total,1,'un profil supprimé ne figure plus au classement');
   } finally {await l.db.close();}
@@ -277,6 +281,73 @@ it('le script 17 s’applique par-dessus le direct installé, deux fois de suite
   const l=await laboratoireDirect();try {
     await l.chercher(0,'solo');
     await l.admin();await l.db.exec(migrationTenueDuServeur());await l.db.exec(migrationTenueDuServeur());
+    assert.ok((await l.chercher(1,'solo')).proposition,'la file d’avant est gardée');
+  } finally {await l.db.close();}
+});
+
+it('direct SQL : le classement — filtres normalisés, trois rencontres classées par jour, gagnant récompensé d’un abandon',async()=>{
+  const l=await laboratoireDirect();try {
+    // Deux comptes qui choisissent les mêmes filtres dans un ordre ou avec des doublons différents sont réunis avec
+    // tout le monde : pas de file à part.
+    assert.ok((await l.appel(0,{type:'chercher',mode:'solo',masques:['Vieilli','Familier','Vieilli']})).attente);
+    assert.ok((await l.appel(1,{type:'chercher',mode:'solo',masques:['Familier','Vieilli']})).proposition);
+    await l.admin();await l.db.query('delete from public.direct_parties');
+    const K=EQUILIBRAGE.joute.rencontresClasseesParJour;
+    const cotes:({avant:number;apres:number}|null)[]=[];
+    for(let partie=0;partie<K+1;partie++) {
+      await l.chercher(0,'solo');await l.chercher(1,'solo');
+      const r=await l.accepterTous([0,1]);
+      // Le joueur 1 abandonne aussitôt : le joueur 0 gagne.
+      const fin1=await l.appel(1,l.commande(r,{type:'abandonner'}));
+      assert.equal(fin1.partie!.gains.encre,0,'celui qui abandonne ne reçoit rien');
+      const fin0=await l.appel(0,{type:'lire'});
+      assert.equal(fin0.partie!.vue.vainqueur,fin0.partie!.vue.joueurs[fin0.partie!.vue.moi].equipe);
+      if(partie===0) assert.ok(fin0.partie!.gains.encre>0 && fin0.partie!.gains.xp>0,'le gagnant d’un abandon est récompensé');
+      cotes.push(fin0.partie!.cotes);
+      await l.appel(0,{type:'quitter'});await l.appel(1,{type:'quitter'});
+    }
+    assert.ok(cotes.slice(0,K).every(c=>c && c.apres>c.avant),'les premières rencontres du jour font bouger la cote');
+    assert.equal(cotes[K],null,'au-delà, la cote ne bouge plus');
+    await l.admin();
+    const lignes=(await l.db.query<{jouees:number}>("select jouees from public.direct_cotes where mode='solo'")).rows;
+    assert.deepEqual(lignes.map(x=>x.jouees),[K,K],'seules les parties classées comptent pour entrer au classement');
+    // Le même joueur face à un autre adversaire : la cote bouge de nouveau.
+    await l.chercher(0,'solo');await l.chercher(2,'solo');
+    const r=await l.accepterTous([0,2]);
+    await l.appel(2,l.commande(r,{type:'abandonner'}));
+    assert.ok((await l.appel(0,{type:'lire'})).partie!.cotes);
+  } finally {await l.db.close();}
+});
+
+it('direct SQL : un profil supprimé puis recréé retrouve sa cote ; tout s’efface avec le compte',async()=>{
+  const l=await laboratoireDirect();try {
+    await l.chercher(0,'solo');await l.chercher(1,'solo');
+    const r=await l.accepterTous([0,1]);await l.appel(1,l.commande(r,{type:'abandonner'}));
+    await l.appel(0,{type:'quitter'});await l.appel(1,{type:'quitter'});
+    await l.admin();
+    const avant=(await l.db.query<{id:string;cote:number;jouees:number}>('select id,cote,jouees from public.profils where utilisateur=$1',[l.ids[1]])).rows[0];
+    assert.ok(avant.cote<1000 && avant.jouees===1);
+    // Le perdant retire son profil, puis le recrée : même identité, même cote, mêmes cotes en direct.
+    await l.joueur(1);await l.db.query('select public.supprimer_mon_profil()');
+    const pub=await l.db.query<{r:{accepte:boolean;cote:number}}>("select public.publier_mon_profil('revenant',$1,'{}','{}') r",[JSON.stringify(deck)]);
+    assert.deepEqual(pub.rows[0].r,{accepte:true,cote:avant.cote});
+    await l.admin();
+    const apres=(await l.db.query<{id:string;cote:number;jouees:number;pseudo:string}>('select id,cote,jouees,pseudo from public.profils where utilisateur=$1',[l.ids[1]])).rows[0];
+    assert.deepEqual(apres,{...avant,pseudo:'revenant'});
+    await l.joueur(1);const vue=(await l.db.query<{r:any}>("select public.classement_direct('solo') r")).rows[0].r;
+    assert.deepEqual(vue.moi,{cote:avant.cote,jouees:1},'ses parties en direct l’ont suivi');
+    // Effacer tout son compte efface aussi ses cotes.
+    await l.db.query('select public.supprimer_mon_compte()');
+    await l.admin();
+    assert.equal((await l.db.query<{n:number}>('select count(*)::int n from public.direct_cotes where sujet=$1',[avant.id])).rows[0].n,0);
+    assert.equal((await l.db.query<{n:number}>('select count(*)::int n from public.direct_cotes')).rows[0].n,1,'celle de l’autre joueur reste');
+  } finally {await l.db.close();}
+});
+
+it('le script 18 s’applique par-dessus le direct installé, deux fois de suite sans erreur',async()=>{
+  const l=await laboratoireDirect();try {
+    await l.chercher(0,'solo');
+    await l.admin();await l.db.exec(migrationClassement());await l.db.exec(migrationClassement());
     assert.ok((await l.chercher(1,'solo')).proposition,'la file d’avant est gardée');
   } finally {await l.db.close();}
 });

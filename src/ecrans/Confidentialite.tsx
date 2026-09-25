@@ -21,7 +21,7 @@ export function Confidentialite() {
   const collectionSurLeServeur = serveurDesCollections.actif;
 
   const supprimer = async (): Promise<void> => {
-    if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, ta cote, tes joutes, tes amis et tes propositions d’échange seront effacés du serveur. Cette action est définitive.')) return;
+    if (!window.confirm('Supprimer ton profil de joute ? Ton pseudonyme, tes joutes, tes amis et tes propositions d’échange seront effacés du serveur. Ta cote reste attachée à ton compte, sans être visible : tu la retrouveras si tu recrées un profil. Cette action est définitive.')) return;
     setSuppression({ etat: 'en cours' });
     try {
       await supprimerMonProfilDeJoute();
@@ -148,7 +148,8 @@ export function Confidentialite() {
         <h2>Tout effacer</h2>
         <p>
           Ton profil de joute est conservé tant que tu ne le supprimes pas. Le supprimer retire du serveur ton pseudonyme,
-          ta cote, ton deck public, tes résultats publics, tes joutes, tes événements du fil d’activité, tes relations d’amitié et tes propositions d’échange. C'est immédiat et définitif.
+          ton deck public, tes résultats publics, tes joutes, tes événements du fil d’activité, tes relations d’amitié et tes propositions d’échange. C'est immédiat et définitif.
+          Ta cote et ton nombre de parties restent attachés à ton compte, sans être visibles, pour que tu les retrouves si tu recrées un profil (on n’efface pas ses défaites en recommençant) ; ils s’effacent avec ton compte.
           Ton compte, ta collection, tes droits et tes engagements au marché sont conservés.
         </p>
         {suppression.etat === 'faite'

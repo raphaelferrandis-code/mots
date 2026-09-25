@@ -27,7 +27,9 @@ export type ReponseDirect = { maintenant: number; utilisateur: string; attente: 
   partie: { id: string; revision: number; vue: VueDirect; cotes: { avant: number; apres: number } | null; gains: { xp: number; encre: number; reduite: boolean } } | null;
   // Absente d'un serveur d'avant le match à accepter.
   proposition?: PropositionDirecte | null };
-export type ClassementDirect = { lignes: { rang: number; nom: string; cote: number; jouees: number; gagnees: number; moi: boolean }[]; total: number };
+// « minimum » et « moi » : absents d'un serveur d'avant le seuil d'entrée au classement (25/09/2026).
+export type ClassementDirect = { lignes: { rang: number; nom: string; cote: number; jouees: number; gagnees: number; moi: boolean }[]; total: number;
+  minimum?: number; moi?: { cote: number; jouees: number } | null };
 
 // Quand relire l'état des joutes (en millisecondes). Le temps réel du serveur prévient dès qu'une partie, une
 // proposition ou la file change pour le joueur ; on relit aussi juste après chaque échéance (fin d'une phase, fin du

@@ -59,8 +59,20 @@ Aucune partie ni proposition en cours à ce moment-là. Reste à l'essayer à de
 - Une proposition seule est retenue. Deux propositions différentes : l'arbitre choisit entre elles ; sans choix, sa proposition est retenue. Aucune réponse : pas de parade.
 - Les attaques sont automatiques et simultanées, calculées contre la carte de la même voie. Les bonus de faction suivent la carte précédente de chaque joueur. Une parade réduit les dégâts selon les règles existantes.
 - Une pose manquée joue la première carte disponible sur la première voie libre. Deux poses manquées consécutives font perdre le camp. Un abandon fait également perdre le camp.
+- **Le classement contre la triche (décisions de Raphaël du 25/09/2026, script 18)** :
+  - contre les mêmes adversaires (les mêmes camps face à face), seules les **3 premières parties du jour** (heure de
+    Paris) font bouger la cote ; au-delà, la partie se joue normalement (XP, Encre avec les plafonds habituels) et la fin
+    de partie dit « cette partie ne change pas la cote » (registre `direct_rencontres`, que le retrait d'un profil
+    n'efface pas) ;
+  - on n'apparaît au classement qu'après **5 parties classées** ; avant, l'écran du classement montre sa cote et le
+    nombre de parties qui manquent ;
+  - un profil supprimé puis recréé **retrouve son identité et sa cote** (`comptes.profil_precedent`,
+    `serveur/classement.ts`) : on n'efface pas ses défaites en recommençant ; tout s'efface avec le compte ;
+  - les filtres de contenu sont triés et dédoublonnés par le serveur : une combinaison inhabituelle ne crée plus une
+    file à part où deux comptes d'un même tricheur ne rencontreraient qu'eux-mêmes ;
+  - les nombres du classement sont ceux du jeu (`EQUILIBRAGE.joute` : K 32, échelle 400, cote minimale 100).
 - Résultat et Elo (K=32) sont enregistrés une seule fois. En 2v2 solo, l'espérance dépend des moyennes des deux camps. Les classements affichent les participants ayant terminé au moins une partie en direct, le top 100 et le voisinage du joueur.
-- Les réponses personnelles vérifiées font progresser XP et maîtrise. Les parties terminées normalement conservent les récompenses d'Encre/XP et les limites quotidiennes existantes. Un abandon ou forfait ne donne aucune prime de fin ; l'XP déjà gagnée reste acquise.
+- Les réponses personnelles vérifiées font progresser XP et maîtrise. Les parties terminées normalement conservent les récompenses d'Encre/XP et les limites quotidiennes existantes. Un abandon ou forfait ne donne aucune prime de fin au camp qui abandonne ou disparaît ; **le gagnant reçoit sa récompense de victoire** (décision du 25/09/2026). L'XP déjà gagnée reste acquise.
 
 ## Architecture et limites
 

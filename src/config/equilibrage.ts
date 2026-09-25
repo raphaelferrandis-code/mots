@@ -172,6 +172,11 @@ export const EQUILIBRAGE = {
     coteMinimale: 100,
     facteurK: 32,
     echelle: 400,
+    // Contre la triche (décisions de Raphaël du 25/09/2026) : contre les mêmes adversaires, seules les premières
+    // parties du jour font bouger la cote (heure de Paris) ; on n'apparaît au classement qu'après quelques parties
+    // classées. Un profil supprimé puis recréé retrouve sa cote (serveur/classement.ts).
+    rencontresClasseesParJour: 3,
+    partiesPourEtreClasse: 5,
     // Les ligues, de la plus modeste à la plus haute, et la cote à partir de laquelle on y entre.
     ligues: [
       { nom: 'Apprenti', aPartirDe: 0 },

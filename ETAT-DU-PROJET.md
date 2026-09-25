@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — le classement contre la triche : jeu publié, `serveur/18-classement.sql` À COLLER (étape 10).**
+> Décisions de Raphaël : contre les mêmes adversaires, 3 parties classées par jour (heure de Paris) ; le gagnant d'un
+> abandon ou d'un forfait reçoit sa récompense de victoire ; un profil supprimé puis recréé retrouve son identité et sa
+> cote (`comptes.profil_precedent`) ; on entre au classement après 5 parties classées. Et d'office : filtres de contenu
+> normalisés par le serveur (plus de file à part), nombres du classement repris de `EQUILIBRAGE.joute` (cote minimale
+> 100). Aucune fonction à redéployer (le paquet `joutes-direct` du dépôt reste celui qui est en ligne). La dernière
+> migration est désormais la 18.
+
 > **25 septembre 2026 — tenue du serveur et match à accepter : EN LIGNE.** Fonction `joutes-direct` redéployée et
 > `serveur/17-tenue-du-serveur.sql` collé par Raphaël, vérifiés par l'assistant en lecture seule (code déployé identique au
 > dépôt, 26 fonctions, verrous, droits). Décisions de Raphaël : « J'y vais ! » pour tous, 20 s pour

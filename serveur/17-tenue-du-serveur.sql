@@ -31,6 +31,13 @@ create table if not exists public.direct_cotes (
   cote integer not null default 1000, jouees integer not null default 0, gagnees integer not null default 0,
   primary key(mode,sujet)
 );
+-- Les rencontres du jour (les mêmes camps face à face) : seules les 3 premières font bouger la cote
+-- (décision du 25/09/2026). Un registre à part, que le retrait d'un profil n'efface pas ; nettoyé au fil de l'eau.
+create table if not exists public.direct_rencontres (
+  jour date not null, rencontre text not null, parties integer not null default 0, primary key(jour,rencontre)
+);
+alter table public.direct_rencontres enable row level security;
+revoke all on public.direct_rencontres from public,anon,authenticated;
 -- Les notifications ne contiennent ni réponses, ni mains, ni données de l'autre camp.
 create table if not exists public.direct_signaux (
   utilisateur uuid primary key references auth.users(id) on delete cascade, version bigint not null default 1
@@ -103,6 +110,10 @@ begin
   perform pg_advisory_xact_lock(20260924);
   select * into moi from public.profils where utilisateur=p_utilisateur and not maison;
   if not found then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
+  -- Les filtres de contenu, triés et sans doublon : une combinaison inhabituelle ne crée pas une file à part, où deux
+  -- comptes d'un même tricheur ne rencontreraient qu'eux-mêmes.
+  p_masques:=coalesce((select jsonb_agg(x.v order by x.v) from (select distinct filtre.value v from jsonb_array_elements_text(coalesce(p_masques,'[]'::jsonb)) filtre
+    where filtre.value in ('Familier','Injurieux','Littéraire','Vieilli')) x),'[]'::jsonb);
   delete from public.direct_file where present_le < now()-interval '150 seconds';
   perform public.direct_expirer_propositions();
   select partie into identifiant from public.direct_places where utilisateur=p_utilisateur and not archive;
@@ -226,7 +237,7 @@ end $$;
 create or replace function public.direct_appliquer(p_utilisateur uuid,p_id uuid,p_revision integer,p_etat jsonb,p_requete text,p_action jsonb) returns boolean
 language plpgsql security definer set search_path='' as $$
 declare partie_lue public.direct_parties%rowtype; ligne record; moyennes numeric[]; score numeric; avant integer; apres integer;
-  evenement jsonb; uid uuid; gain integer; resultat text; prime jsonb;
+  evenement jsonb; uid uuid; gain integer; resultat text; prime jsonb; cle_rencontre text; deja integer;
 begin
   perform c.utilisateur from public.comptes c where c.utilisateur in(select s.utilisateur from public.direct_places s where s.partie=p_id) order by c.utilisateur for update;
   select * into partie_lue from public.direct_parties where id=p_id for update;
@@ -253,13 +264,24 @@ begin
     for ligne in select s.utilisateur,s.camp from public.direct_places s where s.partie=p_id loop
       resultat:=case when p_etat->>'vainqueur'='nul' then 'nul' when p_etat->>'vainqueur'=ligne.camp::text then 'victoire' else 'defaite' end;
       prime:='{"encre":0,"reduite":false}'::jsonb;gain:=0;
-      if p_etat->>'raison' is null then
+      -- Le gagnant reçoit sa récompense même quand l'autre camp abandonne ou disparaît (décision du 25/09/2026) ;
+      -- le camp qui abandonne ou disparaît, rien.
+      if p_etat->>'raison' is null or resultat='victoire' then
         prime:=public.recompenser(ligne.utilisateur,35,resultat);
         gain:=public.gagner_xp(ligne.utilisateur,30+case when resultat='victoire' then 20 else 0 end,true);
       end if;
       update public.direct_places set xp=xp+gain,recompense=prime where partie=p_id and utilisateur=ligne.utilisateur;
       update public.comptes set combats_joues=combats_joues+1,combats_gagnes=combats_gagnes+(resultat='victoire')::integer where utilisateur=ligne.utilisateur;
     end loop;
+    -- La même rencontre (les mêmes camps face à face) ne fait bouger la cote que 3 fois par jour
+    -- (heure de Paris) ; au-delà, la partie compte pour tout le reste, pas pour la cote ni pour le classement.
+    select partie_lue.mode||':'||string_agg(c.sujets,'|' order by c.sujets) into cle_rencontre from (
+      select string_agg(s.sujet::text,',' order by s.sujet) sujets from public.direct_places s where s.partie=p_id group by s.camp
+    ) c;
+    insert into public.direct_rencontres(jour,rencontre,parties) values((now() at time zone 'Europe/Paris')::date,cle_rencontre,1)
+      on conflict(jour,rencontre) do update set parties=public.direct_rencontres.parties+1 returning parties into deja;
+    delete from public.direct_rencontres where jour<(now() at time zone 'Europe/Paris')::date-2;
+    if deja<=3 then
     -- Ordre stable des verrous, y compris lorsque des résultats arrivent en même temps.
     perform c.sujet from public.direct_cotes c where c.mode=partie_lue.mode and c.sujet in(select sujet from public.direct_places where partie=p_id) order by c.sujet for update;
     select array_agg(m.cote order by m.camp) into moyennes from (
@@ -268,13 +290,14 @@ begin
     for ligne in select distinct s.sujet,s.camp from public.direct_places s where s.partie=p_id loop
       select cote into avant from public.direct_cotes where mode=partie_lue.mode and sujet=ligne.sujet;
       score:=case when p_etat->>'vainqueur'='nul' then 0.5 when (p_etat->>'vainqueur')::text=ligne.camp::text then 1 else 0 end;
-      apres:=greatest(0,avant+round(32*(score-1/(1+power(10,(moyennes[2-ligne.camp]-moyennes[ligne.camp+1])/400))))::integer);
+      apres:=greatest(100,avant+round(32*(score-1/(1+power(10,(moyennes[2-ligne.camp]-moyennes[ligne.camp+1])/400))))::integer);
       update public.direct_cotes set cote=apres,jouees=jouees+1,gagnees=gagnees+(score=1)::integer where mode=partie_lue.mode and sujet=ligne.sujet;
       if partie_lue.mode='solo' then
         update public.profils set cote=apres,jouees=jouees+1,gagnees=gagnees+(score=1)::integer,maj_le=now() where id=ligne.sujet;
       end if;
       update public.direct_places set cote_avant=avant,cote_apres=apres where partie=p_id and sujet=ligne.sujet;
     end loop;
+    end if;
   end if;
   perform public.direct_signaler(array(select utilisateur from public.direct_places where partie=p_id));
   return true;
@@ -295,9 +318,13 @@ begin
     from public.direct_cotes c
     left join public.equipes e on p_mode='duo_equipe' and e.id=c.sujet
     left join public.profils p on p_mode<>'duo_equipe' and p.id=c.sujet and not p.maison
-    where c.mode=p_mode and c.jouees>0 and (e.id is not null or p.id is not null)
+    where c.mode=p_mode and c.jouees>=5 and (e.id is not null or p.id is not null)
   ) select jsonb_build_object('total',(select count(*) from classes),'lignes',coalesce((select jsonb_agg(to_jsonb(x) order by rang) from classes x
-      where rang<=100 or abs(rang-coalesce((select rang from classes where moi),-1000))<=2),'[]'::jsonb)) into resultat;
+      where rang<=100 or abs(rang-coalesce((select rang from classes where moi),-1000))<=2),'[]'::jsonb),
+    -- On entre au classement après quelques parties classées ; avant, le joueur voit quand même sa cote.
+    'minimum',5,
+    'moi',(select jsonb_build_object('cote',c.cote,'jouees',c.jouees) from public.direct_cotes c
+      where c.mode=p_mode and c.sujet=case when p_mode='duo_equipe' then mon_equipe else mon_profil end)) into resultat;
   return resultat;
 end $$;
 
@@ -329,6 +356,17 @@ end $$;
 drop trigger if exists direct_profil on public.profils;
 create trigger direct_profil before delete or update of utilisateur on public.profils for each row execute function public.direct_proteger_profil();
 
+-- Les cotes suivent le compte (elles survivent au retrait du profil : serveur/classement.ts) et s'effacent avec lui.
+create or replace function public.direct_oublier_les_cotes() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+  delete from public.direct_cotes where sujet in (select id from public.profils where utilisateur=old.utilisateur)
+    or sujet=(to_jsonb(old)->'profil_precedent'->>'id')::uuid; -- to_jsonb : sans erreur si la colonne n'est pas encore là
+  return old;
+end $$;
+drop trigger if exists direct_oublier_les_cotes on public.comptes;
+create trigger direct_oublier_les_cotes before delete on public.comptes for each row execute function public.direct_oublier_les_cotes();
+
 -- Les anciens clients ne peuvent plus démarrer une joute classée contre un double.
 create or replace function public.direct_refuser_double() returns trigger
 language plpgsql security definer set search_path='' as $$
@@ -344,6 +382,7 @@ end $$;
 drop trigger if exists direct_pas_de_double on public.combats;
 create trigger direct_pas_de_double before insert on public.combats for each row execute function public.direct_refuser_double();
 
+revoke all on function public.direct_oublier_les_cotes() from public,anon,authenticated;
 revoke all on function public.direct_defaire_la_proposition(uuid,uuid),public.direct_expirer_propositions(),public.direct_accepter(uuid,uuid,boolean) from public,anon,authenticated;
 grant execute on function public.direct_accepter(uuid,uuid,boolean) to service_role;
 revoke all on function public.direct_signaler(uuid[]),public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb),public.direct_proteger_membre(),public.direct_proteger_profil(),public.direct_refuser_double(),public.classement_direct(text) from public,anon,authenticated;

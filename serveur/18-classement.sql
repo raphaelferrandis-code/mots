@@ -1,12 +1,22 @@
-// État privé, files distinctes et cotes atomiques. Aucune écriture client directe.
-// Une partie trouvée est d'abord « proposée » : elle ne commence que quand chacun a pressé « J'y vais ! » à temps
-// (EQUILIBRAGE.direct). Sinon elle tombe sans défaite pour personne, et ceux qui avaient accepté reprennent leur rang.
-import { XP } from '../src/jeu/personnalisation.ts';
-import { VERROU_DU_DIRECT } from './verrous.ts';
-import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
-const D = EQUILIBRAGE.direct;
-const J = EQUILIBRAGE.joute;
-export function direct(): string { return String.raw`
+-- Le classement : filtres normalisés, rencontres limitées, récompense du gagnant, cote retrouvée, seuil d’entrée.
+-- Après 17-tenue-du-serveur.sql. Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après.
+begin;
+
+-- ── Le classement suit le compte ─────────────────────────────────────────────
+alter table public.comptes add column if not exists profil_precedent jsonb; -- { id, cote, jouees, gagnees } du dernier profil retiré
+
+create or replace function public.retenir_le_profil() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.comptes set profil_precedent = jsonb_build_object('id', old.id, 'cote', old.cote, 'jouees', old.jouees, 'gagnees', old.gagnees)
+    where utilisateur = old.utilisateur;
+  return null;
+end $$;
+drop trigger if exists retenir_le_profil on public.profils;
+create trigger retenir_le_profil after delete on public.profils
+  for each row when (old.utilisateur is not null) execute function public.retenir_le_profil();
+revoke execute on function public.retenir_le_profil() from public, anon, authenticated;
+
 create table if not exists public.direct_parties (
   id uuid primary key default gen_random_uuid(), mode text not null check(mode in ('solo','duo_solo','duo_equipe')),
   etat jsonb, revision integer not null default 0, termine boolean not null default false,
@@ -35,7 +45,7 @@ create table if not exists public.direct_cotes (
   cote integer not null default 1000, jouees integer not null default 0, gagnees integer not null default 0,
   primary key(mode,sujet)
 );
--- Les rencontres du jour (les mêmes camps face à face) : seules les ${J.rencontresClasseesParJour} premières font bouger la cote
+-- Les rencontres du jour (les mêmes camps face à face) : seules les 3 premières font bouger la cote
 -- (décision du 25/09/2026). Un registre à part, que le retrait d'un profil n'efface pas ; nettoyé au fil de l'eau.
 create table if not exists public.direct_rencontres (
   jour date not null, rencontre text not null, parties integer not null default 0, primary key(jour,rencontre)
@@ -111,14 +121,14 @@ begin
     return jsonb_build_object('attente',null);
   end if;
   -- Le verrou du direct, commun avec les adhésions : aucun changement de duo pendant la réservation.
-  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform pg_advisory_xact_lock(20260924);
   select * into moi from public.profils where utilisateur=p_utilisateur and not maison;
   if not found then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
   -- Les filtres de contenu, triés et sans doublon : une combinaison inhabituelle ne crée pas une file à part, où deux
   -- comptes d'un même tricheur ne rencontreraient qu'eux-mêmes.
   p_masques:=coalesce((select jsonb_agg(x.v order by x.v) from (select distinct filtre.value v from jsonb_array_elements_text(coalesce(p_masques,'[]'::jsonb)) filtre
     where filtre.value in ('Familier','Injurieux','Littéraire','Vieilli')) x),'[]'::jsonb);
-  delete from public.direct_file where present_le < now()-interval '${D.secondesDePresenceDansLaFile} seconds';
+  delete from public.direct_file where present_le < now()-interval '150 seconds';
   perform public.direct_expirer_propositions();
   select partie into identifiant from public.direct_places where utilisateur=p_utilisateur and not archive;
   if p_action='quitter' and identifiant is not null then
@@ -173,14 +183,14 @@ begin
         perform public.direct_signaler(candidats);
       else
         -- Une proposition : chacun doit l'accepter à temps (direct_accepter) pour que la partie commence.
-        insert into public.direct_parties(mode,accepter_avant) values(ma_file.mode,now()+interval '${D.secondesPourAccepter} seconds') returning id into identifiant;
+        insert into public.direct_parties(mode,accepter_avant) values(ma_file.mode,now()+interval '20 seconds') returning id into identifiant;
         foreach sujet in array candidats loop
           select * into f from public.direct_file where utilisateur=sujet;
           camp:=case when idx<cardinality(candidats)/2 then 0 else 1 end;
           insert into public.direct_places(partie,profil,utilisateur,place,camp,equipe,sujet,depart,en_file_depuis)
             values(identifiant,f.profil,f.utilisateur,idx,camp,f.equipe,coalesce(f.equipe,f.profil),f.depart||jsonb_build_object('equipe',camp),f.cree_le);
           insert into public.direct_cotes(mode,sujet,cote) values(ma_file.mode,coalesce(f.equipe,f.profil),
-            case when ma_file.mode='solo' then (select cote from public.profils where id=f.profil) else ${J.coteDeDepart} end) on conflict do nothing;
+            case when ma_file.mode='solo' then (select cote from public.profils where id=f.profil) else 1000 end) on conflict do nothing;
           idx:=idx+1;
         end loop;
         delete from public.direct_file where utilisateur=any(candidats);
@@ -213,7 +223,7 @@ create or replace function public.direct_accepter(p_utilisateur uuid,p_id uuid,p
 language plpgsql security definer set search_path='' as $$
 declare d public.direct_parties%rowtype;
 begin
-  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform pg_advisory_xact_lock(20260924);
   perform public.direct_expirer_propositions();
   select * into d from public.direct_parties x where x.id=p_id
     and exists(select 1 from public.direct_places s where s.partie=x.id and s.utilisateur=p_utilisateur and not s.archive) for update;
@@ -258,7 +268,7 @@ begin
     perform public.noter_reponse_verifiee(uid,evenement||jsonb_build_object('parade',true,'apprentissage',
       exists(select 1 from public.possessions where utilisateur=uid and carte=evenement->>'carte')));
     if (evenement->>'reussie')::boolean then
-      gain:=public.gagner_xp(uid,${XP.reponse},true);
+      gain:=public.gagner_xp(uid,5,true);
       update public.direct_places set xp=xp+gain where partie=p_id and utilisateur=uid;
     end if;
   end loop;
@@ -271,13 +281,13 @@ begin
       -- Le gagnant reçoit sa récompense même quand l'autre camp abandonne ou disparaît (décision du 25/09/2026) ;
       -- le camp qui abandonne ou disparaît, rien.
       if p_etat->>'raison' is null or resultat='victoire' then
-        prime:=public.recompenser(ligne.utilisateur,${EQUILIBRAGE.joute.encreParVictoire},resultat);
-        gain:=public.gagner_xp(ligne.utilisateur,${XP.duel}+case when resultat='victoire' then ${XP.victoire} else 0 end,true);
+        prime:=public.recompenser(ligne.utilisateur,35,resultat);
+        gain:=public.gagner_xp(ligne.utilisateur,30+case when resultat='victoire' then 20 else 0 end,true);
       end if;
       update public.direct_places set xp=xp+gain,recompense=prime where partie=p_id and utilisateur=ligne.utilisateur;
       update public.comptes set combats_joues=combats_joues+1,combats_gagnes=combats_gagnes+(resultat='victoire')::integer where utilisateur=ligne.utilisateur;
     end loop;
-    -- La même rencontre (les mêmes camps face à face) ne fait bouger la cote que ${J.rencontresClasseesParJour} fois par jour
+    -- La même rencontre (les mêmes camps face à face) ne fait bouger la cote que 3 fois par jour
     -- (heure de Paris) ; au-delà, la partie compte pour tout le reste, pas pour la cote ni pour le classement.
     select partie_lue.mode||':'||string_agg(c.sujets,'|' order by c.sujets) into cle_rencontre from (
       select string_agg(s.sujet::text,',' order by s.sujet) sujets from public.direct_places s where s.partie=p_id group by s.camp
@@ -285,7 +295,7 @@ begin
     insert into public.direct_rencontres(jour,rencontre,parties) values((now() at time zone 'Europe/Paris')::date,cle_rencontre,1)
       on conflict(jour,rencontre) do update set parties=public.direct_rencontres.parties+1 returning parties into deja;
     delete from public.direct_rencontres where jour<(now() at time zone 'Europe/Paris')::date-2;
-    if deja<=${J.rencontresClasseesParJour} then
+    if deja<=3 then
     -- Ordre stable des verrous, y compris lorsque des résultats arrivent en même temps.
     perform c.sujet from public.direct_cotes c where c.mode=partie_lue.mode and c.sujet in(select sujet from public.direct_places where partie=p_id) order by c.sujet for update;
     select array_agg(m.cote order by m.camp) into moyennes from (
@@ -294,7 +304,7 @@ begin
     for ligne in select distinct s.sujet,s.camp from public.direct_places s where s.partie=p_id loop
       select cote into avant from public.direct_cotes where mode=partie_lue.mode and sujet=ligne.sujet;
       score:=case when p_etat->>'vainqueur'='nul' then 0.5 when (p_etat->>'vainqueur')::text=ligne.camp::text then 1 else 0 end;
-      apres:=greatest(${J.coteMinimale},avant+round(${J.facteurK}*(score-1/(1+power(10,(moyennes[2-ligne.camp]-moyennes[ligne.camp+1])/${J.echelle}))))::integer);
+      apres:=greatest(100,avant+round(32*(score-1/(1+power(10,(moyennes[2-ligne.camp]-moyennes[ligne.camp+1])/400))))::integer);
       update public.direct_cotes set cote=apres,jouees=jouees+1,gagnees=gagnees+(score=1)::integer where mode=partie_lue.mode and sujet=ligne.sujet;
       if partie_lue.mode='solo' then
         update public.profils set cote=apres,jouees=jouees+1,gagnees=gagnees+(score=1)::integer,maj_le=now() where id=ligne.sujet;
@@ -322,11 +332,11 @@ begin
     from public.direct_cotes c
     left join public.equipes e on p_mode='duo_equipe' and e.id=c.sujet
     left join public.profils p on p_mode<>'duo_equipe' and p.id=c.sujet and not p.maison
-    where c.mode=p_mode and c.jouees>=${J.partiesPourEtreClasse} and (e.id is not null or p.id is not null)
+    where c.mode=p_mode and c.jouees>=5 and (e.id is not null or p.id is not null)
   ) select jsonb_build_object('total',(select count(*) from classes),'lignes',coalesce((select jsonb_agg(to_jsonb(x) order by rang) from classes x
       where rang<=100 or abs(rang-coalesce((select rang from classes where moi),-1000))<=2),'[]'::jsonb),
     -- On entre au classement après quelques parties classées ; avant, le joueur voit quand même sa cote.
-    'minimum',${J.partiesPourEtreClasse},
+    'minimum',5,
     'moi',(select jsonb_build_object('cote',c.cote,'jouees',c.jouees) from public.direct_cotes c
       where c.mode=p_mode and c.sujet=case when p_mode='duo_equipe' then mon_equipe else mon_profil end)) into resultat;
   return resultat;
@@ -336,7 +346,7 @@ end $$;
 create or replace function public.direct_proteger_membre() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
-  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform pg_advisory_xact_lock(20260924);
   perform public.direct_expirer_propositions();
   if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.profil=old.profil and not p.termine)
     then raise exception 'Termine ou abandonne la joute en direct avant de changer d’équipe ou de supprimer ton profil.'; end if;
@@ -349,7 +359,7 @@ create trigger direct_membre before delete on public.equipiers for each row exec
 create or replace function public.direct_proteger_profil() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
-  perform pg_advisory_xact_lock(${VERROU_DU_DIRECT});
+  perform pg_advisory_xact_lock(20260924);
   perform public.direct_expirer_propositions();
   if exists(select 1 from public.direct_places s join public.direct_parties p on p.id=s.partie where s.profil=old.id and not p.termine)
     then raise exception 'Termine ou abandonne la joute en direct avant de supprimer ou transférer ton profil.'; end if;
@@ -392,4 +402,64 @@ grant execute on function public.direct_accepter(uuid,uuid,boolean) to service_r
 revoke all on function public.direct_signaler(uuid[]),public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb),public.direct_proteger_membre(),public.direct_proteger_profil(),public.direct_refuser_double(),public.classement_direct(text) from public,anon,authenticated;
 grant execute on function public.classement_direct(text) to authenticated;
 grant execute on function public.direct_salon(uuid,text,text,jsonb),public.direct_contexte(uuid),public.direct_annuler_preparation(uuid,uuid),public.direct_appliquer(uuid,uuid,integer,jsonb,text,jsonb) to service_role;
-`; }
+create or replace function public.publier_mon_profil(p_pseudo text, p_deck jsonb, p_savoirs jsonb, p_parades jsonb) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  propre text := btrim(regexp_replace(coalesce(p_pseudo, ''), '\s+', ' ', 'g'));
+  refus text;
+  ma_cote integer;
+  precedent jsonb;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  -- Un seul envoi à la fois pour un même joueur : deux envois simultanés de son tout premier profil se gêneraient
+  -- (constaté à la première mise en route : le second revenait en erreur).
+  perform pg_advisory_xact_lock(hashtextextended(moi::text, 0));
+  perform 1 from public.comptes where utilisateur = moi for update;
+  refus := public.pseudo_refuse(propre);
+  if refus is not null then return jsonb_build_object('accepte', false, 'raison', refus); end if;
+  if exists (select 1 from public.profils where pseudo_cle = public.cle_du_pseudo(propre) and utilisateur is distinct from moi) then
+    return jsonb_build_object('accepte', false, 'raison', 'Ce pseudonyme est déjà pris.');
+  end if;
+  if p_deck is null or p_savoirs is null or p_parades is null or jsonb_typeof(p_deck) <> 'array' or jsonb_array_length(p_deck) > 10 or jsonb_typeof(p_savoirs) <> 'object' or jsonb_typeof(p_parades) <> 'object'
+     or pg_column_size(p_deck) > 2000 or pg_column_size(p_savoirs) > 4000 or pg_column_size(p_parades) > 2000 then
+    raise exception 'Ce profil ne peut pas être enregistré.';
+  end if;
+  if p_deck <> public.deck_propre(moi, p_deck) then
+    raise exception 'Le deck doit contenir des cartes distinctes de ta collection.';
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where jsonb_typeof(value) <> 'object'
+       or coalesce(value->>'posees', '') !~ '^[0-9]{1,8}$'
+       or coalesce(value->>'reussies', '') !~ '^[0-9]{1,8}$'
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
+
+  if exists(select 1 from public.comptes where utilisateur=moi and progression_active) then
+    p_savoirs := public.savoirs_verifies(moi,p_deck);
+    select parades_verifiees into p_parades from public.comptes where utilisateur=moi;
+  end if;
+  if exists (
+    select 1 from (select value from jsonb_each(p_savoirs) union all select value from jsonb_each(p_parades)) s
+    where (value->>'reussies')::integer > (value->>'posees')::integer
+  ) then raise exception 'Statistiques de maîtrise invalides.'; end if;
+
+  -- Un profil recréé reprend l'identité et la cote du précédent (serveur/classement.ts) : on n'efface pas ses défaites
+  -- en recommençant. Les cotes des joutes en direct, rangées sous cette identité, reviennent avec elle.
+  select c.profil_precedent into precedent from public.comptes c where c.utilisateur = moi;
+  if exists (select 1 from public.profils where id = (precedent->>'id')::uuid) then precedent := null; end if;
+  begin
+    insert into public.profils (id, utilisateur, pseudo, pseudo_cle, deck, savoirs, parades, cote, jouees, gagnees)
+    values (coalesce((precedent->>'id')::uuid, gen_random_uuid()), moi, propre, public.cle_du_pseudo(propre), p_deck, p_savoirs, p_parades,
+      coalesce((precedent->>'cote')::integer, 1000), coalesce((precedent->>'jouees')::integer, 0), coalesce((precedent->>'gagnees')::integer, 0))
+    on conflict (utilisateur) do update set pseudo = excluded.pseudo, pseudo_cle = excluded.pseudo_cle, deck = excluded.deck, savoirs = excluded.savoirs, parades = excluded.parades, maj_le = now()
+    returning cote into ma_cote;
+  exception when unique_violation then
+    -- Deux joueurs ont demandé le même pseudonyme au même instant : le premier arrivé le garde.
+    return jsonb_build_object('accepte', false, 'raison', 'Ce pseudonyme est déjà pris.');
+  end;
+  return jsonb_build_object('accepte', true, 'cote', ma_cote);
+end $$;
+
+commit;

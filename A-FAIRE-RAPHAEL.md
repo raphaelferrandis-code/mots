@@ -66,6 +66,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
+| Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | Jeu en ligne ; **script 18 à coller (étape 10)** |
 
 ---
 
@@ -187,6 +188,18 @@ après les autres le même verrou. Tes décisions du 25 septembre : un match tro
 - [ ] Essayer avec quelqu'un : chacun lance « Chercher une partie » en Solo ; « Adversaire trouvé ! » apparaît ; la partie
       ne commence que quand les deux ont pressé « J'y vais ! ».
 
+### Étape 10 — Coller le script 18 (le classement contre la triche)
+
+Tes décisions du 25 septembre : contre le même adversaire, **3 parties classées par jour** ; le gagnant d'un abandon
+**reçoit sa récompense** ; un profil recréé **retrouve sa cote** ; on entre au classement après **5 parties**.
+Détails : [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). **Aucune fonction serveur à redéployer** ; le jeu est déjà
+publié et s'adapte tout seul.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/18-classement.sql → **Copy raw file** → Supabase →
+      **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse attendue :
+      **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
+- [ ] Le dire à l'assistant : il vérifie en lecture seule.
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de
@@ -239,7 +252,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 - Ne jamais ouvrir les paiements sans demande explicite, ne jamais lire, copier ni afficher une clé secrète
   (Supabase, Stripe, Cloudflare).
 - Changement du serveur : modifier `serveur/*.ts`, lancer `npm run serveur:script`, ajouter une **nouvelle**
-  migration numérotée (la dernière est la 17) ; ne jamais recoller une ancienne migration.
+  migration numérotée (la dernière est la 18) ; ne jamais recoller une ancienne migration.
 - Bancs locaux sans compte distant : `node serveur/apercu-direct.mjs` (joutes en direct à quatre) et
   `node serveur/apercu-secours-parrainage.mjs` (parrainage et adversaire de secours).
 - Ne committer que ses propres fichiers, par leur nom ; tenir à jour l'en-tête d'`ETAT-DU-PROJET.md` et cette page.
