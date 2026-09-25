@@ -1,6 +1,6 @@
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
-import { faceCachee, melanger, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
-import type { Duel } from '../src/jeu/duel.ts';
+import { bonusDEnchainement, faceCachee, melanger, prevoirLAttaque, taillesDesFactions } from '../src/jeu/duel.ts';
+import type { Duel, TaillesDesFactions } from '../src/jeu/duel.ts';
 import { composerLEpreuve } from '../src/jeu/epreuve.ts';
 import type { Epreuve } from '../src/jeu/epreuve.ts';
 import type { Hasard } from '../src/jeu/hasard.ts';
@@ -100,6 +100,12 @@ function resoudre(e: EtatDirect, catalogue: CatalogueCombat, maintenant: number)
   } else { e.phase = 'bilan'; e.echeance = maintenant + TEMPS_DIRECT.bilan; }
 }
 export function avancerDirect(initial: EtatDirect, catalogue: CatalogueCombat, hasard: Hasard, maintenant: number, commande?: { joueur: number; manche: number; phase: PhaseDirect; action: ActionDirect }): EtatDirect {
+  // Une commande partie avant l'échéance, arrivée juste après (le temps du réseau), compte comme arrivée à temps : on
+  // l'applique à l'instant de l'échéance, puis la partie avance jusqu'à maintenant.
+  if (commande && commande.action.type !== 'abandonner' && maintenant >= initial.echeance && maintenant < initial.echeance + R.margeDuReseauEnMillisecondes
+    && commande.manche === initial.manche && commande.phase === initial.phase && initial.phase !== 'fin') {
+    return avancerDirect(avancerDirect(initial, catalogue, hasard, initial.echeance - 1, commande), catalogue, hasard, maintenant);
+  }
   const e = structuredClone(initial);
   // Rattrapage borné, depuis les échéances serveur, même si tous les onglets étaient fermés.
   for (let i = 0; e.phase !== 'fin' && maintenant >= e.echeance && i < 100; i++) {
@@ -133,12 +139,14 @@ export function avancerDirect(initial: EtatDirect, catalogue: CatalogueCombat, h
   }
   return e;
 }
-export function vueDirect(e: EtatDirect, utilisateur: string): VueDirect {
+// « tailles » : pour annoncer l'attaque d'un mot face cachée avec son bonus d'enchaînement, comme le duel.
+export function vueDirect(e: EtatDirect, utilisateur: string, tailles?: TaillesDesFactions): VueDirect {
   const moi = e.joueurs.findIndex(j => j.utilisateur === utilisateur);
   if (moi < 0) throw new RefusDirect('Tu ne participes pas à cette partie.');
   // Pendant la pose, les mots de l'autre équipe ne se voient que face cachée (nature, attaque, défense) ; tous se
   // retournent à l'ouverture des réponses. Aucune définition n'est transmise avant le bilan.
-  const voir = (p: PoseDirect): CarteIndex => e.phase === 'pose' && e.joueurs[p.joueur].equipe !== e.joueurs[moi].equipe ? faceCachee(p.carte) : { ...p.carte, definition: '' };
+  const voir = (p: PoseDirect): CarteIndex => e.phase === 'pose' && e.joueurs[p.joueur].equipe !== e.joueurs[moi].equipe
+    ? faceCachee(p.carte, tailles ? bonusDEnchainement(e.joueurs[p.joueur].derniere, p.carte, tailles, R) : 0) : { ...p.carte, definition: '' };
   return { mode: e.mode, manche: e.manche, phase: e.phase, echeance: e.echeance, moi,
     joueurs: e.joueurs.map(j => ({ pseudo: j.pseudo, equipe: j.equipe, main: j.equipe === e.joueurs[moi].equipe ? j.main.map(c => ({ ...c, definition: '' })) : [], restantes: j.pioche.length + j.main.length, derniere: j.derniere && { ...j.derniere, definition: '' } })),
     noms: e.noms, pv: e.pv, ordre: e.ordre, arbitres: e.arbitres, poses: e.poses.map(p => ({ ...p, carte: voir(p) })),

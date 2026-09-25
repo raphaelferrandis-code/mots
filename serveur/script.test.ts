@@ -7,11 +7,11 @@ import path from 'node:path';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { NOMBRE_DE_JOUEURS_MAISON, fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
-import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
+import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -37,6 +37,7 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('17-tenue-du-serveur.sql'), migrationTenueDuServeur());
     assert.equal(lire('18-classement.sql'), migrationClassement());
     assert.equal(lire('19-paiements.sql'), migrationPaiements());
+    assert.equal(lire('20-points-secondaires.sql'), migrationPointsSecondaires());
   });
 
   it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {
@@ -73,9 +74,9 @@ describe('les scripts du serveur', () => {
     for (const carte of edition.cartes) assert.ok(script.includes(`"id":"${carte.id}"`), carte.id);
     // Les aides internes ne sont offertes à personne ; les fonctions du jeu seulement aux joueurs connectés.
     assert.match(sql, /revoke execute on function [^;]*public\.tirer_un_paquet\(uuid, text\[\]\)[^;]* from authenticated;/);
-    assert.match(sql, /grant execute on function [^;]*public\.ouvrir_un_paquet\(text\[\]\)[^;]* to authenticated;/);
+    assert.match(sql, /grant execute on function [^;]*public\.ouvrir_un_paquet\(text\[\], uuid\)[^;]* to authenticated;/);
     // Le code de secours : sa longueur est celle du jeu, son empreinte reste interne, et un transfert emporte timbres et duels.
-    assert.ok(sql.includes(`char_length(propre) <> ${LONGUEUR_DU_CODE}`));
+    assert.ok(sql.includes(`propre !~ '^[${ALPHABET_DU_CODE}]{${LONGUEUR_DU_CODE}}$'`), 'seulement les signes que le jeu tire');
     assert.match(sql, /revoke execute on function [^;]*public\.empreinte_du_code\(text\)[^;]* from authenticated;/);
     assert.match(sql, /grant execute on function [^;]*public\.recuperer_par_code\(text\)[^;]* to authenticated;/);
     assert.ok(sql.includes('references public.comptes (utilisateur) on delete cascade on update cascade'));

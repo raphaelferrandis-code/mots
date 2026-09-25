@@ -53,13 +53,16 @@ for each row execute function public.changement_offre();
 update public.comptes set prochain_hebdo = now()
 where abonnement <> 'aucun' and abonnement_jusqu_au > now() and prochain_hebdo is null;
 
-create or replace function public.reclamer_recompense(p_type text, p_masques text[]) returns jsonb
+drop function if exists public.reclamer_recompense(text, text[]);
+create or replace function public.reclamer_recompense(p_type text, p_masques text[], p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare c public.comptes; tirees jsonb;
+declare c public.comptes; tirees jsonb; deja jsonb;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   select * into c from public.comptes where utilisateur = auth.uid() for update;
   if not found then raise exception 'Compte introuvable.'; end if;
+  deja := public.demande_deja_traitee(auth.uid(), p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(auth.uid())); end if;
   if p_type = 'achat' then
     if not c.achat_unique or c.cadeau_achat_reclame then raise exception 'Aucune Hors-série à recevoir.'; end if;
     update public.comptes set cadeau_achat_reclame = true where utilisateur = c.utilisateur;
@@ -70,6 +73,7 @@ begin
   else raise exception 'Récompense inconnue.';
   end if;
   tirees := public.tirer_les_cartes(c.utilisateur, p_masques, p_type);
+  perform public.noter_la_demande(c.utilisateur, p_demande, jsonb_build_object('cartes', tirees));
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 `; }

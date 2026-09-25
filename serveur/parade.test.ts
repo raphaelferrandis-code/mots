@@ -52,6 +52,17 @@ it('une parade fausse ou expirée ne fait rater aucune attaque et ne crédite au
     assert.equal(suite.etat.apprentissages[e.adverse.id].reussites,0);
   }
 });
+it('une parade partie à temps compte encore si le réseau la retarde un peu, pas au-delà', () => {
+  const avant=depart();
+  const question=avancerCombat(avant,{type:'choisir',carte:avant.duel.camps.joueur.main[0].id},catalogue,hasardReproductible(4),1000).etat;
+  const e=question.etape;
+  if(e.nom!=='parade') throw Error('parade attendue');
+  const fin=1000+EQUILIBRAGE.duel.secondesPourRepondre*1000;
+  const marge=EQUILIBRAGE.duel.margeDuReseauEnMillisecondes;
+  const repondre=(temps:number)=>avancerCombat(structuredClone(question),{type:'repondre',choisie:e.epreuve.bonne},catalogue,()=>.999,temps).reponse?.reussie;
+  assert.equal(repondre(fin+marge),true,'dans la marge du réseau');
+  assert.equal(repondre(fin+marge+1),false,'au-delà, la parade est perdue');
+});
 it('reprend une ancienne question d’attaque sans la poser ni inventer une récompense', () => {
   const avant=depart();
   const question=avancerCombat(avant,{type:'choisir',carte:avant.duel.camps.joueur.main[0].id},catalogue,hasardReproductible(4),1000).etat;

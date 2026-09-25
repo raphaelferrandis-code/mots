@@ -4,7 +4,7 @@
 // d'e-mail fourni par Supabase est limité à deux messages par heure.)
 // Ce fichier est utilisé par fabriquer-le-script.ts ; les colonnes qu'il utilise sont créées dans collections.ts.
 
-import { LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
+import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
 
 export const ESSAIS_DE_RECUPERATION_PAR_HEURE = 10;
@@ -40,8 +40,13 @@ declare
   propre text := public.code_propre(p_code);
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if char_length(propre) <> ${LONGUEUR_DU_CODE} then raise exception 'Ce code ne peut pas servir de code de secours.'; end if;
-  update public.comptes set code_hache = public.empreinte_du_code(propre), code_defini_le = now(), maj_le = now() where utilisateur = auth.uid();
+  -- Seulement les signes que le jeu tire (sans I, L, O, 0 ni 1) : src/jeu/codeDeSecours.ts.
+  if propre !~ '^[${ALPHABET_DU_CODE}]{${LONGUEUR_DU_CODE}}$' then raise exception 'Ce code ne peut pas servir de code de secours.'; end if;
+  begin
+    update public.comptes set code_hache = public.empreinte_du_code(propre), code_defini_le = now(), maj_le = now() where utilisateur = auth.uid();
+  exception when unique_violation then
+    raise exception 'Ce code est déjà pris : tires-en un autre.';
+  end;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
   return public.etat_du_compte(auth.uid());
 end $$;
@@ -60,6 +65,8 @@ declare
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 2));
+  -- Les essais de plus d'un jour ne servent plus à rien (la limite compte ceux de l'heure) : on les oublie.
+  delete from public.tentatives_de_recuperation where quand < now() - interval '1 day';
   if (select count(*) from public.tentatives_de_recuperation where utilisateur = moi and quand > now() - interval '1 hour') >= ${ESSAIS_DE_RECUPERATION_PAR_HEURE} then
     return jsonb_build_object('refus', 'Trop d''essais : attends une heure.');
   end if;

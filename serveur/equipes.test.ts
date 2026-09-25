@@ -109,8 +109,8 @@ it('équipes : récupération du compte, migration répétée et suppression du 
   try {
     await l.lier(); const id = await l.creer(); const invitation = await l.inviter(id);
     await l.joueur(1); await l.rpc('repondre_invitation_equipe', [invitation, 'accepter']);
-    await l.joueur(0); await l.rpc('definir_un_code_de_secours', ['ABCDEFGHIJKLMNOPQRST']);
-    await l.joueur(2); await l.rpc('recuperer_par_code', ['ABCDEFGHIJKLMNOPQRST']);
+    await l.joueur(0); await l.rpc('definir_un_code_de_secours', ['ABCDEFGHJKMNPQRSTUVW']);
+    await l.joueur(2); await l.rpc('recuperer_par_code', ['ABCDEFGHJKMNPQRSTUVW']);
     assert.equal((await l.lire()).equipe!.id, id);
     await l.admin(); await l.db.exec(migrationEquipes()); await l.db.exec(migrationEquipes());
     await l.joueur(2); assert.equal((await l.lire()).equipe!.membres.length, 2);

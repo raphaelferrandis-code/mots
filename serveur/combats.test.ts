@@ -179,8 +179,8 @@ it('la progression et le combat suivent la récupération du compte, avec migrat
     const e=(await l.lirePrive(r.combat!.id)).etat.etape;
     if(e.nom!=='parade') throw Error('attaque attendue');
     r=await l.agir(r,{type:'repondre',choisie:e.epreuve.bonne});
-    await l.joueur(0);await l.db.query("select public.definir_un_code_de_secours('ABCDEFGHIJKLMNOPQRST')");
-    await l.joueur(2);await l.db.query("select public.recuperer_par_code('ABCDEFGHIJKLMNOPQRST')");
+    await l.joueur(0);await l.db.query("select public.definir_un_code_de_secours('ABCDEFGHJKMNPQRSTUVW')");
+    await l.joueur(2);await l.db.query("select public.recuperer_par_code('ABCDEFGHJKMNPQRSTUVW')");
     const retrouve=await l.appel({type:'lire'},l.ids[2]);
     assert.equal(retrouve.combat!.id,r.combat!.id);
     assert.deepEqual(retrouve.etat.cartes,r.etat.cartes);

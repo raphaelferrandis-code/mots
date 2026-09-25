@@ -17,6 +17,12 @@ const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
 const liste = (valeurs: readonly string[]): string => valeurs.map(texte).join(', ');
 const cas = (valeurs: readonly string[], valeur: (v: string) => string | number): string => valeurs.map((v) => `when ${texte(v)} then ${valeur(v)}`).join(' ');
 
+// Une vente conclue survit à l'effacement du compte de son vendeur, sans lui (« Un collectionneur ») : la cote des
+// acheteurs ne change pas après coup. Les ventes ouvertes sont soldées avant (solder_compte_supprime).
+export const VENDEUR_FACULTATIF_SQL = `alter table public.encheres alter column vendeur drop not null;
+alter table public.encheres drop constraint if exists encheres_vendeur_fkey;
+alter table public.encheres add constraint encheres_vendeur_fkey foreign key (vendeur) references public.comptes (utilisateur) on delete set null on update cascade;`;
+
 export function marche(): string {
   return String.raw`
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -31,7 +37,7 @@ alter table public.possessions add column if not exists provenance text;
 
 create table if not exists public.encheres (
   id bigint generated always as identity primary key,
-  vendeur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  vendeur uuid references public.comptes (utilisateur) on delete set null on update cascade, -- vide : vendeur effacé
   carte text not null,
   finition text not null,
   obtenue_le timestamptz not null, -- pour rendre le timbre tel quel s'il n'est pas vendu
@@ -46,6 +52,7 @@ create table if not exists public.encheres (
   prix_final integer,
   acheteur uuid references public.comptes (utilisateur) on delete set null on update cascade
 );
+${VENDEUR_FACULTATIF_SQL}
 create index if not exists encheres_ouvertes on public.encheres (ferme_le) where etat = 'ouverte';
 create index if not exists encheres_par_vendeur on public.encheres (vendeur, ouverte_le desc);
 create index if not exists encheres_par_acheteur on public.encheres (acheteur, cloturee_le desc);
@@ -212,7 +219,8 @@ end $$;
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
 -- Mettre un timbre en vente : il quitte l'album (et le deck) tout de suite.
-create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+drop function if exists public.mettre_en_vente(text, text, integer, integer, integer);
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer, p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
@@ -223,12 +231,16 @@ declare
   plancher integer;
   restantes jsonb;
   e public.encheres%rowtype;
+  deja jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(${VERROU_DU_MARCHE}); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  -- La même vente redemandée (réponse perdue en route) : l'enchère déjà créée, pas une seconde.
+  deja := public.demande_deja_traitee(moi, p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(moi)); end if;
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
   if p_heures is null or p_heures not in (${M.dureesEnHeures.join(', ')}) then raise exception 'Durée inconnue.'; end if;
@@ -260,6 +272,7 @@ begin
   insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
   values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
   returning * into e;
+  perform public.noter_la_demande(moi, p_demande, jsonb_build_object('enchere', public.enchere_en_json(e)));
   return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
 end $$;
 
@@ -382,7 +395,7 @@ begin
     'ventes', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
                from public.encheres e where e.vendeur = moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
     'mises', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
-              from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur <> moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
+              from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur is distinct from moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
     'maintenant', public.en_millisecondes(now())
   );
 end $$;
@@ -413,7 +426,7 @@ declare
   moi uuid := auth.uid();
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
-  if (select public.niveau(c) from public.comptes c where c.utilisateur = moi) < 3 then
+  if coalesce((select public.niveau(c) from public.comptes c where c.utilisateur = moi), 0) < 3 then
     raise exception 'L''histoire des prix et les statistiques font partie de la formule Expert.';
   end if;
   perform public.cloturer_les_encheres();
@@ -432,5 +445,5 @@ end $$;
 `;
 }
 
-export const FONCTIONS_DU_MARCHE = ['public.mettre_en_vente(text, text, integer, integer, integer)', 'public.retirer_de_la_vente(bigint)', 'public.encherir(bigint, integer)', 'public.marche(text, integer)', 'public.mes_encheres()', 'public.cotes(text)', 'public.historique_de_la_cote(text)'];
+export const FONCTIONS_DU_MARCHE = ['public.mettre_en_vente(text, text, integer, integer, integer, uuid)', 'public.retirer_de_la_vente(bigint)', 'public.encherir(bigint, integer)', 'public.marche(text, integer)', 'public.mes_encheres()', 'public.cotes(text)', 'public.historique_de_la_cote(text)'];
 export const FONCTIONS_INTERNES_DU_MARCHE = ['public.cloturer_une_enchere(bigint)', 'public.solder_compte_supprime()', 'public.pseudonyme_de(uuid)', 'public.rendre_un_timbre(uuid, text, text, timestamptz, text)', 'public.enchere_en_json(public.encheres)', 'public.cloturer_les_encheres()', 'public.calculer_les_cotes()', 'public.cote_du_jour(text, text)'];

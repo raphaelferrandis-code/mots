@@ -112,6 +112,9 @@ export const EQUILIBRAGE = {
     manchesMaximum: 10,
     // Temps pour retrouver une définition parmi quatre (une seule épreuve par manche : le mot adverse).
     secondesPourRepondre: 15,
+    // Le temps du réseau (audit du 25/09/2026) : une réponse partie avant la fin du compte à rebours, arrivée au serveur
+    // un peu après, compte encore. Le compte à rebours affiché ne change pas.
+    margeDuReseauEnMillisecondes: 1500,
 
     // Dégâts d'une attaque qui porte = attaque de la carte + bonus − part de la défense de la carte d'en face
     // (au moins degatsMinimum). Le brief prévoyait la défense entière (part = 1). Mesuré : attaque et défense étant

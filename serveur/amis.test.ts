@@ -110,8 +110,8 @@ it('récupérer un compte conserve les amis et propositions ; supprimer son prof
   const l = await laboratoire();
   try {
     await l.lier(); const id = await l.proposer();
-    await l.rpc('definir_un_code_de_secours', ['ABCDEFGHIJKLMNOPQRST']);
-    await l.joueur(2); await l.rpc('recuperer_par_code', ['ABCDEFGHIJKLMNOPQRST']);
+    await l.rpc('definir_un_code_de_secours', ['ABCDEFGHJKMNPQRSTUVW']);
+    await l.joueur(2); await l.rpc('recuperer_par_code', ['ABCDEFGHJKMNPQRSTUVW']);
     const carnet = await l.rpc<CarnetAmis>('mes_amis');
     assert.equal(carnet.moi!.id, l.profils[0]); assert.equal(carnet.relations[0].etat, 'ami');
     assert.equal(carnet.echanges[0].id, id);

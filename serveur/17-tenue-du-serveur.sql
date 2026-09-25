@@ -575,7 +575,7 @@ begin
   perform public.calculer_les_cotes();
 end $$;
 
-create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer, p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
@@ -586,12 +586,16 @@ declare
   plancher integer;
   restantes jsonb;
   e public.encheres%rowtype;
+  deja jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  -- La même vente redemandée (réponse perdue en route) : l'enchère déjà créée, pas une seconde.
+  deja := public.demande_deja_traitee(moi, p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(moi)); end if;
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
   if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
@@ -623,6 +627,7 @@ begin
   insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
   values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
   returning * into e;
+  perform public.noter_la_demande(moi, p_demande, jsonb_build_object('enchere', public.enchere_en_json(e)));
   return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
 end $$;
 
@@ -749,6 +754,8 @@ declare
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 2));
+  -- Les essais de plus d'un jour ne servent plus à rien (la limite compte ceux de l'heure) : on les oublie.
+  delete from public.tentatives_de_recuperation where quand < now() - interval '1 day';
   if (select count(*) from public.tentatives_de_recuperation where utilisateur = moi and quand > now() - interval '1 hour') >= 10 then
     return jsonb_build_object('refus', 'Trop d''essais : attends une heure.');
   end if;

@@ -59,8 +59,8 @@ it('récupérer un compte rembourse les mises des tiers sur le compte remplacé'
   try {
     const vente = await vendre(150);
     await joueur(1); await db.query('select public.encherir($1,150)', [vente]);
-    await joueur(2); await db.query("select public.definir_un_code_de_secours('ABCDEFGHIJKLMNOPQRST')");
-    await joueur(0); await db.query("select public.recuperer_par_code('ABCDEFGHIJKLMNOPQRST')");
+    await joueur(2); await db.query("select public.definir_un_code_de_secours('ABCDEFGHJKMNPQRSTUVW')");
+    await joueur(0); await db.query("select public.recuperer_par_code('ABCDEFGHJKMNPQRSTUVW')");
     await admin();
     assert.deepEqual((await db.query('select encre,encre_achetee from public.comptes where utilisateur=$1', [ids[1]])).rows[0], { encre: 200, encre_achetee: 100 });
     assert.equal((await db.query('select * from public.comptes where utilisateur=$1', [ids[2]])).rows.length, 0);

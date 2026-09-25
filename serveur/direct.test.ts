@@ -9,7 +9,7 @@ import { cartes } from './collections.ts';
 import { avancerDirect, creerDirect, voiesDisponibles, vueDirect } from './moteur-direct.ts';
 import { executerDirect, gestionnaireDirect, lireRequeteDirect } from './api-direct.ts';
 import type { EtatDirect } from './moteur-direct.ts';
-import { ID_FACE_CACHEE } from '../src/jeu/duel.ts';
+import { ID_FACE_CACHEE, bonusDEnchainement, faceCachee, taillesDesFactions } from '../src/jeu/duel.ts';
 import type { OutilsCombat } from './api-combat.ts';
 import type { CarteIndex, Definition, IndexEdition } from '../src/partage/types.ts';
 import type { ActionDirect, ModeDirect, ReponseDirect } from '../src/jeu/direct.ts';
@@ -74,12 +74,39 @@ it('direct : pendant la pose, les mots de l’autre équipe restent face cachée
   assert.ok(vueDirect(e,'u2').poses.every(p=>p.carte.mot!=='' && p.carte.definition===''));
 });
 it('direct : échéances serveur, reprise, double absence et commandes tardives',()=>{
-  const e=debut('solo');const tardif=avancerDirect(e,catalogue,hasard,e.echeance,{joueur:0,manche:1,phase:'pose',action:{type:'poser',carte:e.joueurs[0].main[0].id,voie:0}});
-  assert.equal(tardif.poses.length,1);
+  const e=debut('solo');const marge=EQUILIBRAGE.duel.margeDuReseauEnMillisecondes;
+  const choisie=e.joueurs[0].main[1].id;
+  const poser=(temps:number)=>avancerDirect(e,catalogue,hasard,temps,{joueur:0,manche:1,phase:'pose',action:{type:'poser',carte:choisie,voie:0}});
+  // Partie avant la fin du compte à rebours, arrivée juste après (le temps du réseau) : la carte choisie est posée.
+  const juste=poser(e.echeance+marge-1);
+  assert.deepEqual(juste.poses.map(p=>p.carte.id),[choisie]);assert.equal(juste.joueurs[0].absences,0);
+  // Au-delà de la marge : le serveur a déjà joué la première carte à sa place, et compte une absence.
+  const tardif=poser(e.echeance+marge);
+  assert.deepEqual(tardif.poses.map(p=>p.carte.id),[e.joueurs[0].main[0].id]);assert.equal(tardif.joueurs[0].absences,1);
+  // Un abandon, lui, s'applique à l'heure où il arrive : la pose automatique d'abord.
+  const abandon=avancerDirect(e,catalogue,hasard,e.echeance+1,{joueur:1,manche:1,phase:'pose',action:{type:'abandonner'}});
+  assert.equal(abandon.phase,'fin');assert.equal(abandon.poses.length,1);
   const fin=avancerDirect(e,catalogue,hasard,1_000_000);assert.equal(fin.phase,'fin');assert.match(fin.raison!,/deux tours/);
   const q=poserToutes(debut('solo'));
-  const reponse=avancerDirect(q,catalogue,hasard,q.echeance,{joueur:0,manche:1,phase:'reponses',action:{type:'proposer',cible:1,choix:0}});
-  assert.equal(reponse.bilan.find(b=>b.joueur===1)!.choisie,null);
+  const repondre=(temps:number)=>avancerDirect(q,catalogue,hasard,temps,{joueur:0,manche:1,phase:'reponses',action:{type:'proposer',cible:1,choix:0}}).bilan.find(b=>b.joueur===1)!.choisie;
+  assert.equal(repondre(q.echeance+marge-1),q.questions.find(x=>x.cible===1)!.epreuve.propositions[0]);
+  assert.equal(repondre(q.echeance+marge),null);
+  // Une commande d'une autre étape ne profite pas de la marge.
+  const autre=avancerDirect(q,catalogue,hasard,q.echeance+1,{joueur:0,manche:1,phase:'pose',action:{type:'poser',carte:q.joueurs[0].main[0].id,voie:0}});
+  assert.equal(autre.bilan.find(b=>b.joueur===1)!.choisie,null);
+});
+it('direct : l’attaque d’un mot face cachée annonce son bonus d’enchaînement, comme le duel',()=>{
+  const e=debut('solo');const tailles=taillesDesFactions(catalogue.cartes);
+  const premier=e.joueurs[0].main[0];
+  const soeur=catalogue.cartes.find(c=>c.faction===premier.faction && c.id!==premier.id)!;
+  e.joueurs[0].derniere=soeur;
+  const pose=agir(e,0,{type:'poser',carte:premier.id,voie:0});
+  const bonus=bonusDEnchainement(soeur,premier,tailles,EQUILIBRAGE.duel);
+  assert.ok(bonus>0);
+  const vue=vueDirect(pose,'u1',tailles).poses[0].carte;
+  assert.equal(vue.id,ID_FACE_CACHEE);assert.equal(vue.faction,'');
+  assert.equal(vue.attaque,faceCachee(premier,bonus).attaque);
+  assert.equal(vue.attaque,vueDirect(pose,'u1').poses[0].carte.attaque+bonus);
 });
 
 export async function laboratoireDirect() {

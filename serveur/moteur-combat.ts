@@ -90,7 +90,8 @@ export function avancerCombat(avant: EtatCombatPrive, action: ActionCombat, cata
   } else if (action.type === 'repondre' && e.nom === 'parade') {
     if (action.choisie !== null && (!Number.isInteger(action.choisie) || action.choisie < 0 || action.choisie >= e.epreuve.propositions.length)) throw new RefusCombat('Réponse invalide.');
     const secondes = etat.temps === 'illimite' ? Infinity : R.secondesPourRepondre * (etat.temps === 'double' ? 2 : 1);
-    const choisie = maintenant > e.debut + secondes * 1000 ? null : action.choisie;
+    // Une réponse arrivée juste après la fin du compte à rebours (le temps du réseau) compte encore.
+    const choisie = maintenant > e.debut + secondes * 1000 + R.margeDuReseauEnMillisecondes ? null : action.choisie;
     const juste = choisie !== null && choisie === e.epreuve.bonne;
     const carte = e.adverse;
     const apprentissage = etat.possedees.includes(carte.id);

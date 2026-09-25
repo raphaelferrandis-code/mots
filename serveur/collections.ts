@@ -10,7 +10,7 @@ import { XP } from '../src/jeu/personnalisation.ts';
 
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { FINITIONS, RARETES } from '../src/partage/types.ts';
-import type { IndexEdition, Rarete } from '../src/partage/types.ts';
+import type { IndexEdition, Rarete, Registre } from '../src/partage/types.ts';
 
 const P = EQUILIBRAGE.paquets;
 const F = EQUILIBRAGE.finitions;
@@ -31,6 +31,8 @@ export const HEURES_DE_VALIDITE_DU_TICKET = 2;
 
 const texte = (valeur: string): string => `'${valeur.replaceAll("'", "''")}'`;
 const liste = (valeurs: readonly string[]): string => valeurs.map(texte).join(', ');
+// Les registres qu'un joueur peut masquer (src/partage/types.ts).
+const REGISTRES: readonly Registre[] = ['Familier', 'Injurieux', 'Littéraire', 'Vieilli'];
 
 // Une carte de la rareté voulue, sinon la plus proche : d'abord les raretés en dessous, puis au-dessus —
 // et jamais une Hors-série à la place d'une carte ordinaire (même ordre que tirerCarte dans src/jeu/paquets.ts).
@@ -40,6 +42,34 @@ function ordreDeRepli(rarete: Rarete): Rarete[] {
 }
 
 const cas = (valeurs: readonly string[], valeur: (v: string) => string | number): string => valeurs.map((v) => `when ${texte(v)} then ${valeur(v)}`).join(' ');
+
+// Le code de secours est unique (une recherche ne peut pas tomber sur deux comptes). Remplace l'ancien index simple.
+export const INDEX_DU_CODE_SQL = `drop index if exists public.comptes_par_code;
+create unique index if not exists comptes_code_unique on public.comptes (code_hache) where code_hache is not null;`;
+
+// Les demandes déjà traitées (identifiant tiré par le jeu) : un envoi répété après une coupure de réseau rend la
+// réponse de la première fois au lieu de recommencer (un paquet ouvert deux fois, une vente créée deux fois).
+export const DEMANDES_TRAITEES_SQL = String.raw`create table if not exists public.demandes_traitees (
+  utilisateur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  demande uuid not null,
+  reponse jsonb not null,
+  le timestamptz not null default now(),
+  primary key (utilisateur, demande)
+);
+alter table public.demandes_traitees enable row level security;
+revoke all on public.demandes_traitees from public, anon, authenticated;
+create or replace function public.demande_deja_traitee(p_utilisateur uuid, p_demande uuid) returns jsonb
+language sql security definer set search_path = '' as $$
+  select d.reponse from public.demandes_traitees d where d.utilisateur = p_utilisateur and d.demande = p_demande
+$$;
+create or replace function public.noter_la_demande(p_utilisateur uuid, p_demande uuid, p_reponse jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_demande is null then return; end if;
+  insert into public.demandes_traitees (utilisateur, demande, reponse) values (p_utilisateur, p_demande, p_reponse) on conflict do nothing;
+  delete from public.demandes_traitees where utilisateur = p_utilisateur and le < now() - interval '2 days';
+end $$;
+revoke execute on function public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb) from public, anon, authenticated;`;
 
 export function collections(): string {
   const chanceHolo = F.chances.Holographique ?? 0;
@@ -102,7 +132,8 @@ alter table public.comptes add column if not exists personnalisations text[] not
 -- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
-create index if not exists comptes_par_code on public.comptes (code_hache);
+${INDEX_DU_CODE_SQL}
+${DEMANDES_TRAITEES_SQL}
 
 -- Une ancienne sauvegarde doit être validée par l'administrateur : le client ne
 -- peut pas prouver l'ancienneté ou les ressources d'un fichier local non signé.
@@ -351,6 +382,10 @@ declare
   legendaire boolean := false;
 begin
   select * into c from public.comptes where utilisateur = p_utilisateur;
+  -- Seulement les registres connus : un tableau fabriqué ne sert ni à orienter les tirages ni à alourdir le calcul.
+  masques := array(select distinct m from unnest(coalesce(p_masques, '{}')) m where m in (${liste(REGISTRES)}));
+  -- Le fil d'activité ne note que les trouvailles tirées d'un paquet (serveur/activite.ts), pas les échanges ni le marché.
+  perform set_config('philamots.tirage', 'oui', true);
   -- Au plus tard au ${P.paquetsAvantLegendaireGarantie}e paquet sans Légendaire, la dernière carte en est une.
   if p_mode = 'achat' then emplacements := '[{"Hors-série":100}]'::jsonb;
   elsif p_mode = 'hebdomadaire' then
@@ -522,20 +557,26 @@ begin
 end $$;
 
 -- Un paquet de la réserve. « p_masques » : les registres que le joueur a choisi de ne plus voir (Familier, Injurieux).
-create or replace function public.ouvrir_un_paquet(p_masques text[]) returns jsonb
+-- « p_demande » : l'identifiant tiré par le jeu ; la même demande renvoyée après une coupure rend les mêmes cartes.
+drop function if exists public.ouvrir_un_paquet(text[]);
+create or replace function public.ouvrir_un_paquet(p_masques text[], p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
   c public.comptes%rowtype;
   tirees jsonb;
+  deja jsonb;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   select * into c from public.comptes where utilisateur = auth.uid() for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  deja := public.demande_deja_traitee(auth.uid(), p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(auth.uid())); end if;
   c := public.recharger(c);
   if c.stock < 1 then raise exception 'Aucun paquet en réserve pour l''instant.'; end if;
   update public.comptes set stock = c.stock - 1, reference = c.reference where utilisateur = c.utilisateur;
   tirees := public.tirer_un_paquet(c.utilisateur, p_masques);
+  perform public.noter_la_demande(c.utilisateur, p_demande, jsonb_build_object('cartes', tirees));
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
@@ -669,11 +710,12 @@ commit;
 
 // Les droits : les fonctions que le jeu appelle, et celles qui restent internes.
 export const FONCTIONS_DES_COLLECTIONS = [
-  'public.reclamer_recompense(text, text[])', 'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
-  'public.ouvrir_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
+  'public.reclamer_recompense(text, text[], uuid)', 'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
+  'public.ouvrir_un_paquet(text[], uuid)', 'public.changer_de_deck(jsonb)',
   'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)', 'public.declarer_ma_naissance(integer, integer)',
 ];
 export const FONCTIONS_INTERNES = [
+  'public.demande_deja_traitee(uuid, uuid)', 'public.noter_la_demande(uuid, uuid, jsonb)',
   ...INTERNES_PROGRESSION,
   'public.autoriser_joute(uuid)',
   'public.actualiser_deck_public()',

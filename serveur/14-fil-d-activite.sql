@@ -32,6 +32,8 @@ create or replace function public.activite_trouvaille() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare pseudo text; rarete text; finition text;
 begin
+  -- Seulement un timbre tiré d'un paquet (décision du 25/09/2026) : ni échange, ni marché, ni importation.
+  if coalesce(current_setting('philamots.tirage', true), '') <> 'oui' then return new; end if;
   begin
     select p.pseudo into pseudo from public.profils p where p.utilisateur = new.utilisateur and not p.maison;
     if pseudo is null then return new; end if;

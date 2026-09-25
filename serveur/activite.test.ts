@@ -14,10 +14,14 @@ async function laboratoire() {
   await b.db.exec(`insert into public.cartes values ('grimoire-nom','Légendaire','{}'), ('amour-nom','Hors-série','{}');
     delete from public.activite;`);
   const fil = async (): Promise<Evenement[]> => { await b.admin(); return (await b.db.query<{ f: Evenement[] }>('select public.fil_d_activite() f')).rows[0].f; };
-  const obtenir = async (i: number, carte: string, finition = 'Normale') => {
+  // Un timbre obtenu d'un paquet (le tirage le signale, comme tirer_les_cartes), ou autrement : marché, échange, récupération.
+  const obtenir = async (i: number, carte: string, finition = 'Normale', paquet = true) => {
     await b.admin();
-    await b.db.query(`insert into public.possessions(utilisateur,carte,finitions) values ($1,$2,jsonb_build_object($3::text,1))
-      on conflict (utilisateur,carte) do update set finitions = public.possessions.finitions || jsonb_build_object($3::text,1)`, [b.ids[i], carte, finition]);
+    await b.db.transaction(async (tx) => {
+      if (paquet) await tx.query("select set_config('philamots.tirage', 'oui', true)");
+      await tx.query(`insert into public.possessions(utilisateur,carte,finitions) values ($1,$2,jsonb_build_object($3::text,1))
+        on conflict (utilisateur,carte) do update set finitions = public.possessions.finitions || jsonb_build_object($3::text,1)`, [b.ids[i], carte, finition]);
+    });
   };
   return { ...b, fil, obtenir };
 }
@@ -34,6 +38,17 @@ it('note les trouvailles remarquables, et seulement elles', async () => {
     ['trouvaille', 'lecteur1', 'mot', 'Commune', 'Holographique'],
     ['trouvaille', 'lecteur0', 'grimoire', 'Légendaire', 'Normale'],
   ]);
+});
+
+it('ne note que les trouvailles des paquets : un timbre acheté, échangé ou rendu reste discret', async () => {
+  const b = await laboratoire();
+  await b.obtenir(0, 'grimoire-nom', 'Normale', false);
+  await b.obtenir(1, 'mot-nom', 'Holographique', false);
+  assert.deepEqual(await b.fil(), []);
+  // Le signal ne dure que le temps du tirage : la transaction suivante n'en hérite pas.
+  await b.obtenir(1, 'amour-nom');
+  await b.obtenir(0, 'amour-nom', 'Normale', false);
+  assert.deepEqual((await b.fil()).map((e) => [e.pseudo, e.mot]), [['lecteur1', 'amour']]);
 });
 
 it('ignore les joueurs sans pseudonyme et les joueurs maison, et note victoires et arrivées', async () => {

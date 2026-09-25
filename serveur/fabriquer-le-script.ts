@@ -14,8 +14,8 @@ import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
-import { FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, cartes, collections, migrationPersonnalisation } from './collections.ts';
-import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, marche } from './marche.ts';
+import { DEMANDES_TRAITEES_SQL, FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, INDEX_DU_CODE_SQL, cartes, collections, migrationPersonnalisation } from './collections.ts';
+import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, VENDEUR_FACULTATIF_SQL, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 import { combats } from './combats.ts';
 import { amis } from './amis.ts';
@@ -516,6 +516,23 @@ export function migrationPaiements(): string {
     + paiementsSuppressionEtVerification() + '\ncommit;\n';
 }
 
+// Les points secondaires de l'audit (25/09/2026). Après 19-paiements.sql. Paquet, cadeau et vente sans doublon après
+// une coupure de réseau ; filtres des paquets contrôlés ; fil d'activité réservé aux paquets ; code de secours unique
+// et de l'alphabet du jeu ; vieux essais de récupération oubliés ; vente conclue gardée sans son vendeur ; histoire des
+// prix fermée aux comptes inconnus.
+export function migrationPointsSecondaires(): string {
+  return '-- Les points secondaires de l’audit. Après 19-paiements.sql. Redéployer aussi les fonctions combats et joutes-direct.\nbegin;\n'
+    + INDEX_DU_CODE_SQL + '\n' + DEMANDES_TRAITEES_SQL + '\n' + VENDEUR_FACULTATIF_SQL + '\n\n'
+    + 'drop function if exists public.ouvrir_un_paquet(text[]);\n'
+    + 'drop function if exists public.reclamer_recompense(text, text[]);\n'
+    + 'drop function if exists public.mettre_en_vente(text, text, integer, integer, integer);\n\n'
+    + ['tirer_les_cartes', 'ouvrir_un_paquet', 'reclamer_recompense', 'mettre_en_vente', 'mes_encheres', 'historique_de_la_cote',
+      'definir_un_code_de_secours', 'recuperer_par_code', 'activite_trouvaille'].map((nom) => reprise(structure(), nom)).join('\n\n')
+    + '\nrevoke execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) from public, anon;\n'
+    + 'grant execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) to authenticated;\n'
+    + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -552,5 +569,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '17-tenue-du-serveur.sql'), migrationTenueDuServeur());
   writeFileSync(path.join(RACINE, 'serveur', '18-classement.sql'), migrationClassement());
   writeFileSync(path.join(RACINE, 'serveur', '19-paiements.sql'), migrationPaiements());
+  writeFileSync(path.join(RACINE, 'serveur', '20-points-secondaires.sql'), migrationPointsSecondaires());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

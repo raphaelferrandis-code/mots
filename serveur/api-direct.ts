@@ -2,6 +2,8 @@ import { MODES_DIRECTS } from '../src/jeu/direct.ts';
 import type { ActionDirect, ModeDirect, PhaseDirect, PropositionDirecte, ReponseDirect } from '../src/jeu/direct.ts';
 import type { Registre } from '../src/partage/types.ts';
 import { avancerDirect, creerDirect, RefusDirect, vueDirect } from './moteur-direct.ts';
+import { taillesDesFactions } from '../src/jeu/duel.ts';
+import type { TaillesDesFactions } from '../src/jeu/duel.ts';
 import type { EtatDirect } from './moteur-direct.ts';
 import type { OutilsCombat } from './api-combat.ts';
 import { ErreurCombat } from './api-combat.ts';
@@ -50,6 +52,13 @@ function propositionDe(p: Partie, utilisateur: string, maintenant: number): Prop
     acceptes: p.places.filter(s => s.accepte_le).length, jAccepte: !!p.places.find(s => s.utilisateur === utilisateur)?.accepte_le };
 }
 const canonique = (v: unknown) => JSON.stringify(v, (_k, x) => objet(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
+// La taille des factions, pour le bonus d'enchaînement annoncé : calculée une fois par catalogue.
+const taillesParCatalogue = new WeakMap<object, TaillesDesFactions>();
+const taillesDe = (catalogue: OutilsCombat['catalogue']): TaillesDesFactions => {
+  let t = taillesParCatalogue.get(catalogue);
+  if (!t) { t = taillesDesFactions(catalogue.cartes); taillesParCatalogue.set(catalogue, t); }
+  return t;
+};
 export async function executerDirect(utilisateur: string, req: RequeteDirect, outils: OutilsCombat): Promise<ReponseDirect> {
   let attente: ReponseDirect['attente'] = null;
   if (req.type === 'accepter' || req.type === 'refuser') {
@@ -99,10 +108,10 @@ export async function executerDirect(utilisateur: string, req: RequeteDirect, ou
       if (!frais.partie?.etat) continue;
       const s = frais.partie.places.find(s => s.utilisateur === utilisateur)!;
       return { maintenant: frais.maintenant, utilisateur, attente: null, partie: { id: p.id, revision: frais.partie.revision,
-        vue: vueDirect(frais.partie.etat, utilisateur), cotes: s.cote_avant === null ? null : { avant: s.cote_avant, apres: s.cote_apres! }, gains: {xp:s.xp,encre:s.recompense?.encre??0,reduite:s.recompense?.reduite??false} } };
+        vue: vueDirect(frais.partie.etat, utilisateur, taillesDe(outils.catalogue)), cotes: s.cote_avant === null ? null : { avant: s.cote_avant, apres: s.cote_apres! }, gains: {xp:s.xp,encre:s.recompense?.encre??0,reduite:s.recompense?.reduite??false} } };
     }
     const s = p.places[joueur];
-    return { maintenant: contexte.maintenant, utilisateur, attente: null, partie: { id: p.id, revision: p.revision, vue: vueDirect(etat, utilisateur),
+    return { maintenant: contexte.maintenant, utilisateur, attente: null, partie: { id: p.id, revision: p.revision, vue: vueDirect(etat, utilisateur, taillesDe(outils.catalogue)),
       cotes: s.cote_avant === null ? null : { avant: s.cote_avant, apres: s.cote_apres! }, gains: {xp:s.xp,encre:s.recompense?.encre??0,reduite:s.recompense?.reduite??false} } };
   }
   throw new ErreurCombat('La partie a avancé. Réessaie ton action.',409);

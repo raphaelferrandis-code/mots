@@ -404,7 +404,29 @@ alter table public.comptes add column if not exists personnalisations text[] not
 -- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
-create index if not exists comptes_par_code on public.comptes (code_hache);
+drop index if exists public.comptes_par_code;
+create unique index if not exists comptes_code_unique on public.comptes (code_hache) where code_hache is not null;
+create table if not exists public.demandes_traitees (
+  utilisateur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  demande uuid not null,
+  reponse jsonb not null,
+  le timestamptz not null default now(),
+  primary key (utilisateur, demande)
+);
+alter table public.demandes_traitees enable row level security;
+revoke all on public.demandes_traitees from public, anon, authenticated;
+create or replace function public.demande_deja_traitee(p_utilisateur uuid, p_demande uuid) returns jsonb
+language sql security definer set search_path = '' as $$
+  select d.reponse from public.demandes_traitees d where d.utilisateur = p_utilisateur and d.demande = p_demande
+$$;
+create or replace function public.noter_la_demande(p_utilisateur uuid, p_demande uuid, p_reponse jsonb) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_demande is null then return; end if;
+  insert into public.demandes_traitees (utilisateur, demande, reponse) values (p_utilisateur, p_demande, p_reponse) on conflict do nothing;
+  delete from public.demandes_traitees where utilisateur = p_utilisateur and le < now() - interval '2 days';
+end $$;
+revoke execute on function public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb) from public, anon, authenticated;
 
 -- Une ancienne sauvegarde doit être validée par l'administrateur : le client ne
 -- peut pas prouver l'ancienneté ou les ressources d'un fichier local non signé.
@@ -789,6 +811,10 @@ declare
   legendaire boolean := false;
 begin
   select * into c from public.comptes where utilisateur = p_utilisateur;
+  -- Seulement les registres connus : un tableau fabriqué ne sert ni à orienter les tirages ni à alourdir le calcul.
+  masques := array(select distinct m from unnest(coalesce(p_masques, '{}')) m where m in ('Familier', 'Injurieux', 'Littéraire', 'Vieilli'));
+  -- Le fil d'activité ne note que les trouvailles tirées d'un paquet (serveur/activite.ts), pas les échanges ni le marché.
+  perform set_config('philamots.tirage', 'oui', true);
   -- Au plus tard au 40e paquet sans Légendaire, la dernière carte en est une.
   if p_mode = 'achat' then emplacements := '[{"Hors-série":100}]'::jsonb;
   elsif p_mode = 'hebdomadaire' then
@@ -960,20 +986,26 @@ begin
 end $$;
 
 -- Un paquet de la réserve. « p_masques » : les registres que le joueur a choisi de ne plus voir (Familier, Injurieux).
-create or replace function public.ouvrir_un_paquet(p_masques text[]) returns jsonb
+-- « p_demande » : l'identifiant tiré par le jeu ; la même demande renvoyée après une coupure rend les mêmes cartes.
+drop function if exists public.ouvrir_un_paquet(text[]);
+create or replace function public.ouvrir_un_paquet(p_masques text[], p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
   c public.comptes%rowtype;
   tirees jsonb;
+  deja jsonb;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   select * into c from public.comptes where utilisateur = auth.uid() for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  deja := public.demande_deja_traitee(auth.uid(), p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(auth.uid())); end if;
   c := public.recharger(c);
   if c.stock < 1 then raise exception 'Aucun paquet en réserve pour l''instant.'; end if;
   update public.comptes set stock = c.stock - 1, reference = c.reference where utilisateur = c.utilisateur;
   tirees := public.tirer_un_paquet(c.utilisateur, p_masques);
+  perform public.noter_la_demande(c.utilisateur, p_demande, jsonb_build_object('cartes', tirees));
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
@@ -1111,13 +1143,16 @@ for each row execute function public.changement_offre();
 update public.comptes set prochain_hebdo = now()
 where abonnement <> 'aucun' and abonnement_jusqu_au > now() and prochain_hebdo is null;
 
-create or replace function public.reclamer_recompense(p_type text, p_masques text[]) returns jsonb
+drop function if exists public.reclamer_recompense(text, text[]);
+create or replace function public.reclamer_recompense(p_type text, p_masques text[], p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare c public.comptes; tirees jsonb;
+declare c public.comptes; tirees jsonb; deja jsonb;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   select * into c from public.comptes where utilisateur = auth.uid() for update;
   if not found then raise exception 'Compte introuvable.'; end if;
+  deja := public.demande_deja_traitee(auth.uid(), p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(auth.uid())); end if;
   if p_type = 'achat' then
     if not c.achat_unique or c.cadeau_achat_reclame then raise exception 'Aucune Hors-série à recevoir.'; end if;
     update public.comptes set cadeau_achat_reclame = true where utilisateur = c.utilisateur;
@@ -1128,6 +1163,7 @@ begin
   else raise exception 'Récompense inconnue.';
   end if;
   tirees := public.tirer_les_cartes(c.utilisateur, p_masques, p_type);
+  perform public.noter_la_demande(c.utilisateur, p_demande, jsonb_build_object('cartes', tirees));
   return jsonb_build_object('cartes', tirees, 'etat', public.etat_du_compte(c.utilisateur));
 end $$;
 
@@ -1178,8 +1214,13 @@ declare
   propre text := public.code_propre(p_code);
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if char_length(propre) <> 20 then raise exception 'Ce code ne peut pas servir de code de secours.'; end if;
-  update public.comptes set code_hache = public.empreinte_du_code(propre), code_defini_le = now(), maj_le = now() where utilisateur = auth.uid();
+  -- Seulement les signes que le jeu tire (sans I, L, O, 0 ni 1) : src/jeu/codeDeSecours.ts.
+  if propre !~ '^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{20}$' then raise exception 'Ce code ne peut pas servir de code de secours.'; end if;
+  begin
+    update public.comptes set code_hache = public.empreinte_du_code(propre), code_defini_le = now(), maj_le = now() where utilisateur = auth.uid();
+  exception when unique_violation then
+    raise exception 'Ce code est déjà pris : tires-en un autre.';
+  end;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
   return public.etat_du_compte(auth.uid());
 end $$;
@@ -1198,6 +1239,8 @@ declare
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(hashtextextended(moi::text, 2));
+  -- Les essais de plus d'un jour ne servent plus à rien (la limite compte ceux de l'heure) : on les oublie.
+  delete from public.tentatives_de_recuperation where quand < now() - interval '1 day';
   if (select count(*) from public.tentatives_de_recuperation where utilisateur = moi and quand > now() - interval '1 hour') >= 10 then
     return jsonb_build_object('refus', 'Trop d''essais : attends une heure.');
   end if;
@@ -1246,7 +1289,7 @@ alter table public.possessions add column if not exists provenance text;
 
 create table if not exists public.encheres (
   id bigint generated always as identity primary key,
-  vendeur uuid not null references public.comptes (utilisateur) on delete cascade on update cascade,
+  vendeur uuid references public.comptes (utilisateur) on delete set null on update cascade, -- vide : vendeur effacé
   carte text not null,
   finition text not null,
   obtenue_le timestamptz not null, -- pour rendre le timbre tel quel s'il n'est pas vendu
@@ -1261,6 +1304,9 @@ create table if not exists public.encheres (
   prix_final integer,
   acheteur uuid references public.comptes (utilisateur) on delete set null on update cascade
 );
+alter table public.encheres alter column vendeur drop not null;
+alter table public.encheres drop constraint if exists encheres_vendeur_fkey;
+alter table public.encheres add constraint encheres_vendeur_fkey foreign key (vendeur) references public.comptes (utilisateur) on delete set null on update cascade;
 create index if not exists encheres_ouvertes on public.encheres (ferme_le) where etat = 'ouverte';
 create index if not exists encheres_par_vendeur on public.encheres (vendeur, ouverte_le desc);
 create index if not exists encheres_par_acheteur on public.encheres (acheteur, cloturee_le desc);
@@ -1427,7 +1473,8 @@ end $$;
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
 -- Mettre un timbre en vente : il quitte l'album (et le deck) tout de suite.
-create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+drop function if exists public.mettre_en_vente(text, text, integer, integer, integer);
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer, p_demande uuid default null) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
@@ -1438,12 +1485,16 @@ declare
   plancher integer;
   restantes jsonb;
   e public.encheres%rowtype;
+  deja jsonb;
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(20260923); -- les transferts de timbres et d'Encre passent l'un après l'autre
   perform public.cloturer_les_encheres();
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  -- La même vente redemandée (réponse perdue en route) : l'enchère déjà créée, pas une seconde.
+  deja := public.demande_deja_traitee(moi, p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(moi)); end if;
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
   perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
   if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
@@ -1475,6 +1526,7 @@ begin
   insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
   values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
   returning * into e;
+  perform public.noter_la_demande(moi, p_demande, jsonb_build_object('enchere', public.enchere_en_json(e)));
   return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
 end $$;
 
@@ -1597,7 +1649,7 @@ begin
     'ventes', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
                from public.encheres e where e.vendeur = moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
     'mises', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
-              from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur <> moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
+              from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur is distinct from moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
     'maintenant', public.en_millisecondes(now())
   );
 end $$;
@@ -1628,7 +1680,7 @@ declare
   moi uuid := auth.uid();
 begin
   if moi is null then raise exception 'Connexion requise.'; end if;
-  if (select public.niveau(c) from public.comptes c where c.utilisateur = moi) < 3 then
+  if coalesce((select public.niveau(c) from public.comptes c where c.utilisateur = moi), 0) < 3 then
     raise exception 'L''histoire des prix et les statistiques font partie de la formule Expert.';
   end if;
   perform public.cloturer_les_encheres();
@@ -2080,6 +2132,8 @@ create or replace function public.activite_trouvaille() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare pseudo text; rarete text; finition text;
 begin
+  -- Seulement un timbre tiré d'un paquet (décision du 25/09/2026) : ni échange, ni marché, ni importation.
+  if coalesce(current_setting('philamots.tirage', true), '') <> 'oui' then return new; end if;
   begin
     select p.pseudo into pseudo from public.profils p where p.utilisateur = new.utilisateur and not p.maison;
     if pseudo is null then return new; end if;
@@ -2136,9 +2190,9 @@ grant execute on function public.fil_d_activite() to anon, authenticated;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
-revoke execute on function public.pseudo_refuse(text), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.pseudo_refuse(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
 
 -- Les RPC privées ci-dessous ne sont appelées que par la fonction serveur authentifiée.
 create table if not exists public.combats (
