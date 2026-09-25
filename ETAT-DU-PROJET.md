@@ -2,13 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **25 septembre 2026 — la rareté se voit : une aura autour des timbres.** Raphaël ne voyait pas de différence entre
-> les raretés (Commune, Peu commune et Rare étaient presque identiques, et une Commune brillante passait pour le
-> meilleur timbre). Parmi trois pistes (cadre en métal, médaillon, aura), il a choisi **l'aura** : une lueur autour du
-> timbre — Peu commune vert, Rare bleu, Épique violet, Légendaire or (qui respire), Hors-série irisée ; rien pour la
-> Commune ; éteinte tant que le timbre est face cachée. Elle suit le timbre partout (album, deck, duel, cérémonie,
-> accueil, fiche, marché) : `src/composants/timbre/timbre.css`. Le losange « Rare » des pastilles passe du cuivre au
-> bleu. Au passage, les accents des mots dorés (finition brillante) ne sont plus coupés (PÉPÈRE s'affichait PEPERE).
+> **25 septembre 2026 — la rareté se voit au cadre du timbre.** Raphaël ne voyait pas de différence entre les
+> raretés (Commune, Peu commune et Rare étaient presque identiques, et une Commune brillante passait pour le meilleur
+> timbre). Parmi trois pistes (cadre en métal, médaillon, aura), il a d'abord choisi l'aura (une lueur autour du
+> timbre, publiée une heure), puis **le cadre** : le papier autour de l'impression change de matière — Commune papier
+> crème, Peu commune crème et liseré à l'encre du timbre, Rare cuivre, **Épique violet métallisé** (à sa demande :
+> l'argent se confondait avec le papier crème), Légendaire or, Hors-série papier noir irisé. La finition (brillante,
+> holographique) reste dans l'impression, le cadre ne dit que la rareté ; à partir de Rare, le métal miroite sous le
+> pointeur ; les valeurs Att./Déf. restent à l'encre claire. Tout est dans `src/composants/timbre/timbre.css`.
+> Au passage, les accents des mots dorés (finition brillante) ne sont plus coupés (PÉPÈRE s'affichait PEPERE).
 > Rien à installer. Page de contrôle : `#/timbres` (les six raretés dans chaque finition, en grand et en petit).
 
 > **25 septembre 2026 — les paiements (achats toujours FERMÉS) : EN LIGNE.** `serveur/19-paiements.sql` collé et les

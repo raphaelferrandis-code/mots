@@ -60,9 +60,8 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
   font-family: var(--police-etroite); font-weight: 500; font-size: 1em; line-height: 1.18; letter-spacing: .2em; text-transform: uppercase;
   color: rgba(246, 236, 214, .88);
 }
-/* Le rang de rareté : un losange par rang, sous l'origine (une étoile pour les Hors-série). */
-.tb__rang { margin-top: .35em; font-size: .78em; letter-spacing: .28em; line-height: 1; color: var(--texte-impression); opacity: .9; }
-.tb:is([data-niveau='4'], [data-niveau='5']) .tb__rang { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 1; }
+/* Le rang de rareté : un losange par rang, sous l'origine (une étoile pour les Hors-série), à la teinte du cadre. */
+.tb__rang { margin-top: .35em; font-size: .9em; letter-spacing: .28em; line-height: 1; color: var(--rang-cadre, var(--texte-impression)); opacity: .9; }
 .tb[data-niveau='6'] .tb__rang { font-size: 1.3em; background: linear-gradient(90deg, #ff8fb0, #ffe38a, #9dffc8, #8fdcff, #cfaeff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .tb__vignette { position: absolute; left: 50%; top: 48.5%; width: 21.5em; height: 21.5em; translate: -50% -50%; }
 .tb__vignette svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -79,12 +78,14 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
   position: absolute; left: 0; right: 0; bottom: .82em;
   text-align: center; white-space: nowrap;
   font-family: var(--police-etroite); font-size: .72em; letter-spacing: .22em; text-transform: uppercase;
-  color: rgba(78, 54, 26, .62);
+  color: var(--mention, rgba(78, 54, 26, .62));
 }
 
 /* ── Lumières : le vernis (finition) et la lueur (partout) ─────────────────── */
 
 .tb__vernis, .tb__lueur { position: absolute; inset: 0; pointer-events: none; }
+/* Le vernis de la finition ne couvre que l'impression : le cadre ne dit que la rareté. */
+.tb__vernis { inset: 2.15em; }
 .tb__lueur { background: radial-gradient(circle at var(--gx, 32%) var(--gy, 22%), rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 52%); mix-blend-mode: soft-light; }
 
 /* ── Le cachet d'oblitération, posé quand le timbre est révélé ──────────────── */
@@ -106,48 +107,41 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 .tb .tampon__maitrise { font-size: 15px; letter-spacing: .08em; }
 .tb .tampon__date { font-size: 9.5px; }
 
-/* ── La rareté : le cadre de l'impression et la mention du bas ─────────────── */
-
-/* Rare : double filet. Peu commune et au-delà : la petite rosace passe à une seconde encre, chaude. */
-.tb[data-niveau='2'] .tb__trait--second, .tb[data-niveau='3'] .tb__trait--second { stroke: #f3c9a0; opacity: .75; }
-.tb[data-niveau='3'] .tb__impression::after { box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .4em rgba(246, 236, 214, .35); }
-/* Épique : argent. Légendaire : or. Filets doubles et valeurs au métal. */
-.tb[data-niveau='4'] { --metal: linear-gradient(100deg, #8c939d, #f4f6f8 38%, #a9b0b9 58%, #ffffff 80%, #8c939d); --filet-metal: #dfe3e8; }
-.tb[data-niveau='5'] { --metal: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a); --filet-metal: #efca8b; }
-.tb:is([data-niveau='4'], [data-niveau='5']) .tb__impression::after { border-color: var(--filet-metal); box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .42em var(--filet-metal); opacity: .8; }
-.tb:is([data-niveau='4'], [data-niveau='5']) .tb__valeur { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.tb:is([data-niveau='4'], [data-niveau='5']) .tb__trait--second { stroke: var(--filet-metal); opacity: .7; }
-/* ── La rareté se voit d'abord à son aura ──────────────────────────────────────
-   Choix de Raphaël (25 septembre 2026) : une lueur autour du timbre, aux couleurs de rareté des jeux de cartes
-   (et des pastilles de la cérémonie) — Peu commune vert, Rare bleu, Épique violet, Légendaire or, Hors-série
-   irisé ; la Commune n'en a pas. Deux ombres colorées sous le papier, mesurées en largeur du timbre (elles
-   grandissent avec lui) : un liseré au ras de la dentelure, qui colore aussi les trous, puis un halo plus large.
-   L'élément est en retrait de 2,5 % sous le papier ; l'étalement le ramène au bord. L'aura reste éteinte tant
-   que le timbre est face cachée et s'allume quand il se retourne. */
-.tb__cadre::before {
-  content: ''; position: absolute; inset: 2.5cqw; z-index: -1; pointer-events: none;
-  box-shadow: 0 0 var(--aura-bord-flou, 2.5cqw) var(--aura-bord, 3cqw) var(--aura, transparent), 0 0 var(--aura-flou, 10cqw) var(--aura-etendue, 3.5cqw) var(--aura, transparent);
-  opacity: var(--aura-force, 0);
-  transition: opacity .6s ease-out;
+/* ── La rareté se voit au cadre ────────────────────────────────────────────────
+   Choix de Raphaël (25 septembre 2026) : le papier autour de l'impression change de matière avec la rareté.
+   Commune : papier crème. Peu commune : papier crème et liseré à l'encre du timbre. Rare : cuivre. Épique :
+   violet métallisé (l'argent se confondait avec le papier crème). Légendaire : or. Hors-série : papier noir
+   irisé. La finition (brillante, holographique) reste dans l'impression : le cadre ne dit que la rareté.
+   Le reflet du métal suit le pointeur ; le filet intérieur et le rang (losanges) prennent la teinte du cadre ;
+   les valeurs restent à l'encre claire, pour se lire d'un coup d'œil. */
+.tb[data-niveau='2'] .tb__papier::before { content: ''; position: absolute; inset: 1.22em; border: .3em solid var(--encre-timbre); opacity: .9; }
+.tb[data-niveau='3'] { --metal-cadre: linear-gradient(125deg, #6e3a18 0%, #c98652 18%, #f2c095 34%, #a3602f 50%, #e7ab7a 66%, #7d4520 84%, #c07a45 100%); --filet-cadre: #e7ab7a; --rang-cadre: #f2c095; --mention: rgba(55, 25, 5, .8); }
+.tb[data-niveau='4'] { --metal-cadre: linear-gradient(125deg, #4f2f93 0%, #9c7be0 18%, #e6dbff 34%, #7654c2 50%, #c6affa 66%, #5a3aa3 84%, #a488e6 100%); --filet-cadre: #c6affa; --rang-cadre: #e2d6ff; --mention: rgba(34, 12, 72, .82); }
+.tb[data-niveau='5'] { --metal-cadre: linear-gradient(125deg, #7a5410 0%, #d6ae4a 18%, #fff0b8 34%, #b8861f 50%, #f6dc86 66%, #8e6414 84%, #e2c060 100%); --filet-cadre: #efca8b; --rang-cadre: #f6dc86; --mention: rgba(60, 38, 4, .82); }
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier {
+  background: var(--metal-cadre); background-size: 180% 180%;
+  background-position: calc(var(--mx, .3) * 100%) calc(var(--my, .3) * 100%);
 }
-.tb[data-niveau='2'] { --aura: #6fd39c; --aura-force: .65; --aura-bord: 2.7cqw; --aura-bord-flou: 2cqw; --aura-flou: 7cqw; --aura-etendue: 2cqw; }
-.tb[data-niveau='3'] { --aura: #4f96ea; --aura-force: .9; --aura-bord: 3cqw; --aura-bord-flou: 2.5cqw; --aura-flou: 11cqw; --aura-etendue: 3.5cqw; }
-.tb[data-niveau='4'] { --aura: #a97ff2; --aura-force: 1; --aura-bord: 3.2cqw; --aura-bord-flou: 3cqw; --aura-flou: 14cqw; --aura-etendue: 4.5cqw; }
-.tb[data-niveau='5'] { --aura: #f6c544; --aura-force: 1; --aura-bord: 3.5cqw; --aura-bord-flou: 3cqw; --aura-flou: 17cqw; --aura-etendue: 5.5cqw; }
-.tb[data-niveau='6'] { --aura-force: 1; }
-.tb[data-niveau='6'] .tb__cadre::before { box-shadow: -3cqw -2.5cqw 15cqw 4.5cqw #ff6fa3, 3cqw 2.8cqw 15cqw 4.5cqw #6bd4ff, 0 0 3cqw 3.2cqw #fff0c0; }
-.tb[data-face='verso'] .tb__cadre::before { opacity: 0; transition: none; }
-/* Les Légendaires respirent doucement ; l'aura des Hors-série change de reflet. Jamais en mouvement réduit. */
-@media (prefers-reduced-motion: no-preference) {
-  :root:not([data-animations-reduites]) .tb[data-niveau='5']:not([data-face='verso']) .tb__cadre::before { animation: tb-aura 3.4s ease-in-out infinite alternate; }
-  :root:not([data-animations-reduites]) .tb[data-niveau='6']:not([data-face='verso']) .tb__cadre::before { animation: tb-aura 3.4s ease-in-out infinite alternate, tb-aura-irisee 5s ease-in-out infinite alternate; }
-}
-@keyframes tb-aura { from { opacity: 1; } to { opacity: .62; } }
-/* Le reflet glisse sans quitter le rose et le bleu : l'aura d'une Hors-série ne doit jamais passer pour une autre rareté. */
-@keyframes tb-aura-irisee { from { filter: hue-rotate(-20deg); } to { filter: hue-rotate(20deg); } }
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier::after { opacity: .2; }
+/* Un filet gravé autour de l'impression, comme la bordure d'une dorure à chaud. */
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__papier::before { content: ''; position: absolute; inset: 1.62em; border: .1em solid rgba(0, 0, 0, .28); box-shadow: 0 0 0 .08em rgba(255, 255, 255, .35); }
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__impression::after { border-color: var(--filet-cadre); box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .42em var(--filet-cadre); opacity: .8; }
+.tb:is([data-niveau='3'], [data-niveau='4'], [data-niveau='5']) .tb__rang { opacity: 1; }
+/* La petite rosace passe à une seconde encre, chaude (Peu commune, Rare), puis à la teinte du cadre. */
+.tb:is([data-niveau='2'], [data-niveau='3']) .tb__trait--second { stroke: #f3c9a0; opacity: .75; }
+.tb:is([data-niveau='4'], [data-niveau='5']) .tb__trait--second { stroke: var(--filet-cadre); opacity: .7; }
 
-/* Hors-série : impression noire, cadre irisé, illustration propre au mot. */
-.tb[data-niveau='6'] { --trait: #fff6dc; }
+/* Hors-série : papier noir au voile irisé (il suit le pointeur), impression noire, cadre irisé, illustration propre
+   au mot. Sur le noir, les cachets passent à l'encre claire. */
+.tb[data-niveau='6'] { --trait: #fff6dc; --mention: rgba(255, 238, 205, .72); }
+.tb[data-niveau='6'] .tb__papier { background: radial-gradient(130% 100% at 25% 12%, #3a3546 0%, #1c1a24 55%, #0c0b10 100%); }
+.tb[data-niveau='6'] .tb__papier::after {
+  background-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f, #ffd36b);
+  background-size: 300% 300%; background-position: calc(var(--mx, .4) * 100%) 50%; opacity: .32; mix-blend-mode: screen;
+}
+.tb[data-niveau='6'] .tb__cachet { color: #f3ecd8; mix-blend-mode: screen; }
+.tb[data-niveau='6'][data-oblitere] .tb__cachet { opacity: .55; }
+.tb[data-niveau='6'] .tim__maitrise { color: #c9b3ff; mix-blend-mode: screen; }
 .tb[data-niveau='6'] .tb__impression::after { border: .14em solid transparent; border-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f) 1; }
 .tb[data-niveau='6'] .tb__disque { fill: rgba(255, 246, 220, .04); }
 .tb__illustration :is(path, circle, line, polyline, polygon, rect) { fill: none; stroke: var(--trait); stroke-width: .8; stroke-linejoin: round; stroke-linecap: round; }
