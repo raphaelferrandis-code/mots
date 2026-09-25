@@ -45,7 +45,19 @@ Tous ces réglages sont dans `src/config/equilibrage.ts` (rubriques `parrainage`
   lien d'invitation, arrivée d'un nouveau venu, premier duel, 3 paquets de chaque côté, messages ; recherche en
   direct, proposition après 30 s, duel « Sans classement » contre un joueur simulé ; affichage sur téléphone.
 
-## Ce que Raphaël doit faire : coller le script 13 (3 minutes)
+## Installé le 25 septembre 2026
+
+Le script 13 a été collé dans Supabase par l'assistant, avec l'autorisation de Raphaël, dans le navigateur où
+Raphaël était connecté : « Success. No rows returned ». Contrôles faits ensuite :
+- dans la base, en lecture seule : les 7 fonctions, les 2 déclencheurs, la table `parrainages` et la nouvelle
+  `combat_creer` sont en place ; 240 joueurs maison et 61 comptes, inchangés ;
+- depuis l'extérieur, avec un joueur d'essai créé puis supprimé : code d'invitation stable, refus du code inconnu et
+  de son propre lien, adversaires de secours installés, fonction interne et table fermées aux joueurs (403) ;
+  après suppression, 61 comptes, aucun parrainage ni code restant.
+
+L'interrupteur `secoursEtParrainage` est passé à `true` et le jeu publié le même jour.
+
+## Pour mémoire : comment le script a été installé
 
 Tant que ce n'est pas fait, les joueurs ne voient rien de nouveau : un interrupteur (`secoursEtParrainage` dans
 `src/config/serveur.ts`) garde ces écrans fermés.

@@ -54,23 +54,21 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Vignette de partage (image quand on partage le lien) | En ligne |
 | Site prêt pour Google (titre, description, plan du site) | En ligne ; **inscription à faire** (étape 4) |
 | Contrôle anti-robot Cloudflare | Construit, **éteint** (étape 3) |
-| Adversaire de secours des joutes en direct | Construit, **éteint** (étape 2) |
-| Parrainage (3 paquets chacun) | Construit, **éteint** (étape 2) |
+| Adversaire de secours des joutes en direct | **En ligne** (étape 2 faite) |
+| Parrainage (3 paquets chacun) | **En ligne** (étape 2 faite) |
 
 ---
 
 ## 3. Les étapes, dans l'ordre
 
-### Étape 2 — Installer le script 13 (parrainage et adversaire de secours)
+### Étape 2 — Installer le script 13 (parrainage et adversaire de secours) — FAIT le 25 septembre
 
 Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md).
 
-- [ ] Coller `serveur/13-secours-et-parrainage.sql` dans Supabase (SQL Editor, menu **Database**, **Run**).
-      Raphaël a autorisé l'assistant à le faire le 25 septembre, dans un navigateur connecté à Supabase.
-- [ ] L'assistant vérifie avec un joueur d'essai (créé puis supprimé).
-- [ ] L'assistant passe `secoursEtParrainage: true` dans `src/config/serveur.ts` et publie.
-
-**À faire avant l'étape 3.**
+- [x] Script `serveur/13-secours-et-parrainage.sql` collé dans Supabase par l'assistant, avec l'autorisation de
+      Raphaël.
+- [x] Vérifié avec un joueur d'essai, créé puis supprimé.
+- [x] `secoursEtParrainage: true` dans `src/config/serveur.ts`, jeu publié.
 
 ### Étape 3 — Allumer le contrôle anti-robot (10 minutes)
 

@@ -13,8 +13,9 @@
 >    ordre (`GUIDE-anti-robot.md`).
 > 3. **Adversaire de secours** (décisions de Raphaël : sans classement, proposé après 30 s) et 4. **parrainage**
 >    (3 paquets chacun au premier duel terminé du filleul, 10 filleuls récompensés par mois) — **code publié,
->    interrupteur `secoursEtParrainage` fermé.** **À faire par Raphaël : coller `serveur/13-secours-et-parrainage.sql`**
->    dans Supabase (`GUIDE-secours-et-parrainage.md`), avant d'activer l'anti-robot ; j'ouvre ensuite l'interrupteur.
+>    script 13 installé sur Supabase le 25/09 (par
+>    l'assistant, avec l'autorisation de Raphaël), vérifié, interrupteur `secoursEtParrainage` ouvert : EN LIGNE.**
+>    La dernière migration est désormais la 13 (`GUIDE-secours-et-parrainage.md`).
 
 > **Décision de Raphaël du 24 septembre 2026 — un seul pseudonyme, public dès qu’il est choisi.** La même case « Choisis ton pseudonyme » (`src/composants/ChoixDuPseudonyme.tsx`) sert sur le Profil, les Amis, les Joutes en direct et l’Équipe ; une fois choisi, il n’est plus jamais redemandé, et le Profil permet de le changer. Le choisir publie le profil de joute (ancien « Rejoindre les joutes ») ; la page Confidentialité le dit. Même jour : sur téléphone, la barre du bas passe de 7 à 5 onglets (Accueil, Album, Duel, Marché, Profil) ; le Deck et les Classements se rangent dans Duel, qui reste allumé sur leurs pages, et le salon des duels gagne un raccourci « Classements ». L’ordinateur garde ses 7 entrées.
 
