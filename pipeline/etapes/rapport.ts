@@ -6,7 +6,7 @@ import { defenseEnJeu } from '../../src/config/equilibrage.ts';
 import { CONFIG, FORMATION_FRANCAISE, LANGUES_D_AILLEURS, ORIGINE_INCONNUE, factionDeLaLangue } from '../config.ts';
 import type { CarteComplete } from './cartes.ts';
 import { estEligible, partsDesFactions } from './edition.ts';
-import type { JournalEdition } from './edition.ts';
+import type { EditionGardee, JournalEdition } from './edition.ts';
 import type { ResultatLexique } from './lexique.ts';
 import type { PoidsDesFichiers } from './sortie.ts';
 import { creerHasard, echantillon } from './stats.ts';
@@ -19,6 +19,7 @@ export type DonneesDuRapport = {
   cartes: CarteComplete[];
   edition: CarteComplete[];
   journal: JournalEdition;
+  gardee: EditionGardee | null; // l'édition en jeu, gardée telle quelle (voir « figee » dans config.ts)
   exclusions: Set<string>;
   horsSerieIntrouvables: string[];
   corrections: Map<string, string>;
@@ -96,6 +97,8 @@ export function redigerRapport(d: DonneesDuRapport): string {
   L.push(`- Édition ${CONFIG.edition.numero} : **${nombre(edition.length)} cartes**, choisies parmi ${nombre(journal.eligibles)} cartes éligibles.`);
   L.push(`- Poids pour le jeu : ${enKo(d.poids.index)} chargés au démarrage, plus ${enKo(d.poids.details)} de détails répartis en ${d.poids.lots} fichiers chargés à la demande.`);
   if (journal.manques.length) L.push(`- ⚠️ Cartes manquantes : ${journal.manques.join(' ; ')}.`);
+  if (d.gardee) L.push(`- L'édition est en jeu : ses cartes sont gardées telles quelles, seuls leurs textes et leurs notes sont recalculés (réglage \`figee\` de \`pipeline/config.ts\`, détail au §4).`);
+  if (d.gardee?.changements.length) L.push(`- ⚠️ Cartes en jeu qui changent de rareté ou de badges (\`serveur/3-cartes.sql\` à recoller dans Supabase) : ${d.gardee.changements.join(' ; ')}.`);
   L.push('');
 
   // ── 2
@@ -109,6 +112,7 @@ export function redigerRapport(d: DonneesDuRapport): string {
     ['— dont entrées correspondant à un lemme de Lexique', d.compteurs.retenues],
     ['— écartées : simples formes fléchies', d.compteurs.flexions],
     ['Définitions écartées (simples renvois : « Pluriel de… »)', d.compteurs.renvois],
+    ['Définitions écartées (pas encore rédigées : « Définition manquante ou à compléter » ; le sens compte dans la richesse du mot)', d.compteurs.vides],
     ['Mots présents dans les deux sources', d.motsCroises],
     ['— écartés : aucune définition utilisable', d.motsCroises - cartes.length],
     ['**Cartes de la base complète**', cartes.length],
@@ -137,6 +141,10 @@ export function redigerRapport(d: DonneesDuRapport): string {
   // ── 4
   L.push(`## 4. L'Édition ${CONFIG.edition.numero}`, '');
   L.push(`Pour être éligible, une carte doit avoir une faction reconnue, une prévalence mesurée (au moins ${CONFIG.rarete.avisMinimum} personnes interrogées) et au moins une définition utilisable en duel. **${nombre(journal.eligibles)} cartes éligibles.**`, '');
+  if (d.gardee) {
+    const liste = (ids: string[]): string => (ids.length ? ids.join(', ') : 'aucune');
+    L.push(`**L'édition est en jeu : ses ${nombre(edition.length)} cartes sont gardées telles quelles.** Composée aujourd'hui avec les mêmes réglages, elle perdrait ${d.gardee.sortiraient.length} cartes (${liste(d.gardee.sortiraient)}) et en gagnerait ${d.gardee.entreraient.length} (${liste(d.gardee.entreraient)}).`, '');
+  }
   L.push(...tableauParRarete(edition));
   L.push(CONFIG.edition.notesCalculeesSur === 'edition'
     ? "*Les notes d'attaque et de défense sont calculées entre les cartes de l'édition : les 10 % de cartes les plus fortes du jeu ont 10, les 10 % les plus faibles ont 1.*"

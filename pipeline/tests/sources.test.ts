@@ -52,14 +52,14 @@ const entree = (champs: Record<string, unknown>): string => {
 
 describe('Wiktionnaire', () => {
   const { lemmes } = analyserLexique(LEXIQUE);
-  const compteurs = (): Compteurs => ({ lignes: 0, francais: 0, retenues: 0, flexions: 0, renvois: 0 });
+  const compteurs = (): Compteurs => ({ lignes: 0, francais: 0, retenues: 0, flexions: 0, renvois: 0, vides: 0 });
 
   it('ignore les autres langues, les autres natures et les mots absents de Lexique', () => {
     const c = compteurs();
     assert.equal(analyserLigne(entree({ word: 'danseur', lang_code: 'it', pos: 'noun', senses: [] }), lemmes, c), null);
     assert.equal(analyserLigne(entree({ word: 'danseur', pos: 'name', senses: [] }), lemmes, c), null);
     assert.equal(analyserLigne(entree({ word: 'zigoto', pos: 'noun', senses: [] }), lemmes, c), null);
-    assert.deepEqual(c, { lignes: 3, francais: 2, retenues: 0, flexions: 0, renvois: 0 });
+    assert.deepEqual(c, { lignes: 3, francais: 2, retenues: 0, flexions: 0, renvois: 0, vides: 0 });
   });
   it('écarte les simples formes fléchies', () => {
     const c = compteurs();
@@ -89,6 +89,20 @@ describe('Wiktionnaire', () => {
     assert.deepEqual([mot.synonymes, mot.derives, mot.attestation, c.renvois], [1, 2, 'XIIᵉ siècle', 2]);
     assert.deepEqual(mot.etymologies, ['Dérivé de danser, avec le suffixe -eur.']);
   });
+  it('ne garde pas le texte d\'attente d\'un sens pas encore rédigé, mais compte ce sens', () => {
+    const c = compteurs();
+    const mot = analyserLigne(entree({
+      word: 'danseur', pos: 'noun',
+      senses: [
+        { glosses: ['Celui qui danse.'] },
+        { glosses: ['Définition manquante ou à compléter. (Ajouter)'], tags: ['figuratively'] },
+        { glosses: ['Définition manquante ou à compléter. (Ajouter)…'], tags: ['familiar'] },
+      ],
+    }), lemmes, c)!;
+    assert.deepEqual(mot.sens.map((s) => s.definition), ['Celui qui danse.']);
+    assert.equal(mot.sensARediger, 2);
+    assert.deepEqual([c.vides, c.renvois], [2, 0]);
+  });
   it('lit aussi un mot qui contient des caractères échappés', () => {
     const mot = analyserLigne(entree({ word: 'livre', pos: 'noun', senses: [{ glosses: ['Assemblage de feuilles "reliées".'] }] }), lemmes, compteurs());
     assert.equal(mot!.sens[0].definition, 'Assemblage de feuilles "reliées".');
@@ -97,11 +111,12 @@ describe('Wiktionnaire', () => {
     const mots = new Map<string, MotBrut>();
     const lire = (champs: Record<string, unknown>): void => fusionner(mots, analyserLigne(entree(champs), lemmes, compteurs())!);
     lire({ word: 'livre', pos: 'noun', etymology_texts: ['Du latin liber.'], senses: [{ glosses: ['Assemblage de feuilles imprimées.'] }] });
-    lire({ word: 'livre', pos: 'noun', etymology_texts: ['Du latin libra.'], senses: [{ glosses: ['Unité de masse valant un demi-kilogramme.'] }], attestations: [{ date: '980' }] });
+    lire({ word: 'livre', pos: 'noun', etymology_texts: ['Du latin libra.'], senses: [{ glosses: ['Unité de masse valant un demi-kilogramme.'] }, { glosses: ['Définition manquante ou à compléter. (Ajouter)'] }], attestations: [{ date: '980' }] });
     const livre = mots.get(cle('livre', 'Nom'))!;
     assert.equal(mots.size, 1);
     assert.equal(livre.entrees, 2);
     assert.equal(livre.sens.length, 2);
+    assert.equal(livre.sensARediger, 1);
     assert.deepEqual(livre.etymologies, ['Du latin liber.', 'Du latin libra.']);
     assert.equal(livre.attestation, '980');
   });

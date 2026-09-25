@@ -26,6 +26,15 @@ export function estRenvoi(definition: string): boolean {
   return RENVOI.test(definition) || RENVOI_ORTHOGRAPHIQUE.test(definition);
 }
 
+// Un sens que personne n'a encore rédigé porte un texte d'attente du Wiktionnaire : « Définition manquante ou à
+// compléter. (Ajouter) », parfois après un début de phrase (« En ski, Définition manquante… »), ou « Exemple
+// d'utilisation manquant. (Ajouter) » à la place de la définition. En duel, ce serait une réponse vide.
+const DEFINITION_VIDE = /définition manquante|définition à compléter|sens à compléter|exemple d[’']utilisation manquant|manquante ou incomplète/i;
+
+export function estUneDefinitionVide(definition: string): boolean {
+  return DEFINITION_VIDE.test(definition);
+}
+
 // Coupe proprement un texte trop long, à la fin d'un mot.
 export function couper(texte: string, longueurMaximale: number): string {
   if (texte.length <= longueurMaximale) return texte;

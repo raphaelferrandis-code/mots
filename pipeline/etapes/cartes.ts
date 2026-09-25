@@ -42,7 +42,9 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
 
   const jouables = tous.filter((m) => m.sens.length > 0);
   const valeurs = jouables.map((m) => valeurDesLettres(m.mot));
-  const richesses = jouables.map((m) => config.richesse.poidsSens * m.sens.length + config.richesse.poidsSynonymes * m.synonymes + config.richesse.poidsDerives * m.derives);
+  // Les sens que le Wiktionnaire n'a pas encore rédigés comptent : le mot les a, seul leur texte manque.
+  const nombresDeSens = jouables.map((m) => m.sens.length + m.sensARediger);
+  const richesses = jouables.map((m, i) => config.richesse.poidsSens * nombresDeSens[i] + config.richesse.poidsSynonymes * m.synonymes + config.richesse.poidsDerives * m.derives);
   const attaques = notesSurDix(valeurs);
   const defenses = notesSurDix(richesses);
   const raretes = attribuerRaretes(
@@ -89,7 +91,7 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
       factionReconnue: origine.reconnue,
       herite: origine.via,
       homographes: m.entrees,
-      nombreDeSens: m.sens.length,
+      nombreDeSens: nombresDeSens[i],
       synonymes: m.synonymes,
       derives: m.derives,
       valeurLettres: valeurs[i],

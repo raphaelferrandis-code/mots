@@ -5,7 +5,7 @@
 // les cartes les mieux notées en qualité.
 
 import { RARETES_ORDINAIRES as RARETES } from '../../src/partage/types.ts';
-import type { Rarete } from '../../src/partage/types.ts';
+import type { CarteIndex, Rarete } from '../../src/partage/types.ts';
 import type { CONFIG } from '../config.ts';
 import type { CarteComplete } from './cartes.ts';
 import { empreinte, notesSurDix, repartirEntiers } from './stats.ts';
@@ -162,4 +162,33 @@ export function renoterDansLEdition(edition: CarteComplete[]): CarteComplete[] {
   const attaques = notesSurDix(edition.map((c) => c.valeurLettres));
   const defenses = notesSurDix(edition.map((c) => c.richesse));
   return edition.map((c, i) => ({ ...c, index: { ...c.index, attaque: attaques[i], defense: defenses[i] } }));
+}
+
+export type EditionGardee = {
+  edition: CarteComplete[];
+  disparues: string[]; // cartes publiées qui ne sont plus dans la base : impossible de les garder
+  changements: string[]; // cartes publiées qui changeraient de rareté ou de badges
+  sortiraient: string[]; // ce que la composition calculée aujourd'hui retirerait…
+  entreraient: string[]; // … et ajouterait
+};
+
+// Une édition en jeu garde ses cartes : des joueurs les possèdent, et le serveur les connaît (serveur/3-cartes.sql).
+// On reprend donc les cartes publiées, telles que le pipeline les calcule aujourd'hui : leurs textes et leurs notes
+// suivent ses corrections, la liste ne bouge pas. Ce que la composition aurait changé est seulement signalé.
+export function garderLEditionPubliee(cartes: CarteComplete[], publiees: readonly CarteIndex[], composee: readonly CarteComplete[]): EditionGardee {
+  const parId = new Map(cartes.map((c) => [c.index.id, c]));
+  const badges = (registre: readonly string[]): string => registre.join(', ') || 'aucun';
+  const resultat: EditionGardee = { edition: [], disparues: [], changements: [], sortiraient: [], entreraient: [] };
+  for (const publiee of publiees) {
+    const carte = parId.get(publiee.id);
+    if (!carte) { resultat.disparues.push(publiee.id); continue; }
+    if (carte.index.rarete !== publiee.rarete) resultat.changements.push(`${publiee.id} : ${publiee.rarete} → ${carte.index.rarete}`);
+    if (badges(carte.index.registre) !== badges(publiee.registre)) resultat.changements.push(`${publiee.id} : badges ${badges(publiee.registre)} → ${badges(carte.index.registre)}`);
+    resultat.edition.push(carte);
+  }
+  const ids = new Set(publiees.map((c) => c.id));
+  const composees = new Set(composee.map((c) => c.index.id));
+  resultat.sortiraient = [...ids].filter((id) => !composees.has(id));
+  resultat.entreraient = [...composees].filter((id) => !ids.has(id));
+  return resultat;
 }

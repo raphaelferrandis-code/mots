@@ -9,9 +9,10 @@
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import type { IndexEdition } from '../src/partage/types.ts';
 import { CONFIG, estUneOrigineConnue } from './config.ts';
 import { assemblerCartes } from './etapes/cartes.ts';
-import { composerEdition, renoterDansLEdition } from './etapes/edition.ts';
+import { composerEdition, garderLEditionPubliee, renoterDansLEdition } from './etapes/edition.ts';
 import { chargerLexique } from './etapes/lexique.ts';
 import { trouverLesRecords } from './etapes/records.ts';
 import { redigerMotsSensibles, redigerRapport } from './etapes/rapport.ts';
@@ -89,14 +90,26 @@ const exclusions = lireListe(chemin('data', 'exclusions.txt'));
 const composition = composerEdition(cartes, { exclusions, coupsDeCoeur }, CONFIG.edition, CONFIG.rarete.parts);
 const journal = composition.journal;
 // Les cartes Hors-série s'ajoutent aux cartes ordinaires, sans prendre la place d'aucune.
-const choisies = [...composition.edition, ...horsSerie];
+const composee = [...composition.edition, ...horsSerie];
+// Une édition en jeu garde ses cartes (voir « figee » dans config.ts).
+const editionPubliee = chemin('public', 'data', `edition-${CONFIG.edition.numero}.index.json`);
+const gardee = CONFIG.edition.figee && existsSync(editionPubliee)
+  ? garderLEditionPubliee(cartes, (JSON.parse(readFileSync(editionPubliee, 'utf8')) as IndexEdition).cartes, composee)
+  : null;
+if (gardee?.disparues.length) {
+  console.error(`    ❌ Cartes en jeu absentes de la base : ${gardee.disparues.join(', ')}. Rien n'a été écrit.`);
+  process.exit(1);
+}
+if (gardee) console.log(`    Édition en jeu : ses cartes sont gardées (recomposée, elle en perdrait ${gardee.sortiraient.length} et en gagnerait ${gardee.entreraient.length}).`);
+for (const changement of gardee?.changements ?? []) console.warn(`    ⚠️ ${changement} (à recoller dans Supabase : serveur/3-cartes.sql)`);
+const choisies = gardee?.edition ?? composee;
 const edition = CONFIG.edition.notesCalculeesSur === 'edition' ? renoterDansLEdition(choisies) : choisies;
 console.log(`    ${edition.length.toLocaleString('fr-FR')} cartes retenues`);
 
 console.log('5/5 Écriture des fichiers…');
 const poids = ecrireEdition(chemin('public', 'data'), edition, CONFIG.edition.numero, CONFIG.edition.lots, version);
 ecrireBaseComplete(chemin('data', 'intermediaire', 'base-complete.jsonl'), cartes);
-writeFileSync(chemin('data', 'rapport.md'), redigerRapport({ lexique, compteurs, motsCroises: mots.size, cartes, edition, journal, exclusions, horsSerieIntrouvables: records.introuvables, corrections, correctionsIllisibles, poids, dureeSecondes: (Date.now() - depart) / 1000, version }));
+writeFileSync(chemin('data', 'rapport.md'), redigerRapport({ lexique, compteurs, motsCroises: mots.size, cartes, edition, journal, gardee, exclusions, horsSerieIntrouvables: records.introuvables, corrections, correctionsIllisibles, poids, dureeSecondes: (Date.now() - depart) / 1000, version }));
 writeFileSync(chemin('data', 'mots-sensibles.md'), redigerMotsSensibles(edition));
 
 console.log(`Terminé en ${Math.round((Date.now() - depart) / 1000)} secondes. À relire : data/rapport.md`);

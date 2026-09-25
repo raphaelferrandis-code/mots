@@ -5,7 +5,7 @@ import { createGunzip } from 'node:zlib';
 import type { Nature } from '../../src/partage/types.ts';
 import { cle } from './lexique.ts';
 import type { InfoLexique } from './lexique.ts';
-import { estRenvoi, nettoyerTexte } from './nettoyage.ts';
+import { estRenvoi, estUneDefinitionVide, nettoyerTexte } from './nettoyage.ts';
 
 export type SensBrut = {
   definition: string;
@@ -20,6 +20,9 @@ export type MotBrut = {
   entrees: number; // 2 ou plus : homographes (« avocat » le juriste, le fruit, la couleur)
   etymologies: string[];
   sens: SensBrut[];
+  // Sens que le Wiktionnaire n'a pas encore rédigés (« Définition manquante ou à compléter ») : le mot a bien ces
+  // sens, ils comptent dans sa richesse, mais il n'y a rien à en montrer.
+  sensARediger: number;
   synonymes: number;
   derives: number;
   attestation: string | null;
@@ -32,6 +35,7 @@ export type Compteurs = {
   retenues: number;
   flexions: number;
   renvois: number;
+  vides: number; // sens pas encore rédigés : « Définition manquante ou à compléter »
 };
 
 const NATURE_PAR_POS: Record<string, Nature> = { noun: 'Nom', verb: 'Verbe', adj: 'Adjectif', adv: 'Adverbe' };
@@ -71,9 +75,11 @@ export function analyserLigne(ligne: string, lemmes: Map<string, InfoLexique>, c
   compteurs.retenues++;
 
   const sens: SensBrut[] = [];
+  let sensARediger = 0;
   for (const s of entree.senses ?? []) {
     const definition = nettoyerTexte(s.glosses?.[s.glosses.length - 1] ?? '');
     if (!definition || s.form_of || s.alt_of || estRenvoi(definition)) { compteurs.renvois++; continue; }
+    if (estUneDefinitionVide(definition)) { compteurs.vides++; sensARediger++; continue; }
     sens.push({ definition, etiquettes: [...(s.tags ?? []), ...(s.raw_tags ?? [])], domaines: s.topics ?? [] });
   }
 
@@ -84,6 +90,7 @@ export function analyserLigne(ligne: string, lemmes: Map<string, InfoLexique>, c
     entrees: 1,
     etymologies: etymologie ? [etymologie] : [],
     sens,
+    sensARediger,
     synonymes: entree.synonyms?.length ?? 0,
     derives: entree.derived?.length ?? 0,
     attestation: entree.attestations?.[0]?.date ? nettoyerTexte(String(entree.attestations[0].date)) : null,
@@ -99,6 +106,7 @@ export function fusionner(mots: Map<string, MotBrut>, nouveau: MotBrut): void {
   existant.entrees++;
   existant.etymologies.push(...nouveau.etymologies);
   existant.sens.push(...nouveau.sens);
+  existant.sensARediger += nouveau.sensARediger;
   existant.synonymes += nouveau.synonymes;
   existant.derives += nouveau.derives;
   existant.attestation ??= nouveau.attestation;
@@ -110,7 +118,7 @@ export async function lireWiktionnaire(
   progression?: (lignes: number) => void,
 ): Promise<{ mots: Map<string, MotBrut>; compteurs: Compteurs }> {
   const mots = new Map<string, MotBrut>();
-  const compteurs: Compteurs = { lignes: 0, francais: 0, retenues: 0, flexions: 0, renvois: 0 };
+  const compteurs: Compteurs = { lignes: 0, francais: 0, retenues: 0, flexions: 0, renvois: 0, vides: 0 };
   const traiter = (ligne: string): void => {
     const mot = analyserLigne(ligne, lemmes, compteurs);
     if (mot) fusionner(mots, mot);

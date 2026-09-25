@@ -68,6 +68,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
 | Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
 | Paiements : suppression par le joueur, mois et année de naissance, reprises après une panne de Stripe | **En ligne** (étape 11 faite), achats toujours fermés |
+| Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | Jeu en ligne ; **étape 12 à faire** pour les duels joués sur le serveur |
 
 ---
 
@@ -223,6 +224,21 @@ Détails : [docs/GUIDE-paiements-production.md](docs/GUIDE-paiements-production.
       le mois, avec la même année, s'il veut payer.
 - [ ] Six requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE : elles
       peuvent être supprimées.
+
+### Étape 12 — Redéployer les deux fonctions du combat (définitions vides)
+
+Pourquoi : en duel, la parade proposait parfois « Définition manquante ou à compléter. (Ajouter) » comme réponse. Les
+8 cartes concernées sont corrigées dans le jeu, mais les duels et les joutes sont joués sur le serveur, qui garde sa
+propre copie des définitions : tant que les deux fonctions ne sont pas redéployées, ce texte peut encore sortir.
+**Aucun script SQL à coller**, aucune carte ne change (ni rareté, ni attaque, ni défense). Ce redéploiement emporte
+aussi la marge du réseau du script 20 (une réponse partie à temps compte encore si elle arrive jusqu'à 1,5 s en retard).
+
+- [ ] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
+      `serveur/deploiement-combats/combats.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
+- [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+      `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
+- [ ] Dire à l'assistant que c'est fait : il vérifie, en lecture seule, que le code déployé est identique aux fichiers.
+      Un joueur qui avait le jeu ouvert pendant le redéploiement doit recharger la page.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

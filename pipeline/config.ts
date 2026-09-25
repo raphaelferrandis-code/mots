@@ -42,6 +42,11 @@ export const CONFIG = {
   // ── Édition ───────────────────────────────────────────────────────────────
   edition: {
     numero: 1,
+    // L'édition est en jeu : des joueurs possèdent ses cartes, et le serveur les connaît (serveur/3-cartes.sql,
+    // catalogue des combats). Tant que ce réglage vaut true, le pipeline garde exactement les cartes publiées dans
+    // public/data/ : seuls leurs textes et leurs notes suivent ses corrections. Le passer à false pour composer une
+    // nouvelle édition (le rapport dit, au §4, ce que la composition changerait).
+    figee: true,
     taille: 3000,
     // Comment répartir les cartes entre factions :
     //   1   = proportions réelles de la langue (le latin écrase tout)

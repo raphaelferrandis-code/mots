@@ -1,10 +1,13 @@
-// Tests : valeur des lettres, nettoyage des définitions, registres.
+// Tests : valeur des lettres, nettoyage des définitions, définitions pas encore rédigées, registres.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { valeurDesLettres } from '../../src/partage/lettres.ts';
 import { lotDeLaCarte } from '../../src/partage/lots.ts';
-import { construireDefinitions, contientLeMot, couper, estRenvoi, nettoyerTexte } from '../etapes/nettoyage.ts';
+import type { CarteDetails } from '../../src/partage/types.ts';
+import { construireDefinitions, contientLeMot, couper, estRenvoi, estUneDefinitionVide, nettoyerTexte } from '../etapes/nettoyage.ts';
 import { registresDeLaCarte, registresDuSens, sensActuelsDAbord } from '../etapes/registre.ts';
 
 describe('valeur des lettres', () => {
@@ -54,6 +57,33 @@ describe('renvois', () => {
     for (const d of ['Variante de la belote qui se joue à trois.', 'Variante du jeu de dames.', 'Forme de gouvernement où le peuple est souverain.', 'Pluriel de majesté employé par les rois.', 'Féminin, délicat, gracieux.']) {
       assert.ok(!estRenvoi(d), d);
     }
+  });
+});
+
+describe('définitions pas encore rédigées', () => {
+  it('reconnaît le texte d\'attente du Wiktionnaire, seul ou accompagné', () => {
+    for (const d of [
+      'Définition manquante ou à compléter. (Ajouter)',
+      'Définition manquante ou à compléter. (Ajouter)…',
+      'En ski, Définition manquante ou à compléter. (Ajouter)',
+      'Définition manquante ou à compléter. (Ajouter) Insulte.',
+      'Exemple d’utilisation manquant. (Ajouter)',
+      '? (définition à compléter)',
+      '(autre sens à compléter)',
+    ]) assert.ok(estUneDefinitionVide(d), d);
+  });
+  it('garde les vraies définitions qui parlent de manque ou de compléter', () => {
+    for (const d of ['Qui sert à compléter.', 'Pièce, chose manquante dans un inventaire.', 'Ajouter quelque chose pour compléter, remédier à un manque.', 'Qui a une ou plusieurs dents manquantes.']) {
+      assert.ok(!estUneDefinitionVide(d), d);
+    }
+  });
+  it('n\'en laisse aucune dans l\'édition publiée', () => {
+    const dossier = path.join(import.meta.dirname, '..', '..', 'public', 'data', 'details');
+    const vides = readdirSync(dossier).filter((nom) => nom.endsWith('.json')).flatMap((nom) => {
+      const lot: Record<string, CarteDetails> = JSON.parse(readFileSync(path.join(dossier, nom), 'utf8'));
+      return Object.entries(lot).flatMap(([id, carte]) => carte.definitions.filter((d) => estUneDefinitionVide(d.texte)).map((d) => `${id} : ${d.texte}`));
+    });
+    assert.deepEqual(vides, []);
   });
 });
 

@@ -1,12 +1,13 @@
 # Rapport de génération des cartes
 
-*Généré par `npm run pipeline` en 24 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
+*Généré par `npm run pipeline` en 26 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
 
 ## 1. En bref
 
-- Base complète : **52 053 cartes possibles**.
-- Édition 1 : **3 016 cartes**, choisies parmi 22 767 cartes éligibles.
+- Base complète : **52 046 cartes possibles**.
+- Édition 1 : **3 016 cartes**, choisies parmi 22 757 cartes éligibles.
 - Poids pour le jeu : 694 Ko chargés au démarrage, plus 1 413 Ko de détails répartis en 16 fichiers chargés à la demande.
+- L'édition est en jeu : ses cartes sont gardées telles quelles, seuls leurs textes et leurs notes sont recalculés (réglage `figee` de `pipeline/config.ts`, détail au §4).
 
 ## 2. Du fichier brut aux cartes
 
@@ -22,37 +23,38 @@
 | — dont entrées correspondant à un lemme de Lexique | 57 331 |
 | — écartées : simples formes fléchies | 1 943 |
 | Définitions écartées (simples renvois : « Pluriel de… ») | 1 578 |
+| Définitions écartées (pas encore rédigées : « Définition manquante ou à compléter » ; le sens compte dans la richesse du mot) | 121 |
 | Mots présents dans les deux sources | 53 294 |
-| — écartés : aucune définition utilisable | 1 241 |
-| **Cartes de la base complète** | 52 053 |
+| — écartés : aucune définition utilisable | 1 248 |
+| **Cartes de la base complète** | 52 046 |
 
 ## 3. La base complète
 
 | Rareté | Cartes | Part | Attaque moyenne | Défense moyenne (brute) | Défense moyenne (avec le bonus de rareté) | Connu de… (moyenne) |
 |---|---|---|---|---|---|---|
-| Hors-série | 16 | 0,0 % | 5,3 | 7,4 | 8,8 | 79,7 % |
+| Hors-série | 16 | 0,0 % | 5,3 | 7,4 | 9,3 | 79,7 % |
 | Légendaire | 1 561 | 3,0 % | 5,7 | 4,4 | 6,3 | 17,8 % |
-| Épique | 3 645 | 7,0 % | 5,8 | 4,4 | 5,4 | 41,0 % |
-| Rare | 7 808 | 15,0 % | 5,9 | 4,6 | 5,5 | 63,8 % |
-| Peu commune | 13 012 | 25,0 % | 5,7 | 5,0 | 5,0 | 84,5 % |
-| Commune | 26 011 | 50,0 % | 5,2 | 6,3 | 6,3 | 97,1 % |
+| Épique | 3 644 | 7,0 % | 5,8 | 4,4 | 5,4 | 41,0 % |
+| Rare | 7 808 | 15,0 % | 5,9 | 4,6 | 5,5 | 63,9 % |
+| Peu commune | 13 009 | 25,0 % | 5,7 | 5,0 | 5,0 | 84,5 % |
+| Commune | 26 008 | 50,0 % | 5,2 | 6,3 | 6,3 | 97,1 % |
 
 | Type | Cartes | Part |
 |---|---|---|
-| Nom | 33 891 | 65,1 % |
-| Adjectif | 10 620 | 20,4 % |
+| Nom | 33 886 | 65,1 % |
+| Adjectif | 10 618 | 20,4 % |
 | Verbe | 5 924 | 11,4 % |
 | Adverbe | 1 618 | 3,1 % |
 
-**Mots sans faction reconnue : 7 419 (14,3 %)** — ils restent dans la base complète mais ne peuvent pas entrer dans une édition.
+**Mots sans faction reconnue : 7 414 (14,2 %)** — ils restent dans la base complète mais ne peuvent pas entrer dans une édition.
 
 | Faction | Cartes | Part |
 |---|---|---|
-| Latin | 29 657 | 57,0 % |
-| Origine inconnue | 4 246 | 8,2 % |
+| Latin | 29 656 | 57,0 % |
+| Origine inconnue | 4 241 | 8,1 % |
 | Anglais | 3 284 | 6,3 % |
 | Formation française | 3 173 | 6,1 % |
-| Grec | 2 466 | 4,7 % |
+| Grec | 2 465 | 4,7 % |
 | Vieux français | 2 386 | 4,6 % |
 | Italien | 1 449 | 2,8 % |
 | Francique | 1 217 | 2,3 % |
@@ -64,27 +66,29 @@
 | Onomatopée | 266 | 0,5 % |
 | Gaulois | 231 | 0,4 % |
 
-Origine héritée d'un autre mot (« danseur » prend l'origine de « danser ») : 23 836 mots (45,8 %).
+Origine héritée d'un autre mot (« danseur » prend l'origine de « danser ») : 23 835 mots (45,8 %).
 
 | Badge de registre | Cartes | Part |
 |---|---|---|
-| Familier | 2 267 | 4,4 % |
-| Vieilli | 555 | 1,1 % |
-| Injurieux | 105 | 0,2 % |
+| Familier | 2 268 | 4,4 % |
+| Vieilli | 556 | 1,1 % |
+| Injurieux | 104 | 0,2 % |
 | Littéraire | 84 | 0,2 % |
 
-- Prévalence mesurée : 32 808 cartes (63,0 %)
-- Au moins une définition utilisable en duel : 37 376 cartes (71,8 %)
+- Prévalence mesurée : 32 806 cartes (63,0 %)
+- Au moins une définition utilisable en duel : 37 351 cartes (71,8 %)
 - Date de première apparition connue : 11 659 cartes (22,4 %)
 - Homographes regroupés en une seule carte : 3 169, par exemple fils, banal, pouf, beau, bocage, bretelle, nazi, livre, composter, ya, seconde, daille, accordance, kan, coquard, chambrer, grimaud, marner, broc, slop, tonga, colon, pli, arène, triton
 
 ## 4. L'Édition 1
 
-Pour être éligible, une carte doit avoir une faction reconnue, une prévalence mesurée (au moins 10 personnes interrogées) et au moins une définition utilisable en duel. **22 767 cartes éligibles.**
+Pour être éligible, une carte doit avoir une faction reconnue, une prévalence mesurée (au moins 10 personnes interrogées) et au moins une définition utilisable en duel. **22 757 cartes éligibles.**
+
+**L'édition est en jeu : ses 3 016 cartes sont gardées telles quelles.** Composée aujourd'hui avec les mêmes réglages, elle perdrait 4 cartes (chipie-nom, coquerie-nom, recourber-verbe, ronronnement-nom) et en gagnerait 4 (yéti-nom, chuchotement-nom, pâmer-verbe, pochon-nom).
 
 | Rareté | Cartes | Part | Attaque moyenne | Défense moyenne (brute) | Défense moyenne (avec le bonus de rareté) | Connu de… (moyenne) |
 |---|---|---|---|---|---|---|
-| Hors-série | 16 | 0,5 % | 5,6 | 6,4 | 7,9 | 79,7 % |
+| Hors-série | 16 | 0,5 % | 5,6 | 6,4 | 9,3 | 79,7 % |
 | Légendaire | 90 | 3,0 % | 5,6 | 3,8 | 5,7 | 22,9 % |
 | Épique | 210 | 7,0 % | 5,6 | 4,4 | 5,4 | 37,8 % |
 | Rare | 450 | 14,9 % | 5,4 | 4,3 | 5,3 | 48,3 % |
@@ -95,10 +99,10 @@ Pour être éligible, une carte doit avoir une faction reconnue, une prévalence
 
 | Faction | Mots éligibles | Part réelle | Cartes dans l'édition | Part dans l'édition | dont Légendaires | dont Épiques |
 |---|---|---|---|---|---|---|
-| Latin | 15 838 | 69,6 % | 963 | 31,9 % | 29 | 67 |
-| Vieux français | 1 397 | 6,1 % | 284 | 9,4 % | 8 | 20 |
+| Latin | 15 832 | 69,6 % | 963 | 31,9 % | 29 | 67 |
+| Vieux français | 1 395 | 6,1 % | 284 | 9,4 % | 8 | 20 |
 | Anglais | 1 185 | 5,2 % | 261 | 8,7 % | 8 | 18 |
-| Grec | 854 | 3,8 % | 226 | 7,5 % | 7 | 16 |
+| Grec | 853 | 3,7 % | 226 | 7,5 % | 7 | 16 |
 | Italien | 840 | 3,7 % | 221 | 7,3 % | 7 | 15 |
 | Francique | 720 | 3,2 % | 203 | 6,7 % | 6 | 14 |
 | Allemand et néerlandais | 429 | 1,9 % | 157 | 5,2 % | 5 | 11 |
@@ -106,7 +110,7 @@ Pour être éligible, une carte doit avoir une faction reconnue, une prévalence
 | Espagnol et portugais | 354 | 1,6 % | 142 | 4,7 % | 4 | 10 |
 | Occitan | 332 | 1,5 % | 139 | 4,6 % | 4 | 10 |
 | Arabe | 173 | 0,8 % | 99 | 3,3 % | 3 | 7 |
-| Onomatopée | 141 | 0,6 % | 90 | 3,0 % | 3 | 6 |
+| Onomatopée | 140 | 0,6 % | 90 | 3,0 % | 3 | 6 |
 | Gaulois | 127 | 0,6 % | 85 | 2,8 % | 2 | 6 |
 
 | Type | Cartes | Part |
@@ -143,22 +147,22 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 | Mot | Type | Faction | Attaque / défense | Titre de la carte |
 |---|---|---|---|---|
+| amour | Nom | Vieux français | 1 / 10 | Le plus vieux mot daté · attesté en 842, dans les Serments de Strasbourg |
+| anticonstitutionnellement | Adverbe | Latin | 10 / 2 | Le plus long mot de la langue · 25 lettres |
+| dictionnaire | Nom | Latin | 8 / 10 | La maison de tous les autres |
+| électro-encéphalogramme | Nom | Grec | 10 / 1 | Le plus long mot composé · 22 lettres |
+| être | Verbe | Latin | 1 / 10 | Le mot le plus employé de la langue |
+| faire | Verbe | Latin | 2 / 10 | La plus grande famille · 1 282 mots dérivés |
+| hapax | Nom | Grec | 9 / 8 | Le mot qui désigne un mot que l'on ne rencontre qu'une seule fois |
+| jazzy | Adjectif | Anglais | 10 / 1 | La plus forte valeur par lettre · 7,8 points en moyenne |
+| lexie | Nom | Grec | 7 / 2 | Le mot que presque personne ne connaît · connu de 0 % des gens |
+| marron | Nom | Italien | 2 / 10 | Le mot aux synonymes les plus nombreux · 161 |
+| mot | Nom | Latin | 1 / 10 | Le mot « mot » |
 | oiseau | Nom | Latin | 1 / 10 | Les cinq voyelles en 6 lettres seulement |
 | prendre | Verbe | Latin | 4 / 10 | Le mot aux sens les plus nombreux · 70 sens |
-| mot | Nom | Latin | 1 / 10 | Le mot « mot » |
-| faire | Verbe | Latin | 2 / 10 | La plus grande famille · 1 282 mots dérivés |
-| amour | Nom | Vieux français | 1 / 10 | Le plus vieux mot daté · attesté en 842, dans les Serments de Strasbourg |
-| marron | Nom | Italien | 2 / 10 | Le mot aux synonymes les plus nombreux · 161 |
-| anticonstitutionnellement | Adverbe | Latin | 10 / 2 | Le plus long mot de la langue · 25 lettres |
-| hapax | Nom | Grec | 9 / 8 | Le mot qui désigne un mot que l'on ne rencontre qu'une seule fois |
-| ressasser | Verbe | Latin | 3 / 7 | Le plus long palindrome · il se lit dans les deux sens |
-| lexie | Nom | Grec | 7 / 2 | Le mot que presque personne ne connaît · connu de 0 % des gens |
-| être | Verbe | Latin | 1 / 10 | Le mot le plus employé de la langue |
-| électro-encéphalogramme | Nom | Grec | 10 / 1 | Le plus long mot composé · 22 lettres |
-| pyroclastique | Adjectif | Grec | 10 / 1 | Le plus long mot sans lettre répétée · 13 lettres |
 | psychophysiologique | Adjectif | Latin | 10 / 1 | Les lettres les plus chères · 57 points |
-| dictionnaire | Nom | Latin | 8 / 10 | La maison de tous les autres |
-| jazzy | Adjectif | Anglais | 10 / 1 | La plus forte valeur par lettre · 7,8 points en moyenne |
+| pyroclastique | Adjectif | Grec | 10 / 1 | Le plus long mot sans lettre répétée · 13 lettres |
+| ressasser | Verbe | Latin | 3 / 7 | Le plus long palindrome · il se lit dans les deux sens |
 
 ## 5. Exemples tirés au hasard dans l'édition
 
@@ -166,165 +170,165 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 ### Hors-série
 
-- **ressasser** *(Verbe, Latin, 3/7, connu de 100 %)* — Revenir constamment en esprit sur le même sujet ou revenir sans cesse sur les mêmes propos.
-- **psychophysiologique** *(Adjectif, Latin, 10/1, connu de 68 % · attesté : XIXᵉ siècle)* — Relatif à la psychophysiologie.
-- **jazzy** *(Adjectif, Anglais, 10/1, connu de 75 %)* — Proche du jazz, qui évoque le jazz.
-- **marron** *(Nom, Italien, 2/10, connu de 100 % · attesté : 1526)* — Fruit rond comestible de certaines variétés de châtaigniers, plus gros qu’une châtaigne ordinaire, de couleur brune.
 - **lexie** *(Nom, Grec, 7/2, connu de 0 %)* — Élément unitaire du lexique, comme un mot simple (lexème), une locution ou un proverbe. Par exemple, jeune, jeune homme et les …
-- **dictionnaire** *(Nom, Latin, 8/10, connu de 100 % · attesté : c. 1501)* — Ouvrage de référence qui répertorie des mots dans un ordre convenu (alphabétique en général) fournissant pour chacun d’eux diff…
-- **hapax** *(Nom, Grec, 9/8, prévalence non mesurée · attesté : XXᵉ siècle)* — Mot, spécialement pour les langues anciennes, dont on ne connaît qu’une seule occurrence dans le corpus d’une langue donnée, gl…
-- **électro-encéphalogramme** *(Nom, Grec, 10/1, prévalence non mesurée)* — Enregistrement d’une électro-encéphalographie, résultat de cet enregistrement.
-- **oiseau** *(Nom, Latin, 1/10, connu de 100 % · attesté : c. 1100)* — Animal vertébré théropode, à deux pattes et deux ailes, ovipare, homéotherme, au corps couvert de plumes et qui possède un bec …
-- **mot** *(Nom, Latin, 1/10, prévalence non mesurée · attesté : Xᵉ siècle)* — Succession de sons dans les langues parlées, ou de signes dans les langues des signes ou écrites, qui a un sens propre.
-- **être** *(Verbe, Latin, 1/10, connu de 100 %)* — Définir un état, une caractéristique du sujet.
-- **pyroclastique** *(Adjectif, Grec, 10/1, connu de 18 %)* — Qui contient de la matière bouillante composée de cendres, de terre, de gaz et de roches éclatées.
-- **anticonstitutionnellement** *(Adverbe, Latin, 10/2, prévalence non mesurée · attesté : XIXᵉ siècle)* — Contrairement aux règles constitutionnelles de l’organisation des pouvoirs publics d’un gouvernement.
-- **prendre** *(Verbe, Latin, 4/10, connu de 95 % · attesté : IXᵉ siècle)* — Saisir, mettre en sa main.
-- **amour** *(Nom, Vieux français, 1/10, connu de 100 % · attesté : 842)* — Sentiment intense et agréable qui incite les êtres à s’unir.
+- **psychophysiologique** *(Adjectif, Latin, 10/1, connu de 68 % · attesté : XIXᵉ siècle)* — Relatif à la psychophysiologie.
+- **ressasser** *(Verbe, Latin, 3/7, connu de 100 %)* — Revenir constamment en esprit sur le même sujet ou revenir sans cesse sur les mêmes propos.
 - **faire** *(Verbe, Latin, 2/10, connu de 100 % · attesté : IXᵉ siècle)* — Créer, produire, fabriquer, en parlant de toute œuvre matérielle.
+- **marron** *(Nom, Italien, 2/10, connu de 100 % · attesté : 1526)* — Fruit rond comestible de certaines variétés de châtaigniers, plus gros qu’une châtaigne ordinaire, de couleur brune.
+- **pyroclastique** *(Adjectif, Grec, 10/1, connu de 18 %)* — Qui contient de la matière bouillante composée de cendres, de terre, de gaz et de roches éclatées.
+- **jazzy** *(Adjectif, Anglais, 10/1, connu de 75 %)* — Proche du jazz, qui évoque le jazz.
+- **oiseau** *(Nom, Latin, 1/10, connu de 100 % · attesté : c. 1100)* — Animal vertébré théropode, à deux pattes et deux ailes, ovipare, homéotherme, au corps couvert de plumes et qui possède un bec …
+- **amour** *(Nom, Vieux français, 1/10, connu de 100 % · attesté : 842)* — Sentiment intense et agréable qui incite les êtres à s’unir.
+- **dictionnaire** *(Nom, Latin, 8/10, connu de 100 % · attesté : c. 1501)* — Ouvrage de référence qui répertorie des mots dans un ordre convenu (alphabétique en général) fournissant pour chacun d’eux diff…
+- **mot** *(Nom, Latin, 1/10, prévalence non mesurée · attesté : Xᵉ siècle)* — Succession de sons dans les langues parlées, ou de signes dans les langues des signes ou écrites, qui a un sens propre.
+- **prendre** *(Verbe, Latin, 4/10, connu de 95 % · attesté : IXᵉ siècle)* — Saisir, mettre en sa main.
+- **hapax** *(Nom, Grec, 9/8, prévalence non mesurée · attesté : XXᵉ siècle)* — Mot, spécialement pour les langues anciennes, dont on ne connaît qu’une seule occurrence dans le corpus d’une langue donnée, gl…
+- **anticonstitutionnellement** *(Adverbe, Latin, 10/2, prévalence non mesurée · attesté : XIXᵉ siècle)* — Contrairement aux règles constitutionnelles de l’organisation des pouvoirs publics d’un gouvernement.
+- **être** *(Verbe, Latin, 1/10, connu de 100 %)* — Définir un état, une caractéristique du sujet.
+- **électro-encéphalogramme** *(Nom, Grec, 10/1, prévalence non mesurée)* — Enregistrement d’une électro-encéphalographie, résultat de cet enregistrement.
 
 ### Légendaire
 
-- **enclosure** *(Nom, Anglais, 5/2, connu de 31 % · attesté : 1804)* — Clôture, notamment dans le contexte seigneurial du début de la Renaissance et des révolutions agricoles.
-- **mousqueterie** *(Nom, Italien, 10/2, connu de 22 %)* — Décharge de plusieurs mousquets, de plusieurs fusils tirés en même temps.
+- **ribote** *(Nom, Vieux français, 2/9, connu de 13 %)* — Réunion, fête mondaine avec épouse ou amis dans le monde des officiers de Marine.
+- **douar** *(Nom, Arabe, 1/4, connu de 11 %)* — Groupe de tentes disposées en cercle, de façon à remiser les troupeaux dans l’espace laissé libre au centre.
+- **sunna** *(Nom, Arabe, 1/3, connu de 13 %)* — Livre qui contient certaines traditions de la religion musulmane.
+- **yatagan** *(Nom, Langues d'ailleurs, 9/1, connu de 23 %)* — Sabre turc, à lame recourbée et dont le tranchant forme, vers la pointe, une courbe rentrante.
 - **blédard** *(Nom, Arabe, 5/8, connu de 14 % · attesté : Vers 1920)* — Immigré dont les coutumes et la culture différentes sont encore visibles par manque d’intégration.
-- **souchet** *(Nom, Gaulois, 6/7, connu de 20 %)* — Plante monocotylédone de la famille des Cypéracées, dont les diverses espèces croissent dans les endroits humides.
-- **abstrus** *(Adjectif, Latin, 3/6, connu de 24 % · Littéraire · attesté : 1327)* — Qui est difficile à comprendre, à saisir par l’esprit.
-- **épiphane** *(Adjectif, Grec, 8/2, connu de 31 %)* — Illustre, nom donné à quelques souverains parmi les successeurs d’Alexandre le Grand.
-- **offertoire** *(Nom, Latin, 8/5, connu de 33 %)* — Prière qui, dans la messe, précède immédiatement l’oblation du pain et du vin.
-- **baret** *(Nom, Onomatopée, 2/1, connu de 10 % · Vieilli)* — Cri de l’éléphant ou du rhinocéros.
-- **couaquer** *(Verbe, Onomatopée, 9/2, connu de 25 %)* — Se moquer d'un prêtre en faisant un couac, en imitant le corbeau, quand il passe.
-- **sarigue** *(Nom, Espagnol et portugais, 2/4, connu de 26 %)* — Petit mammifère à longue queue préhensile de l’ordre des marsupiaux. La femelle porte les petits sur son dos lorsqu'ils sont so…
-- **rouf** *(Nom, Allemand et néerlandais, 2/3, connu de 16 % · attesté : 1582)* — Petit logement généralement situé à l'arrière du pont supérieur d'un bateau et ne s'étendant pas sur toute la largeur comme la …
-- **coryphée** *(Nom, Latin, 10/4, connu de 10 %)* — Chef de chœur dans le théâtre antique ou dans une fête moderne.
-- **guarani** *(Nom, Espagnol et portugais, 2/2, connu de 21 %)* — Unité monétaire du Paraguay. Son symbole est ₲ (Unicode U+20B2).
-- **rétrogression** *(Nom, Latin, 7/6, connu de 29 % · attesté : 1836)* — Action de rétrograder, déclin vers une forme plus simple, moins complexe, moins évoluée.
-- **miton** *(Nom, Vieux français, 1/7, connu de 27 %)* — Gantelet d’une armure, ou partie du gantelet, qui ne recouvre que la moitié supérieur de la main, laissant les doigts découverts.
-- **carole** *(Nom, Latin, 2/6, connu de 27 % · attesté : XIIᵉ siècle)* — Forme de danse festive et populaire, très répandue au Moyen Âge, se présentant sous forme de chaîne ouverte ou fermée.
-- **mortaiser** *(Verbe, Vieux français, 4/1, connu de 31 % · attesté : 1302)* — Entailler le bois de façon à créer un logement qui reçoit une pièce de bois généralement amincie, appelée le tenon.
+- **pennage** *(Nom, Latin, 4/2, connu de 26 %)* — Plumage des oiseaux de proie, qui se renouvelle à différents âges.
+- **aubain** *(Nom, Francique, 2/4, connu de 18 % · attesté : XIIᵉ siècle)* — Étranger qui n’était pas naturalisé, et qui était privé du droit de tester et d’hériter.
+- **tangence** *(Nom, Latin, 5/5, connu de 42 % · attesté : 1838)* — Correspondance limite entre deux pensées.
+- **tarare** *(Nom, Onomatopée, 1/3, connu de 11 %)* — Appareil, sorte de ventilateur, qui sert à nettoyer le grain des balles et la menue paille, après le battage.
 - **radôme** *(Nom, Anglais, 2/1, connu de 36 %)* — Abri en forme de dôme protégeant une antenne de radar, au sol, au sommet d'un bâtiment ou encore sur un véhicule.
-- **mignard** *(Adjectif, Francique, 4/2, connu de 33 %)* — Qui a de la gentillesse et de l’afféterie.
+- **marmoréen** *(Adjectif, Latin, 5/2, connu de 21 %)* — Qui a la nature ou l’apparence du marbre.
+- **bayadère** *(Adjectif, Espagnol et portugais, 10/1, connu de 24 % · attesté : XVIIᵉ siècle)* — Qui présente des rayures de couleurs différentes.
+- **rapetasser** *(Verbe, Vieux français, 6/7, connu de 31 % · Familier)* — Raccommoder grossièrement de vieux vêtements, de vieux meubles ou des chaussures, y mettre des pièces.
+- **basane** *(Nom, Occitan, 2/7, connu de 40 % · attesté : Deuxième moitié du XIIIᵉ dans sa forme actuelle)* — Peau de mouton préparée qui sert à couvrir les livres et à d’autres usages.
+- **haire** *(Nom, Allemand et néerlandais, 2/3, connu de 31 %)* — Petite chemise faite d’un tissu de poil de chèvre, de crin ou de tout autre poil rude et piquant, qu’on porte sur la chair par …
+- **aboucher** *(Verbe, Latin, 8/9, connu de 23 % · attesté : XIIIᵉ siècle)* — Entrer en communication avec quelqu’un.
+- **jaculatoire** *(Adjectif, Latin, 10/4, connu de 20 %)* — Marqué par un jaillissement intérieur intense, exalté, lyrique.
+- **sérendipité** *(Nom, Anglais, 7/9, prévalence non mesurée · attesté : 1953)* — Fait de faire une découverte par hasard et par sagacité alors que l’on cherchait autre chose.
+- **marmiteux** *(Adjectif, Vieux français, 10/1, connu de 40 % · Familier)* — Qui est piteux, qui est mal sous le rapport de la fortune, des vêtements ou de la santé, et qui s’en plaint habituellement.
 - **shipchandler** *(Nom, Anglais, 10/1, connu de 17 %)* — Avitailleur, fournisseur d’accastillage.
 
 ### Épique
 
-- **colback** *(Nom, Langues d'ailleurs, 10/2, connu de 21 %)* — Ancienne coiffure militaire, bonnet de fourrure en forme de cône tronqué dont la partie supérieure était plate.
-- **subreptice** *(Adjectif, Latin, 8/4, connu de 45 %)* — Qualifie une décision, une grâce, un jugement obtenu sur un faux exposé.
-- **lèchefrite** *(Nom, Vieux français, 9/4, connu de 57 %)* — Ustensile de cuisine, ordinairement de fer, qu’on place sous le gril ou sous la broche, pour recueillir la graisse et le jus de…
-- **anamnèse** *(Nom, Grec, 3/7, connu de 23 % · attesté : 1831)* — Prière qui, dans la messe, suit la consécration et rappelle le souvenir de la rédemption.
-- **tapotis** *(Nom, Onomatopée, 3/1, connu de 45 %)* — Bruit produit par de petits coups secs.
-- **skating** *(Nom, Anglais, 9/6, connu de 59 %)* — (Ski de randonnée) Technique de glisse, variante du ski de fond, créée dans les années 2000 et inspirée par le patinage.
-- **criailler** *(Verbe, Latin, 5/7, connu de 24 % · Familier · attesté : 1555)* — Crier, se plaindre souvent et pour des sujets de peu d’importance.
-- **démotique** *(Adjectif, Grec, 9/1, connu de 18 %)* — Populaire, courant, en parlant de la langue ou de l’écriture, en particulier l’égyptien ancien et le grec moderne.
-- **bordage** *(Nom, Francique, 5/8, connu de 44 %)* — Planche, fer ou acier revêtant le corps d’un bâtiment, tant à l’extérieur qu’à l'intérieur.
-- **liséré** *(Nom, Vieux français, 1/5, connu de 43 %)* — Tresse ou ruban fort étroit dont on borde un vêtement.
-- **baronner** *(Verbe, Latin, 4/2, connu de 18 % · Familier)* — Pour un membre du personnel d'un débit de boisson, s'installer et consommer au bar ou à la terrasse pour attirer les clients.
-- **espagnolette** *(Nom, Espagnol et portugais, 8/4, connu de 52 %)* — Ferrure à poignée tournante servant à fermer et à ouvrir les châssis d’une fenêtre.
-- **fourgonner** *(Verbe, Latin, 7/7, connu de 38 %)* — Remuer le feu d’un foyer d’appartement avec les pincettes, et parfois le déranger en voulant l’accommoder.
-- **stencil** *(Nom, Anglais, 3/2, connu de 52 %)* — Feuille intermédiaire permettant la reproduction de documents.
-- **ovalaire** *(Adjectif, Latin, 5/5, connu de 16 %)* — Qui est de forme approximativement ovale.
-- **copte** *(Nom, Arabe, 3/2, connu de 50 % · attesté : 1665)* — Chrétien d’Égypte et d’Éthiopie, généralement de confession monophysite.
-- **piauler** *(Verbe, Francique, 3/5, connu de 38 % · attesté : 1607)* — Crier, en parlant des petits poulets.
-- **lobulaire** *(Adjectif, Grec, 5/1, connu de 27 %)* — Qui a la forme d’un lobule, qui appartient à un lobule.
-- **bégum** *(Nom, Langues d'ailleurs, 3/2, connu de 33 %)* — Titre d’honneur des princesses et des femmes de qualité de l’Indoustan.
-- **logogriphe** *(Nom, Grec, 9/3, connu de 20 % · attesté : 1623)* — Jeu d’esprit qui consiste à former d’autres mots avec les lettres d’un mot.
+- **guéret** *(Nom, Latin, 2/2, connu de 26 %)* — Terre labourée et non ensemencée; voire terre laissée en jachère.
+- **débardage** *(Nom, Occitan, 7/5, connu de 56 %)* — Transport de bois ou de pierre depuis le lieu d’obtention, forêt ou carrière, jusqu’au lieu de chargement.
+- **halva** *(Nom, Arabe, 5/2, connu de 28 %)* — Confiserie orientale faite de farine, d'huile de sésame, de miel, de fruits et d'amandes ou de pistaches.
+- **phraséologie** *(Nom, Latin, 9/4, connu de 44 % · attesté : 1678)* — Construction de phrases particulière à une langue, ou propre à un écrivain.
+- **aléser** *(Verbe, Latin, 1/4, connu de 50 %)* — Agrandir, aux dimensions voulues, le diamètre d'un trou, d'un tube, d'un jour, le calibre d’un canon.
+- **russophone** *(Adjectif, Langues d'ailleurs, 8/1, connu de 57 %)* — Qui parle la langue russe.
+- **écornifler** *(Verbe, Latin, 8/7, connu de 25 % · Familier)* — Importuner, harceler quelqu’un de façon à lui arracher un profit ou simplement à surprendre un renseignement.
+- **podestat** *(Nom, Italien, 5/4, connu de 26 %)* — Titre du premier magistrat dans certaines villes d’Italie au Moyen-Âge.
+- **madré** *(Adjectif, Vieux français, 2/7, connu de 44 %)* — Qui est tacheté, marbré, marqué de diverses couleurs.
+- **hiératique** *(Adjectif, Latin, 10/7, connu de 37 %)* — En rapport avec les choses sacrées, notamment les religions ou la liturgie.
+- **émétique** *(Nom, Latin, 8/2, connu de 29 % · attesté : XVIᵉ siècle)* — Substance à base de tartrate double d’antimoine et de potassium utilisé comme vomitif.
+- **recouler** *(Verbe, Latin, 4/4, connu de 41 %)* — Examiner les cartes pour enlever les ordures qui peuvent en salir les deux faces.
+- **druidesse** *(Nom, Latin, 5/2, connu de 41 % · attesté : 1727)* — Nom des membres féminins de la classe sacerdotale des Celtes de l’Antiquité.
+- **superfétatoire** *(Adjectif, Latin, 9/7, connu de 47 %)* — Qualifie la naissance d’un second enfant après le premier et dans un écart de temps qui dénote une superfécondation.
+- **coulpe** *(Nom, Latin, 4/7, connu de 27 %)* — Tache spirituelle faite par une faute, conséquence personnelle d'un péché commis; se distingue de la peine comme punition mérit…
+- **surfaçage** *(Nom, Latin, 8/4, connu de 40 %)* — Opération exécutée immédiatement avant la mise en peinture et consistant en une application d’enduit mince sur un subjectile pr…
+- **médianoche** *(Nom, Espagnol et portugais, 9/1, connu de 15 % · Littéraire, Vieilli)* — Désigne à l’origine un repas pris après minuit, marquant le passage d’un jour maigre à un jour gras, puis, la mode évoluant, un…
+- **pitonner** *(Verbe, Occitan, 4/8, connu de 42 %)* — Composer ou écrire sur un clavier.
+- **glose** *(Nom, Latin, 1/9, connu de 42 % · attesté : XIIᵉ siècle)* — Mot vieilli ou difficile, recueilli dans les auteurs grecs et expliqué.
+- **parégorique** *(Adjectif, Latin, 10/1, connu de 14 % · Vieilli)* — Qualifiait autrefois des remèdes qui calment les douleurs.
 
 ### Rare
 
-- **paroxystique** *(Adjectif, Latin, 10/1, connu de 50 %)* — Qui se présente sous forme de paroxysme, aigu, sévère, extrême.
+- **chichiteux** *(Adjectif, Latin, 10/1, connu de 52 %)* — Qui fait des chichis, des manières, des simagrées.
+- **lige** *(Adjectif, Latin, 1/6, connu de 23 %)* — Qualifie un vassal tenant un fief qui le lie d’une obligation exclusive envers son seigneur dominant.
+- **remmener** *(Verbe, Latin, 4/1, connu de 41 %)* — Faire repartir une personne ou un animal qu’on avait amené.
+- **capitonner** *(Verbe, Italien, 7/5, connu de 78 %)* — Rembourrer un siège, un fauteuil en piquant en plusieurs endroits.
+- **oiseleur** *(Nom, Latin, 2/2, connu de 48 % · Littéraire · attesté : XIIIᵉ siècle)* — Celui qui prend les oiseaux à l’aide de filets ou de pièges.
 - **fourbir** *(Verbe, Francique, 6/6, connu de 65 %)* — Rendre clair un objet de métal en le frottant.
-- **cotre** *(Nom, Anglais, 2/4, connu de 19 %)* — Petit bâtiment de guerre à un mât dont la grande voile a beaucoup d’étendue.
-- **inique** *(Adjectif, Latin, 6/4, connu de 59 %)* — Qui n'est pas juste, pas égal; qui manque d’équité.
-- **hémoculture** *(Nom, Grec, 9/1, connu de 33 %)* — Culture bactériologique depuis un prélèvement de sang veineux.
-- **hère** *(Nom, Vieux français, 2/6, connu de 52 % · attesté : début XVIIᵉ siècle)* — Jeu de cartes qui se joue entre plusieurs personnes qu’on appelle aussi l’As qui court ou la Bête noire.
-- **schizoïde** *(Adjectif, Allemand et néerlandais, 10/3, connu de 50 % · attesté : 1927)* — Se dit des individus repliés, inhibés, fuyant le contact d’autrui et se réfugiant dans un autisme plus ou moins complet et énig…
-- **suranné** *(Adjectif, Latin, 2/8, connu de 59 % · attesté : XIIᵉ siècle)* — Qui a dépassé la date d’expiration et n’est plus valide.
-- **ingénier** *(Verbe, Latin, 3/1, connu de 59 %)* — Chercher, tâcher de trouver dans son esprit quelque moyen pour réussir.
-- **babil** *(Nom, Onomatopée, 3/2, connu de 37 %)* — Bavardage enfantin où le plaisir passe avant la volonté d’être compris.
-- **bonard** *(Adjectif, Vieux français, 3/1, connu de 66 %)* — Orthographe alternative de bonnard, bon en plus péjoratif.
-- **étale** *(Adjectif, Francique, 1/9, connu de 83 %)* — Qualifie la mer qui ne monte ni ne descend à la fin du flot ou du jusant.
-- **columbarium** *(Nom, Latin, 9/2, connu de 55 %)* — Édifice sépulcral dans les parois duquel étaient pratiquées des niches destinées à recevoir des urnes mortuaires.
-- **corroder** *(Verbe, Latin, 5/7, connu de 57 % · attesté : 1314)* — Ronger. Il se dit des substances qui, en vertu d’une qualité caustique, rongent, brûlent quelque partie du corps vivant ou de q…
-- **imprescriptible** *(Adjectif, Anglais, 10/1, connu de 81 %)* — Qui n’est pas susceptible de prescription.
-- **gaélique** *(Adjectif, Anglais, 8/6, connu de 63 % · attesté : 1614)* — En rapport avec les langues et la culture celtique d’Irlande et d’Écosse.
-- **soma** *(Nom, Grec, 1/4, connu de 29 %)* — Péricaryon ou corps cellulaire, partie centrale d'un neurone.
-- **aman** *(Nom, Arabe, 1/4, connu de 25 %)* — Grâce en droit musulman par laquelle un ennemi vaincu obtient la vie sauve ou une amnistie.
-- **consumérisme** *(Nom, Anglais, 8/3, connu de 60 %)* — Protection des intérêts du consommateur par des associations.
-- **synesthésie** *(Nom, Grec, 10/5, connu de 14 %)* — Trouble de la perception des sensations, qui fait éprouver deux perceptions simultanées à la sollicitation d’un seul sens.
+- **menterie** *(Nom, Latin, 3/1, connu de 48 % · Familier, Vieilli)* — Propos par lequel on donne pour vrai ce qu’on sait être faux.
+- **canner** *(Verbe, Latin, 2/6, connu de 52 %)* — Mettre en conserve, faire des conserves de.
+- **cruchon** *(Nom, Francique, 7/2, connu de 50 %)* — Personne peu intelligente ou peu cultivée.
+- **sujétion** *(Nom, Latin, 8/7, connu de 57 %)* — Dépendance, état de celui qui est soumis à un pouvoir, à une domination.
+- **histrion** *(Nom, Latin, 5/7, connu de 27 %)* — (Rome antique) Comédien, mime, acteur qui jouait des farces.
+- **lampée** *(Nom, Onomatopée, 3/2, connu de 45 % · Familier)* — Grande quantité de boisson qu’on ingurgite d’un coup.
+- **barje** *(Adjectif, Latin, 7/1, connu de 56 %)* — Se dit d’une personne folle ou qui prend des risques.
+- **concussion** *(Nom, Latin, 7/6, connu de 37 %)* — Profit illicite que l’on fait dans l’exercice d’une fonction publique.
+- **scion** *(Nom, Vieux français, 2/4, connu de 17 %)* — Petit brin, petit rejeton tendre et très flexible d’un arbre, d’un arbrisseau.
+- **schlass** *(Adjectif, Allemand et néerlandais, 6/2, connu de 54 % · Familier · attesté : XIXᵉ siècle)* — Qui est dans un état d’ébriété avancé.
+- **myéloïde** *(Adjectif, Grec, 9/2, connu de 33 %)* — Qui ressemble à la moelle des os.
+- **shunt** *(Nom, Anglais, 2/3, connu de 40 %)* — Dispositif de faible impédance qui permet au courant de passer d'un point à un autre d'un circuit électrique.
+- **récipiendaire** *(Nom, Latin, 9/3, connu de 58 % · attesté : 1674)* — Personne qui est reçue dans quelque corps, dans quelque compagnie, avec une certaine solennité, avec un certain cérémonial.
+- **morbidité** *(Nom, Latin, 6/4, connu de 54 %)* — Caractère maladif; ensemble des causes qui peuvent produire une maladie.
 
 ### Peu commune
 
-- **matraquer** *(Verbe, Espagnol et portugais, 9/8, connu de 72 % · attesté : 1927)* — Marteler, répéter de façon très insistante (une publicité, en particulier), mitrailler.
-- **florentin** *(Adjectif, Italien, 6/9, connu de 86 %)* — Qui présente des caractéristiques propres à cette ville et à ses habitants.
-- **embellie** *(Nom, Latin, 5/4, connu de 95 %)* — Amélioration du temps, devenant beau pour un moment, après une bourrasque, un grain violent ou un coup de vent obstiné.
-- **balayette** *(Nom, Gaulois, 10/6, connu de 93 % · attesté : XIXᵉ siècle)* — Petit balai, parfois sans manche.
-- **thermique** *(Nom, Grec, 10/4, connu de 95 %)* — Partie de la physique portant sur tout ce qui concerne la production et l’utilisation de la chaleur.
-- **myopathie** *(Nom, Anglais, 10/1, connu de 90 % · attesté : 1884)* — Maladie neuromusculaire se traduisant par une dégénérescence du tissu musculaire.
-- **cisaille** *(Nom, Latin, 4/5, connu de 91 % · attesté : 1214)* — Outil servant à découper des matériaux durs ou épais.
-- **calque** *(Nom, Italien, 8/8, connu de 91 %)* — Feuille de papier translucide servant à la reproduction d’un dessin par superposition.
-- **souteneur** *(Nom, Latin, 3/9, connu de 91 %)* — Celui qui, vivant du gain d’un(e) prostitué(e), prétend assurer, en retour, sa protection.
-- **tabatière** *(Nom, Espagnol et portugais, 5/8, connu de 96 %)* — Petite boite où l’on met du tabac à priser.
-- **thermos** *(Nom, Grec, 5/4, connu de 96 %)* — Récipient isolant conservant la température d’un liquide pendant quelques heures.
-- **mystification** *(Nom, Grec, 10/4, connu de 90 % · attesté : Attesté en 1768)* — Action de mystifier, de berner, de duper.
-- **mohair** *(Nom, Anglais, 4/2, connu de 92 %)* — Laine provenant du poil des chèvres de race angora et permettant la confection d’étoffes soyeuses et légères.
-- **bédouin** *(Adjectif, Arabe, 4/8, connu de 85 %)* — Relatif aux communautés nomades, tribales.
-- **funiculaire** *(Adjectif, Latin, 8/2, connu de 100 % · attesté : 1725)* — Qui est mis en mouvement par un ensemble de câbles ou de cordes.
-- **jonchée** *(Nom, Latin, 9/4, connu de 95 %)* — Arrangement d’herbes, de fleurs et de branchages disposé sur le sol, dans les rues, les églises, etc., lors d’une cérémonie.
-- **miséreux** *(Adjectif, Latin, 9/1, connu de 94 % · Vieilli)* — Qui donne l’impression d’une extrême pauvreté.
-- **parité** *(Nom, Latin, 2/9, connu de 90 %)* — Égalité, similitude entre des objets de même qualité, de même nature.
-- **embusquer** *(Verbe, Vieux français, 9/4, connu de 90 % · attesté : 1611)* — Parvenir à se dérober aux plus dures exigences du service militaire.
-- **dribble** *(Nom, Anglais, 6/3, connu de 92 %)* — Dans les sports de balle, action consistant à esquiver son adversaire tout en conservant le ballon.
+- **personnalisation** *(Nom, Latin, 9/7, connu de 96 %)* — Adaptation d’un produit ou d’un service à la demande spécifique exprimée par un client, de façon à le rendre plus conforme à se…
+- **électrodynamique** *(Adjectif, Grec, 10/1, connu de 90 %)* — Qui a rapport aux propriétés des courants électriques.
+- **braiser** *(Verbe, Allemand et néerlandais, 3/1, connu de 88 %)* — Faire cuire doucement une viande, un poisson ou certains légumes dans un récipient fermé avec du jus comme liquide.
+- **zébrure** *(Nom, Espagnol et portugais, 9/2, connu de 93 % · attesté : 1846)* — Effet pictural rappelant ou formant des rayures.
+- **monocorde** *(Adjectif, Latin, 6/4, connu de 96 % · attesté : fin XIXᵉ siècle)* — Qualifie un instrument doté d’une seule corde.
+- **redoublement** *(Nom, Latin, 8/8, connu de 96 %)* — Accroissement, augmentation considérable.
+- **bonder** *(Verbe, Gaulois, 3/4, connu de 70 %)* — Remplir au maximum un bateau.
+- **dessaisir** *(Verbe, Latin, 4/4, connu de 95 %)* — Déposséder un tribunal de ce dont il a été saisi.
+- **assimilé** *(Nom, Latin, 3/5, connu de 100 %)* — Personne qui fait partie d’une catégorie du personnel sans en avoir le titre.
+- **picador** *(Nom, Espagnol et portugais, 6/1, connu de 92 %)* — Cavalier qui dans les combats de taureaux attaque l’animal avec la pique.
+- **monobloc** *(Adjectif, Allemand et néerlandais, 6/1, connu de 93 % · attesté : 1906)* — Qualifie une chose qui réunit tous ses éléments dans un même contenant, un unique ensemble.
+- **mufle** *(Adjectif, Allemand et néerlandais, 3/1, connu de 93 % · Familier · attesté : XVIᵉ siècle)* — Dont la conduite est indélicate et grossière.
+- **réarmer** *(Verbe, Latin, 2/4, connu de 95 % · attesté : 1470)* — Armer de nouveau. Il signifie particulièrement, armer un vaisseau qui a été désarmé pour réparation.
+- **sémantique** *(Adjectif, Grec, 9/4, connu de 94 % · attesté : 1879)* — Relatif à la signification et au sens des unités linguistiques.
+- **casbah** *(Nom, Arabe, 6/4, connu de 84 %)* — Forteresse d’une ville du Maghreb ou du Levant.
+- **cabestan** *(Nom, Occitan, 6/5, connu de 88 %)* — Système tournant dont l’axe vertical permet, en enroulant un câble, de déployer une force très importante.
+- **canonnier** *(Nom, Latin, 5/4, connu de 91 %)* — Soldat ou marin qui est chargé de servir une pièce de canon.
+- **barda** *(Nom, Arabe, 2/9, connu de 77 % · attesté : 1848)* — Attirail encombrant porté sur le dos, bagage très lourd, encombrant.
+- **hard** *(Nom, Anglais, 2/7, connu de 91 %)* — Pornographie insistant sur l’acte sexuel.
+- **prout** *(Nom, Onomatopée, 2/10, connu de 80 % · Familier · attesté : 1782)* — Pet, bruit produit par l’évacuation de gaz du corps humain.
 
 ### Commune
 
-- **abstenir** *(Verbe, Latin, 4/6, connu de 90 %)* — S’empêcher de faire quelque chose; se priver de l’usage de quelque chose.
-- **inceste** *(Nom, Latin, 3/8, connu de 90 %)* — Relation sexuelle illicite entre les personnes qui sont parentes ou alliées au degré prohibé par les lois civiles ou religieuses.
-- **décrassage** *(Nom, Latin, 7/6, connu de 100 %)* — Opération consistant à retirer le laitier flottant au-dessus de l'acier en fusion.
-- **tango** *(Nom, Espagnol et portugais, 1/8, connu de 91 %)* — Danse exécutée en couple et originaire du Río de la Plata.
-- **brasserie** *(Nom, Gaulois, 5/8, connu de 100 % · attesté : 1371)* — Société qui fabrique de la bière et la met en marché.
-- **tape** *(Nom, Onomatopée, 1/7, connu de 100 % · Familier)* — Coup de la main, soit ouverte, soit fermée.
-- **bloc** *(Nom, Allemand et néerlandais, 2/10, connu de 100 % · attesté : 1262)* — Masse, gros morceau d’une matière pesante et dure, telle que la pierre, le marbre, le fer non encore travaillés.
-- **vide** *(Adjectif, Latin, 2/10, connu de 100 %)* — Qui ne contient rien; qui est totalement dépourvu de.
-- **humeur** *(Nom, Latin, 4/10, connu de 100 %)* — État d’esprit plus ou moins durable, particulièrement en ce qu’il est plutôt agréable ou non.
-- **glouton** *(Nom, Latin, 2/8, connu de 100 %)* — Personne ou animal qui mange avidement sa nourriture.
-- **tapisserie** *(Nom, Grec, 6/8, connu de 100 % · attesté : XIVᵉ siècle)* — Ouvrage fait à l’aiguille sur du canevas, avec de la laine, de la soie, etc.
-- **braguette** *(Nom, Gaulois, 6/9, connu de 96 % · attesté : 1534)* — Ouverture sur le devant d’un pantalon, d’une culotte d’homme.
-- **surtout** *(Adverbe, Latin, 2/1, connu de 95 %)* — Principalement; plus que toute autre chose.
-- **corporation** *(Nom, Anglais, 8/6, connu de 95 % · attesté : 1672)* — Ensemble de personnes, considérées comme formant un tout au sens où elles partagent une caractéristique commune, notamment un m…
-- **macédoine** *(Nom, Italien, 6/6, connu de 100 %)* — Association d’éléments hétéroclites, mosaïque.
-- **hôtellerie** *(Nom, Latin, 6/6, connu de 96 % · attesté : c. 1180)* — Corps de logis destiné à recevoir les étrangers, dans les grandes abbayes.
-- **anthropologie** *(Nom, Grec, 9/9, connu de 92 % · attesté : 1534)* — Branche des sciences qui étudie l'être humain sous tous ses aspects à la fois :
-- **milliardaire** *(Adjectif, Italien, 7/2, connu de 92 %)* — Qui possède un ou plusieurs milliards, qui est extrêmement riche.
-- **calotte** *(Nom, Occitan, 3/10, connu de 94 % · attesté : 1394)* — Espèce de petit bonnet qui ne couvre ordinairement que le haut de la tête et qui est surtout en usage parmi les gens d’Église.
-- **chatouiller** *(Verbe, Latin, 8/9, connu de 95 %)* — Causer, par des attouchements légers et répétés, un tressaillement qui provoque le rire.
+- **démarrer** *(Verbe, Allemand et néerlandais, 4/10, connu de 100 %)* — Quitter le port en parlant d’un bâtiment.
+- **bijoutier** *(Nom, Gaulois, 9/5, connu de 100 % · attesté : XVIIᵉ siècle)* — Artisan qui fabrique et qui vend des bijoux.
+- **cabaret** *(Nom, Vieux français, 5/10, connu de 100 % · attesté : 1275)* — Taverne où l’on vend en détail du vin et des boissons spiritueuses et où l’on vend aussi à manger.
+- **racaille** *(Nom, Anglais, 4/4, connu de 96 %)* — Ensemble des individus mauvais, appartenant à la partie la plus pauvre, la plus basse ou la plus méprisée du peuple.
+- **turquoise** *(Adjectif, Langues d'ailleurs, 8/2, connu de 95 % · attesté : XIIIᵉ siècle)* — De la couleur bleu ciel à bleu-vert de la pierre du même nom.
+- **surgir** *(Verbe, Latin, 2/6, connu de 100 %)* — Sortir de terre, en parlant de l’eau d’une source.
+- **monopole** *(Nom, Latin, 5/8, connu de 90 % · attesté : XIVᵉ siècle)* — Trafic exclusif, fait en vertu d’un privilège.
+- **concéder** *(Verbe, Latin, 6/5, connu de 90 %)* — Accorder, octroyer un privilège, une faveur.
+- **besogne** *(Nom, Francique, 4/7, connu de 100 %)* — Travail qu’exige de chacun sa profession, action par laquelle on fait une œuvre.
+- **biberon** *(Nom, Latin, 5/10, connu de 96 %)* — Flacon muni d’une tétine qui sert à allaiter artificiellement les enfants.
+- **pieux** *(Adjectif, Latin, 8/9, connu de 90 % · attesté : Vers 980)* — Qui a de la piété; qui est attaché aux croyances, aux devoirs et aux pratiques de la religion.
+- **valeur** *(Nom, Latin, 3/10, connu de 100 %)* — Qualité ou justesse d’une chose, d’une idée, d’un ouvrage.
+- **distinct** *(Adjectif, Latin, 5/4, connu de 100 %)* — Qui est nettement séparé d’une autre, en parlant de certaines choses.
+- **sauna** *(Nom, Langues d'ailleurs, 1/4, connu de 100 % · attesté : 1950)* — Pièce dans laquelle on prend un bain de chaleur.
+- **emboutir** *(Verbe, Francique, 5/9, connu de 91 % · attesté : XIVᵉ siècle)* — Bomber un morceau de plomb et le rendre convexe d’un côté et concave de l’autre.
+- **bassine** *(Nom, Latin, 3/7, connu de 100 %)* — Récipient en métal ou plus communément en plastique utilisé en général pour y mettre de l’eau, y faire la vaisselle, laver quel…
+- **perfection** *(Nom, Latin, 9/9, connu de 95 % · attesté : c. 1140)* — Qualité de ce qui est parfait dans son genre.
+- **enrober** *(Verbe, Vieux français, 3/7, connu de 94 %)* — Envelopper des médicaments, de la viande, etc., d’une couche isolante pour en masquer la saveur ou les préserver de l’air.
+- **tituber** *(Verbe, Latin, 3/2, connu de 100 %)* — Avancer en marchant, en ayant du mal à garder son équilibre, d’une façon chancelante.
+- **débloquer** *(Verbe, Allemand et néerlandais, 9/8, connu de 96 %)* — Rendre une somme d’argent accessible à une autre action.
 
 ### Par faction
 
-**Latin** : grenaille *(peu commune)*, polonais *(commune)*, grammaire *(commune)*, clairvoyance *(commune)*, roulure *(rare)*, largesse *(peu commune)*, soufflerie *(peu commune)*, cryptique *(rare)*, ânerie *(commune)*, cornard *(rare)*, poison *(commune)*, obnubiler *(peu commune)*, ramener *(commune)*, dépuceler *(commune)*
+**Latin** : menterie *(rare)*, correct *(commune)*, criailler *(épique)*, ambition *(commune)*, rabais *(commune)*, naturalisation *(commune)*, java *(peu commune)*, salé *(commune)*, décollage *(commune)*, quitte *(commune)*, délavé *(peu commune)*, profanation *(peu commune)*, hommasse *(rare)*, fiat *(rare)*
 
-**Vieux français** : fourrière *(commune)*, billevesée *(rare)*, arraisonner *(rare)*, congédier *(commune)*, ramoner *(commune)*, rapetasser *(légendaire)*, crotte *(commune)*, fourrage *(peu commune)*, luger *(rare)*, marquage *(commune)*, papillote *(peu commune)*, degré *(commune)*, tôlier *(peu commune)*, brouet *(épique)*
+**Vieux français** : blesser *(commune)*, plaisanterie *(commune)*, souiller *(commune)*, éclabousser *(commune)*, embûche *(peu commune)*, voirie *(commune)*, camionneur *(commune)*, gratin *(commune)*, ronchonner *(peu commune)*, appoint *(commune)*, gifler *(commune)*, bourdonner *(commune)*, goberger *(rare)*, tôle *(commune)*
 
-**Anglais** : skating *(épique)*, soda *(commune)*, techno *(peu commune)*, chips *(peu commune)*, sélecteur *(peu commune)*, léviter *(peu commune)*, formaliser *(peu commune)*, snober *(commune)*, dumper *(épique)*, dérailleur *(peu commune)*, écrasé *(commune)*, dribble *(peu commune)*, infinitésimal *(peu commune)*, radôme *(légendaire)*
+**Anglais** : tilbury *(épique)*, antitrust *(rare)*, patch *(commune)*, lisse *(commune)*, matérialisme *(peu commune)*, sélectif *(commune)*, romantique *(commune)*, imprescriptible *(rare)*, trigger *(rare)*, péniche *(commune)*, externalité *(épique)*, luminescent *(peu commune)*, quantifier *(commune)*, zapper *(commune)*
 
-**Grec** : mécanicien *(commune)*, presbyte *(peu commune)*, scaphandre *(commune)*, aérodynamique *(peu commune)*, troque *(peu commune)*, radiographie *(commune)*, oxyder *(commune)*, dynamisme *(commune)*, enthousiasme *(commune)*, réhydrater *(commune)*, tapisser *(commune)*, éclectique *(peu commune)*, antipathie *(peu commune)*, prototype *(commune)*
+**Grec** : déshydrater *(commune)*, métaphore *(commune)*, céramique *(commune)*, millimétré *(peu commune)*, mécanisme *(commune)*, despote *(peu commune)*, anthropologie *(commune)*, aphérèse *(légendaire)*, électro-encéphalogramme *(hors-série)*, aérodynamique *(peu commune)*, analyser *(commune)*, paniquer *(commune)*, métèque *(commune)*, diaspora *(rare)*
 
-**Italien** : gouache *(peu commune)*, cavalcade *(peu commune)*, contrebasse *(commune)*, encadrer *(commune)*, désinvolture *(commune)*, impolitesse *(commune)*, isolateur *(rare)*, salami *(commune)*, saccager *(commune)*, trombone *(commune)*, mousqueterie *(légendaire)*, forcé *(commune)*, décalcomanie *(commune)*, bombarder *(commune)*
+**Italien** : manège *(commune)*, malandrin *(rare)*, cavalcade *(peu commune)*, favori *(commune)*, capiteux *(rare)*, cappuccino *(commune)*, saccager *(commune)*, braver *(commune)*, diva *(commune)*, buste *(commune)*, trombone *(commune)*, courtisan *(commune)*, cadencé *(peu commune)*, franquiste *(peu commune)*
 
-**Francique** : mijoter *(commune)*, patrouille *(commune)*, fourbir *(rare)*, défraîchi *(commune)*, zigounette *(peu commune)*, harder *(rare)*, motte *(peu commune)*, chouette *(commune)*, début *(commune)*, branlée *(commune)*, échevin *(rare)*, estoc *(rare)*, gourme *(rare)*, déguiser *(commune)*
+**Francique** : estoc *(rare)*, bordure *(commune)*, salope *(commune)*, échevin *(rare)*, haler *(peu commune)*, rochet *(épique)*, gant *(commune)*, écailleux *(rare)*, cinoque *(épique)*, banc *(commune)*, mijoter *(commune)*, patinoire *(commune)*, mignard *(légendaire)*, étale *(rare)*
 
-**Allemand et néerlandais** : pouffiasse *(commune)*, schizoïde *(rare)*, louvoyer *(rare)*, loquer *(épique)*, drôle *(commune)*, blaser *(peu commune)*, bouquiner *(peu commune)*, drome *(épique)*, haire *(légendaire)*, reluquer *(commune)*, hourvari *(épique)*, démarrer *(commune)*, valse *(commune)*, morphologie *(commune)*
+**Allemand et néerlandais** : bûcheur *(peu commune)*, sabrer *(peu commune)*, néerlandais *(commune)*, valse *(commune)*, drôle *(commune)*, morganatique *(légendaire)*, monobloc *(peu commune)*, transvaser *(commune)*, vasouillard *(épique)*, haire *(légendaire)*, vaguemestre *(épique)*, étriqué *(commune)*, biologique *(commune)*, bouquiner *(peu commune)*
 
-**Langues d'ailleurs** : bandoulière *(peu commune)*, galérer *(commune)*, gréer *(rare)*, russe *(commune)*, bazarder *(peu commune)*, youyou *(rare)*, mikado *(commune)*, kolkhoze *(peu commune)*, caftan *(rare)*, russophone *(épique)*, bidon *(commune)*, décaféiné *(commune)*, manouche *(peu commune)*, chagrin *(commune)*
+**Langues d'ailleurs** : peul *(épique)*, ayatollah *(peu commune)*, russe *(commune)*, catalan *(commune)*, lascar *(peu commune)*, samouraï *(commune)*, chagrin *(commune)*, rabbin *(commune)*, saké *(commune)*, tsar *(commune)*, bandoulière *(peu commune)*, gréer *(rare)*, mikado *(commune)*, anorak *(commune)*
 
-**Espagnol et portugais** : quadrille *(peu commune)*, récif *(commune)*, chihuahua *(commune)*, placer *(commune)*, mirador *(commune)*, condé *(rare)*, sombrero *(commune)*, matraquer *(peu commune)*, palabrer *(peu commune)*, pimenter *(commune)*, carioca *(rare)*, rumba *(peu commune)*, tchatcher *(peu commune)*, nègre *(commune)*
+**Espagnol et portugais** : picador *(peu commune)*, escamotable *(commune)*, cannibalisme *(commune)*, gamelle *(commune)*, estampiller *(peu commune)*, placer *(commune)*, espagnolette *(épique)*, marabout *(commune)*, macho *(commune)*, cacique *(rare)*, savane *(commune)*, patache *(épique)*, luthier *(peu commune)*, débarrasser *(commune)*
 
-**Occitan** : violon *(commune)*, badiner *(commune)*, escargot *(commune)*, causse *(rare)*, accalmie *(peu commune)*, cassoulet *(peu commune)*, liche *(rare)*, praire *(rare)*, entrave *(commune)*, cambouis *(peu commune)*, rôder *(commune)*, cabri *(peu commune)*, muscat *(peu commune)*, péquin *(rare)*
+**Occitan** : caler *(commune)*, décalage *(commune)*, carnier *(épique)*, nougat *(peu commune)*, désemparer *(commune)*, escagasser *(épique)*, paumelle *(légendaire)*, pastel *(commune)*, bastille *(commune)*, entrave *(commune)*, concombre *(commune)*, encanailler *(peu commune)*, entravé *(peu commune)*, muscat *(peu commune)*
 
-**Arabe** : émir *(commune)*, copte *(rare)*, goudronné *(commune)*, imam *(commune)*, bédouin *(peu commune)*, mamelouk *(épique)*, satin *(commune)*, sultan *(commune)*, alcool *(commune)*, goudronneux *(peu commune)*, douar *(légendaire)*, burnous *(rare)*, sarbacane *(commune)*, cafteur *(peu commune)*
+**Arabe** : barrage *(commune)*, médina *(peu commune)*, accablant *(commune)*, casbah *(peu commune)*, emmagasiner *(peu commune)*, sultan *(commune)*, calife *(peu commune)*, barrer *(commune)*, copte *(épique)*, fakir *(peu commune)*, tasse *(commune)*, ottomane *(peu commune)*, bled *(commune)*, hégire *(épique)*
 
-**Onomatopée** : miauler *(commune)*, croquant *(commune)*, croquant *(commune)*, nanan *(rare)*, poufiasse *(commune)*, piaf *(commune)*, chique *(peu commune)*, tapoter *(commune)*, bouder *(commune)*, tapant *(peu commune)*, tapotis *(épique)*, baba *(peu commune)*, crachat *(commune)*, huer *(commune)*
+**Onomatopée** : crachouillis *(rare)*, baba *(peu commune)*, claquette *(commune)*, tapé *(commune)*, crachat *(commune)*, claquer *(commune)*, marmonner *(commune)*, croquis *(commune)*, croquette *(commune)*, déchiqueter *(commune)*, tarare *(légendaire)*, dinguer *(rare)*, bouder *(commune)*, croquer *(commune)*
 
-**Gaulois** : piécette *(commune)*, bourbon *(commune)*, brassage *(commune)*, gober *(commune)*, brasser *(commune)*, renfrogner *(peu commune)*, trogne *(rare)*, cohue *(commune)*, brailler *(commune)*, lise *(commune)*, désembourber *(rare)*, bijoutier *(commune)*, raie *(commune)*, pilou *(rare)*
+**Gaulois** : bousin *(épique)*, balayette *(peu commune)*, braille *(peu commune)*, char *(commune)*, combe *(rare)*, habillé *(commune)*, renfrogner *(peu commune)*, balayer *(commune)*, dépecer *(commune)*, bourbeux *(rare)*, pilou *(rare)*, billard *(commune)*, brasserie *(commune)*, renfrogné *(peu commune)*
 
 ## 6. Origines des mots et choix des factions
 
@@ -332,12 +336,12 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 | Langue d'origine détectée | Cartes de la base | dont éligibles | Faction par défaut |
 |---|---|---|---|
-| Latin | 29 657 | 15 835 | Latin |
-| Origine inconnue | 4 246 | 0 | Origine inconnue |
+| Latin | 29 656 | 15 829 | Latin |
+| Origine inconnue | 4 241 | 0 | Origine inconnue |
 | Anglais | 3 284 | 1 184 | Anglais |
 | Formation française | 3 173 | 0 | Formation française |
-| Grec | 2 466 | 854 | Grec |
-| Ancien français | 2 117 | 1 246 | Vieux français |
+| Grec | 2 465 | 853 | Grec |
+| Ancien français | 2 117 | 1 244 | Vieux français |
 | Italien | 1 449 | 839 | Italien |
 | Francique et germanique ancien | 1 217 | 720 | Francique |
 | Allemand | 606 | 237 | Allemand et néerlandais |
@@ -346,7 +350,7 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 | Arabe | 404 | 173 | Arabe |
 | Néerlandais | 360 | 192 | Allemand et néerlandais |
 | Parlers régionaux | 269 | 151 | Vieux français |
-| Onomatopée | 266 | 141 | Onomatopée |
+| Onomatopée | 266 | 140 | Onomatopée |
 | Gaulois et celtique | 231 | 127 | Gaulois |
 | Russe et langues slaves | 177 | 71 | Langues d'ailleurs |
 | Langues de l'Inde et d'Asie | 176 | 51 | Langues d'ailleurs |
@@ -368,42 +372,42 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 | Faction | Mots éligibles | Cartes dans l'édition (environ) |
 |---|---|---|
-| Latin | 15 835 | 953 |
-| Vieux français | 1 397 | 283 |
+| Latin | 15 829 | 953 |
+| Vieux français | 1 395 | 283 |
 | Anglais | 1 184 | 261 |
-| Grec | 854 | 221 |
+| Grec | 853 | 221 |
 | Italien | 839 | 219 |
 | Francique | 720 | 203 |
 | Allemand et néerlandais | 429 | 157 |
 | Langues d'ailleurs | 377 | 147 |
-| Espagnol et portugais | 354 | 142 |
+| Espagnol et portugais | 354 | 143 |
 | Occitan | 332 | 138 |
 | Arabe | 173 | 100 |
-| Onomatopée | 141 | 90 |
+| Onomatopée | 140 | 90 |
 | Gaulois | 127 | 85 |
 
 **Découpage B — resserré** — 9 factions
 
 | Faction | Mots éligibles | Cartes dans l'édition (environ) |
 |---|---|---|
-| Latin | 15 835 | 1 050 |
+| Latin | 15 829 | 1 050 |
 | Langues romanes | 1 525 | 346 |
-| Vieux français et gaulois | 1 524 | 346 |
+| Vieux français et gaulois | 1 522 | 346 |
 | Anglais | 1 184 | 305 |
 | Langues germaniques | 1 182 | 305 |
-| Grec | 854 | 259 |
+| Grec | 853 | 259 |
 | Arabe et Orient | 268 | 145 |
 | Langues d'ailleurs | 249 | 140 |
-| Onomatopée | 141 | 105 |
+| Onomatopée | 140 | 105 |
 
 **Découpage C — détaillé (une faction par langue d'au moins 60 mots éligibles)** — 18 factions
 
 | Faction | Mots éligibles | Cartes dans l'édition (environ) |
 |---|---|---|
-| Latin | 15 835 | 869 |
-| Ancien français | 1 246 | 244 |
+| Latin | 15 829 | 869 |
+| Ancien français | 1 244 | 244 |
 | Anglais | 1 184 | 238 |
-| Grec | 854 | 202 |
+| Grec | 853 | 202 |
 | Italien | 839 | 200 |
 | Francique et germanique ancien | 720 | 185 |
 | Occitan | 332 | 126 |
@@ -413,7 +417,7 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 | Néerlandais | 192 | 96 |
 | Arabe | 173 | 91 |
 | Parlers régionaux | 151 | 85 |
-| Onomatopée | 141 | 82 |
+| Onomatopée | 140 | 82 |
 | Gaulois et celtique | 127 | 78 |
 | Turc et persan | 81 | 62 |
 | Russe et langues slaves | 71 | 58 |
@@ -425,64 +429,64 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 
 | Mot | Faction | Héritée de | Début de l'étymologie |
 |---|---|---|---|
-| froufrou | Onomatopée |  | Onomatopée. |
-| tapissier | Grec | tapis | Dérivé de tapis, avec le suffixe -ier. |
-| asticot | Vieux français | asticoter | Déverbal de asticoter (« agacer »), d’où asticot (« ce qui sert à agacer, à attirer le poisson ») (→ voir taquiner le go |
-| homogène | Grec |  | Du grec ancien ὁμογενής, homogenês (« de même race, de même sorte, semblable »), en passant par le latin homogeneus (mêm |
-| canton | Occitan |  | De l’ancien occitan canton; le mot est venu de l'Italie du Nord où cantone est passé du sens de « coin » (→ voir chant,  |
-| excréter | Latin |  | Du latin excernere (« cribler, séparer, trier »). |
-| kaiser | Allemand et néerlandais |  | De l’allemand Kaiser, dérivé du latin Caesar (« César, empereur romain »). |
-| panard | Occitan |  | (Adjectif) D’origine incertaine. Viendrait de l’occitan panard (« boiteux ») issu par substitution de suffixe de panet ( |
-| jungle | Anglais |  | De l’anglais jungle, lui-même du hindi जंगल, jaṅgal (« forêt ») ou de l’ourdou جنگل, jaṅgal, de même sens, issu du sansk |
-| neutre | Latin |  | Du latin neuter (« ni l’un, ni l’autre », « indifférent », « neutre »), composé de ne et uter (inter. « qui des deux ? » |
-| barrer | Arabe |  | (Verbe 1) Dénominal de barre.Dérivé de barre, avec le suffixe -er. (Verbe 2) De l’arabe بَرًّا, barran (« dehors »). |
-| immodeste | Latin | modeste | De modeste, avec le préfixe in- modifié en im-. |
-| bonification | Vieux français | bonifier | De bonifier avec le suffixe -ation. |
-| voyeur | Vieux français |  | Dérivé de voir, avec le suffixe -eur, en ancien français veor (« guetteur »). |
+| force | Latin |  | Du bas latin fortia, pluriel neutre substantivé de l’adjectif fortis (« courageux, ferme, brave »). Le maintien de o (on |
+| myéloïde | Grec |  | Mot constitué des éléments: myélo-, du grec ancien μυελός (muelos) « moelle » et -oïde, du grec ancien -ειδής de εἶδος ( |
+| coronal | Latin |  | Du latin coronalis (« de couronne »). |
+| électro-encéphalogramme | Grec | encéphalogramme | Dérivé de encéphalogramme, avec le préfixe électro-. |
+| gauchir | Vieux français |  | De l’ancien français gauchier → voir gauche. |
+| radôme | Anglais | radar | De radar et de dôme. |
+| saccager | Italien |  | De l’italien saccheggiare, attesté depuis le treizième siècle et dérivé de sacco (« saccage »). → voir sac |
+| spiritualité | Vieux français |  | Sous la forme ancien français spiritüalitet (« vie spirituelle ») dans les textes en vers de Gilles Le Muisit. Il existe |
+| étriqué | Allemand et néerlandais | étriquer | Participe passé adjectivé de étriquer. |
+| bouder | Onomatopée |  | De l’onomatopée bod désignant quelque chose d’enflé comme l’est la lèvre du boudeur ou de la boudeuse. Pour le lien séma |
+| abordé | Francique | aborder | Adjectivation du participe passé de aborder. |
+| prospectus | Latin |  | Du latin prospectus (« perspective, vue d’ensemble ») avec, pour le français, le sens initial de « document d’annonce d' |
+| madré | Vieux français |  | De l’ancien français madrer (« veiner, marbrer ») → voir madre (« bois tacheté, bigarré, varié en couleurs »). |
+| contempteur | Latin |  | Du latin contemptor (même signification), dérivé de contemnere (« mépriser »), de cum (« avec ») et temnere (« dédaigner |
+| impolitesse | Italien | politesse | Dérivé de politesse, avec le préfixe im-. |
+| didactique | Grec |  | Du grec ancien διδακτικός, didaktikós (« doué pour l’enseignement »), dérivé du verbe διδάσκω didásko (« enseigner », «  |
+| manquer | Italien |  | De l’italien mancare « faire défaut », du lombard *mangjan (cf. ancien haut allemand mengen « être privé de, ne pas réus |
+| vasouillard | Allemand et néerlandais | vasouiller | Dérivé de vasouiller, avec le suffixe -ard. |
+| imprimatur | Latin |  | Du latin imprimatur (« qu'il soit imprimé ») → voir déléatur, exequatur et admittatur. |
+| douar | Arabe |  | De l'arabe دوار, َdouar (« hameau »), probablement du radical دار dar (« maison »). |
+| retape | Onomatopée | retaper | Déverbal de retaper. |
+| jachère | Vieux français |  | En ancien français jaschier (« terre de labour ») et jascherer (« labourer »), gasker, gieskerech (« juin, mois des labo |
+| pareil | Latin |  | Du latin parilis (« semblable, égal »). |
+| gamelle | Espagnol et portugais |  | De l’espagnol gamella (« auge, récipient »), lui-même du latin gamella (« coupe à boire »). |
+| musard | Latin | muser | Motdérivé de muser, avec le suffixe -ard. |
+| polygame | Grec |  | Du grec ancien πολύγαμος, polygamos → voir poly- et -game. |
+| burnous | Arabe |  | De l’arabe برنوس, barnous, lui-même du berbère abernus, qui a aussi donné les variantes albornoz et alburno avec l’artic |
+| trogne | Gaulois |  | Du gaulois trugna (« nez, museau »), voir aussi le gallois trwyn (« nez, museau »), cornique troen (« nez »), breton str |
+| apparatchik | Langues d'ailleurs |  | Du russe аппарaтчик, apparattchik (« membre de l’appareil du parti communiste »). |
+| tamponnement | Francique | tamponner | Dérivé de tamponner, avec le suffixe -ment. |
+| signaleur | Latin | signaler | De signaler avec le suffixe -eur. |
+| vote | Anglais |  | De l’anglais vote, issu du latin votum (« vœu »). |
+| phénotype | Grec |  | Du grec ancien φαίνω, phaínô (« faire briller, montrer, paraître ») et de τύπος, tupos (« marque, type »). |
+| désemparé | Occitan | désemparer | Composé de désemparer. |
 | embellie | Latin | embellir | Déverbal de embellir. |
-| endiguer | Allemand et néerlandais | diguer | Verbedérivé de diguer, avec le préfixe en-. |
-| tisserand | Vieux français |  | De l’ancien français tissier (« tisserand ») avec la finale germanique -anc avec un ‹ d › non-étymologique comme dans al |
-| ribote | Vieux français |  | Attesté en ancien français sous la forme riboi, de riber et -ote → voir ribaud et ribaude. Pour « baratte » → voir ribot |
+| cafétéria | Espagnol et portugais |  | De l’espagnol cafetería par l’anglais cafeteria. |
+| embusqué | Vieux français | embusquer | Du participe passé de embusquer. |
+| dénaturé | Latin | nature | (aucune) |
+| misanthrope | Grec |  | Du grec ancien μισάνθρωπος, misánthrôpοs |
+| sorbetière | Italien | sorbet | Dérivé de sorbet, avec le suffixe -ière. |
 | rééquilibrage | Latin | rééquilibrer | Dérivé de rééquilibrer, avec le suffixe -age. |
-| androïde | Grec |  | Du grec ancien ἀνδρός, andrós (« d’homme ») et εἶδος, eîdos (« aspect extérieur »). |
-| varech | Vieux français |  | Du normand, du norrois vágrek (« épave marine, ce qui est rejeté sur la côte »). Apparenté à l'anglais wreck et au néerl |
-| rétribuer | Latin |  | Du latin retribuere, « donner en échange, en retour ». |
-| formaliser | Anglais |  | Au sens pronominal,dérivé de formel, avec le suffixe -iser. Forme transitive, de l’anglais formalize (« rendre formel ») |
-| salade | Occitan |  | De l’occitan salada (« salée »), dérivé de sal (« sel »). |
-| misogynie | Grec |  | Du grec ancien μισογυνία, misogunía → voir misogyne et -ie. |
-| éteignoir | Latin | éteindre | Dérivé du verbe éteindre avec le suffixe -oir. |
-| rencontrer | Latin | contre | Verbedérivé de encontrer, avec le préfixe re-, « venir en face », de encontre. → voir à l’encontre |
-| piperade | Occitan |  | De l'occitan (« salade de piments, omelette de piments »), piper en béarnais, dérivé du latin piper (« poivre »). |
-| impulsion | Latin |  | Du latin impulsio (« choc »). |
-| pourlécher | Latin | pour | (aucune) |
-| yearling | Anglais |  | De l’anglais yearling (« qui a un an »). |
-| shipchandler | Anglais |  | De l’anglais ship chandler. |
-| rouste | Occitan |  | De l’occitan rosta (« raclée »). |
-| écologique | Allemand et néerlandais | écologie | Dérivé du nom écologie, avec le suffixe -ique. |
-| indigo | Espagnol et portugais |  | Du portugais índigo. |
-| compiler | Latin |  | Du latin compilare. |
-| escamoter | Espagnol et portugais |  | Peut-être de l'occitan escamotar ou escambotar, dérivé de escamar « effilocher », lui-même issu du latin squama « écaill |
-| surhomme | Allemand et néerlandais |  | Calque de l’allemand Übermensch,dérivé de homme, avec le préfixe sur-. |
-| pocher | Francique | poche | Dénominal de poche. Le sens de « faire un œil au beurre noir » peut venir aussi de l'ancien verbe poucher, « froisser av |
-| lampée | Onomatopée | lamper | De lamper. |
-| excellentissime | Italien |  | Emprunté à l’italien eccellentissimo, composé de excellent et du suffixe -issime. |
-| marabout | Espagnol et portugais |  | Du portugais maraboto, marabuto, lui-même de l’arabe مُرَابِطٌ (murâbiTũ), celui qui se رَابَطَ (râbaTa) : moine-soldat, |
-| conjonction | Latin |  | Du latin conjunctio qui donne l’ancien français conjoncion. |
-| superstructure | Latin | structure | Dérivé de structure, avec le préfixe super-. |
-| dynamisme | Grec | dynamique | Dérivé de dynamie, avec le suffixe -isme. |
-| lurex | Anglais |  | Antonomase du nom de marque Lurex (Marque commerciale) (→ voir Lurex) dérivé de l’anglais lure (« attrait; appât »), ave |
-| momie | Latin |  | Du latin médiéval mummia, lui-même issu de l’arabe مومياء, mūmyāʾ (« mélange de poix et de bitume utilisé pour embaumer  |
-| délayer | Vieux français |  | Origine incertaine : peut-être du latin deliquare (« décanter, transvaser, éclaircir ») avec influence de l’ancien franç |
-| sabir | Espagnol et portugais |  | Altération de l’espagnol saber (« savoir »). |
-| crayonner | Latin | crayon | → voir crayon |
-| stérilisateur | Latin | stériliser | De stériliser avec le suffixe -ateur. |
-| bassine | Latin | bassin | → voir bassin |
-| refendre | Latin | fendre | Dérivé de fendre, avec le préfixe re-. |
-| gargouille | Latin |  | De l’ancien français gargouille, gargoule « gorge, tuyau de descente », composé de garg- (cf. jargon), du latin tardif g |
-| capitulaire | Latin |  | Du latin capitulum (« chapitre ») avec le suffixe -aire. |
-| médiatique | Anglais | média | Dérivé de média, avec le suffixe -ique. |
-| ornière | Vieux français |  | De l’ancien français ordiere (« ornière ») avec l’influence de orne (« rang »), du latin vulgaire *orbitaria → voir orbi |
-| bazar | Langues d'ailleurs |  | Du persan بازار, bâzâr (« marché ») ou de l’arabe بازار, bāzār (« marché »). |
-| renfrogné | Gaulois | renfrogner | Participe passé adjectivé de renfrogner. |
-| hanap | Francique |  | De l’ancien bas vieux-francique hnapp (« écuelle ») apparenté au néerlandais nap (« hanap, écuelle »), à l’allemand Napf |
+| entraver | Occitan |  | De l’ancien occitan entravar, mettre une poutre (trau), via l’ancien français tref, « poutre ». → voir latin trabs. |
+| incalculable | Latin | calculable | Dérivé de calculable, avec le préfixe in-. |
+| humeur | Latin |  | (Nom commun 1) Emprunté au latin humor (« liquide, fait d’être « mouillé ») → voir humide. référence nécessaire (résoudr |
+| doryphore | Grec |  | Du grec ancien δορυφόρος, doruphóros (« porteur de lance »). NC2 (2) car les réquisitions de nourriture et en particulie |
+| voltige | Italien | voltiger | Déverbal de voltiger. |
+| arachnéen | Grec |  | Du grec ancien ἀράχνη, arachné (« araignée »). |
+| méditer | Latin |  | Du latin meditor. |
+| tournebroche | Latin | tourner | (aucune) |
+| jersey | Anglais |  | De l’anglais jersey. |
+| guêtre | Francique |  | guestes; (1432) guietres; du vieux-francique wrist (« cou-de-pied »), par métonymie « vêtement couvrant cette partie du  |
+| affidavit | Anglais |  | De l’anglais affidavit, mot introduit en droit français par le décret du 22 juin 1914. |
+| vachette | Latin | vache | Dérivé de vache, avec le suffixe -ette. (champignon) car, jeune, il forme des gouttes de lait. |
+| hallebarde | Allemand et néerlandais |  | De l’allemand Hellebarde (« hache à hampe »), composé de Halm (« hampe ») et de Barte (« hache »). |
+| tyranniser | Grec |  | Dérivé de tyran, avec le suffixe -iser; en grec ancien τυραννίζω, turannízô a le sens de « être partisan de la tyrannie  |
+| fardeau | Arabe | farde | En ancien français fardel (« botte d'herbe »)dérivé de farde, avec le suffixe -eau. |
+| mânes | Latin |  | L’accent circonflexe est tardif, du latin manes (« âmes des morts »). |
+| ciseau | Vieux français |  | De l’ancien français cisel ou chisel. |
+| pieux | Latin |  | Du latin pius (« pieux, qui remplit ses devoirs envers la divinité, religieux, saint, sacré »). pius. |
+| véloce | Latin |  | Du latin velox (« rapide »). |
 

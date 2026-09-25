@@ -50411,11 +50411,11 @@ var Ee = {
 				quiz: !0
 			},
 			{
-				texte: "Définition manquante ou à compléter. (Ajouter)",
+				texte: "Abus des effets produits par des moyens surnaturels ou extraordinaires.",
 				quiz: !0
 			},
 			{
-				texte: "Abus des effets produits par des moyens surnaturels ou extraordinaires.",
+				texte: "Artifices, des allégations spécieuses par lesquelles on essaie de faire illusion dans un récit, dans une affaire, etc.",
 				quiz: !0
 			}
 		]],
@@ -51688,13 +51688,12 @@ var Ee = {
 				quiz: !0
 			},
 			{
-				texte: "Définition manquante ou à compléter. (Ajouter)",
+				texte: "Danse d’origine hongroise à deux temps et d’un mouvement vif, faisant partie d'un quadrille.",
 				quiz: !0
 			},
 			{
-				texte: "Définition manquante ou à compléter. (Ajouter)",
-				quiz: !0,
-				registre: ["Familier"]
+				texte: "Air sur lequel on danse le galop.",
+				quiz: !1
 			}
 		]],
 		["galopin-nom", [
@@ -54102,11 +54101,11 @@ var Ee = {
 				quiz: !1
 			},
 			{
-				texte: "Définition manquante ou à compléter. (Ajouter)…",
+				texte: "Entrée de militaires, de soldats dans un régiment.",
 				quiz: !0
 			},
 			{
-				texte: "Entrée de militaires, de soldats dans un régiment.",
+				texte: "Autorisation qu’un évêque donne à un ecclésiastique de faire partie de son diocèse.",
 				quiz: !0
 			}
 		]],
@@ -57784,8 +57783,9 @@ var Ee = {
 				quiz: !0
 			},
 			{
-				texte: "Définition manquante ou à compléter. (Ajouter)…",
-				quiz: !0
+				texte: "Anneau qui recouvrait la pointe des lances au Moyen-Âge pour les rendre inoffensives lors des tournois.",
+				quiz: !0,
+				registre: ["Vieilli"]
 			}
 		]],
 		["morphologie-nom", [
@@ -62552,9 +62552,6 @@ var Ee = {
 		["recourber-verbe", [{
 			texte: "Courber en rond par l’extrémité, par le bout.",
 			quiz: !0
-		}, {
-			texte: "Définition manquante ou à compléter. (Ajouter)",
-			quiz: !0
 		}]],
 		["récriminer-verbe", [{
 			texte: "Répondre à des accusations par d’autres accusations.",
@@ -63547,9 +63544,6 @@ var Ee = {
 		["ronronnement-nom", [{
 			texte: "Action de ronronner; bruit provoqué par cette action.",
 			quiz: !1
-		}, {
-			texte: "Définition manquante ou à compléter. (Ajouter)",
-			quiz: !0
 		}]],
 		["rosse-adj", [{
 			texte: "Dur, intransigeant, mauvais, méchant, sévère. → voir vachard, vache",
@@ -65473,9 +65467,6 @@ var Ee = {
 			texte: "Aller très vite; se dépêcher; accélérer.",
 			quiz: !0,
 			registre: ["Familier"]
-		}, {
-			texte: "Définition manquante ou à compléter. (Ajouter)",
-			quiz: !0
 		}]],
 		["sphéroïde-nom", [
 			{
@@ -69290,20 +69281,13 @@ var Ee = {
 			texte: "Dont la robe ou le poil, simple et uniforme, n’a aucune marque de blanc.",
 			quiz: !0
 		}]],
-		["zakouski-nom", [
-			{
-				texte: "Hors-d’œuvre variés, chauds ou froids, russes ou polonais, servis généralement dans une pièce différente de celle du repas.",
-				quiz: !0
-			},
-			{
-				texte: "Hors-d’œuvre, amuse-gueule, canapés.",
-				quiz: !0
-			},
-			{
-				texte: "Définition manquante ou à compléter. (Ajouter)",
-				quiz: !0
-			}
-		]],
+		["zakouski-nom", [{
+			texte: "Hors-d’œuvre variés, chauds ou froids, russes ou polonais, servis généralement dans une pièce différente de celle du repas.",
+			quiz: !0
+		}, {
+			texte: "Hors-d’œuvre, amuse-gueule, canapés.",
+			quiz: !0
+		}]],
 		["zapper-verbe", [
 			{
 				texte: "Appuyer sur la télécommande pour syntoniser une autre chaîne télévisuelle, changer rapidement de chaîne.",

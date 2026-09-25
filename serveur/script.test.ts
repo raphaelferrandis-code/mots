@@ -2,14 +2,14 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { NOMBRE_DE_JOUEURS_MAISON, fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts';
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
-import type { IndexEdition } from '../src/partage/types.ts';
+import type { CarteDetails, Definition, IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
 import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires } from './fabriquer-le-script.ts';
 
@@ -22,6 +22,14 @@ describe('les scripts du serveur', () => {
     const catalogue = JSON.parse(readFileSync(path.join(RACINE,'supabase/functions/_shared/catalogue-combat.json'),'utf8'));
     assert.deepEqual(catalogue.cartes,edition.cartes);
     assert.equal(new Set(catalogue.definitions.map(([id]:[string,unknown])=>id)).size,catalogue.definitions.length);
+  });
+  it('embarque les mêmes définitions que le jeu : sinon, lancer « node serveur/preparer-combats.mjs » puis « node serveur/preparer-direct.mjs », et redéployer les deux fonctions', () => {
+    // Le serveur compose lui-même les questions de parade, avec ses propres définitions.
+    const catalogue = JSON.parse(readFileSync(path.join(RACINE, 'supabase/functions/_shared/catalogue-combat.json'), 'utf8')) as { definitions: [string, Definition[]][] };
+    const dossier = path.join(RACINE, 'public', 'data', 'details');
+    const duJeu = readdirSync(dossier).filter((nom) => nom.endsWith('.json'))
+      .flatMap((nom) => Object.entries(JSON.parse(readFileSync(path.join(dossier, nom), 'utf8')) as Record<string, CarteDetails>).map(([id, d]) => [id, d.definitions] as const));
+    assert.deepEqual(new Map(catalogue.definitions), new Map(duJeu));
   });
   it('sont à jour : sinon, lancer « npm run serveur:script » et les recoller dans Supabase', () => {
     assert.equal(lire('1-structure.sql'), structure());

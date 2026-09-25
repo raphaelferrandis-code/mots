@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — plus de définition vide dans la parade.** En duel, la parade proposait parfois « Définition
+> manquante ou à compléter. (Ajouter) » : un sens que le Wiktionnaire n'a pas encore rédigé, resté dans 8 cartes
+> (speeder, galop, fantasmagorie, recourber, ronronnement, zakouski, incorporation, morne). Le pipeline écarte
+> désormais ces textes d'attente (`estUneDefinitionVide`, `pipeline/etapes/nettoyage.ts`) ; le sens compte toujours dans
+> la richesse du mot, si bien qu'aucune note ne bouge. **L'édition est désormais figée** (`figee: true` dans
+> `pipeline/config.ts`) : le pipeline garde exactement les 3 016 cartes publiées, avec leur rareté et leurs badges,
+> et ne recalcule que leurs textes et leurs notes ; recomposée, l'édition aurait échangé 4 cartes (le rapport le dit au
+> §4). Résultat : seules les définitions des 8 cartes changent ; aucun script SQL à recoller. Le jeu est en ligne ;
+> **côté serveur, il reste à redéployer `combats` et `joutes-direct`** (étape 12 d'A-FAIRE-RAPHAEL), qui composent les
+> questions avec leur propre copie des définitions — un test vérifie maintenant que cette copie suit celle du jeu.
+
 > **25 septembre 2026 — la rareté se voit au cadre du timbre : une teinte de papier et un filet.** Raphaël ne voyait
 > pas de différence entre les raretés (Commune, Peu commune et Rare étaient presque identiques, et une Commune
 > brillante passait pour le meilleur timbre). Essais publiés dans la soirée : une aura autour du timbre, puis une

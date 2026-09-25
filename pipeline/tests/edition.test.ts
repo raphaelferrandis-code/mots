@@ -7,7 +7,7 @@ import type { Nature, Rarete } from '../../src/partage/types.ts';
 import { CONFIG } from '../config.ts';
 import { assemblerCartes } from '../etapes/cartes.ts';
 import type { CarteComplete } from '../etapes/cartes.ts';
-import { allouer, composerEdition, estEligible, noteDeQualite, partsDesFactions, renoterDansLEdition } from '../etapes/edition.ts';
+import { allouer, composerEdition, estEligible, garderLEditionPubliee, noteDeQualite, partsDesFactions, renoterDansLEdition } from '../etapes/edition.ts';
 import { creerHasard } from '../etapes/stats.ts';
 import type { MotBrut } from '../etapes/wiktionnaire.ts';
 
@@ -138,14 +138,32 @@ describe('composition d\'une édition', () => {
   });
 });
 
+describe('édition en jeu', () => {
+  const base = [carte({ mot: 'garde' }), carte({ mot: 'remplacee' }), carte({ mot: 'rare', rarete: 'Rare' }), carte({ mot: 'nouvelle' })];
+  const [garde, remplacee, rare, nouvelle] = base;
+
+  it('garde les cartes publiées, même celles que la composition remplacerait, et le signale', () => {
+    const gardee = garderLEditionPubliee(base, [garde.index, remplacee.index], [garde, nouvelle]);
+    assert.deepEqual(gardee.edition, [garde, remplacee]);
+    assert.deepEqual([gardee.sortiraient, gardee.entreraient], [[remplacee.index.id], [nouvelle.index.id]]);
+    assert.deepEqual([gardee.disparues, gardee.changements], [[], []]);
+  });
+  it('signale une carte en jeu qui changerait de rareté ou de badges, et une carte disparue de la base', () => {
+    const publiees = [{ ...rare.index, rarete: 'Épique' as Rarete, registre: ['Familier' as const] }, { ...garde.index, id: 'disparue-Nom' }];
+    const gardee = garderLEditionPubliee(base, publiees, []);
+    assert.deepEqual(gardee.changements, ['rare-Nom : Épique → Rare', 'rare-Nom : badges Familier → aucun']);
+    assert.deepEqual(gardee.disparues, ['disparue-Nom']);
+  });
+});
+
 describe('assemblage des cartes', () => {
   const lexique = (nature: Nature, frequence: number, prevalence: number | null, base = '') => ({ nature, frequence, prevalence, avis: prevalence === null ? 0 : 20, base });
   const mots = new Map<string, MotBrut>([
-    ['détester|Verbe', { mot: 'détester', nature: 'Verbe', entrees: 1, etymologies: ['Du latin detestari.'], synonymes: 2, derives: 1, attestation: 'Siècle à préciser', lexique: lexique('Verbe', 40, 100),
+    ['détester|Verbe', { mot: 'détester', nature: 'Verbe', entrees: 1, etymologies: ['Du latin detestari.'], sensARediger: 0, synonymes:2, derives: 1, attestation: 'Siècle à préciser', lexique: lexique('Verbe', 40, 100),
       sens: [{ definition: 'Réprouver, maudire solennellement.', etiquettes: ['dated'], domaines: [] }, { definition: 'Avoir en aversion, ne pas pouvoir souffrir.', etiquettes: [], domaines: [] }, { definition: 'Avoir beaucoup de mal à supporter quelque chose.', etiquettes: [], domaines: [] }] }],
-    ['callipyge|Adjectif', { mot: 'callipyge', nature: 'Adjectif', entrees: 1, etymologies: ['Emprunté au grec ancien καλλίπυγος.'], synonymes: 0, derives: 0, attestation: '1786', lexique: lexique('Adjectif', 0.003, 33),
+    ['callipyge|Adjectif', { mot: 'callipyge', nature: 'Adjectif', entrees: 1, etymologies: ['Emprunté au grec ancien καλλίπυγος.'], sensARediger: 0, synonymes:0, derives: 0, attestation: '1786', lexique: lexique('Adjectif', 0.003, 33),
       sens: [{ definition: 'Qui a de belles fesses, aux formes harmonieuses.', etiquettes: [], domaines: [] }] }],
-    ['vide|Nom', { mot: 'vide', nature: 'Nom', entrees: 1, etymologies: ['Du latin vocitus.'], synonymes: 0, derives: 0, attestation: null, lexique: lexique('Nom', 20, 100), sens: [] }],
+    ['vide|Nom', { mot: 'vide', nature: 'Nom', entrees: 1, etymologies: ['Du latin vocitus.'], sensARediger: 0, synonymes:0, derives: 0, attestation: null, lexique: lexique('Nom', 20, 100), sens: [] }],
   ]);
   const cartes = assemblerCartes(mots, CONFIG);
   const parId = new Map(cartes.map((c) => [c.index.id, c]));
@@ -170,8 +188,16 @@ describe('assemblage des cartes', () => {
   it('n\'affiche pas une date de première apparition inconnue', () => {
     assert.equal(parId.get('détester-verbe')!.details.attestation, undefined);
   });
+  it('compte dans la richesse du mot un sens pas encore rédigé, sans rien en montrer', () => {
+    const callipyge = parId.get('callipyge-adj')!;
+    const avecUnSensARediger = assemblerCartes(new Map(mots).set('callipyge|Adjectif', { ...mots.get('callipyge|Adjectif')!, sensARediger: 1 }), CONFIG)
+      .find((c) => c.index.id === 'callipyge-adj')!;
+    assert.equal(avecUnSensARediger.richesse, callipyge.richesse + CONFIG.richesse.poidsSens);
+    assert.equal(avecUnSensARediger.nombreDeSens, 2);
+    assert.deepEqual(avecUnSensARediger.details.definitions, callipyge.details.definitions);
+  });
   it('range un coup de cœur non mesuré parmi les mots mesurés', () => {
-    const avecZeugma = new Map(mots).set('zeugma|Nom', { mot: 'zeugma', nature: 'Nom', entrees: 1, etymologies: ['Du latin zeugma.'], synonymes: 0, derives: 0, attestation: null, lexique: lexique('Nom', 0.001, null),
+    const avecZeugma = new Map(mots).set('zeugma|Nom', { mot: 'zeugma', nature: 'Nom', entrees: 1, etymologies: ['Du latin zeugma.'], sensARediger: 0, synonymes:0, derives: 0, attestation: null, lexique: lexique('Nom', 0.001, null),
       sens: [{ definition: 'Figure de style qui rattache à un même mot deux termes disparates.', etiquettes: [], domaines: [] }] });
     const raretes = new Map(assemblerCartes(avecZeugma, CONFIG, new Map(), new Set(['zeugma'])).map((c) => [c.index.id, c.index.rarete]));
     assert.equal(raretes.get('zeugma-nom'), raretes.get('callipyge-adj'), 'moins fréquent que tous les mots mesurés : aussi rare que le plus rare d\'entre eux');
