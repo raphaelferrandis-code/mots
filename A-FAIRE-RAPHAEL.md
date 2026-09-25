@@ -92,9 +92,9 @@ Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
 
 Détails : [GUIDE-google.md](GUIDE-google.md).
 
-- [ ] https://search.google.com/search-console → **Ajouter une propriété** → **Préfixe de l'URL** →
+- [x] https://search.google.com/search-console → **Ajouter une propriété** → **Préfixe de l'URL** →
       `https://philamots.fr/` → méthode **Balise HTML** : envoyer la ligne `<meta name="google-site-verification" …>`
-      à l'assistant (elle n'est pas secrète).
+      à l'assistant (elle n'est pas secrète). Balise publiée dans `index.html` le 25 septembre.
 - [ ] Une fois publiée par l'assistant : **Valider**, puis **Sitemaps** → `sitemap.xml` → **Envoyer**, puis
       **Inspecter l'URL** `https://philamots.fr/` → **Demander une indexation**.
 - [ ] https://www.bing.com/webmasters → **Importer depuis Google Search Console**.
