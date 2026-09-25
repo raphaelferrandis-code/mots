@@ -144,7 +144,7 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 }
 @keyframes tb-aura { from { opacity: 1; } to { opacity: .62; } }
 /* Le reflet glisse sans quitter le rose et le bleu : l'aura d'une Hors-série ne doit jamais passer pour une autre rareté. */
-@keyframes tb-aura-irisee { from { filter: hue-rotate(-35deg); } to { filter: hue-rotate(35deg); } }
+@keyframes tb-aura-irisee { from { filter: hue-rotate(-20deg); } to { filter: hue-rotate(20deg); } }
 
 /* Hors-série : impression noire, cadre irisé, illustration propre au mot. */
 .tb[data-niveau='6'] { --trait: #fff6dc; }
