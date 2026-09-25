@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { couperEnLignes, nomDuFichierImage, tailleDuMot, texteDePartage } from './miseEnLignes.ts';
+import { couperEnLignes, nomDuFichierImage, texteDePartage } from './miseEnLignes.ts';
 
 // Une règle simple : chaque caractère fait une unité.
 const mesurer = (texte: string): number => texte.length;
@@ -23,9 +23,7 @@ describe('mise en lignes du texte du timbre', () => {
   it('rend une liste vide pour un texte vide', () => {
     assert.deepEqual(couperEnLignes('   ', 10, mesurer), []);
   });
-  it('donne au mot la taille du timbre à l’écran, et un nom de fichier stable', () => {
-    assert.equal(tailleDuMot('chic'), 10.5);
-    assert.equal(tailleDuMot('anticonstitutionnellement'), 96 / 25);
+  it('donne un nom de fichier stable et un message de partage', () => {
     assert.equal(nomDuFichierImage('velum-nom'), 'philamots-timbre-velum-nom.png');
     assert.match(texteDePartage('velum', 'Épique', 'Latin', 'https://x.test/'), /« velum ».*épique.*Latin.*https:\/\/x\.test\//);
   });

@@ -1,497 +1,879 @@
-// L'image d'un timbre, pour la partager ou l'enregistrer. Le timbre est redessiné trait par trait sur un canevas,
-// d'après les mêmes règles que timbre.css : mesures en centièmes de la largeur, encres de la faction, qualité
-// d'impression selon la rareté, finition, cachets. On ne « photographie » pas l'écran : cela ne marche pas sur
-// tous les téléphones, et l'image doit être la même partout. Quand timbre.css change d'aspect, ce fichier suit.
-// Tout est déterminé par le mot : la même carte donne toujours la même image.
+// L'image d'un timbre, pour la partager ou l'enregistrer : le timbre tel que le jeu l'affiche (Timbre.tsx et
+// timbre.css), posé sur le bleu nuit du jeu, avec son mot, sa définition et l'adresse du site.
+//
+// Comment : le vrai timbre est monté hors de l'écran, en grand, le temps de lire ce que le navigateur en a calculé
+// (places, couleurs, dégradés, ombres, lettres, dessins) ; puis tout est repeint sur un canevas. On ne
+// « photographie » pas l'écran : un navigateur comme Safari ne sait pas mettre du HTML dans un canevas, et l'image
+// doit être la même partout. Mais comme on lit les styles calculés, l'image suit d'elle-même les réglages de
+// timbre.css (couleurs de rareté, filets, finitions…). Ce que le peintre sait dessiner est listé plus bas
+// (peindreUnElement, peindreDuSvg) : une nouvelle sorte d'effet dans timbre.css (un flou, un masque d'une autre
+// forme…) demande d'être ajoutée ici, sinon elle manquera sur l'image.
 
 import { createElement } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { SITE } from '../../config/site.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
-import { NIVEAU, NOM_COURT, anneeDuCachet, encresDe, entier, entre, hasardDe, motifDuTimbre } from './decor.ts';
-import { couperEnLignes, tailleDuMot } from './miseEnLignes.ts';
-import { VIGNETTES } from './vignettes.tsx';
+import { chiffresPlaces } from '../timbre/chiffresAlignes.ts';
+import { Timbre } from '../timbre/Timbre.tsx';
+import { couperEnLignes } from './miseEnLignes.ts';
+import {
+  cadrer, decouper, ecrireCouleur, lecteurDeBordureImage, lecteurDeCouche, lettresLeLongDuChemin, lireCouleur,
+  lireLesAdresses, lireLesFonds, lireLesOmbres, lireLongueur, lisserLesAplats, peindreLeFond, placerLesLettres, preparerLeBruit, resoudre, turbulence,
+} from './pinceaux.ts';
+import type { Couche, Degrade, Rvba } from './pinceaux.ts';
 
-export type Habillage = { finition: Finition; maitriseeLe: number | null };
+export type Habillage = { finition: Finition; maitriseeLe: number | null; obtenuLe?: number | null };
 
+type Contexte = CanvasRenderingContext2D;
+type Boite = { x: number; y: number; l: number; h: number };
+
+// Le timbre est lu à cette largeur (px) : les arrondis du navigateur (épaisseur des bordures, lignes de texte)
+// y deviennent invisibles, puis tout est réduit à la taille de l'image.
+const LARGEUR_SONDE = 3000;
+
+// Le timbre lu est figé : pas d'animation (rosaces des Hors-série, poussières), et les poussières gardent l'éclat
+// qu'elles ont quand les animations sont réduites (timbre.css).
+const STYLE_SONDE = '.sonde-du-partage *, .sonde-du-partage *::before, .sonde-du-partage *::after { animation: none !important; transition: none !important; }'
+  + ' .sonde-du-partage .tb__grain { opacity: .5 !important; }';
+
+// L'effet moyen du grain du papier (texture --grain-papier, fondue en « multiply ») si l'on ne peut pas le mesurer :
+// assombrissement par canal pour une opacité de 1. Un vrai grain alourdirait l'image sans se voir à cette taille.
+const GRAIN_MOYEN: [number, number, number] = [0.0896, 0.1052, 0.125];
+
+// ── L'atelier : la sonde (le timbre monté hors de l'écran) et les toiles de travail ─────────────────────────
+
+type Atelier = {
+  sonde: HTMLElement; // le conteneur de la sonde : les identifiants (filtres, chemins) se cherchent dedans
+  timbre: HTMLElement; // l'élément .tb de la sonde
+  origine: DOMRect; // sa place à l'écran, pour ramener les mesures au coin du timbre
+  k: number; // de la sonde (px) à l'image (px)
+  largeur: number;
+  hauteur: number;
+  grains: Map<string, [number, number, number]>; // effet moyen des textures (url) de fond, par adresse
+  toiles: HTMLCanvasElement[]; // réserve de toiles de la taille du timbre
+};
+
+function nouvelleToile(largeur: number, hauteur: number): HTMLCanvasElement {
+  const toile = document.createElement('canvas');
+  toile.width = largeur;
+  toile.height = hauteur;
+  return toile;
+}
+
+function contexteDe(toile: HTMLCanvasElement): Contexte {
+  const ctx = toile.getContext('2d');
+  if (!ctx) throw new Error("Ce navigateur ne sait pas dessiner l'image.");
+  return ctx;
+}
+
+function emprunterUneToile(at: Atelier): Contexte {
+  const toile = at.toiles.pop() ?? nouvelleToile(at.largeur, at.hauteur);
+  const ctx = contexteDe(toile);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, at.largeur, at.hauteur);
+  return ctx;
+}
+
+function rendreLaToile(at: Atelier, ctx: Contexte): void {
+  at.toiles.push(ctx.canvas);
+}
+
+// Pose une toile de travail sur une autre, avec une opacité et un mode de fusion (mix-blend-mode).
+function poser(cible: Contexte, source: HTMLCanvasElement, opacite = 1, mode = 'normal'): void {
+  cible.save();
+  cible.setTransform(1, 0, 0, 1, 0, 0);
+  cible.globalAlpha = opacite;
+  cible.globalCompositeOperation = (mode === 'normal' ? 'source-over' : mode) as GlobalCompositeOperation;
+  cible.drawImage(source, 0, 0);
+  cible.restore();
+}
+
+const px = (valeur: string): number => parseFloat(valeur) || 0;
+
+// Un élément de la sonde par son identifiant (ceux de React, rendus uniques à la sonde par leur préfixe).
+const parIdentifiant = (at: Atelier, id: string): Element | null => at.sonde.querySelector(`#${CSS.escape(id)}`);
+const transparente = (couleur: Rvba | null): boolean => !couleur || couleur[3] === 0;
+
+// ── Places et transformations ────────────────────────────────────────────────
+
+// La place d'un élément dans le timbre, sans ses transformations (rotate, transform…), en px de la sonde.
+function placeDe(el: Element, at: Atelier): Boite {
+  if (el instanceof HTMLElement) {
+    let x = 0;
+    let y = 0;
+    let e: HTMLElement | null = el;
+    while (e && e !== at.timbre) {
+      x += e.offsetLeft;
+      y += e.offsetTop;
+      e = e.offsetParent as HTMLElement | null;
+    }
+    return { x, y, l: el.offsetWidth, h: el.offsetHeight };
+  }
+  // Un dessin SVG posé dans le HTML : sa place se lit dans ses styles (left, top, largeur, hauteur calculées),
+  // depuis le bloc qui le contient.
+  const s = getComputedStyle(el);
+  const parent = el.parentElement ? placeDe(el.parentElement, at) : { x: 0, y: 0, l: 0, h: 0 };
+  const absolu = s.position === 'absolute' || s.position === 'fixed';
+  return {
+    x: parent.x + (absolu ? px(s.left) : 0) + px(s.marginLeft),
+    y: parent.y + (absolu ? px(s.top) : 0) + px(s.marginTop),
+    l: px(s.width),
+    h: px(s.height),
+  };
+}
+
+// La transformation CSS propre à un élément (translate, rotate, scale, puis transform, autour de transform-origin).
+function transformationDe(el: Element, boite: Boite): DOMMatrix | null {
+  const s = getComputedStyle(el);
+  const m = new DOMMatrix();
+  let transforme = false;
+  const [ox = 0, oy = 0] = s.transformOrigin.split(/\s+/).map(px);
+  if (s.translate && s.translate !== 'none') {
+    const [tx = '0', ty = '0'] = s.translate.split(/\s+/);
+    const l = (v: string, ref: number): number => { const lu = lireLongueur(v); return lu ? resoudre(lu, ref) : 0; };
+    m.translateSelf(l(tx, boite.l), l(ty, boite.h));
+    transforme = true;
+  }
+  if (s.rotate && s.rotate !== 'none') {
+    const angle = s.rotate.match(/(-?[\d.]+)deg\s*$/);
+    if (angle) { m.translateSelf(ox, oy).rotateSelf(parseFloat(angle[1])).translateSelf(-ox, -oy); transforme = true; }
+  }
+  if (s.scale && s.scale !== 'none') {
+    const [sx, sy = sx] = s.scale.split(/\s+/).map(parseFloat);
+    m.translateSelf(ox, oy).scaleSelf(sx, sy).translateSelf(-ox, -oy);
+    transforme = true;
+  }
+  if (s.transform && s.transform !== 'none') {
+    m.translateSelf(ox, oy).multiplySelf(new DOMMatrix(s.transform)).translateSelf(-ox, -oy);
+    transforme = true;
+  }
+  return transforme ? m : null;
+}
+
+// La matrice qui mène du repère d'un élément (coin haut gauche de sa boîte) au repère du timbre, transformations
+// de l'élément et de ses parents comprises.
+function matriceDe(el: Element, at: Atelier): DOMMatrix {
+  const chaine: Element[] = [];
+  for (let e: Element | null = el; e && e !== at.timbre; e = e.parentElement) chaine.unshift(e);
+  const m = new DOMMatrix();
+  let precedente = { x: 0, y: 0, l: 0, h: 0 };
+  for (const e of chaine) {
+    const place = placeDe(e, at);
+    m.translateSelf(place.x - precedente.x, place.y - precedente.y);
+    const t = transformationDe(e, place);
+    if (t) m.multiplySelf(t);
+    precedente = place;
+  }
+  return m;
+}
+
+const sansRotation = (m: DOMMatrix): boolean => Math.abs(m.b) < 1e-9 && Math.abs(m.c) < 1e-9 && Math.abs(m.a - 1) < 1e-9 && Math.abs(m.d - 1) < 1e-9;
+
+// La boîte d'un élément dans le repère du timbre, s'il n'est ni tourné ni agrandi (sinon null).
+function boiteDroite(el: Element, at: Atelier): Boite | null {
+  const m = matriceDe(el, at);
+  if (!sansRotation(m)) return null;
+  const place = placeDe(el, at);
+  return { x: m.e, y: m.f, l: place.l, h: place.h };
+}
+
+// Les pseudo-éléments ::before et ::after, placés en absolu dans leur parent.
+function boiteDuPseudo(s: CSSStyleDeclaration, parent: Boite): Boite {
+  const haut = px(s.top), gauche = px(s.left);
+  const l = s.right !== 'auto' && s.left !== 'auto' ? parent.l - gauche - px(s.right) : px(s.width) + px(s.borderLeftWidth) + px(s.borderRightWidth) + px(s.paddingLeft) + px(s.paddingRight);
+  const h = s.bottom !== 'auto' && s.top !== 'auto' ? parent.h - haut - px(s.bottom) : px(s.height) + px(s.borderTopWidth) + px(s.borderBottomWidth) + px(s.paddingTop) + px(s.paddingBottom);
+  return { x: parent.x + gauche, y: parent.y + haut, l, h };
+}
+
+// ── Les boîtes : fonds, bordures, ombres ─────────────────────────────────────
+
+// Les couches de fond d'une boîte (background-image, -size, -position), prêtes à peindre.
+function couchesDuFond(s: CSSStyleDeclaration, boite: Boite): Couche[] {
+  const fonds = lireLesFonds(s.backgroundImage);
+  const tailles = decouper(s.backgroundSize);
+  const positions = decouper(s.backgroundPosition);
+  const couches: Couche[] = [];
+  fonds.forEach((fond, i) => {
+    if (!fond || fond === 'image') return;
+    // Un dégradé n'a pas de taille propre : « auto » (ou cover, contain) vaut la boîte entière.
+    const [tailleX = 'auto', tailleY = 'auto'] = (tailles[i % tailles.length] ?? 'auto').split(/\s+/);
+    const cote = (valeur: string, place: number): number => { const l = lireLongueur(valeur); return l ? resoudre(l, place) : place; };
+    const tl = cote(tailleX, boite.l);
+    const th = cote(tailleY, boite.h);
+    // background-position : un pourcentage aligne ce point de la tuile sur le même point de la boîte.
+    const [posX = '0%', posY = '50%'] = (positions[i % positions.length] ?? '0% 0%').split(/\s+/);
+    const decale = (valeur: string, place: number, tuile: number): number => { const l = lireLongueur(valeur); return !l ? 0 : l.u === '%' ? ((place - tuile) * l.v) / 100 : l.v; };
+    couches.push({ degrade: fond, tuile: [tl, th], decalage: [decale(posX, boite.l, tl), decale(posY, boite.h, th)] });
+  });
+  return couches;
+}
+
+// Peint un fond calculé pixel par pixel sur une toile, à la place de la boîte.
+function peindreDesPixels(ctx: Contexte, boite: Boite, at: Atelier, couleur: Rvba | null, couches: Couche[], bord = 0, lecteur?: (x: number, y: number, sortie: Float64Array) => void): void {
+  const pixels = cadrer(boite, at.k);
+  if (!pixels.largeur || !pixels.hauteur) return;
+  peindreLeFond(pixels, boite, at.k, couleur, lecteur ? [lecteur] : couches.map(lecteurDeCouche), bord);
+  const toile = nouvelleToile(pixels.largeur, pixels.hauteur);
+  contexteDe(toile).putImageData(new ImageData(pixels.donnees, pixels.largeur, pixels.hauteur), 0, 0);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(toile, pixels.x, pixels.y);
+  ctx.restore();
+}
+
+// Un anneau plein (ombre sans flou, bordure unie) : entre la boîte et la même boîte rentrée de « epaisseur ».
+function anneau(ctx: Contexte, boite: Boite, epaisseur: number, couleur: Rvba, at: Atelier): void {
+  if (epaisseur <= 0 || transparente(couleur)) return;
+  const k = at.k;
+  ctx.save();
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.fillStyle = ecrireCouleur(couleur);
+  ctx.beginPath();
+  ctx.rect(boite.x, boite.y, boite.l, boite.h);
+  ctx.rect(boite.x + epaisseur, boite.y + epaisseur, boite.l - 2 * epaisseur, boite.h - 2 * epaisseur);
+  ctx.fill('evenodd');
+  ctx.restore();
+}
+
+// Un fond découpé aux lettres (background-clip: text) : le texte doré des finitions Brillante, le rang irisé.
+const texteDore = (s: CSSStyleDeclaration): boolean => s.backgroundClip === 'text' || s.getPropertyValue('-webkit-background-clip') === 'text';
+
+// Une boîte dont le fond n'est qu'une texture fondue en « multiply » (le grain du papier) : on pose son effet moyen,
+// en teinte unie (l'opacité de la boîte est déjà comptée dans l'effet). Rend true si c'était le cas.
+function peindreUneTexture(ctx: Contexte, s: CSSStyleDeclaration, boite: Boite, at: Atelier): boolean {
+  const fonds = lireLesFonds(s.backgroundImage);
+  const [adresse] = lireLesAdresses(s.backgroundImage);
+  if (fonds.length !== 1 || fonds[0] !== 'image' || !adresse || s.mixBlendMode !== 'multiply') return false;
+  const effet = at.grains.get(adresse);
+  if (!effet) return true;
+  ctx.save();
+  ctx.setTransform(at.k, 0, 0, at.k, 0, 0);
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = ecrireCouleur([255 * (1 - effet[0]), 255 * (1 - effet[1]), 255 * (1 - effet[2]), 1]);
+  ctx.fillRect(boite.x, boite.y, boite.l, boite.h);
+  ctx.restore();
+  return true;
+}
+
+// Le fond, les ombres et la bordure d'une boîte (un élément ou un pseudo-élément), dans l'ordre de CSS.
+function peindreLaBoite(ctx: Contexte, s: CSSStyleDeclaration, boite: Boite, at: Atelier): void {
+  const ombres = lireLesOmbres(s.boxShadow);
+  const rond = s.borderTopLeftRadius === '50%';
+  const couleur = lireCouleur(s.backgroundColor);
+  // Une pastille ronde et lumineuse (poussières des Hors-série) : couleur de fond, halo flou.
+  if (rond) {
+    ctx.save();
+    ctx.setTransform(at.k, 0, 0, at.k, 0, 0);
+    const halo = ombres.find((o) => !o.interieure);
+    if (halo) { ctx.shadowColor = ecrireCouleur(halo.couleur); ctx.shadowBlur = halo.flou * at.k; }
+    ctx.fillStyle = ecrireCouleur(couleur ?? [0, 0, 0, 0]);
+    ctx.beginPath();
+    ctx.ellipse(boite.x + boite.l / 2, boite.y + boite.h / 2, boite.l / 2, boite.h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+  for (const o of ombres) if (!o.interieure && o.flou === 0) anneau(ctx, { x: boite.x - o.etendue + o.x, y: boite.y - o.etendue + o.y, l: boite.l + 2 * o.etendue, h: boite.h + 2 * o.etendue }, o.etendue, o.couleur, at);
+  if (!texteDore(s)) {
+    const couches = couchesDuFond(s, boite);
+    if (!transparente(couleur) || couches.length) peindreDesPixels(ctx, boite, at, transparente(couleur) ? null : couleur, couches);
+  }
+  // Les ombres intérieures, de la dernière à la première (la première est au-dessus).
+  for (const o of [...ombres].reverse()) if (o.interieure && o.flou === 0) anneau(ctx, boite, o.etendue, o.couleur, at);
+  // La bordure : unie, ou peinte d'un dégradé (border-image).
+  const bord = px(s.borderTopWidth);
+  if (bord > 0 && s.borderTopStyle !== 'none') {
+    const source = s.borderImageSource && s.borderImageSource !== 'none' ? lireLesFonds(s.borderImageSource)[0] : null;
+    if (source && source !== 'image') peindreDesPixels(ctx, boite, at, null, [], bord, lecteurDeBordureImage(source as Degrade, boite.l, boite.h, bord));
+    else anneau(ctx, boite, bord, lireCouleur(s.borderTopColor) ?? [0, 0, 0, 0], at);
+  }
+}
+
+// ── Les textes du HTML ───────────────────────────────────────────────────────
+
+const policeDe = (s: CSSStyleDeclaration, taille = px(s.fontSize)): string => `${s.fontStyle === 'italic' ? 'italic ' : ''}${s.fontWeight} ${taille}px ${s.fontFamily}`;
+
+function transformerLeTexte(texte: string, s: CSSStyleDeclaration): string {
+  if (s.textTransform === 'uppercase') return texte.toLocaleUpperCase('fr');
+  if (s.textTransform === 'lowercase') return texte.toLocaleLowerCase('fr');
+  return texte;
+}
+
+// Les chiffres alignés de Playfair (lining-nums), que le canevas ne sait pas choisir : tracés d'après la police.
+function chiffresAlignes(s: CSSStyleDeclaration): boolean {
+  return s.fontVariantNumeric.includes('lining-nums') && s.fontFamily.includes('Playfair Display') && px(s.fontWeight) >= 800;
+}
+
+// Dessine les lettres d'un nœud de texte, chacune à la place exacte que le navigateur lui a donnée (espacement,
+// crénage et capitales compris). « couleur » impose une teinte (masque des textes dorés).
+function peindreUnTexte(ctx: Contexte, noeud: Text, at: Atelier, couleur?: string): void {
+  const parent = noeud.parentElement;
+  if (!parent || !noeud.data.trim()) return;
+  const s = getComputedStyle(parent);
+  const teinte = couleur ?? (transparente(lireCouleur(s.color)) ? null : s.color);
+  if (!teinte) return;
+  const taille = px(s.fontSize);
+  ctx.save();
+  ctx.setTransform(at.k, 0, 0, at.k, 0, 0);
+  ctx.font = policeDe(s);
+  ctx.fillStyle = teinte;
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  const montante = ctx.measureText('H').fontBoundingBoxAscent || taille * 0.9;
+  const ombre = couleur ? undefined : lireLesOmbres(s.textShadow)[0];
+  if (ombre) {
+    ctx.shadowColor = ecrireCouleur(ombre.couleur);
+    ctx.shadowBlur = ombre.flou * at.k;
+    ctx.shadowOffsetX = ombre.x * at.k;
+    ctx.shadowOffsetY = ombre.y * at.k;
+  }
+  const alignes = chiffresAlignes(s);
+  const plage = document.createRange();
+  let i = 0;
+  for (const lettre of noeud.data) {
+    plage.setStart(noeud, i);
+    plage.setEnd(noeud, i + lettre.length);
+    i += lettre.length;
+    if (!lettre.trim()) continue;
+    const r = plage.getBoundingClientRect();
+    const x = r.left - at.origine.left;
+    const base = r.top - at.origine.top + montante;
+    if (alignes && /\d/.test(lettre)) {
+      const [chiffre] = chiffresPlaces(lettre);
+      ctx.save();
+      ctx.translate(x, base);
+      ctx.scale(taille / 1000, taille / 1000);
+      ctx.fill(new Path2D(chiffre.contour));
+      ctx.restore();
+    } else ctx.fillText(transformerLeTexte(lettre, s), x, base);
+  }
+  ctx.restore();
+}
+
+// Tous les textes sous un élément (pour les textes dorés, découpés dans leur fond).
+function textesSous(el: Element): Text[] {
+  const textes: Text[] = [];
+  const marcheur = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = marcheur.nextNode(); n; n = marcheur.nextNode()) textes.push(n as Text);
+  return textes;
+}
+
+// ── Les dessins SVG ──────────────────────────────────────────────────────────
+
+function transformationSvg(el: SVGGraphicsElement): DOMMatrix | null {
+  const liste = el.transform?.baseVal;
+  if (!liste || liste.numberOfItems === 0) return null;
+  const m = liste.consolidate()?.matrix;
+  return m ? new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]) : null;
+}
+
+// Le passage du repère d'un <svg> (viewBox) à sa boîte, comme preserveAspectRatio="xMidYMid meet" par défaut.
+function repereDuViewBox(svg: SVGSVGElement, l: number, h: number): DOMMatrix {
+  const vb = svg.viewBox?.baseVal;
+  if (!vb || !vb.width || !vb.height) return new DOMMatrix();
+  const aucun = svg.getAttribute('preserveAspectRatio') === 'none';
+  const ex = l / vb.width;
+  const ey = h / vb.height;
+  const e = Math.min(ex, ey);
+  return aucun
+    ? new DOMMatrix().scaleSelf(ex, ey).translateSelf(-vb.x, -vb.y)
+    : new DOMMatrix().translateSelf((l - vb.width * e) / 2, (h - vb.height * e) / 2).scaleSelf(e, e).translateSelf(-vb.x, -vb.y);
+}
+
+function poserLeRepere(ctx: Contexte, m: DOMMatrix, at: Atelier): void {
+  ctx.setTransform(m.a * at.k, m.b * at.k, m.c * at.k, m.d * at.k, m.e * at.k, m.f * at.k);
+}
+
+// Le trait et le remplissage d'une forme, avec les styles calculés de l'élément.
+function peindreUneForme(ctx: Contexte, chemin: Path2D, s: CSSStyleDeclaration): void {
+  const opacite = parseFloat(s.opacity);
+  const remplissage = s.fill && s.fill !== 'none' ? lireCouleur(s.fill) : null;
+  const trait = s.stroke && s.stroke !== 'none' ? lireCouleur(s.stroke) : null;
+  if (!transparente(remplissage)) {
+    ctx.globalAlpha = opacite * parseFloat(s.fillOpacity || '1');
+    ctx.fillStyle = ecrireCouleur(remplissage!);
+    ctx.fill(chemin, s.fillRule === 'evenodd' ? 'evenodd' : 'nonzero');
+  }
+  const epaisseur = px(s.strokeWidth);
+  if (!transparente(trait) && epaisseur > 0) {
+    ctx.globalAlpha = opacite * parseFloat(s.strokeOpacity || '1');
+    ctx.strokeStyle = ecrireCouleur(trait!);
+    ctx.lineWidth = epaisseur;
+    ctx.lineCap = s.strokeLinecap as CanvasLineCap;
+    ctx.lineJoin = s.strokeLinejoin as CanvasLineJoin;
+    ctx.setLineDash(s.strokeDasharray && s.strokeDasharray !== 'none' ? decouper(s.strokeDasharray.replace(/,/g, ' '), ' ').map(px) : []);
+    ctx.lineDashOffset = px(s.strokeDashoffset);
+    ctx.stroke(chemin);
+    ctx.setLineDash([]);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function cheminDe(el: SVGElement): Path2D | null {
+  const nombre = (nom: string): number => parseFloat(el.getAttribute(nom) ?? '0') || 0;
+  const chemin = new Path2D();
+  switch (el.tagName) {
+    case 'path': return new Path2D(el.getAttribute('d') ?? '');
+    case 'circle': chemin.arc(nombre('cx'), nombre('cy'), nombre('r'), 0, Math.PI * 2); return chemin;
+    case 'ellipse': chemin.ellipse(nombre('cx'), nombre('cy'), nombre('rx'), nombre('ry'), 0, 0, Math.PI * 2); return chemin;
+    case 'line': chemin.moveTo(nombre('x1'), nombre('y1')); chemin.lineTo(nombre('x2'), nombre('y2')); return chemin;
+    case 'rect': {
+      const [x, y, l, h] = [nombre('x'), nombre('y'), nombre('width'), nombre('height')];
+      const r = Math.min(nombre('rx') || nombre('ry'), l / 2, h / 2);
+      if (r <= 0) chemin.rect(x, y, l, h);
+      else {
+        // Coins arrondis tracés à la main : Path2D.roundRect manque aux Safari d'avant 2022.
+        chemin.moveTo(x + r, y);
+        chemin.arcTo(x + l, y, x + l, y + h, r);
+        chemin.arcTo(x + l, y + h, x, y + h, r);
+        chemin.arcTo(x, y + h, x, y, r);
+        chemin.arcTo(x, y, x + l, y, r);
+        chemin.closePath();
+      }
+      return chemin;
+    }
+    case 'polyline':
+    case 'polygon': {
+      const points = (el.getAttribute('points') ?? '').trim().split(/[\s,]+/).map(Number);
+      for (let i = 0; i + 1 < points.length; i += 2) (i === 0 ? chemin.moveTo : chemin.lineTo).call(chemin, points[i], points[i + 1]);
+      if (el.tagName === 'polygon') chemin.closePath();
+      return chemin;
+    }
+    default: return null;
+  }
+}
+
+// Un texte SVG : droit (x, y, text-anchor, dominant-baseline) ou posé sur un chemin (textPath).
+function peindreUnTexteSvg(ctx: Contexte, texte: SVGTextElement, m: DOMMatrix, at: Atelier): void {
+  const s = getComputedStyle(texte);
+  const remplissage = s.fill && s.fill !== 'none' ? lireCouleur(s.fill) : null;
+  if (transparente(remplissage)) return;
+  const taille = px(s.fontSize);
+  const espace = px(s.letterSpacing);
+  const premier = (liste: SVGAnimatedLengthList): number => (liste.baseVal.numberOfItems ? liste.baseVal.getItem(0).value : 0);
+  ctx.save();
+  poserLeRepere(ctx, m, at);
+  ctx.font = policeDe(s, taille);
+  ctx.fillStyle = ecrireCouleur(remplissage!);
+  ctx.globalAlpha = parseFloat(s.opacity) * parseFloat(s.fillOpacity || '1');
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  const mesurer = (t: string): number => ctx.measureText(t).width;
+  const dy = premier(texte.dy);
+  const surChemin = texte.querySelector('textPath');
+  const contenu = transformerLeTexte((surChemin ?? texte).textContent ?? '', s);
+  const placement = placerLesLettres(contenu, espace, mesurer);
+  if (surChemin) {
+    const lien = surChemin.getAttribute('href') ?? surChemin.getAttribute('xlink:href') ?? '';
+    const chemin = parIdentifiant(at, lien.replace(/^#/, ''));
+    if (chemin instanceof SVGGeometryElement) {
+      const longueur = chemin.getTotalLength();
+      const depart = lireLongueur(surChemin.getAttribute('startOffset') ?? '0');
+      const voulue = surChemin.getAttribute('textLength');
+      const lettres = lettresLeLongDuChemin(placement, depart ? resoudre(depart, longueur) : 0, longueur, voulue ? parseFloat(voulue) : null);
+      for (const { lettre, milieu, chasse } of lettres) {
+        const avant = chemin.getPointAtLength(Math.max(0, milieu - 0.05));
+        const apres = chemin.getPointAtLength(Math.min(longueur, milieu + 0.05));
+        const point = chemin.getPointAtLength(milieu);
+        ctx.save();
+        ctx.translate(point.x, point.y);
+        ctx.rotate(Math.atan2(apres.y - avant.y, apres.x - avant.x));
+        ctx.fillText(lettre, -chasse / 2, dy);
+        ctx.restore();
+      }
+    }
+  } else {
+    let x = premier(texte.x) + premier(texte.dx);
+    let y = premier(texte.y) + dy;
+    const ancrage = s.textAnchor;
+    // La largeur du texte compte l'espacement après la dernière lettre, comme le fait le navigateur.
+    if (ancrage === 'middle') x -= placement.largeur / 2;
+    else if (ancrage === 'end') x -= placement.largeur;
+    const ligne = s.dominantBaseline;
+    if (ligne === 'middle') y += (ctx.measureText('x').actualBoundingBoxAscent || taille * 0.5) / 2;
+    else if (ligne === 'central') { const mesure = ctx.measureText('H'); y += (mesure.fontBoundingBoxAscent - mesure.fontBoundingBoxDescent) / 2; }
+    if (espace === 0) ctx.fillText(contenu, x, y);
+    else placement.lettres.forEach((lettre, i) => ctx.fillText(lettre, x + placement.x[i], y));
+  }
+  ctx.restore();
+}
+
+// Le filtre « encre usée » des cachets : feTurbulence → feColorMatrix → feComposite in. Rend la fonction qui donne,
+// pour un point du dessin, la part d'encre conservée (0 à 1) ; null si le filtre est d'une autre sorte.
+function lireLeFiltre(g: SVGGElement, at: Atelier): ((x: number, y: number) => number) | null {
+  const reference = g.getAttribute('filter')?.match(/url\(["']?#([^"')]+)["']?\)/)?.[1];
+  const filtre = reference ? parIdentifiant(at, reference) : null;
+  const bruit = filtre?.querySelector('feTurbulence');
+  const matrice = filtre?.querySelector('feColorMatrix');
+  if (!bruit || !matrice || !filtre?.querySelector('feComposite[operator="in"]')) return null;
+  const frequences = (bruit.getAttribute('baseFrequency') ?? '0').trim().split(/[\s,]+/).map(Number);
+  const frequence: [number, number] = [frequences[0], frequences[1] ?? frequences[0]];
+  const octaves = parseInt(bruit.getAttribute('numOctaves') ?? '1', 10);
+  const fractal = bruit.getAttribute('type') === 'fractalNoise';
+  const graine = parseFloat(bruit.getAttribute('seed') ?? '0');
+  const valeurs = (matrice.getAttribute('values') ?? '').trim().split(/[\s,]+/).map(Number);
+  if (valeurs.length !== 20) return null;
+  const ligneAlpha = valeurs.slice(15, 20);
+  const canaux = [0, 1, 2, 3].filter((c) => ligneAlpha[c] !== 0);
+  const bruitDeBase = preparerLeBruit(graine);
+  return (x, y) => {
+    let a = ligneAlpha[4];
+    for (const c of canaux) a += ligneAlpha[c] * turbulence(bruitDeBase, c, x, y, frequence, octaves, fractal);
+    return Math.min(1, Math.max(0, a));
+  };
+}
+
+// Peint un élément SVG et ses enfants, dans le repère m (du dessin vers le timbre, en px de la sonde).
+function peindreDuSvg(ctx: Contexte, el: Element, m: DOMMatrix, at: Atelier): void {
+  if (!(el instanceof SVGElement)) return;
+  const s = getComputedStyle(el);
+  if (s.display === 'none' || s.visibility === 'hidden') return;
+  const nom = el.tagName;
+  if (['defs', 'filter', 'style', 'title', 'desc', 'clipPath', 'mask', 'linearGradient', 'radialGradient', 'symbol', 'textPath'].includes(nom)) return;
+
+  if (nom === 'svg') {
+    const svg = el as SVGSVGElement;
+    const [x, y, l, h] = ['x', 'y', 'width', 'height'].map((a) => (svg.getAttribute(a) ? (svg as unknown as Record<string, SVGAnimatedLength>)[a].baseVal.value : 0));
+    const repere = m.translate(x, y).multiply(repereDuViewBox(svg, l, h));
+    ctx.save();
+    if (s.overflow === 'hidden' || s.overflow === 'clip') { poserLeRepere(ctx, m, at); ctx.beginPath(); ctx.rect(x, y, l, h); ctx.clip(); }
+    for (const enfant of Array.from(svg.children)) peindreDuSvg(ctx, enfant, repere, at);
+    ctx.restore();
+    return;
+  }
+
+  const propre = transformationSvg(el as SVGGraphicsElement);
+  const repere = propre ? m.multiply(propre) : m;
+
+  if (nom === 'g') {
+    const encre = lireLeFiltre(el as SVGGElement, at);
+    const opacite = parseFloat(s.opacity);
+    if (!encre && opacite === 1) { for (const enfant of Array.from(el.children)) peindreDuSvg(ctx, enfant, repere, at); return; }
+    const calque = emprunterUneToile(at);
+    for (const enfant of Array.from(el.children)) peindreDuSvg(calque, enfant, repere, at);
+    if (encre) userouLEncre(calque, el as SVGGElement, repere, encre, at);
+    poser(ctx, calque.canvas, opacite);
+    rendreLaToile(at, calque);
+    return;
+  }
+
+  if (nom === 'text') { peindreUnTexteSvg(ctx, el as SVGTextElement, repere, at); return; }
+
+  const chemin = cheminDe(el);
+  if (!chemin) return;
+  ctx.save();
+  poserLeRepere(ctx, repere, at);
+  peindreUneForme(ctx, chemin, s);
+  ctx.restore();
+}
+
+// Ronge l'encre d'un calque selon le filtre : chaque pixel garde la part d'encre que le bruit lui laisse.
+function userouLEncre(calque: Contexte, g: SVGGElement, m: DOMMatrix, encre: (x: number, y: number) => number, at: Atelier): void {
+  const b = g.getBBox();
+  const coins = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]].map(([x, y]) => m.transformPoint(new DOMPoint(x, y)));
+  const x0 = Math.max(0, Math.floor(Math.min(...coins.map((p) => p.x)) * at.k) - 2);
+  const y0 = Math.max(0, Math.floor(Math.min(...coins.map((p) => p.y)) * at.k) - 2);
+  const x1 = Math.min(at.largeur, Math.ceil(Math.max(...coins.map((p) => p.x)) * at.k) + 2);
+  const y1 = Math.min(at.hauteur, Math.ceil(Math.max(...coins.map((p) => p.y)) * at.k) + 2);
+  if (x1 <= x0 || y1 <= y0) return;
+  const image = calque.getImageData(x0, y0, x1 - x0, y1 - y0);
+  const inv = new DOMMatrix([m.a * at.k, m.b * at.k, m.c * at.k, m.d * at.k, m.e * at.k, m.f * at.k]).inverse();
+  const d = image.data;
+  for (let j = 0; j < y1 - y0; j++) {
+    const py = y0 + j + 0.5;
+    for (let i = 0; i < x1 - x0; i++) {
+      const o = (j * (x1 - x0) + i) * 4 + 3;
+      if (d[o] === 0) continue;
+      const pX = x0 + i + 0.5;
+      d[o] = d[o] * encre(inv.a * pX + inv.c * py + inv.e, inv.b * pX + inv.d * py + inv.f);
+    }
+  }
+  calque.putImageData(image, x0, y0);
+}
+
+// ── Le peintre : un élément du timbre, son fond, ses pseudo-éléments, ses enfants ─────────────────────────
+
+function peindreUnPseudo(ctx: Contexte, el: Element, quel: '::before' | '::after', boiteParent: Boite, at: Atelier): void {
+  const s = getComputedStyle(el, quel);
+  if (!s.content || s.content === 'none' || s.content === 'normal' || s.display === 'none') return;
+  const opacite = parseFloat(s.opacity);
+  if (opacite === 0) return;
+  const boite = boiteDuPseudo(s, boiteParent);
+  if (peindreUneTexture(ctx, s, boite, at)) return;
+  const groupe = opacite < 1 || s.mixBlendMode !== 'normal';
+  const cible = groupe ? emprunterUneToile(at) : ctx;
+  peindreLaBoite(cible, s, boite, at);
+  if (groupe) { poser(ctx, cible.canvas, opacite, s.mixBlendMode); rendreLaToile(at, cible); }
+}
+
+// Le masque d'un élément (la dentelure du timbre) : une image SVG d'un seul chemin, étirée sur la boîte.
+function appliquerLeMasque(ctx: Contexte, s: CSSStyleDeclaration, boite: Boite, at: Atelier): void {
+  const image = s.maskImage || s.getPropertyValue('-webkit-mask-image');
+  const [adresse] = image ? lireLesAdresses(image) : [];
+  if (!adresse?.startsWith('data:image/svg+xml,')) return;
+  const svg = decodeURIComponent(adresse.slice('data:image/svg+xml,'.length));
+  const vue = svg.match(/viewBox=['"]([^'"]+)['"]/)?.[1]?.split(/[\s,]+/).map(Number);
+  const d = svg.match(/\sd=['"]([^'"]+)['"]/)?.[1];
+  if (!vue || !d) return;
+  ctx.save();
+  ctx.setTransform((boite.l / vue[2]) * at.k, 0, 0, (boite.h / vue[3]) * at.k, boite.x * at.k, boite.y * at.k);
+  ctx.translate(-vue[0], -vue[1]);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fill(new Path2D(d));
+  ctx.restore();
+}
+
+function peindreUnElement(ctx: Contexte, el: Element, at: Atelier): void {
+  if (!(el instanceof HTMLElement) && !(el instanceof SVGSVGElement)) return;
+  const s = getComputedStyle(el);
+  if (s.display === 'none' || s.visibility === 'hidden') return;
+  const opacite = parseFloat(s.opacity);
+  if (opacite === 0) return;
+
+  // Un dessin SVG posé dans le HTML (vignette, cachets) : ses enfants, dans le repère de son viewBox.
+  if (el instanceof SVGSVGElement) {
+    const groupeSvg = opacite < 1 || s.mixBlendMode !== 'normal';
+    const cibleSvg = groupeSvg ? emprunterUneToile(at) : ctx;
+    const place = placeDe(el, at);
+    const repere = matriceDe(el, at).multiply(repereDuViewBox(el, place.l, place.h));
+    for (const enfant of Array.from(el.children)) peindreDuSvg(cibleSvg, enfant, repere, at);
+    if (groupeSvg) { poser(ctx, cibleSvg.canvas, opacite, s.mixBlendMode); rendreLaToile(at, cibleSvg); }
+    return;
+  }
+
+  const boite = boiteDroite(el, at);
+  const masque = Boolean(s.maskImage && s.maskImage !== 'none') || Boolean(s.getPropertyValue('-webkit-mask-image') && s.getPropertyValue('-webkit-mask-image') !== 'none');
+  const groupe = opacite < 1 || s.mixBlendMode !== 'normal' || masque;
+  const cible = groupe ? emprunterUneToile(at) : ctx;
+
+  if (boite && !peindreUneTexture(cible, s, boite, at)) {
+    peindreLaBoite(cible, s, boite, at);
+    // Texte doré : le fond de l'élément n'apparaît qu'à travers ses lettres.
+    if (texteDore(s)) {
+      const dore = emprunterUneToile(at);
+      peindreDesPixels(dore, boite, at, null, couchesDuFond(s, boite));
+      const lettres = emprunterUneToile(at);
+      for (const noeud of textesSous(el)) peindreUnTexte(lettres, noeud, at, '#fff');
+      dore.globalCompositeOperation = 'destination-in';
+      dore.drawImage(lettres.canvas, 0, 0);
+      dore.globalCompositeOperation = 'source-over';
+      poser(cible, dore.canvas);
+      rendreLaToile(at, dore);
+      rendreLaToile(at, lettres);
+    }
+  }
+
+  cible.save();
+  if (boite && (s.overflow === 'hidden' || s.overflow === 'clip' || masque)) {
+    cible.setTransform(at.k, 0, 0, at.k, 0, 0);
+    cible.beginPath();
+    cible.rect(boite.x, boite.y, boite.l, boite.h);
+    cible.clip();
+  }
+  if (boite) peindreUnPseudo(cible, el, '::before', boite, at);
+  // Les enfants dans l'ordre du document ; ceux qui ont un z-index positif, par-dessus.
+  const enfants = Array.from(el.childNodes);
+  const rang = (n: ChildNode): number => (n instanceof Element ? parseInt(getComputedStyle(n).zIndex, 10) || 0 : 0);
+  const ordonnes = enfants.map((n, i) => ({ n, i, z: rang(n) })).sort((a, b) => (Math.max(0, a.z) - Math.max(0, b.z)) || a.i - b.i);
+  for (const { n } of ordonnes) {
+    if (n instanceof Text) peindreUnTexte(cible, n, at);
+    else if (n instanceof Element) peindreUnElement(cible, n, at);
+  }
+  if (boite) peindreUnPseudo(cible, el, '::after', boite, at);
+  cible.restore();
+
+  if (groupe) {
+    if (masque && boite) appliquerLeMasque(cible, s, boite, at);
+    poser(ctx, cible.canvas, opacite, s.mixBlendMode);
+    rendreLaToile(at, cible);
+  }
+}
+
+// ── Monter la sonde, mesurer les textures, peindre ───────────────────────────
+
+const POLICES = ['500 40px Oswald', '600 40px Oswald', '400 40px "Playfair Display"', '700 40px "Playfair Display"', '900 40px "Playfair Display"', 'italic 400 40px "Playfair Display"', 'italic 700 40px "Playfair Display"', '600 40px "Barlow Condensed"'];
+
+async function chargerLesPolices(): Promise<void> {
+  if (typeof document === 'undefined' || !('fonts' in document)) return;
+  await Promise.all(POLICES.map((p) => document.fonts.load(p).catch(() => [])));
+}
+
+// L'effet moyen d'une texture fondue en « multiply » (le grain du papier), pour une opacité donnée : de combien
+// chaque canal s'assombrit en moyenne.
+async function effetMoyen(adresse: string, opacite: number): Promise<[number, number, number]> {
+  const repli: [number, number, number] = [GRAIN_MOYEN[0] * opacite, GRAIN_MOYEN[1] * opacite, GRAIN_MOYEN[2] * opacite];
+  try {
+    const image = new Image();
+    image.src = adresse;
+    await image.decode();
+    const l = Math.max(1, image.naturalWidth || 180);
+    const h = Math.max(1, image.naturalHeight || 180);
+    const ctx = contexteDe(nouvelleToile(l, h));
+    ctx.drawImage(image, 0, 0, l, h);
+    const d = ctx.getImageData(0, 0, l, h).data;
+    const somme = [0, 0, 0];
+    for (let i = 0; i < d.length; i += 4) for (let c = 0; c < 3; c++) somme[c] += (d[i + 3] / 255) * (1 - d[i + c] / 255);
+    const n = d.length / 4;
+    return [(somme[0] / n) * opacite, (somme[1] / n) * opacite, (somme[2] / n) * opacite];
+  } catch {
+    return repli;
+  }
+}
+
+// Les textures (url) posées en fond dans le timbre, et leur effet moyen (mesuré une fois par texture et opacité).
+const EFFETS_MESURES = new Map<string, Promise<[number, number, number]>>();
+async function mesurerLesTextures(timbre: HTMLElement): Promise<Map<string, [number, number, number]>> {
+  const effets = new Map<string, [number, number, number]>();
+  for (const el of [timbre, ...Array.from(timbre.querySelectorAll('*'))]) {
+    for (const quel of [null, '::before', '::after']) {
+      const s = getComputedStyle(el, quel);
+      if (s.mixBlendMode !== 'multiply') continue;
+      for (const adresse of lireLesAdresses(s.backgroundImage)) {
+        const cle = `${s.opacity} ${adresse}`;
+        if (!EFFETS_MESURES.has(cle)) EFFETS_MESURES.set(cle, effetMoyen(adresse, parseFloat(s.opacity)));
+        if (!effets.has(adresse)) effets.set(adresse, await EFFETS_MESURES.get(cle)!);
+      }
+    }
+  }
+  return effets;
+}
+
+// Dessine le timbre, tel que le jeu l'affiche, sur un canevas de la largeur donnée (hauteur : 38/30 de la largeur).
+export async function dessinerLeTimbre(carte: CarteIndex, habillage: Habillage, largeur: number): Promise<HTMLCanvasElement> {
+  await chargerLesPolices();
+  const conteneur = document.createElement('div');
+  conteneur.className = 'sonde-du-partage';
+  conteneur.setAttribute('aria-hidden', 'true');
+  conteneur.style.cssText = `position:fixed;left:-${LARGEUR_SONDE + 1000}px;top:0;width:${LARGEUR_SONDE}px;pointer-events:none;contain:layout style`;
+  const style = document.createElement('style');
+  style.textContent = STYLE_SONDE;
+  const support = document.createElement('div');
+  conteneur.append(style, support);
+  document.body.appendChild(conteneur);
+  // Préfixe : les identifiants de la sonde (filtres, chemins des textes) ne se confondent pas avec ceux de la page.
+  const racine = createRoot(support, { identifierPrefix: 'partage-' });
+  try {
+    flushSync(() => racine.render(createElement(Timbre, {
+      carte, finition: habillage.finition, oblitere: true, obtenuLe: habillage.obtenuLe ?? null,
+      maitriseeLe: habillage.maitriseeLe, cliquable: false, reagir: false,
+    })));
+    const timbre = support.querySelector<HTMLElement>('.tb');
+    if (!timbre) throw new Error("Le timbre n'a pas pu être préparé.");
+    timbre.getBoundingClientRect();
+    await document.fonts.ready;
+    const origine = timbre.getBoundingClientRect();
+    const k = largeur / origine.width;
+    const at: Atelier = {
+      sonde: conteneur, timbre, origine, k,
+      largeur: Math.round(origine.width * k),
+      hauteur: Math.round(origine.height * k),
+      grains: await mesurerLesTextures(timbre),
+      toiles: [],
+    };
+    const toile = nouvelleToile(at.largeur, at.hauteur);
+    const ctx = contexteDe(toile);
+    for (const enfant of Array.from(timbre.children)) peindreUnElement(ctx, enfant, at);
+    return toile;
+  } finally {
+    racine.unmount();
+    conteneur.remove();
+  }
+}
+
+// ── L'image à partager : le timbre sur le bleu nuit du jeu, avec son mot, sa définition et l'adresse du site ─
+
+// Le format portrait des réseaux sociaux (4:5), mesures données pour l'échelle 1.
+const LARGEUR_IMAGE = 1080;
+const HAUTEUR_IMAGE = 1350;
+const LARGEUR_TIMBRE = 640;
+// Au-delà de ce poids, l'image est refaite un peu plus petite (90 %, puis 80 %) : cela n'arrive qu'aux timbres les
+// plus chargés (quelques Hors-série au fond très guilloché).
+const POIDS_MAXIMUM = 600 * 1024;
+const ECHELLES = [1, 0.9, 0.8];
+// Écart toléré (niveaux sur 255) quand on aligne les pixels presque égaux : invisible, et l'image pèse 30 % de moins.
+const TOLERANCE = 2;
+const NUIT = '#0b1729';
 const SERIF = '"Playfair Display", "Palatino Linotype", Palatino, Georgia, serif';
 const MENTION = '"Barlow Condensed", "Arial Narrow", Arial, sans-serif';
 const SANS = '"Segoe UI", system-ui, -apple-system, sans-serif';
 
-// Les dégradés métalliques et irisés de timbre.css.
-type Arrets = [number, string][];
-const OR: Arrets = [[0, '#8a6a12'], [0.22, '#f6e59a'], [0.4, '#c9a227'], [0.55, '#fff6c4'], [0.72, '#b08a1e'], [1, '#f1d979']];
-const ARGENT: Arrets = [[0, '#6f7680'], [0.24, '#eef1f4'], [0.42, '#a9b0b9'], [0.56, '#ffffff'], [0.74, '#8c939d'], [1, '#dfe3e8']];
-const IRISE: Arrets = ['#ff5ea0', '#ffd75e', '#6dffb0', '#5ec8ff', '#b57bff', '#ff5ea0', '#ffd75e', '#6dffb0', '#5ec8ff'].map((c, i, t) => [i / (t.length - 1), c]);
-
-type Contexte = CanvasRenderingContext2D;
-
-// ── Petites aides de dessin ──────────────────────────────────────────────────
-
-function composantes(hexa: string): [number, number, number] {
-  const h = hexa.replace('#', '');
-  const n = parseInt(h.length === 3 ? [...h].map((c) => c + c).join('') : h, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-// L'équivalent de color-mix(in srgb, a part%, b).
-function melange(a: string, part: number, b: string): string {
-  const [ra, ga, ba] = composantes(a);
-  const [rb, gb, bb] = composantes(b);
-  const m = (x: number, y: number): number => Math.round(x * part + y * (1 - part));
-  return `rgb(${m(ra, rb)},${m(ga, gb)},${m(ba, bb)})`;
-}
-function voile(hexa: string, alpha: number): string {
-  const [r, g, b] = composantes(hexa);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// Un dégradé linéaire comme en CSS : l'angle en degrés, 0 vers le haut, 90 vers la droite.
-function degrade(ctx: Contexte, arrets: Arrets, x: number, y: number, w: number, h: number, angle: number): CanvasGradient {
-  const t = (angle * Math.PI) / 180;
-  const dx = Math.sin(t);
-  const dy = -Math.cos(t);
-  const longueur = Math.abs(w * dx) + Math.abs(h * dy);
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  const g = ctx.createLinearGradient(cx - (dx * longueur) / 2, cy - (dy * longueur) / 2, cx + (dx * longueur) / 2, cy + (dy * longueur) / 2);
-  for (const [position, couleur] of arrets) g.addColorStop(position, couleur);
-  return g;
-}
-
-function police(ctx: Contexte, style: '' | 'italic', poids: number, taille: number, famille: string): void {
-  ctx.font = `${style} ${poids} ${taille}px ${famille}`.trim();
-}
-
-// Un texte dessiné caractère par caractère, pour l'espacement des lettres (letter-spacing), que le canevas ne connaît pas partout.
-function largeurEspacee(ctx: Contexte, texte: string, espace: number): number {
-  const lettres = [...texte];
-  return lettres.reduce((total, lettre) => total + ctx.measureText(lettre).width, 0) + espace * Math.max(0, lettres.length - 1);
-}
-function texteEspace(ctx: Contexte, texte: string, x: number, y: number, espace: number, alignement: 'left' | 'center' | 'right'): void {
-  const total = largeurEspacee(ctx, texte, espace);
-  let px = alignement === 'center' ? x - total / 2 : alignement === 'right' ? x - total : x;
-  const ancien = ctx.textAlign;
+// Un texte espacé (letter-spacing), centré sur x.
+function texteEspaceCentre(ctx: Contexte, texte: string, x: number, y: number, espace: number): void {
+  const placement = placerLesLettres(texte, espace, (t) => ctx.measureText(t).width);
+  const depart = x - (placement.largeur - espace) / 2;
   ctx.textAlign = 'left';
-  for (const lettre of [...texte]) {
-    ctx.fillText(lettre, px, y);
-    px += ctx.measureText(lettre).width + espace;
+  placement.lettres.forEach((lettre, i) => ctx.fillText(lettre, depart + placement.x[i], y));
+}
+
+// L'image entière, à partir du timbre déjà dessiné à la bonne taille (LARGEUR_TIMBRE × échelle).
+function composerLImage(timbre: HTMLCanvasElement, carte: CarteIndex, echelle: number): HTMLCanvasElement {
+  const e = (n: number): number => n * echelle;
+  const largeur = Math.round(e(LARGEUR_IMAGE));
+  const toile = nouvelleToile(largeur, Math.round(e(HAUTEUR_IMAGE)));
+  const ctx = contexteDe(toile);
+  const milieu = largeur / 2;
+
+  // Un fond uni : un halo dégradé alourdirait beaucoup l'image.
+  ctx.fillStyle = NUIT;
+  ctx.fillRect(0, 0, toile.width, toile.height);
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#e0edfa';
+  ctx.font = `700 ${e(56)}px ${SERIF}`;
+  texteEspaceCentre(ctx, SITE.nom, milieu, e(96), e(-1.5));
+
+  // Le timbre, posé au pixel près (sans rééchantillonnage), avec l'ombre portée des timbres de la page d'essai.
+  const haut = Math.round(e(134));
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = e(38);
+  ctx.shadowOffsetY = e(20);
+  ctx.drawImage(timbre, Math.round((largeur - timbre.width) / 2), haut);
+  ctx.restore();
+
+  // Le mot, sa rareté et son origine, puis sa définition : elle n'est plus imprimée sur le timbre.
+  let y = haut + timbre.height + e(86);
+  ctx.fillStyle = '#e0edfa';
+  ctx.font = `700 ${e(50)}px ${SERIF}`;
+  ctx.textAlign = 'center';
+  ctx.fillText(carte.mot, milieu, y);
+  y += e(44);
+  ctx.fillStyle = '#adc3da';
+  ctx.font = `600 ${e(22)}px ${MENTION}`;
+  texteEspaceCentre(ctx, `TIMBRE ${carte.rarete.toUpperCase()} · ${carte.faction.toUpperCase()}`, milieu, y, e(22 * 0.12));
+  ctx.font = `italic 400 ${e(28)}px ${SERIF}`;
+  ctx.fillStyle = '#c3d4e6';
+  ctx.textAlign = 'center';
+  y += e(8);
+  for (const ligne of couperEnLignes(carte.definition, e(LARGEUR_IMAGE - 200), (t) => ctx.measureText(t).width, 2)) {
+    y += e(40);
+    ctx.fillText(ligne, milieu, y);
   }
-  ctx.textAlign = ancien;
-}
 
-function rectangleArrondi(ctx: Contexte, x: number, y: number, w: number, h: number, r: number): void {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-// Des traits horizontaux très fins, comme les tailles d'une gravure.
-function hachures(ctx: Contexte, x: number, y: number, w: number, h: number, pas: number, epaisseur: number, couleur: string): void {
-  ctx.fillStyle = couleur;
-  for (let ligne = y; ligne < y + h; ligne += pas) ctx.fillRect(x, ligne, w, epaisseur);
-}
-
-// Un cachet à l'encre usée : dessiné à part, puis rongé de petits trous, comme le filtre de Tampon.tsx.
-function cachetUse(largeur: number, hauteur: number, hasard: () => number, dessiner: (ctx: Contexte) => void): HTMLCanvasElement {
-  const toile = document.createElement('canvas');
-  toile.width = Math.ceil(largeur);
-  toile.height = Math.ceil(hauteur);
-  const ctx = toile.getContext('2d');
-  if (!ctx) return toile;
-  dessiner(ctx);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0,0,0,0.7)';
-  const trous = Math.round((largeur * hauteur) / 55);
-  for (let i = 0; i < trous; i++) {
-    ctx.beginPath();
-    ctx.arc(hasard() * largeur, hasard() * hauteur, entre(hasard, 0.2, 1.1) * (largeur / 100), 0, Math.PI * 2);
-    ctx.fill();
-  }
+  ctx.fillStyle = '#adc3da';
+  ctx.font = `400 ${e(22)}px ${SANS}`;
+  ctx.fillText(SITE.adresseCourte, milieu, toile.height - e(48));
   return toile;
 }
 
-// ── Le timbre ────────────────────────────────────────────────────────────────
-
-// Dessine le timbre en (0, 0), de la largeur donnée (hauteur : 1,4 fois la largeur), sur un canevas transparent.
-export function dessinerLeTimbre(ctx: Contexte, carte: CarteIndex, habillage: Habillage, largeur: number, illustration: CanvasImageSource | null): void {
-  const U = (n: number): number => (n * largeur) / 100; // 1 = un centième de la largeur, comme « cqi » dans timbre.css
-  const W = largeur;
-  const H = U(140);
-  const niveau = NIVEAU[carte.rarete];
-  const horsSerie = niveau === 6;
-  const [encreNature, contraste, encreClaire] = encresDe(carte.type);
-  const papier = horsSerie ? '#17161c' : '#f8f2e2';
-  const texte = horsSerie ? '#efe9da' : '#26201b';
-  const encre = horsSerie ? encreClaire : encreNature;
-  const seconde = horsSerie ? contraste : niveau === 5 ? '#a67c1a' : niveau === 4 ? '#7b838d' : niveau === 2 || niveau === 3 ? melange(contraste, 0.72, '#000000') : encre;
-  const metal = niveau === 4 ? ARGENT : niveau === 5 ? OR : horsSerie ? IRISE : null;
-  const angleMetal = horsSerie ? 115 : 120;
-  const texteSurMetal = horsSerie ? '#15131a' : '#241a05';
-  const finition = horsSerie ? 'Prismatique' : habillage.finition;
-
-  // Le papier et la dentelure : des demi-cercles mordus dans le bord tous les 4 centièmes. (Pas de grain comme à
-  // l'écran : un bruit aléatoire rend l'image trois fois plus lourde et bien plus lente à fabriquer.)
-  ctx.fillStyle = papier;
-  ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'destination-out';
-  const dent = U(4);
-  const trou = (x: number, y: number): void => { ctx.beginPath(); ctx.arc(x, y, dent * 0.31, 0, Math.PI * 2); ctx.fill(); };
-  for (let i = 0; i <= 25; i++) { trou(i * dent, 0); trou(i * dent, H); }
-  for (let j = 1; j < 35; j++) { trou(0, j * dent); trou(W, j * dent); }
-  ctx.globalCompositeOperation = 'source-over';
-
-  // Le cadre de l'impression : une bordure, un filet intérieur, deux pour une Rare.
-  const x0 = U(4.6), y0 = U(4.6), w0 = W - 2 * x0, h0 = H - 2 * y0;
-  const filet = (retrait: number, epaisseur: number, couleur: string | CanvasGradient): void => {
-    ctx.lineWidth = epaisseur;
-    ctx.strokeStyle = couleur;
-    ctx.strokeRect(x0 + retrait + epaisseur / 2, y0 + retrait + epaisseur / 2, w0 - 2 * retrait - epaisseur, h0 - 2 * retrait - epaisseur);
-  };
-  filet(0, U(0.75), metal ? degrade(ctx, metal, x0, y0, w0, h0, angleMetal) : encre);
-  filet(U(0.75 + 0.45), U(0.3), encre);
-  if (niveau === 3) filet(U(0.75 + 1.3), U(0.25), encre);
-
-  // La zone imprimée, et la hauteur de chaque bande (les mêmes proportions que la grille de timbre.css).
-  const cx = x0 + U(0.75), cy = y0 + U(0.75), cw = w0 - U(1.5), ch = h0 - U(1.5);
-  const bordure = U(0.5);
-  const hautH = U(15);
-  const tailleMot = U(tailleDuMot(carte.mot));
-  const motH = U(0.9 + 1.5 + 1.1 + 0.9) + tailleMot * 1.05;
-  const tailleDef = U(4.6);
-  const interligne = tailleDef * 1.35;
-  police(ctx, '', 400, tailleDef, SERIF);
-  const lignesDef = couperEnLignes(carte.definition, cw - U(12), (t) => ctx.measureText(t).width, 4);
-  const defH = U(2) + lignesDef.length * interligne + U(2.2);
-  const registreH = carte.registre.length > 0 ? U(5.5) : 0;
-  const basH = U(7.2);
-  police(ctx, '', 700, U(2.9), MENTION);
-  const lignesRecord = carte.record ? couperEnLignes(carte.record.toUpperCase(), cw - U(4), (t) => largeurEspacee(ctx, t, U(2.9) * 0.12), 3) : [];
-  const recordH = lignesRecord.length > 0 ? U(2.6) + lignesRecord.length * U(2.9 * 1.2) : 0;
-  const vignetteH = ch - (hautH + bordure + U(2.6) + U(2.2) + motH + defH + registreH + bordure + basH + recordH);
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(cx, cy, cw, ch);
-  ctx.clip();
-  ctx.textBaseline = 'middle';
-
-  // Le bandeau du haut : les deux valeurs dans les coins, la langue émettrice au centre.
-  const vw = U(15.5);
-  const valeurs = [[cx, 'Att.', attaqueEnJeu(carte.attaque, carte.rarete)], [cx + cw - vw, 'Déf.', defenseEnJeu(carte.defense, carte.rarete)]] as const;
-  for (const [x, nom, valeur] of valeurs) {
-    ctx.fillStyle = metal ? degrade(ctx, metal, x, cy, vw, hautH, angleMetal) : encre;
-    ctx.fillRect(x, cy, vw, hautH);
-    ctx.fillStyle = metal ? texteSurMetal : papier;
-    police(ctx, '', 600, U(3), MENTION);
-    texteEspace(ctx, nom.toUpperCase(), x + vw / 2, cy + U(1.2 + 1.8), U(3) * 0.08, 'center');
-    police(ctx, '', 700, U(9.6), SERIF);
-    ctx.textAlign = 'center';
-    ctx.fillText(String(valeur), x + vw / 2, cy + U(1.2 + 3.6 + 4.56 + 0.5));
-  }
-  ctx.fillStyle = encre;
-  police(ctx, '', 700, U(4.1), SERIF);
-  const lignesFaction = couperEnLignes(carte.faction.toUpperCase(), cw - 2 * vw - U(3), (t) => largeurEspacee(ctx, t, U(4.1) * 0.04));
-  const blocFaction = U(3 * 1.2 + 0.5) + lignesFaction.length * U(4.1 * 1.15);
-  let y = cy + (hautH - blocFaction) / 2;
-  ctx.fillStyle = texte;
-  police(ctx, '', 600, U(3), MENTION);
-  texteEspace(ctx, 'ORIGINE', cx + cw / 2, y + U(1.8), U(3) * 0.08, 'center');
-  ctx.fillStyle = encre;
-  y += U(3 * 1.2 + 0.5);
-  police(ctx, '', 700, U(4.1), SERIF);
-  for (const ligne of lignesFaction) { texteEspace(ctx, ligne, cx + cw / 2, y + U(4.1 * 0.575), U(4.1) * 0.04, 'center'); y += U(4.1 * 1.15); }
-  ctx.fillStyle = encre;
-  ctx.fillRect(cx, cy + hautH, cw, bordure);
-
-  // La vignette : une fenêtre aux coins du haut arrondis, un fond de tailles, et la rosace propre au mot.
-  const vx = cx + U(6), vy = cy + hautH + bordure + U(2.6), vwid = cw - U(12), vh = vignetteH;
-  const rx = Math.min(U(36), vwid / 2), ry = Math.min(U(26), vh);
-  const fenetre = (): void => {
-    ctx.beginPath();
-    ctx.moveTo(vx, vy + vh);
-    ctx.lineTo(vx, vy + ry);
-    ctx.ellipse(vx + rx, vy + ry, rx, ry, 0, Math.PI, Math.PI * 1.5);
-    ctx.lineTo(vx + vwid - rx, vy);
-    ctx.ellipse(vx + vwid - rx, vy + ry, rx, ry, 0, Math.PI * 1.5, Math.PI * 2);
-    ctx.lineTo(vx + vwid, vy + vh);
-    ctx.closePath();
-  };
-  ctx.save();
-  fenetre();
-  ctx.clip();
-  if (niveau === 5 || horsSerie) {
-    const fond = ctx.createRadialGradient(vx + vwid / 2, vy + vh * 0.6, 0, vx + vwid / 2, vy + vh * 0.6, Math.max(vwid, vh) * 0.75);
-    fond.addColorStop(0, horsSerie ? '#2b2838' : '#fff8dc');
-    fond.addColorStop(1, horsSerie ? '#121118' : '#f1dfa6');
-    ctx.fillStyle = fond;
-  } else {
-    ctx.fillStyle = niveau === 3 ? melange(contraste, 0.22, papier) : melange(papier, 0.8, '#ffffff');
-  }
-  ctx.fillRect(vx, vy, vwid, vh);
-  hachures(ctx, vx, vy, vwid, vh, U(niveau >= 5 ? 0.95 : 1.5), U(niveau >= 5 ? 0.22 : 0.2), horsSerie ? 'rgba(255,255,255,0.07)' : niveau === 5 ? 'rgba(166,124,26,0.22)' : voile(encre, 0.1));
-  const cote = Math.min(vwid, vh);
-  const ox = vx + (vwid - cote) / 2, oy = vy + (vh - cote) / 2;
-  if (illustration) {
-    ctx.drawImage(illustration, ox, oy, cote, cote);
-  } else {
-    const echelle = cote / 60;
-    ctx.save();
-    ctx.translate(ox, oy);
-    ctx.scale(echelle, echelle);
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.lineWidth = horsSerie ? 0.8 : 0.42;
-    motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2).forEach((d, i) => {
-      ctx.strokeStyle = horsSerie ? '#fff6dc' : i % 2 === 1 ? seconde : encre;
-      ctx.stroke(new Path2D(d));
-    });
-    // Le vernis suit les traits ; l'image exportée en conserve un angle de lumière fixe.
-    if (finition === 'Brillante' || finition === 'Holographique') {
-      ctx.strokeStyle = finition === 'Brillante'
-        ? degrade(ctx, [[0, '#fff9e500'], [.35, '#fff9e500'], [.48, '#fff9e5'], [.6, '#fff9e500'], [1, '#fff9e500']], 0, 0, 60, 60, 115)
-        : degrade(ctx, [[0, '#fff8d5'], [.3, '#82dedf'], [.5, '#fffef5'], [.7, '#ca9fde'], [1, '#efbf80']], 0, 0, 60, 60, 135);
-      ctx.globalAlpha = finition === 'Brillante' ? .9 : .8;
-      ctx.lineWidth = finition === 'Brillante' ? .48 : .42;
-      motifDuTimbre(carte.id, niveau >= 4 ? 4 : niveau >= 2 ? 3 : 2).forEach((d) => ctx.stroke(new Path2D(d)));
-    }
-    ctx.restore();
-  }
-  ctx.restore();
-  fenetre();
-  ctx.lineWidth = U(0.45);
-  ctx.strokeStyle = encre;
-  ctx.stroke();
-
-  // Le mot, entre deux doubles filets.
-  y = vy + vh + U(2.2);
-  const mx = cx + U(3), mw = cw - U(6);
-  const doubleFilet = (haut: number): void => { ctx.fillStyle = encre; ctx.fillRect(mx, haut, mw, U(0.3)); ctx.fillRect(mx, haut + U(0.6), mw, U(0.3)); };
-  doubleFilet(y);
-  ctx.fillStyle = horsSerie ? '#fff4d6' : encre;
-  police(ctx, '', 700, tailleMot, SERIF);
-  texteEspace(ctx, carte.mot.toUpperCase(), cx + cw / 2, y + U(0.9 + 1.5) + tailleMot * 0.58, tailleMot * 0.07, 'center');
-  doubleFilet(y + motH - U(0.9));
-  y += motH;
-  const yDefinition = y + U(2);
-  y += defH;
-
-  // Le registre, puis la bande du bas : type, rareté, date du cachet.
-  if (carte.registre.length > 0) {
-    ctx.fillStyle = encre;
-    police(ctx, '', 600, U(3), MENTION);
-    texteEspace(ctx, carte.registre.join(' · ').toUpperCase(), cx + cw / 2, y + U(1.8), U(3) * 0.08, 'center');
-    y += registreH;
-  }
-  ctx.fillStyle = encre;
-  ctx.fillRect(cx, y, cw, bordure);
-  y += bordure;
-  const basMetal = metal && !horsSerie;
-  if (basMetal) { ctx.fillStyle = degrade(ctx, metal, cx, y, cw, basH, angleMetal); ctx.fillRect(cx, y, cw, basH); }
-  ctx.fillStyle = basMetal ? texteSurMetal : encre;
-  police(ctx, '', 600, U(3.2), MENTION);
-  const yBas = y + U(1.3 + 1.92);
-  texteEspace(ctx, carte.type.toUpperCase(), cx + U(2.4), yBas, U(3.2) * 0.06, 'left');
-  texteEspace(ctx, carte.rarete.toUpperCase(), cx + cw / 2, yBas, U(3.2) * 0.06, 'center');
-  texteEspace(ctx, anneeDuCachet(carte.attestation), cx + cw - U(2.4), yBas, U(3.2) * 0.06, 'right');
-  y += basH;
-  if (lignesRecord.length > 0) {
-    ctx.fillStyle = degrade(ctx, IRISE, cx, y, cw, recordH, 115);
-    ctx.fillRect(cx, y, cw, recordH);
-    ctx.fillStyle = '#15131a';
-    police(ctx, '', 700, U(2.9), MENTION);
-    lignesRecord.forEach((ligne, i) => texteEspace(ctx, ligne, cx + cw / 2, y + U(1.3 + 1.74) + i * U(2.9 * 1.2), U(2.9) * 0.12, 'center'));
-  }
-
-  // La finition : un reflet figé, là où l'écran le fait balayer la carte.
-  if (finition !== 'Normale') {
-    ctx.save();
-    if (finition === 'Brillante') {
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.globalAlpha = 0.32;
-      const reflet: Arrets = [[0, '#fff9df00'], [.35, '#fff9df00'], [.47, '#fff9df'], [.49, '#ffffff'], [.52, '#84755c44'], [.58, '#ffffff00'], [1, '#ffffff00']];
-      ctx.fillStyle = degrade(ctx, reflet, cx, cy, cw, ch, 115);
-    } else {
-      ctx.globalCompositeOperation = finition === 'Prismatique' ? 'screen' : 'soft-light';
-      ctx.globalAlpha = finition === 'Prismatique' ? 0.2 : 0.38;
-      ctx.fillStyle = degrade(ctx, IRISE, cx - cw * 1.1, cy - ch * 1.1, cw * 3.2, ch * 3.2, 115);
-    }
-    if (finition !== 'Prismatique') { fenetre(); ctx.clip(); }
-    ctx.fillRect(cx, cy, cw, ch);
-    if (finition === 'Holographique') hachures(ctx, vx, vy, vwid, vh, U(0.8), U(0.13), 'rgba(129,207,216,0.26)');
-    ctx.restore();
-  }
-
-  // La définition, toujours au-dessus du reflet pour rester lisible.
-  ctx.fillStyle = texte;
-  ctx.textAlign = 'center';
-  police(ctx, '', 400, tailleDef, SERIF);
-  if (finition === 'Holographique' || finition === 'Prismatique') { ctx.shadowColor = papier; ctx.shadowBlur = U(0.8); }
-  lignesDef.forEach((ligne, i) => ctx.fillText(ligne, cx + cw / 2, yDefinition + i * interligne + interligne / 2));
-  ctx.shadowBlur = 0;
-  ctx.restore();
-
-  // Le cachet d'origine, à l'encre noire, par-dessus l'impression.
-  const hasardTampon = hasardDe(`${carte.id}-tampon`);
-  const rotationTampon = entre(hasardTampon, -19, 14);
-  entier(hasardTampon, 1, 90); // la graine du filtre à l'écran : on la consomme pour rester en phase
-  const taille = U(38);
-  const echelle = taille / 100;
-  const tampon = cachetUse(taille, taille, hasardTampon, (c) => {
-    c.scale(echelle, echelle);
-    c.strokeStyle = horsSerie ? '#f3ecd8' : '#1b2230';
-    c.fillStyle = c.strokeStyle;
-    c.lineWidth = 2.2;
-    c.beginPath(); c.arc(50, 50, 46, 0, Math.PI * 2); c.stroke();
-    c.lineWidth = 0.9;
-    c.beginPath(); c.arc(50, 50, 42.5, 0, Math.PI * 2); c.stroke();
-    c.beginPath(); c.arc(50, 50, 27, 0, Math.PI * 2); c.stroke();
-    // Le texte qui suit le cercle, réparti sur presque tout le tour, comme le « textPath » de Tampon.tsx.
-    police(c, '', 700, 7.4, MENTION);
-    c.textBaseline = 'alphabetic';
-    c.textAlign = 'left';
-    const lettres = [...`★ ORIGINE CONTRÔLÉE ★ ${carte.faction.toUpperCase()}`];
-    const largeurs = lettres.map((l) => c.measureText(l).width);
-    const espace = Math.max(0, (220 - largeurs.reduce((a, b) => a + b, 0)) / (lettres.length - 1));
-    let position = 0;
-    lettres.forEach((lettre, i) => {
-      const angle = Math.PI + (position + largeurs[i] / 2) / 36;
-      c.save();
-      c.translate(50 + 36 * Math.cos(angle), 50 + 36 * Math.sin(angle));
-      c.rotate(angle + Math.PI / 2);
-      c.fillText(lettre, -largeurs[i] / 2, 0);
-      c.restore();
-      position += largeurs[i] + espace;
-    });
-    c.textAlign = 'center';
-    police(c, '', 700, 8.4, MENTION);
-    texteEspace(c, NOM_COURT[carte.faction] ?? carte.faction.toUpperCase(), 50, 47, 8.4 * 0.04, 'center');
-    police(c, '', 700, 9.5, MENTION);
-    c.fillText(anneeDuCachet(carte.attestation), 50, 59);
-  });
-  ctx.save();
-  ctx.globalAlpha = horsSerie ? 0.55 : 0.74;
-  ctx.globalCompositeOperation = horsSerie ? 'screen' : 'multiply';
-  ctx.translate(W - U(2.5) - taille / 2, U(22) + taille / 2);
-  ctx.rotate((rotationTampon * Math.PI) / 180);
-  ctx.drawImage(tampon, -taille / 2, -taille / 2);
-  ctx.restore();
-
-  // Le cachet « Maîtrisé », à l'encre violette, de l'autre côté de la vignette.
-  if (habillage.maitriseeLe !== null) {
-    const hasardMaitrise = hasardDe(`${carte.id}-maitrise`);
-    const rotation = entre(hasardMaitrise, -16, -7);
-    entier(hasardMaitrise, 1, 90);
-    const date = new Date(habillage.maitriseeLe);
-    const jour = `${String(date.getDate()).padStart(2, '0')}·${String(date.getMonth() + 1).padStart(2, '0')}·${date.getFullYear()}`;
-    const largeurCachet = U(47), hauteurCachet = U(47 * 0.46);
-    const e = largeurCachet / 100;
-    const griffe = cachetUse(largeurCachet, hauteurCachet, hasardMaitrise, (c) => {
-      c.scale(e, e);
-      c.strokeStyle = horsSerie ? '#c9b3ff' : '#4a2a8a';
-      c.fillStyle = c.strokeStyle;
-      c.lineWidth = 3; rectangleArrondi(c, 2, 2, 96, 42, 3); c.stroke();
-      c.lineWidth = 0.9; rectangleArrondi(c, 5.5, 5.5, 89, 35, 1.5); c.stroke();
-      c.textBaseline = 'alphabetic';
-      c.textAlign = 'center';
-      police(c, '', 700, 15, MENTION);
-      texteEspace(c, 'MAÎTRISÉ', 50, 23, 15 * 0.08, 'center');
-      police(c, '', 700, 9.5, MENTION);
-      c.fillText(jour, 50, 35.5);
-    });
-    ctx.save();
-    ctx.globalAlpha = 0.85;
-    ctx.globalCompositeOperation = horsSerie ? 'screen' : 'multiply';
-    ctx.translate(U(2.5) + largeurCachet / 2, U(30) + hauteurCachet / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.drawImage(griffe, -largeurCachet / 2, -hauteurCachet / 2);
-    ctx.restore();
-  }
-}
-
-// ── L'image à partager : le timbre sur le bleu nuit du jeu, avec son nom et l'adresse du site ───────────────
-
-const LARGEUR_IMAGE = 1080;
-const HAUTEUR_IMAGE = 1440;
-const LARGEUR_TIMBRE = 780;
-
-async function chargerLesPolices(): Promise<void> {
-  if (typeof document === 'undefined' || !('fonts' in document)) return;
-  await Promise.all(['700 40px "Playfair Display"', '400 40px "Playfair Display"', '600 40px "Barlow Condensed"', '700 40px "Barlow Condensed"'].map((p) => document.fonts.load(p).catch(() => [])));
-}
-
-function chargerUneImage(source: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("L'illustration du timbre n'a pas pu être dessinée."));
-    image.src = source;
-  });
-}
-
-// L'illustration d'un timbre Hors-série : son dessin, rendu en SVG dans un coin de page détaché, puis chargé
-// comme une image (sans police ni ressource extérieure, pour qu'un canevas accepte de le dessiner partout).
-function illustrationDe(carte: CarteIndex): Promise<HTMLImageElement | null> {
-  const dessin = VIGNETTES[carte.id];
-  if (!dessin) return Promise.resolve(null);
-  const style = 'path,circle,line,polyline,polygon,rect{fill:none;stroke:#fff6dc;stroke-width:.8;stroke-linejoin:round;stroke-linecap:round}.vig-fin{stroke-width:.3!important;opacity:.55}.vig-plein{fill:#fff6dc;stroke:none}.vig-texte{fill:#fff6dc;stroke:none;font-family:Georgia,"Times New Roman",serif}';
-  const coin = document.createElement('div');
-  const racine = createRoot(coin);
-  flushSync(() => racine.render(createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 60 60', width: 600, height: 600 }, createElement('style', null, style), dessin('partage'))));
-  const svg = coin.innerHTML;
-  racine.unmount();
-  return chargerUneImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
-}
-
-export async function fabriquerLImage(carte: CarteIndex, habillage: Habillage): Promise<Blob> {
-  await chargerLesPolices();
-  const illustration = await illustrationDe(carte);
-
-  const timbre = document.createElement('canvas');
-  timbre.width = LARGEUR_TIMBRE;
-  timbre.height = LARGEUR_TIMBRE * 1.4;
-  const contexteTimbre = timbre.getContext('2d');
-  const toile = document.createElement('canvas');
-  toile.width = LARGEUR_IMAGE;
-  toile.height = HAUTEUR_IMAGE;
-  const ctx = toile.getContext('2d');
-  if (!contexteTimbre || !ctx) throw new Error("Ce navigateur ne sait pas dessiner l'image.");
-  dessinerLeTimbre(contexteTimbre, carte, habillage, LARGEUR_TIMBRE, illustration);
-
-  // Un fond uni : un halo dégradé comme à l'écran doublerait le poids de l'image (mesuré : plus d'un mégaoctet).
-  ctx.fillStyle = '#0b1729';
-  ctx.fillRect(0, 0, LARGEUR_IMAGE, HAUTEUR_IMAGE);
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#e0edfa';
-  police(ctx, '', 700, 60, SERIF);
-  texteEspace(ctx, SITE.nom, LARGEUR_IMAGE / 2, 92, -2, 'center');
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 36;
-  ctx.shadowOffsetY = 16;
-  ctx.drawImage(timbre, (LARGEUR_IMAGE - LARGEUR_TIMBRE) / 2, 158);
-  ctx.restore();
-
-  const basDuTimbre = 158 + LARGEUR_TIMBRE * 1.4;
-  ctx.fillStyle = '#e0edfa';
-  police(ctx, '', 700, 42, SERIF);
-  ctx.fillText(carte.mot, LARGEUR_IMAGE / 2, basDuTimbre + 66);
-  ctx.fillStyle = '#adc3da';
-  police(ctx, '', 600, 22, MENTION);
-  texteEspace(ctx, `TIMBRE ${carte.rarete.toUpperCase()} · ${carte.faction.toUpperCase()}`, LARGEUR_IMAGE / 2, basDuTimbre + 112, 22 * 0.12, 'center');
-  police(ctx, '', 400, 22, SANS);
-  ctx.fillText(SITE.adresseCourte, LARGEUR_IMAGE / 2, basDuTimbre + 152);
-
+function enPng(toile: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     toile.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("L'image n'a pas pu être fabriquée."))), 'image/png');
   });
+}
+
+export async function fabriquerLImage(carte: CarteIndex, habillage: Habillage): Promise<Blob> {
+  for (const [i, echelle] of ECHELLES.entries()) {
+    const toile = composerLImage(await dessinerLeTimbre(carte, habillage, Math.round(LARGEUR_TIMBRE * echelle)), carte, echelle);
+    const ctx = contexteDe(toile);
+    const pixels = ctx.getImageData(0, 0, toile.width, toile.height);
+    lisserLesAplats(pixels.data, toile.width, toile.height, TOLERANCE);
+    ctx.putImageData(pixels, 0, 0);
+    const image = await enPng(toile);
+    if (image.size <= POIDS_MAXIMUM || i === ECHELLES.length - 1) return image;
+  }
+  throw new Error("L'image n'a pas pu être fabriquée.");
 }

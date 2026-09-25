@@ -1,5 +1,6 @@
 // Couper un texte en lignes qui tiennent dans une largeur donnée, avec une fonction de mesure fournie par
-// l'appelant (celle d'un canevas, ou une règle simple dans les tests). Sert à l'image de partage du timbre.
+// l'appelant (celle d'un canevas, ou une règle simple dans les tests). Sert à l'image de partage du timbre
+// (la définition, sous le mot).
 
 export function couperEnLignes(texte: string, largeurMaximum: number, mesurer: (texte: string) => number, lignesMaximum = Infinity): string[] {
   const mots = texte.trim().split(/\s+/).filter(Boolean);
@@ -19,9 +20,6 @@ export function couperEnLignes(texte: string, largeurMaximum: number, mesurer: (
   gardees[gardees.length - 1] = `${derniere}…`;
   return gardees;
 }
-
-// La taille du mot sur le timbre, en centièmes de la largeur de la carte (la même règle que dans Carte.tsx).
-export const tailleDuMot = (mot: string): number => Math.min(10.5, 96 / mot.length);
 
 // Le nom du fichier image et le message qui l'accompagne quand on partage un timbre.
 export const nomDuFichierImage = (idCarte: string): string => `philamots-timbre-${idCarte}.png`;

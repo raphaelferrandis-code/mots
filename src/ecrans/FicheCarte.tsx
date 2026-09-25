@@ -60,7 +60,7 @@ export function FicheCarte({ id }: { id: string }) {
   const partager = async (): Promise<void> => {
     setPartage({ etat: 'en cours' });
     try {
-      const issue = await partagerLeTimbre(carte, { finition, maitriseeLe: possedee?.maitriseeLe ?? null });
+      const issue = await partagerLeTimbre(carte, { finition, maitriseeLe: possedee?.maitriseeLe ?? null, obtenuLe: possedee?.obtenueLe ?? null });
       setPartage(issue === 'telecharge' ? { etat: 'fait', message: "L'image du timbre est enregistrée sur cet appareil." } : { etat: 'repos' });
     } catch (erreur) {
       setPartage({ etat: 'erreur', message: messageDe(erreur) });
