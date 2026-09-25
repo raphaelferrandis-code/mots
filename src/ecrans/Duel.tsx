@@ -368,7 +368,7 @@ export function Duel() {
       <h1 className="visuellement-cache">Duel contre {nomAdverse}</h1>
       <header className="duel__camps">
         <Jauge nom={nomAdverse} camp={adversaire} maison={enJoute?.maison} avant={duel.camps.adversaire.pv} delai="450ms" />
-        <span className="duel__manche">{duel.manche === 1 && <SceauDuel empreinte />}<span>Manche {duel.manche}<small> / {REGLES.manchesMaximum}</small></span><small>{terrain.adversaire.type === 'joute' ? terrain.adversaire.amical ? 'Défi amical · sans classement' : `Joute · cote ${terrain.adversaire.profil.cote}` : `Niveau ${terrain.adversaire.niveau.toLowerCase()}`}</small></span>
+        <span className="duel__manche">{duel.manche === 1 && <SceauDuel empreinte />}<span>Manche {duel.manche}<small> / {REGLES.manchesMaximum}</small></span><small>{terrain.adversaire.type === 'joute' ? terrain.adversaire.amical ? terrain.adversaire.profil.maison ? 'Sans classement' : 'Défi amical · sans classement' : `Joute · cote ${terrain.adversaire.profil.cote}` : `Niveau ${terrain.adversaire.niveau.toLowerCase()}`}</small></span>
         <Jauge nom="Toi" camp={joueur} avant={duel.camps.joueur.pv} delai="750ms" />
       </header>
 

@@ -5,7 +5,10 @@ import { Carte } from '../composants/carte/Carte.tsx';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { serveurEquipes } from '../services/equipes.ts';
-import { serveurUtilise } from '../services/compte.ts';
+import { secoursEtParrainage, serveurUtilise } from '../services/compte.ts';
+import { commanderCombat, lireLesAdversairesDeSecours } from '../services/partie.ts';
+import { ErreurDuServeur } from '../services/supabase.ts';
+import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import type { ModeDirect } from '../jeu/direct.ts';
@@ -20,7 +23,45 @@ export function JoutesDirectes() {
   const equipe = useChargement(async () => serveurUtilise && inscrit ? serveurEquipes().lire() : null,`equipe-direct:${inscrit}`);
   const [mode, setMode] = useState<ModeDirect>('solo');
   const [abandon, setAbandon] = useState(false);
-  const maintenant = useMaintenant(250) + direct.decalage;
+  const horloge = useMaintenant(250);
+  const maintenant = horloge + direct.decalage;
+  // L'adversaire de secours : proposé quand personne n'est libre depuis un moment (hors 2v2 équipe, où l'on attend
+  // son partenaire). La recherche continue tant que le joueur ne l'accepte pas.
+  const attente = direct.etat?.attente ?? null;
+  const [debutAttente, setDebutAttente] = useState<number | null>(null);
+  useEffect(() => { setDebutAttente(attente ? Date.now() : null); }, [attente?.mode]);
+  const [secours, setSecours] = useState<{ etat: 'repos' | 'en cours' } | { etat: 'erreur'; message: string }>({ etat: 'repos' });
+  const proposerLeSecours = secoursEtParrainage && !!attente && attente.mode !== 'duo_equipe' && debutAttente !== null
+    && horloge - debutAttente >= EQUILIBRAGE.secours.attenteAvantDeProposerEnSecondes * 1000;
+  const jouerContreUnSimule = async (): Promise<void> => {
+    if (!sauvegarde) return;
+    setSecours({ etat: 'en cours' });
+    try {
+      const masques = registresMasques(sauvegarde);
+      const adversaires = await lireLesAdversairesDeSecours(masques);
+      if (adversaires.length === 0) throw new Error('Aucun joueur simulé n’est disponible avec tes filtres de contenu.');
+      await direct.annuler();
+      // Un vrai joueur est peut-être arrivé entre-temps : la joute en direct passe avant.
+      if (direct.courant()?.partie) { setSecours({ etat: 'repos' }); return; }
+      let refus: unknown;
+      for (const adversaire of adversaires) {
+        try {
+          await commanderCombat({ type: 'commencer', requete: crypto.randomUUID(), choix: {
+            mode: 'amical', adversaire: adversaire.id, masques, temps: sauvegarde.reglages.tempsDeReponse,
+          } });
+          window.location.hash = lien({ ecran: 'duel' });
+          return;
+        } catch (erreur) {
+          // Un deck adverse refusé par le serveur des combats : on essaie le joueur suivant.
+          refus = erreur;
+          if (!(erreur instanceof ErreurDuServeur && erreur.refus)) break;
+        }
+      }
+      throw refus;
+    } catch (erreur) {
+      setSecours({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+    }
+  };
   const p = direct.etat?.partie; const v = p?.vue;
   const moi = v?.joueurs[v.moi];
   const monEquipe = equipe.etat === 'pret' ? equipe.donnees?.equipe : null;
@@ -45,12 +86,15 @@ export function JoutesDirectes() {
             <p>{mode === 'solo' ? 'Deux joueurs en direct. Chacun pose une carte ; retrouve la définition du mot adverse pour parer. Le premier à poser change à chaque manche.' : mode === 'duo_solo' ? 'Inscris-toi seul. Le jeu forme deux équipes de deux joueurs. Chaque résultat compte uniquement pour ta cote personnelle 2v2.' : 'Les deux membres de ton équipe doivent ouvrir ce mode et se déclarer prêts. Vos résultats font évoluer uniquement la cote de votre équipe.'}</p>
             {mode === 'duo_equipe' && (!monEquipe || monEquipe.membres.length !== 2) ? <a className="bouton" href={lien({ecran:'equipe'})}>Former mon équipe · inviter un ami</a>
               : <button className="bouton bouton-presse" disabled={bloque || !direct.etat} onClick={() => void direct.chercher(mode,registresMasques(sauvegarde))}>{mode === 'duo_equipe' ? 'Je suis prêt avec mon équipe' : 'Chercher une partie'}</button>}
-            <p className="texte-doux petit">Deck de dix cartes requis. Les joueurs sont réunis avec les mêmes filtres de contenu. Aucun adversaire simulé.</p>
+            <p className="texte-doux petit">Deck de dix cartes requis. Les joueurs sont réunis avec les mêmes filtres de contenu.{secoursEtParrainage && mode !== 'duo_equipe' && ` Si personne n’est libre au bout de ${EQUILIBRAGE.secours.attenteAvantDeProposerEnSecondes} secondes, tu pourras jouer contre un joueur simulé, sans effet sur le classement.`}</p>
           </section>
           <details className="bloc"><summary>Les règles du 2v2</summary><p>PV communs, mains personnelles visibles entre partenaires. Ordre A1 → B1 → B2 → A2. B1 choisit son opposition ; B2 prend la place restante. À la manche suivante, B2 → A2 → A1 → B1.</p><p>8 s pour poser une carte, 30 s pour les deux définitions adverses. En cas de désaccord, le dernier poseur a 5 s pour choisir entre les propositions. Sans arbitrage, sa proposition est retenue. Une proposition seule compte. Sans proposition, la parade échoue. Les attaques sont simultanées.</p><p>Une pose manquée joue automatiquement la première carte ; deux poses manquées consécutives entraînent une défaite. Recharge la page pour reprendre une partie interrompue.</p></details>
           <a href={lien({ecran:'duel'})}>S’entraîner contre l’ordinateur</a>
         </>}
-        {direct.etat?.attente && <section className="bloc direct__attente" aria-live="polite"><h2>{NOMS_DIRECTS[direct.etat.attente.mode]} · recherche en cours</h2><p>{direct.etat.attente.mode === 'duo_equipe' && !direct.etat.attente.partenairePret ? 'Ton partenaire doit aussi se déclarer prêt dans « 2v2 équipe ».' : 'Nous attendons les autres joueurs. Tu peux annuler à tout moment.'}</p><button className="bouton" disabled={bloque} onClick={() => void direct.annuler()}>Annuler la recherche</button></section>}
+        {direct.etat?.attente && <section className="bloc direct__attente" aria-live="polite"><h2>{NOMS_DIRECTS[direct.etat.attente.mode]} · recherche en cours</h2><p>{direct.etat.attente.mode === 'duo_equipe' && !direct.etat.attente.partenairePret ? 'Ton partenaire doit aussi se déclarer prêt dans « 2v2 équipe ».' : 'Nous attendons les autres joueurs. Tu peux annuler à tout moment.'}</p><button className="bouton" disabled={bloque || secours.etat === 'en cours'} onClick={() => void direct.annuler()}>Annuler la recherche</button>
+          {proposerLeSecours && <div className="direct__secours"><p><strong>Personne n’est libre pour l’instant.</strong> En attendant, joue un duel contre un joueur simulé : il ne compte pas pour le classement, mais rapporte Encre et expérience comme un duel normal.</p>
+            <button className="bouton bouton-presse" disabled={bloque || secours.etat === 'en cours'} onClick={() => void jouerContreUnSimule()}>{secours.etat === 'en cours' ? 'Préparation du duel…' : 'Jouer contre un joueur simulé'}</button></div>}
+          {secours.etat === 'erreur' && <p role="alert">{secours.message}</p>}</section>}
         {v && moi && <>
           <div className="direct__scores">{v.noms.map((nom,i) => <section key={i} className="bloc" data-moi={i===moi.equipe}><h2>{nom}{i===moi.equipe && <small> · ton camp</small>}</h2><strong>{v.pv[i]} <small>PV</small></strong></section>)}</div>
           <div className="direct__phase" role="status"><strong>Manche {v.manche} · {v.phase==='pose' ? `${v.joueurs[poseur]?.pseudo} pose une carte` : v.phase==='reponses' ? 'Retrouvez les définitions adverses' : v.phase==='arbitrage' ? 'Les derniers poseurs tranchent' : v.phase==='bilan' ? 'Résultat de la manche' : 'Partie terminée'}</strong>{v.phase!=='fin' && <span aria-label={`${secondes} secondes restantes`}>{secondes} s</span>}</div>

@@ -51,6 +51,22 @@ it('un défi amical exige une amitié et ne modifie aucune cote, même après ab
   } finally { await l.db.close(); }
 });
 
+it('l’adversaire de secours : un défi sans amitié contre un joueur maison, sans effet sur les cotes', async () => {
+  const l = await laboratoire();
+  try {
+    await l.admin();
+    const maison = (await l.db.query<{ id: string }>('insert into public.profils(maison,pseudo,pseudo_cle,cote,deck) values(true,$1,$1,1040,$2) returning id', ['secours', JSON.stringify(deck)])).rows[0].id;
+    const avant = (await l.db.query('select id,cote,jouees,gagnees from public.profils order by id')).rows;
+    let r = await l.appel(lireRequeteCombat({ type: 'commencer', requete: crypto.randomUUID(), choix: { mode: 'amical', adversaire: maison, masques: [], temps: 'illimite' } }));
+    const adversaire = r.combat!.vue.adversaire;
+    assert.ok(adversaire.type === 'joute' && adversaire.amical && adversaire.profil.maison, 'le joueur simulé est signalé');
+    r = await l.agir(r, { type: 'abandonner' });
+    assert.equal(r.combat!.recompense!.cote, null);
+    await l.admin();
+    assert.deepEqual((await l.db.query('select id,cote,jouees,gagnees from public.profils order by id')).rows, avant);
+  } finally { await l.db.close(); }
+});
+
 async function laboratoire() {
   const b = await baseDeTest(true);
   await b.db.exec(cartes({ cartes:brut.cartes, meta:{edition:1,version:'test'} } as IndexEdition));

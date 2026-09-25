@@ -1,5 +1,19 @@
 # Où en est Philamots
 
+> **25 septembre 2026 — faire connaître le jeu.** Raphaël a demandé comment promouvoir le site (déjà public sur
+> philamots.fr) et a choisi quatre chantiers :
+> 1. **Vignette de partage et Google — publiés.** Image 1200 × 630 avec trois timbres quand on partage le lien,
+>    titre d'accueil descriptif, fiche du jeu pour les moteurs, `robots.txt`, `sitemap.xml`. **À faire par Raphaël :
+>    Google Search Console et Bing** (`GUIDE-google.md`) ; m'envoyer la balise de vérification de Google.
+> 2. **Contrôle anti-robot Cloudflare Turnstile — publié, éteint.** Le jeu envoie un jeton à l'ouverture d'un compte
+>    et à l'envoi d'un code e-mail dès qu'une clé du site est réglée (`cleAntiRobot`). **À faire par Raphaël :**
+>    créer le contrôle chez Cloudflare, m'envoyer la clé publique, puis activer le contrôle dans Supabase — dans cet
+>    ordre (`GUIDE-anti-robot.md`).
+> 3. **Adversaire de secours** (décisions de Raphaël : sans classement, proposé après 30 s) et 4. **parrainage**
+>    (3 paquets chacun au premier duel terminé du filleul, 10 filleuls récompensés par mois) — **code publié,
+>    interrupteur `secoursEtParrainage` fermé.** **À faire par Raphaël : coller `serveur/13-secours-et-parrainage.sql`**
+>    dans Supabase (`GUIDE-secours-et-parrainage.md`), avant d'activer l'anti-robot ; j'ouvre ensuite l'interrupteur.
+
 > **Décision de Raphaël du 24 septembre 2026 — un seul pseudonyme, public dès qu’il est choisi.** La même case « Choisis ton pseudonyme » (`src/composants/ChoixDuPseudonyme.tsx`) sert sur le Profil, les Amis, les Joutes en direct et l’Équipe ; une fois choisi, il n’est plus jamais redemandé, et le Profil permet de le changer. Le choisir publie le profil de joute (ancien « Rejoindre les joutes ») ; la page Confidentialité le dit. Même jour : sur téléphone, la barre du bas passe de 7 à 5 onglets (Accueil, Album, Duel, Marché, Profil) ; le Deck et les Classements se rangent dans Duel, qui reste allumé sur leurs pages, et le salon des duels gagne un raccourci « Classements ». L’ordinateur garde ses 7 entrées.
 
 > **Amis et duels — déployés le 24 septembre 2026 :** demandes par pseudo, échanges d’un timbre contre un timbre et défis contre le double d’un ami sans effet sur le classement. Les attaques sont automatiques ; une seule question de définition sert à parer. Migration `serveur/10-amis.sql`, fonction `combats` et client `12f50a4` publiés avec succès. Données conservées, 326 tests réussis, parcours complet vérifié avec deux comptes locaux et pages publiques contrôlées : voir [GUIDE-amis.md](GUIDE-amis.md).
@@ -111,5 +125,8 @@ Ce ne sont pas des pannes, mais des choses que je sais imparfaites.
 | `GUIDE-supabase.md` | La mise en route du serveur, pas à pas, pour Raphaël |
 | `GUIDE-domaine-et-contact.md` | Le raccordement du domaine actif et la création du contact chez OVHcloud |
 | `GUIDE-testeurs.md` | Ce qu'on demande aux cinq testeurs |
+| `GUIDE-google.md` | Faire connaître le site à Google et à Bing ; la vignette de partage |
+| `GUIDE-anti-robot.md` | Le contrôle anti-robot Cloudflare Turnstile, étape par étape |
+| `GUIDE-secours-et-parrainage.md` | L'adversaire de secours des joutes en direct et le parrainage |
 | `data/simulation-marche.md` | L'économie du marché, mesurée |
 | `README.md` | Le dépôt, les commandes, l'organisation des fichiers |

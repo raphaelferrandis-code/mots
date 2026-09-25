@@ -20,6 +20,8 @@ import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recupera
 import { combats } from './combats.ts';
 import { amis } from './amis.ts';
 import { equipes } from './equipes.ts';
+import { parrainage } from './parrainage.ts';
+import { secours } from './secours.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -408,6 +410,16 @@ export function migrationEquipes(): string {
   return '-- Équipes de deux joueurs. Après 10-amis.sql.\nbegin;\n' + equipes() + '\ncommit;\n';
 }
 
+// L'adversaire de secours des joutes en direct et le parrainage. Après 12-joutes-direct.sql.
+// Seule combat_creer change parmi les fonctions déjà installées : elle est reprise telle quelle de combats().
+export function migrationSecoursEtParrainage(): string {
+  const creer = combats().match(/create or replace function public\.combat_creer\([\s\S]*?\nend \$\$;/)?.[0];
+  if (!creer) throw new Error('combat_creer introuvable dans combats()');
+  return '-- L’adversaire de secours des joutes en direct et le parrainage. Après 12-joutes-direct.sql.\n'
+    + '-- Aucune fonction serveur (Edge) à redéployer : le client peut être publié avant ou après ce script.\nbegin;\n'
+    + creer + '\n' + secours() + parrainage() + 'commit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -437,5 +449,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '9-combats.sql'), migrationCombats());
   writeFileSync(path.join(RACINE, 'serveur', '10-amis.sql'), migrationAmis());
   writeFileSync(path.join(RACINE, 'serveur', '11-equipes.sql'), migrationEquipes());
+  writeFileSync(path.join(RACINE, 'serveur', '13-secours-et-parrainage.sql'), migrationSecoursEtParrainage());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

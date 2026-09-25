@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
+import { InviterDesAmis } from '../composants/InviterDesAmis.tsx';
+import { secoursEtParrainage } from '../services/compte.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -79,6 +81,7 @@ export function Amis() {
       : <>
         {carnet.etat === 'erreur' && <section className="bloc bloc--alerte" role="alert"><p>{carnet.message}</p><button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></section>}
         {carnet.etat === 'en cours' && !donnees && <p role="status">Chargement du carnet…</p>}
+        {secoursEtParrainage && <InviterDesAmis />}
         {donnees && !donnees.moi && <section className="rubrique"><ChoixDuPseudonyme onValide={() => { setMessage('Ton pseudonyme est enregistré.'); setTour(t => t + 1); }} /></section>}
         {donnees?.moi && <>
           <section className="rubrique amis__invitation"><h2>Ajouter un ami</h2>

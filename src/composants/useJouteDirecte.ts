@@ -89,6 +89,8 @@ export function useJouteDirecte(actif: boolean) {
     return () => { ferme = true; clearInterval(renouveler); void client.removeAllChannels(); client.disconnect(); };
   }, [actif,utilisateur,actualiser]);
   return { etat, erreur, occupe, reessayer, connecte, decalage:decalage.current, actualiser,
+    // La dernière réponse du serveur, sans attendre le prochain affichage.
+    courant: () => courant.current,
     chercher: (mode:ModeDirect,masques:Registre[]) => envoyer({type:'chercher',mode,masques:[...masques].sort()},true),
     annuler: () => envoyer({type:'annuler'},true), quitter: () => envoyer({type:'quitter'},true),
     retenter: () => attente.current ? envoyer(attente.current,true) : envoyer({type:'lire'}),

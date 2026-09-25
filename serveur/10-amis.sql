@@ -254,8 +254,10 @@ begin
     if not exists(select 1 from public.profils where utilisateur=p_utilisateur) then raise exception 'Publie d''abord ton profil.'; end if;
     if not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and utilisateur is distinct from p_utilisateur)
       then raise exception 'Cet adversaire n''est plus disponible.'; end if;
+    -- Un défi sans classement vise un ami, ou un joueur maison : l'adversaire de secours des joutes (serveur/secours.ts).
     if coalesce((p_etat->'adversaire'->>'amical')::boolean,false) and not public.sont_amis(
       (select id from public.profils where utilisateur=p_utilisateur),(p_etat->'adversaire'->'profil'->>'id')::uuid)
+      and not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and maison)
       then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
   end if;
   perform public.autoriser_joute(p_utilisateur); -- quota commun, conservé après retrait du profil

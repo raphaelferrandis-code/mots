@@ -24,6 +24,8 @@ export function vraiServeurPermis(): boolean {
 export const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== '';
 // Le serveur est réglé, et l'on a le droit de lui parler.
 export const serveurUtilise = serveurRegle && vraiServeurPermis();
+// Le parrainage et l'adversaire de secours, une fois leur script installé sur le serveur.
+export const secoursEtParrainage = serveurUtilise && SERVEUR.secoursEtParrainage;
 // Le contrôle anti-robot, quand une clé est réglée (voir GUIDE-anti-robot.md).
 export const jetonAntiRobot = SERVEUR.cleAntiRobot !== '' ? creerAntiRobot(SERVEUR.cleAntiRobot) : undefined;
 

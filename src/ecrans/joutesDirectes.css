@@ -29,3 +29,5 @@
 .direct__abandon { margin-top:28px; }
 .direct .modes { flex-wrap:wrap; }
 @media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main .tim { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }
+/* L'adversaire de secours, sous la recherche en cours. */
+.direct__secours { display:grid; gap:12px; justify-items:start; margin-top:20px; padding-top:20px; border-top:1px solid var(--filet); }

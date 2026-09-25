@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "banc-secours-parrainage",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["serveur/apercu-secours-parrainage.mjs"],
+      "port": 5190
     }
   ]
 }

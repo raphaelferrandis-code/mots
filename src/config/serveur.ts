@@ -21,4 +21,7 @@ export const SERVEUR = {
   // Le contrôle anti-robot (Cloudflare Turnstile) : la « clé du site » (Site Key), PUBLIQUE, faite pour être visible.
   // Vide : pas de contrôle. Voir GUIDE-anti-robot.md. La clé « secrète » va dans Supabase, JAMAIS ici.
   cleAntiRobot: '',
+  // Le parrainage et l'adversaire de secours des joutes en direct. À passer à « true » une fois
+  // serveur/13-secours-et-parrainage.sql collé dans Supabase (GUIDE-secours-et-parrainage.md).
+  secoursEtParrainage: false,
 };

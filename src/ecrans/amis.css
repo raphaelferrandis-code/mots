@@ -23,3 +23,7 @@
   .amis__confirmation { padding: 12px; }
   .amis__composition { scroll-margin-top: 16px; }
 }
+
+/* Le lien d'invitation (composants/InviterDesAmis.tsx). */
+.parrainage__lien { display: grid; gap: 10px; margin-block: 12px; }
+.parrainage__lien input { font: inherit; color: inherit; min-height: 44px; padding: 8px 12px; width: 100%; min-width: 0; border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); }

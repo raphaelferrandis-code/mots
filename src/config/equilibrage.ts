@@ -241,6 +241,22 @@ export const EQUILIBRAGE = {
     ageMinimumPourPayer: 18,
   },
 
+  // ── Le parrainage (décision de Raphaël du 24/09/2026) ─────────────────────
+  // Un joueur partage son lien ; quand le nouveau venu termine son premier duel sans l'abandonner, chacun reçoit
+  // des paquets. Le parrain n'est récompensé que pour un nombre limité de filleuls par mois (contre les faux comptes).
+  // Les paquets offerts ne font jamais dépasser la réserve la plus grande du jeu : sinon, ils attendent qu'il y ait
+  // de la place (serveur/parrainage.ts).
+  parrainage: {
+    paquetsOfferts: 3,
+    filleulsRecompensesParMois: 10,
+    // Un filleul se déclare dans les jours qui suivent son arrivée, avant son premier duel.
+    joursPourSeDeclarer: 7,
+  },
+
+  // ── L'adversaire de secours des joutes en direct (décision de Raphaël du 24/09/2026) ─
+  // Quand personne n'est libre, le jeu propose un duel contre un joueur simulé, sans effet sur le classement.
+  secours: { attenteAvantDeProposerEnSecondes: 30 },
+
   // ── Sauvegarde ────────────────────────────────────────────────────────────
   // Le jeu rappelle d'exporter sa sauvegarde après ce nombre de paquets ouverts depuis le dernier export.
   paquetsEntreDeuxRappelsDExport: 100,

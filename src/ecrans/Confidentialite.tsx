@@ -118,6 +118,11 @@ export function Confidentialite() {
         <p>Les propositions expirent après sept jours. Retirer un ami annule vos propositions en attente et ferme l’accès à ta collection. Les défis amicaux affrontent son double automatisé, sans changer vos cotes.</p>
       </section>}
 
+      {collectionSurLeServeur && SERVEUR.secoursEtParrainage && <section className="rubrique">
+        <h2>Parrainage</h2>
+        <p>Si tu arrives par le lien d’invitation d’un ami, le serveur retient qui t’a invité, pour vous offrir des paquets quand tu termines ton premier duel. Ton ami voit alors ton pseudonyme, si tu en as choisi un. Ton propre lien contient un code tiré au hasard, qui ne révèle rien de ton compte.</p>
+      </section>}
+
       <section className="rubrique">
         <h2>Qui héberge quoi</h2>
         <p>

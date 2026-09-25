@@ -22,7 +22,7 @@ import type { Reserve } from '../jeu/paquets.ts';
 import type { Niveau } from '../jeu/duel.ts';
 import { mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
 import type { RequeteCombat, ReponseServeurCombat } from '../jeu/combat.ts';
-import { chacunSonTour, clientDuServeur, lireIdentiteLocale } from './compte.ts';
+import { chacunSonTour, clientDuServeur, lireIdentiteLocale, secoursEtParrainage } from './compte.ts';
 import { sauvegardeDuCompte } from '../jeu/changementCompte.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
@@ -31,11 +31,14 @@ import type { Resultat } from '../jeu/progression.ts';
 import type { CotesDUnTimbre, HistoireDeLaCote } from '../jeu/cote.ts';
 import type { Formule } from '../jeu/formule.ts';
 import type { Enchere } from '../jeu/marche.ts';
-import type { Finition, Rarete } from '../partage/types.ts';
+import type { Finition, Rarete, Registre } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { afficherUnCode, estUnCodeValable, fabriquerUnCode, normaliserUnCode } from '../jeu/codeDeSecours.ts';
 import { aQuelqueChoseAImporter, fusionner, lireEtat } from '../jeu/synchronisation.ts';
+import { lireParrainage } from '../jeu/parrainage.ts';
+import type { MonParrainage } from '../jeu/parrainage.ts';
+import { invitationEnAttente, oublierLInvitation, retenirLesFilleulsRecompenses } from './invitation.ts';
 import type { EtatDuCompte, ProfilRetrouve } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
 import { serveurDesCollections } from './collections.ts';
@@ -189,6 +192,7 @@ export function synchroniser(): Promise<boolean> {
       if (partie.etat !== 'prete') return false;
       etat ??= aQuelqueChoseAImporter(partie.sauvegarde) ? await serveurDesCollections.importer(partie.sauvegarde) : await serveurDesCollections.ouvrirMonCompte();
       appliquer(etat);
+      void declarerLInvitation();
       return true;
     } catch (erreur) {
       signalerLaPanne(erreur);
@@ -198,6 +202,42 @@ export function synchroniser(): Promise<boolean> {
     }
   })();
   return synchronisation;
+}
+
+// ── Le parrainage ──────────────────────────────────────────────────────────
+// Le nouveau venu arrivé par un lien d'invitation (services/invitation.ts) : déclaré une fois son compte ouvert.
+// Le serveur répond toujours oui ou non (jamais d'erreur) : après une réponse, le code est oublié ; après une panne,
+// ou si le serveur n'est pas encore à jour, il sera redemandé à la prochaine visite.
+let declaration: Promise<void> | undefined;
+function declarerLInvitation(): Promise<void> {
+  declaration ??= (async () => {
+    const code = invitationEnAttente();
+    if (!code || !serveurDesCollections.actif || !secoursEtParrainage) return;
+    try {
+      const reponse = await clientDuServeur().appeler<{ accepte?: unknown } | null>('declarer_mon_parrain', { p_code: code });
+      if (typeof reponse?.accepte === 'boolean') oublierLInvitation();
+    } catch { /* réessayé plus tard */ }
+  })().finally(() => { declaration = undefined; });
+  return declaration;
+}
+
+// Le lien d'invitation du joueur et ce qu'il a donné ; verse au passage les paquets de parrainage qui l'attendaient.
+export async function lireMonParrainage(): Promise<MonParrainage> {
+  return surLeServeur(async () => {
+    await declarerLInvitation();
+    return chacunSonTour(async () => {
+      const lu = lireParrainage(await clientDuServeur().appeler<unknown>('mon_parrainage'));
+      if (lu.etat) appliquer(lu.etat);
+      return { ...lu, nouveaux: retenirLesFilleulsRecompenses(lu.nouveaux) };
+    });
+  });
+}
+
+// ── L'adversaire de secours des joutes en direct ───────────────────────────
+export type AdversaireDeSecours = { id: string; pseudo: string; cote: number };
+export async function lireLesAdversairesDeSecours(masques: readonly Registre[]): Promise<AdversaireDeSecours[]> {
+  const brut = await surLeServeur(() => clientDuServeur().appeler<unknown>('adversaires_de_secours', { p_masques: [...masques] }));
+  return Array.isArray(brut) ? brut.filter((a): a is AdversaireDeSecours => typeof a?.id === 'string' && typeof a?.pseudo === 'string' && typeof a?.cote === 'number') : [];
 }
 
 // Avant une action qui a de la valeur : le serveur doit répondre.

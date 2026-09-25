@@ -1,0 +1,64 @@
+# L'adversaire de secours et le parrainage
+
+*Écrit le 25 septembre 2026. Décisions de Raphaël du 24 septembre.*
+
+## Ce qui est construit
+
+### L'adversaire de secours des joutes en direct
+
+- Quand un joueur cherche une joute en direct (**Solo** ou **2v2 solo**) et que personne n'est libre depuis
+  **30 secondes**, le jeu propose : « Jouer contre un joueur simulé ». La recherche continue tant que le joueur
+  n'accepte pas. En **2v2 équipe**, rien n'est proposé : on y attend son partenaire.
+- Le duel se joue sur l'écran Duel, contre un joueur maison proche de sa cote, signalé « Joueur simulé ».
+  Il est marqué **« Sans classement »** : aucune cote ne bouge. Il rapporte l'Encre et l'expérience d'un duel
+  normal, dans la même limite quotidienne.
+- Si un vrai joueur arrive au moment où l'on accepte, la joute en direct passe avant.
+
+### Le parrainage
+
+- Page **Amis** : chaque joueur a son lien d'invitation (`https://philamots.fr/?parrain=XXXXXXXX`), avec les
+  boutons « Copier le lien » et « Partager… », et le compte de ses invités.
+- Le nouveau venu qui arrive par ce lien voit sur l'accueil : « Bienvenue ! … t'a invité. Termine ton premier
+  duel : vous recevrez chacun 3 paquets. »
+- Quand il **termine son premier duel sans l'abandonner** (entraînement, défi, adversaire de secours ou joute en
+  direct), il reçoit **3 paquets** aussitôt. Le parrain reçoit les siens à sa visite suivante, avec un message
+  « Merci pour l'invitation ! ».
+- Garde-fous contre les faux comptes :
+  - seul un **nouveau joueur** peut se déclarer invité (compte de moins de 7 jours, aucun duel terminé), une
+    seule fois ;
+  - on ne peut pas s'inviter soi-même, ni s'inviter l'un l'autre ;
+  - le parrain est récompensé pour **10 filleuls par mois** au plus (le filleul, lui, l'est toujours) ;
+  - le premier duel est vérifié par le serveur des combats : le navigateur ne peut pas le déclarer.
+- Les paquets offerts ne font jamais dépasser **15 paquets en réserve**. Sans place, ils attendent, et le joueur
+  voit : « Des paquets t'attendent ».
+- La page Confidentialité explique ce que le serveur retient.
+
+Tous ces réglages sont dans `src/config/equilibrage.ts` (rubriques `parrainage` et `secours`).
+
+## Vérifications faites
+
+- 10 tests sur une vraie base PostgreSQL (`serveur/parrainage.test.ts`, `serveur/combats.test.ts`) et 3 tests des
+  messages (`src/jeu/parrainage.test.ts`) : codes,
+  refus, récompenses, réserve pleine, plafond mensuel, récupération et suppression de compte, droits, choix des
+  joueurs simulés, script rejouable deux fois.
+- Parcours complet dans le navigateur sur un banc local (`node serveur/apercu-secours-parrainage.mjs`) :
+  lien d'invitation, arrivée d'un nouveau venu, premier duel, 3 paquets de chaque côté, messages ; recherche en
+  direct, proposition après 30 s, duel « Sans classement » contre un joueur simulé ; affichage sur téléphone.
+
+## Ce que Raphaël doit faire : coller le script 13 (3 minutes)
+
+Tant que ce n'est pas fait, les joueurs ne voient rien de nouveau : un interrupteur (`secoursEtParrainage` dans
+`src/config/serveur.ts`) garde ces écrans fermés.
+
+1. Ouvrir le fichier du script sur GitHub :
+   https://github.com/raphaelferrandis-code/mots/blob/main/serveur/13-secours-et-parrainage.sql
+   puis cliquer sur l'icône **Copy raw file** (deux carrés superposés, en haut à droite du fichier).
+2. Ouvrir le projet Supabase du jeu, puis **SQL Editor** dans le menu de gauche, et **New query**.
+3. Vérifier que le petit menu à gauche du bouton **Save** indique **Database** (et non « Logs »).
+4. Coller le script, puis cliquer sur **Run**. Supabase doit répondre **Success. No rows returned**.
+5. Me le dire. Je vérifie avec un joueur d'essai créé puis supprimé, j'ouvre l'interrupteur et je publie.
+
+Aucune fonction serveur (Edge) n'est à redéployer. Le script peut être relancé sans danger.
+
+**Le faire avant d'activer le contrôle anti-robot** (`GUIDE-anti-robot.md`) : ma vérification crée un joueur
+d'essai, ce que le contrôle anti-robot empêchera ensuite depuis un programme.
