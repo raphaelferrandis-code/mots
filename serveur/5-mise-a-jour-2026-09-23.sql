@@ -1,3 +1,5 @@
+-- ⚠️ HISTORIQUE — NE PAS REJOUER. Installé le 23/09/2026 ; le rejouer remettrait d'anciennes versions de fonctions.
+-- Les versions à jour viennent de 1-structure.sql et des scripts suivants (voir A-FAIRE-RAPHAEL.md).
 -- Migration des cosmétiques : générée par npm run serveur:script.
 -- Relançable ; conserve les collections, les soldes et les achats existants.
 begin;

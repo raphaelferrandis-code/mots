@@ -14,6 +14,7 @@ import { FINITIONS } from '../partage/types.ts';
 import type { CarteIndex, Finition } from '../partage/types.ts';
 import { mettreEnVente } from '../services/partie.ts';
 import { demanderConfirmation } from './Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 const REGLES = EQUILIBRAGE.marche;
 const entier = (texte: string): number | null => (texte.trim() === '' ? null : Number(texte));
@@ -43,7 +44,7 @@ export function MiseEnVente({ carte, possedee, dansLeDeck, cotes = null, onVendu
     try {
       onVendu(await mettreEnVente(carte.id, finition, demande.mise, demande.achatImmediat, heures));
     } catch (erreur) {
-      setEtat({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      setEtat({ etat: 'erreur', message: messageDe(erreur) });
     }
   };
 

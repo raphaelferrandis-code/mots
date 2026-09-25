@@ -1,5 +1,5 @@
 import { Motif } from '../cosmetiques/Gravures.tsx';
-import { ornement, profilVisible } from '../../jeu/personnalisation.ts';
+import { profilVisible } from '../../jeu/personnalisation.ts';
 import { usePartie } from '../usePartie.ts';
 // La carte du jeu : un timbre-poste dont l'encre indique la nature du mot.
 // Dentelure, attaque et défense dans les coins comme des valeurs faciales, rosace gravée unique au centre,
@@ -10,7 +10,6 @@ import { useId, useMemo, useRef } from 'react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import './timbre.css';
 import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
-import { SITE } from '../../config/site.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
@@ -129,16 +128,3 @@ export function DosDeCarte({ onRetourner, etiquette, modele }: { onRetourner?: (
   return <VersoDuTimbre dos={choix} etiquette={etiquette} onRetourner={onRetourner} />;
 }
 
-// L'ancien dos, avant la refonte.
-export function DosClassique({ onRetourner, etiquette, modele, anime = true }: { onRetourner?: () => void; etiquette: string; modele?: string; anime?: boolean }) {
-  const partie = usePartie();
-  const choix = modele ?? (partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null).dos : 'gomme');
-  const decor = ornement(choix);
-  const contenu = <span className="tim__papier"><span className="dos-grave" data-anime={anime && decor?.anime} style={{ '--dos-teinte': decor?.teinte } as CSSProperties} aria-hidden="true"><svg viewBox="0 0 120 160" fill="none" stroke="currentColor" strokeWidth=".75"><path d="m60 8 49 72-49 72L11 80Z" opacity=".3" /><circle cx="60" cy="80" r="46" opacity=".5" /><circle cx="60" cy="80" r="50" strokeDasharray="1 4" /><svg x="22" y="42" width="76" height="76" viewBox="0 0 100 100"><Motif nom={decor?.valeur ?? 'plume'} /></svg><path d="M30 16h60M30 144h60" /></svg><span className="dos-grave__nom">{SITE.nomEnCapitales}</span></span></span>;
-  if (!onRetourner) return <div className="tim tim--dos" data-modele={choix} role="img" aria-label={etiquette}>{contenu}</div>;
-  return (
-    <button type="button" className="tim tim--dos" data-modele={choix} onClick={onRetourner} aria-label={etiquette}>
-      {contenu}
-    </button>
-  );
-}

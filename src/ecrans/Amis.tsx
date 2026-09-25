@@ -19,6 +19,7 @@ import type { Equipe } from '../services/equipes.ts';
 import type { AlbumAmi, CarnetAmis, Echange, Relation, TimbreEchange } from '../services/amis.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
+import { messageDe } from '../partage/messages.ts';
 import './amis.css';
 
 type Agir = (action: () => Promise<void>, message: string) => Promise<boolean>;
@@ -69,7 +70,7 @@ export function Amis() {
     if (verrou.current) return false;
     verrou.current = true; setOccupe(true); setErreur(''); setMessage('');
     try { await action(); setMessage(succes); setTour(t => t + 1); return true; }
-    catch (e) { setErreur(e instanceof Error ? e.message : String(e)); return false; }
+    catch (e) { setErreur(messageDe(e)); return false; }
     finally { verrou.current = false; setOccupe(false); }
   };
   const amis = donnees?.relations.filter(a => a.etat === 'ami') ?? [];

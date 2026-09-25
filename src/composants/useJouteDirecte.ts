@@ -7,6 +7,7 @@ import type { ActionDirect, ModeDirect, ReponseDirect } from '../jeu/direct.ts';
 import type { Registre } from '../partage/types.ts';
 import { ErreurDuServeur } from '../services/supabase.ts';
 import { synchroniser } from '../services/partie.ts';
+import { messageDe } from '../partage/messages.ts';
 
 export function useJouteDirecte(actif: boolean) {
   const [etat, setEtat] = useState<ReponseDirect | null>(null);
@@ -41,7 +42,7 @@ export function useJouteDirecte(actif: boolean) {
         if (!attente.current && !refus.current) setErreur('');
       } catch (e) {
         if (!monte.current) return;
-        setErreur(e instanceof Error ? e.message : String(e));
+        setErreur(messageDe(e));
         if (mutation) {
           const incertain = !(e instanceof ErreurDuServeur && e.refus);
           refus.current = !incertain;

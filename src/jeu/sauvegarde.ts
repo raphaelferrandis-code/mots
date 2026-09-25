@@ -166,13 +166,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
     }
   }
   const exporte = estUnObjet(brut.dernierExport) ? brut.dernierExport : null;
-  const apprentissages: Record<string, Apprentissage> = {};
-  for (const [id, valeur] of Object.entries(estUnObjet(brut.apprentissages) ? brut.apprentissages : {})) {
-    if (!estUnObjet(valeur)) continue;
-    const reussites = entierPositif(valeur.reussites, 0);
-    apprentissages[id] = { posees: Math.max(reussites, entierPositif(valeur.posees, 0)), reussites,
-      maitriseeLe: typeof valeur.maitriseeLe === 'number' && Number.isFinite(valeur.maitriseeLe) ? valeur.maitriseeLe : null };
-  }
+  const apprentissages = relireApprentissages(brut.apprentissages);
 
   return {
     version: VERSION_DE_SAUVEGARDE,

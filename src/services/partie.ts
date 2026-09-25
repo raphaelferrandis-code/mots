@@ -42,12 +42,12 @@ import { invitationEnAttente, oublierLInvitation, retenirLesFilleulsRecompenses 
 import type { EtatDuCompte, ProfilRetrouve } from '../jeu/synchronisation.ts';
 import { chargerEdition } from './cartes.ts';
 import { serveurDesCollections } from './collections.ts';
-import { serveurDeJoutes } from './joutes.ts';
 import { serveurDuMarche } from './marche.ts';
 import type { MesEncheres, PageDuMarche } from './marche.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
 import type { Emplacement } from './stockage.ts';
 import { ErreurDuServeur } from './supabase.ts';
+import { messageDe } from '../partage/messages.ts';
 
 // Où en est le serveur des collections : « appareil » quand il n'en est pas propriétaire.
 export type EtatDuServeur =
@@ -136,7 +136,7 @@ export function demarrerLaPartie(): Promise<void> {
       const durable = await demanderUnStockageDurable();
       if (partie.etat === 'prete') publier({ ...partie, stockageDurable: durable });
     } catch (erreur) {
-      publier({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      publier({ etat: 'erreur', message: messageDe(erreur) });
     }
   })();
   return demarrage;
@@ -189,7 +189,7 @@ export async function recupererAvecUnCode(saisie: string): Promise<{ timbres: nu
 }
 
 function signalerLaPanne(erreur: unknown): void {
-  if (partie.etat === 'prete') publier({ ...partie, serveur: { etat: 'hors ligne', message: erreur instanceof Error ? erreur.message : String(erreur) } });
+  if (partie.etat === 'prete') publier({ ...partie, serveur: { etat: 'hors ligne', message: messageDe(erreur) } });
 }
 
 // Au démarrage, et après une panne : l'état du serveur remplace celui de l'appareil. Un joueur qui n'a pas encore de
@@ -352,7 +352,6 @@ function enregistrerIdentite(saisie: string | undefined, rejoindre: boolean): Pr
 }
 // Le pseudonyme est public dès qu'il est choisi (décision du 24/09/2026) : le choisir, c'est rejoindre les joutes.
 export const rejoindreLesJoutes = (saisie: string): Promise<void> => enregistrerIdentite(saisie, true);
-export const publierMonIdentite = (): Promise<void> => enregistrerIdentite(undefined, true);
 export function changerUnReglage<C extends keyof ReglagesDuJoueur>(cle: C, valeur: ReglagesDuJoueur[C]): void {
   if (partie.etat !== 'prete') return;
   enregistrer({ ...partie.sauvegarde, reglages: { ...partie.sauvegarde.reglages, [cle]: valeur } });
@@ -386,66 +385,31 @@ export function noterLaParade(rarete: Rarete, reussie: boolean): void {
   if (reussie) gagnerExperience(XP.reponse, true);
 }
 
-// Un duel d'entraînement commence : quand le serveur tient la collection, il donne un ticket (c'est lui qui versera l'Encre).
-export async function commencerUnDuel(niveau: Niveau): Promise<number | null> {
-  if (!serveurDesCollections.actif) return null;
-  return surLeServeur(() => serveurDesCollections.commencerUnDuel(niveau));
-}
-
 export type FinDeDuel = { encre: number; reduite: boolean; cote: { avant: number; apres: number } | null };
-export type RecompenseDuServeur = { encre: number; reduite: boolean; etat?: EtatDuCompte };
 
-// Fin d'un duel : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge.
-// Quand le serveur tient la collection, c'est lui qui verse l'Encre : d'après le ticket du duel d'entraînement, ou
-// d'après ce que le serveur des joutes a répondu (« recompenseDuServeur »). Sinon, le jeu calcule tout lui-même.
-export async function finirLeDuel(
-  adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute },
-  resultat: Resultat,
-  ticket: number | null = null,
-  coteDuServeur?: { avant: number; apres: number },
-  recompenseDuServeur?: RecompenseDuServeur,
-): Promise<FinDeDuel> {
+// Fin d'un duel joué sur l'appareil : l'Encre gagnée est versée — et, en joute, la cote du joueur bouge. (Quand le
+// serveur tient la collection, c'est le serveur des combats qui mène le duel de bout en bout : useCombatServeur.)
+export async function finirLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, resultat: Resultat): Promise<FinDeDuel> {
   if (partie.etat !== 'prete') return { encre: 0, reduite: false, cote: null };
-  let confirme = recompenseDuServeur;
-  if (serveurDesCollections.actif) {
-    if (adversaire.type === 'entrainement') {
-      if (ticket === null) throw new Error('Ce duel ne possède pas de ticket serveur.');
-      confirme = await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, resultat));
-    }
-    if (!confirme?.etat) throw new Error('Le résultat doit être confirmé par le serveur avant de recevoir la récompense. Réessaie.');
-  }
   gagnerExperience(XP.duel + (resultat === 'victoire' ? XP.victoire : 0), true);
   if (adversaire.type === 'entrainement') {
     const fin = terminerUnDuel(partie.sauvegarde, adversaire.niveau, resultat, maintenant(), EQUILIBRAGE.duel);
-    enregistrer(serveurDesCollections.actif ? { ...fin.sauvegarde, encre: partie.sauvegarde.encre } : fin.sauvegarde);
-    if (serveurDesCollections.actif && confirme?.etat) {
-      appliquer(confirme.etat);
-      return { encre: confirme.encre, reduite: confirme.reduite, cote: null };
-    }
+    enregistrer(fin.sauvegarde);
     return { encre: fin.encre, reduite: fin.reduite, cote: null };
   }
-  const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, coteDuServeur);
-  if (serveurDesCollections.actif && confirme?.etat) {
-    enregistrer({ ...fin.sauvegarde, encre: partie.sauvegarde.encre });
-    appliquer(confirme.etat);
-    return { encre: confirme.encre, reduite: confirme.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
-  }
+  const fin = terminerUneJoute(partie.sauvegarde, adversaire.profil, resultat, maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute);
   enregistrer(fin.sauvegarde);
   return { encre: fin.encre, reduite: fin.reduite, cote: { avant: fin.coteAvant, apres: fin.coteApres } };
 }
 
-export async function abandonnerLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }, ticket: number | null): Promise<void> {
+// Abandon d'un duel joué sur l'appareil : une défaite, sans récompense.
+export async function abandonnerLeDuel(adversaire: { type: 'entrainement'; niveau: Niveau } | { type: 'joute'; profil: ProfilDeJoute }): Promise<void> {
   if (partie.etat !== 'prete') return;
-  const compte = adversaire.type === 'entrainement' && serveurDesCollections.actif && ticket !== null
-    ? await surLeServeur(() => serveurDesCollections.terminerUnDuel(ticket, 'abandon')) : null;
-  const joute = adversaire.type === 'joute' && serveurDeJoutes.enLigne ? await serveurDeJoutes.terminer(ticket, 'abandon') : null;
   const avant = partie.sauvegarde;
   const fin = adversaire.type === 'entrainement'
     ? terminerUnDuel(avant, adversaire.niveau, 'defaite', maintenant(), EQUILIBRAGE.duel)
-    : terminerUneJoute(avant, adversaire.profil, 'defaite', maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute, joute ?? undefined);
+    : terminerUneJoute(avant, adversaire.profil, 'defaite', maintenant(), EQUILIBRAGE.duel, EQUILIBRAGE.joute);
   enregistrer({ ...fin.sauvegarde, encre: avant.encre });
-  const etat = compte?.etat ?? joute?.etat;
-  if (etat) appliquer(etat);
 }
 
 // Le joueur quitte les joutes : pseudonyme, cote et compteurs de joutes repartent de zéro sur l'appareil.
@@ -455,11 +419,6 @@ export function quitterLesJoutes(): void {
   if (partie.etat !== 'prete') return;
   generationIdentite++;
   enregistrer({ ...partie.sauvegarde, joutes: nouvelleSauvegarde(maintenant(), 0).joutes });
-}
-
-export function recevoirLaCoteDuServeur(cote: number): void {
-  if (partie.etat !== 'prete' || partie.sauvegarde.joutes.cote === cote) return;
-  enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });
 }
 
 // ── Le marché (docs/BRIEF-marche.md, étape M3) ───────────────────────────────────

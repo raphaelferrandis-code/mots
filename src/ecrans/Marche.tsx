@@ -17,9 +17,9 @@ import { chargerEdition } from '../services/cartes.ts';
 import { decalageDuServeur, encherir, lireLeMarche, lireMesEncheres, retirerDeLaVente } from '../services/partie.ts';
 import type { PageDuMarche } from '../services/marche.ts';
 import { demanderConfirmation } from '../composants/Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 const REGLES = EQUILIBRAGE.marche;
-const messageDe = (erreur: unknown): string => (erreur instanceof Error ? erreur.message : String(erreur));
 const enToutesLettres = (date: number): string => new Date(date).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
 export function Marche() {

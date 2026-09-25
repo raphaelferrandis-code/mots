@@ -9,16 +9,16 @@ import { useActionArmee } from '../../composants/useActionArmee.ts';
 import { mouvementReduit } from '../../composants/mouvement.ts';
 import { ErreurDeChargement } from '../../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../../composants/useChargement.ts';
-import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
+import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 import { NATURES } from '../../jeu/aidesDuDuel.ts';
 import { forceDeLaCarte, meilleurDeck, taillesDesFactions } from '../../jeu/duel.ts';
 import { registresMasques } from '../../jeu/partie.ts';
+import { COMPARAISONS, correspond, trierLesCartes } from '../../jeu/rangement.ts';
+import type { Comparaison } from '../../jeu/rangement.ts';
 import { cartesDuDeck } from '../../jeu/progression.ts';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
 import { lien } from '../../navigation/routes.ts';
-import { sansAccents } from '../../partage/lettres.ts';
-import { RARETES } from '../../partage/types.ts';
 import type { CarteIndex, Nature } from '../../partage/types.ts';
 import { chargerEdition } from '../../services/cartes.ts';
 import { changerLeDeck } from '../../services/partie.ts';
@@ -82,17 +82,9 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
 
   const disponibles = useMemo(() => {
     const dansLeDeck = new Set(deck.map((c) => c.id));
-    const cherche = sansAccents(recherche.trim());
-    const ordres: Record<Tri, (a: CarteIndex, b: CarteIndex) => number> = {
-      force: (a, b) => forceDeLaCarte(b) - forceDeLaCarte(a),
-      attaque: (a, b) => attaqueEnJeu(b.attaque, b.rarete) - attaqueEnJeu(a.attaque, a.rarete),
-      defense: (a, b) => defenseEnJeu(b.defense, b.rarete) - defenseEnJeu(a.defense, a.rarete),
-      rarete: (a, b) => RARETES.indexOf(b.rarete) - RARETES.indexOf(a.rarete),
-      alphabet: () => 0,
-    };
-    return possedees
-      .filter((c) => !dansLeDeck.has(c.id) && (!nature || c.type === nature) && (!origine || c.faction === origine) && (!cherche || sansAccents(c.mot).includes(cherche)))
-      .sort((a, b) => ordres[tri](a, b) || a.mot.localeCompare(b.mot, 'fr'));
+    const ordres: Record<Tri, Comparaison> = { ...COMPARAISONS, force: (a, b) => forceDeLaCarte(b) - forceDeLaCarte(a) };
+    const convient = correspond({ recherche, nature, origine });
+    return trierLesCartes(possedees.filter((c) => !dansLeDeck.has(c.id) && convient(c)), ordres[tri]);
   }, [possedees, deck, nature, origine, recherche, tri]);
 
   const modifier = (ids: string[], message: string): void => {

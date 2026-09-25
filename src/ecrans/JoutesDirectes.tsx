@@ -16,6 +16,7 @@ import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import { ID_FACE_CACHEE } from '../jeu/duel.ts';
 import type { ModeDirect, PropositionDirecte } from '../jeu/direct.ts';
 import { lien } from '../navigation/routes.ts';
+import { messageDe } from '../partage/messages.ts';
 import './joutesDirectes.css';
 
 export function JoutesDirectes() {
@@ -63,7 +64,7 @@ export function JoutesDirectes() {
       }
       throw refus;
     } catch (erreur) {
-      setSecours({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      setSecours({ etat: 'erreur', message: messageDe(erreur) });
     }
   };
   // Le match à accepter (décision de Raphaël du 25/09/2026) : « J'y vais ! » à temps, sinon la proposition tombe

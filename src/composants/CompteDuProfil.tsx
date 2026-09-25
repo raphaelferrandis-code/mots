@@ -4,6 +4,7 @@ import { nomDeLaFormule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { definirUnCodeDeSecours, recupererAvecUnCode } from '../services/partie.ts';
 import { demanderConfirmation } from './Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 import '../ecrans/reglages.css';
 
 export function CompteDuProfil() {
@@ -22,7 +23,7 @@ export function CompteDuProfil() {
     }))) return;
     setOccupe(true);
     setMessageDuCompte(null);
-    try { setCode(await definirUnCodeDeSecours()); } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
+    try { setCode(await definirUnCodeDeSecours()); } catch (erreur) { setMessageDuCompte(messageDe(erreur)); } finally { setOccupe(false); }
   };
 
   const copierLeCode = async (): Promise<void> => {
@@ -42,7 +43,7 @@ export function CompteDuProfil() {
       setRecuperation(false);
       setSaisie('');
       setMessageDuCompte(`Collection retrouvée : ${retrouvee.timbres} timbre${retrouvee.timbres > 1 ? 's' : ''}${retrouvee.profil ? `, et ton profil de joute « ${retrouvee.profil.pseudo} »` : ''}.`);
-    } catch (erreur) { setMessageDuCompte(erreur instanceof Error ? erreur.message : String(erreur)); } finally { setOccupe(false); }
+    } catch (erreur) { setMessageDuCompte(messageDe(erreur)); } finally { setOccupe(false); }
   };
 
   return (

@@ -23,14 +23,14 @@ import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { debutDeManche, deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
-import { serveurDeJoutes } from '../services/joutes.ts';
-import { abandonnerLeDuel, commencerUnDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
-import type { FinDeDuel, RecompenseDuServeur } from '../services/partie.ts';
+import { abandonnerLeDuel, finirLeDuel, noterLaParade, noterLaReponse } from '../services/partie.ts';
+import type { FinDeDuel } from '../services/partie.ts';
 import type { Relation } from '../services/amis.ts';
 import { Preparation } from './duel/Preparation.tsx';
 import type { ModeDuSalon } from './duel/Preparation.tsx';
 import { Partie } from './duel/Partie.tsx';
 import { FinDuDuel } from './duel/FinDuDuel.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 const REGLES = EQUILIBRAGE.duel;
 
@@ -80,7 +80,6 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
   useRecompensesSuspendues(etape.nom !== 'accueil' && etape.nom !== 'fin');
   const [bilan, setBilan] = useState<Bilan>(BILAN_VIDE);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [ticket, setTicket] = useState<number | null>(null); // le numéro de la joute en cours, quand un serveur tient le classement
   const [enregistrement, setEnregistrement] = useState(false);
   const enregistrementEnCours = useRef(false);
   const sons = useSonsDuDuel(sauvegarde?.reglages.sonsPaquets ?? true);
@@ -143,15 +142,13 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     setErreur(null);
     try {
       const pret = await preparerUnDuel(adversaire);
-      // Le ticket de la joute, ou celui du duel d'entraînement quand le serveur tient la collection (il versera l'Encre).
-      setTicket(adversaire.type === 'joute' ? await serveurDeJoutes.commencer(adversaire.profil) : await commencerUnDuel(adversaire.niveau));
       xpAuDebut.current = sauvegarde?.profil.xp ?? 0;
       setTerrain(pret.terrain);
       setDuel(pret.duel);
       setBilan(BILAN_VIDE);
       changerDEtape({ nom: 'choix', adverse: debutDeManche(pret.terrain, pret.duel), choisie: null });
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : String(e));
+      setErreur(messageDe(e));
       changerDEtape({ nom: 'accueil' });
     }
   };
@@ -222,19 +219,11 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     setEnregistrement(true);
     setErreur(null);
     try {
-      // Un échec laisse le bilan disponible pour réessayer le même ticket.
-      let coteDuServeur: { avant: number; apres: number } | undefined;
-      let recompenseDuServeur: RecompenseDuServeur | undefined;
-      if (terrain.adversaire.type === 'joute' && serveurDeJoutes.enLigne) {
-        const finDeJoute = await serveurDeJoutes.terminer(ticket, resultat);
-        coteDuServeur = finDeJoute ?? undefined;
-        if (finDeJoute && typeof finDeJoute.encre === 'number') recompenseDuServeur = { encre: finDeJoute.encre, reduite: finDeJoute.reduite === true, etat: finDeJoute.etat };
-      }
-      const fin = await finirLeDuel(terrain.adversaire, resultat, ticket, coteDuServeur, recompenseDuServeur);
+      const fin = await finirLeDuel(terrain.adversaire, resultat);
       if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
       changerDEtape({ nom: 'fin', resultat, nonEnregistree: false, ...fin });
     } catch (e) {
-      setErreur(`${e instanceof Error ? e.message : String(e)} Ton résultat reste affiché : réessaie avec « Voir le résultat ».`);
+      setErreur(`${messageDe(e)} Ton résultat reste affiché : réessaie avec « Voir le résultat ».`);
     } finally {
       enregistrementEnCours.current = false;
       setEnregistrement(false);
@@ -248,10 +237,10 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     setEnregistrement(true);
     setErreur(null);
     try {
-      await abandonnerLeDuel(terrain.adversaire, ticket);
+      await abandonnerLeDuel(terrain.adversaire);
       setDuel(null);
       changerDEtape({ nom: 'accueil' });
-    } catch (e) { setErreur(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setErreur(messageDe(e)); }
     finally { enregistrementEnCours.current = false; setEnregistrement(false); }
   };
 

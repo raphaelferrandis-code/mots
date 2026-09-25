@@ -1,3 +1,5 @@
+-- ⚠️ HISTORIQUE — NE PAS REJOUER. Installé le 25/09/2026 ; le rejouer remettrait d'anciennes versions des fonctions de
+-- paiement (les versions à jour viennent de 19-paiements.sql). Gardé pour les tests et pour une installation neuve.
 -- Installation après 8-paiements-test.sql. Aucun paiement activé par cette migration.
 begin;
 create table if not exists public.paiements_production (

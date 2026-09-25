@@ -9,6 +9,7 @@ import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
 import { telechargerUnFichier } from '../services/partage.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
 import { demanderConfirmation } from '../composants/Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 import './reglages.css';
 
@@ -48,7 +49,7 @@ export function Reglages() {
       importerUneSauvegarde(texte);
       setMessage('Sauvegarde importée : ta collection est restaurée.');
     } catch (erreur) {
-      setMessage(erreur instanceof Error ? erreur.message : String(erreur));
+      setMessage(messageDe(erreur));
     } finally {
       if (fichier.current) fichier.current.value = '';
     }
@@ -69,7 +70,7 @@ export function Reglages() {
       await effacerLaPartieEtLeProfil();
       setMessage('Partie effacée : tu repars de zéro, avec trois paquets.');
     } catch (erreur) {
-      setMessage(`${erreur instanceof Error ? erreur.message : String(erreur)} Rien n'a été effacé : réessaie dans un moment.`);
+      setMessage(`${messageDe(erreur)} Rien n'a été effacé : réessaie dans un moment.`);
     }
   };
 

@@ -15,6 +15,7 @@ import { lien } from '../navigation/routes.ts';
 import { chargerCarte, chargerDetails } from '../services/cartes.ts';
 import { partagerLeTimbre } from '../services/partage.ts';
 import { lireLesCotes } from '../services/partie.ts';
+import { messageDe } from '../partage/messages.ts';
 
 async function chargerFiche(id: string) {
   const [carte, details] = await Promise.all([chargerCarte(id), chargerDetails(id)]);
@@ -62,7 +63,7 @@ export function FicheCarte({ id }: { id: string }) {
       const issue = await partagerLeTimbre(carte, { finition, maitriseeLe: possedee?.maitriseeLe ?? null });
       setPartage(issue === 'telecharge' ? { etat: 'fait', message: "L'image du timbre est enregistrée sur cet appareil." } : { etat: 'repos' });
     } catch (erreur) {
-      setPartage({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      setPartage({ etat: 'erreur', message: messageDe(erreur) });
     }
   };
 

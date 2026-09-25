@@ -78,14 +78,10 @@ describe('le service des collections', () => {
     ]);
   });
 
-  it('enregistre le deck, et joue les duels avec un ticket', async () => {
-    const { service, appels } = doublure({ changer_de_deck: ['a-nom'], commencer_un_duel: 7, terminer_un_duel: { encre: 30, reduite: false, etat: ETAT } });
+  it('enregistre le deck', async () => {
+    const { service, appels } = doublure({ changer_de_deck: ['a-nom'] });
     assert.deepEqual(await service.changerDeDeck(['a-nom', 'inconnue-nom']), ['a-nom']);
-    assert.equal(await service.commencerUnDuel('Normal'), 7);
-    const fin = await service.terminerUnDuel(7, 'victoire');
-    assert.deepEqual({ encre: fin.encre, reduite: fin.reduite, total: fin.etat.encre }, { encre: 30, reduite: false, total: 12 });
-    assert.deepEqual(appels.map((a) => a.fonction), ['changer_de_deck', 'commencer_un_duel', 'terminer_un_duel']);
-    assert.deepEqual(appels[2].parametres, { p_ticket: 7, p_resultat: 'victoire' });
+    assert.deepEqual(appels, [{ fonction: 'changer_de_deck', parametres: { p_deck: ['a-nom', 'inconnue-nom'] } }]);
   });
 
   it('définit un code de secours et retrouve une collection avec', async () => {

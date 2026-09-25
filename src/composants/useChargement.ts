@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { messageDe } from '../partage/messages.ts';
 
 export type Chargement<T> =
   | { etat: 'en cours' }
@@ -16,7 +17,7 @@ export function useChargement<T>(charger: () => Promise<T>, cle: string): Charge
     setResultat({ etat: 'en cours' });
     charger().then(
       (donnees) => { if (actif) setResultat({ etat: 'pret', donnees }); },
-      (erreur: unknown) => { if (actif) setResultat({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) }); },
+      (erreur: unknown) => { if (actif) setResultat({ etat: 'erreur', message: messageDe(erreur) }); },
     );
     return () => { actif = false; };
     // « charger » est recréée à chaque affichage : c'est « cle » qui dit quand recommencer.

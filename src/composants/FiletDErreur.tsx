@@ -2,6 +2,7 @@
 // l'application et laisse une page vide. Ici, le joueur lit ce qui arrive et peut recharger.
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { messageDe } from '../partage/messages.ts';
 
 type Etat = { erreur: string | null };
 
@@ -9,7 +10,7 @@ export class FiletDErreur extends Component<{ children: ReactNode }, Etat> {
   state: Etat = { erreur: null };
 
   static getDerivedStateFromError(erreur: unknown): Etat {
-    return { erreur: erreur instanceof Error ? erreur.message : String(erreur) };
+    return { erreur: messageDe(erreur) };
   }
 
   componentDidCatch(erreur: unknown, info: ErrorInfo): void {

@@ -17,6 +17,7 @@ import { declarerMaNaissance } from '../services/partie.ts';
 import { PaiementsTest } from '../composants/PaiementsTest.tsx';
 import { paiement, paiementsDeTest, paiementsDisponibles } from '../services/paiements.ts';
 import { useAchatsOuverts } from '../composants/useAchatsOuverts.ts';
+import { messageDe } from '../partage/messages.ts';
 
 const AGE = EQUILIBRAGE.payant.ageMinimumPourPayer;
 const anneeActuelle = (): number => new Date().getFullYear();
@@ -154,7 +155,7 @@ function Age({ formule }: { formule: Formule }) {
       await declarerMaNaissance(a, m);
       setEtat({ etat: 'repos' });
     } catch (erreur) {
-      setEtat({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      setEtat({ etat: 'erreur', message: messageDe(erreur) });
     }
   };
 

@@ -4,13 +4,13 @@ import { Entete } from '../composants/Entete.tsx';
 import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
-import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import { registresMasques } from '../jeu/partie.ts';
+import { COMPARAISONS, correspond, trierLesCartes } from '../jeu/rangement.ts';
+import type { Comparaison } from '../jeu/rangement.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
-import { sansAccents } from '../partage/lettres.ts';
 import { RARETES } from '../partage/types.ts';
-import type { CarteIndex, Nature, Rarete } from '../partage/types.ts';
+import type { Nature, Rarete } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 
 const TYPES: Nature[] = ['Nom', 'Adjectif', 'Verbe', 'Adverbe'];
@@ -91,16 +91,8 @@ export function Collection() {
 
   const affichees = useMemo(() => {
     if (!sauvegarde) return [];
-    const cherche = sansAccents(recherche.trim());
-    const filtrees = possedees.filter((c) => (!rarete || c.rarete === rarete) && (!type || c.type === type) && (!faction || c.faction === faction) && (!cherche || sansAccents(c.mot).includes(cherche)));
-    const ordres: Record<Tri, (a: CarteIndex, b: CarteIndex) => number> = {
-      recentes: (a, b) => sauvegarde.cartes[b.id].obtenueLe - sauvegarde.cartes[a.id].obtenueLe,
-      alphabet: () => 0,
-      rarete: (a, b) => RARETES.indexOf(b.rarete) - RARETES.indexOf(a.rarete),
-      attaque: (a, b) => attaqueEnJeu(b.attaque, b.rarete) - attaqueEnJeu(a.attaque, a.rarete),
-      defense: (a, b) => defenseEnJeu(b.defense, b.rarete) - defenseEnJeu(a.defense, a.rarete),
-    };
-    return filtrees.sort((a, b) => ordres[tri](a, b) || a.mot.localeCompare(b.mot, 'fr'));
+    const ordres: Record<Tri, Comparaison> = { ...COMPARAISONS, recentes: (a, b) => sauvegarde.cartes[b.id].obtenueLe - sauvegarde.cartes[a.id].obtenueLe };
+    return trierLesCartes(possedees.filter(correspond({ recherche, rarete, nature: type, origine: faction })), ordres[tri]);
   }, [possedees, sauvegarde, rarete, type, faction, recherche, tri]);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ import { Particules, SONS } from './effets.ts';
 import { ABREGE_DE_LA_NATURE, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, titreDuResume } from './eclats.ts';
 import { useRacineInerte } from '../useRacineInerte.ts';
 import { mouvementReduit } from '../mouvement.ts';
+import { messageDe } from '../../partage/messages.ts';
 import './ceremonie.css';
 
 type Phase = 'ouverture' | 'dechirure' | 'sortie' | 'revelation' | 'retournement' | 'revelee' | 'envoi' | 'resume' | 'fermeture';
@@ -171,7 +172,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
       [obtenues] = await Promise.all([promesse, vol]);
     } catch (e) {
       if (j !== jeton.current) return;
-      onErreur(e instanceof Error ? e.message : String(e));
+      onErreur(messageDe(e));
       fermer(true);
       return;
     }

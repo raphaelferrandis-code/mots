@@ -3,8 +3,6 @@
 // passe par ses fonctions (serveur/collections.ts). Sinon, le jeu vit sur l'appareil comme avant, et ce service est inactif.
 
 import { SERVEUR } from '../config/serveur.ts';
-import type { Niveau } from '../jeu/duel.ts';
-import type { Resultat } from '../jeu/progression.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { aImporter, lireEtat, lireRecuperation } from '../jeu/synchronisation.ts';
 import type { EtatDuCompte, Recuperation } from '../jeu/synchronisation.ts';
@@ -17,7 +15,6 @@ import { ErreurDuServeur } from './supabase.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 export type CarteTireeParLeServeur = { id: string; finition: Finition; nouvelle: boolean; nouvelleFinition: boolean; encre: number };
-export type Recompense = { encre: number; reduite: boolean; etat: EtatDuCompte };
 
 export type ServeurDesCollections = {
   actif: boolean;
@@ -30,8 +27,6 @@ export type ServeurDesCollections = {
   ouvrirUnPaquet(masques: readonly Registre[]): Promise<{ cartes: CarteTireeParLeServeur[]; etat: EtatDuCompte }>;
   // Rend le deck tel que le serveur l'a enregistré (cartes possédées seulement).
   changerDeDeck(deck: readonly string[]): Promise<string[]>;
-  commencerUnDuel(niveau: Niveau): Promise<number>;
-  terminerUnDuel(ticket: number, resultat: Resultat | 'abandon'): Promise<Recompense>;
   // Le code de secours (décision n° 36) : le définir, ou retrouver une collection avec.
   definirUnCode(code: string): Promise<EtatDuCompte>;
   declarerMaNaissance(annee: number, mois: number): Promise<EtatDuCompte>;
@@ -46,11 +41,6 @@ function lireLesCartesTirees(brut: unknown): CarteTireeParLeServeur[] {
   return brut.flatMap((t) => (estUnObjet(t) && typeof t.id === 'string' && estUneFinition(t.finition)
     ? [{ id: t.id, finition: t.finition, nouvelle: t.nouvelle === true, nouvelleFinition: t.nouvelleFinition === true, encre: typeof t.encre === 'number' ? t.encre : 0 }]
     : []));
-}
-
-function lireLaRecompense(brut: unknown): Recompense {
-  const lu = estUnObjet(brut) ? brut : {};
-  return { encre: typeof lu.encre === 'number' ? lu.encre : 0, reduite: lu.reduite === true, etat: lireEtat(lu.etat) };
 }
 
 // Le service branché sur un client donné : celui du serveur dans le jeu, une doublure dans les tests. Un paquet ou un
@@ -79,8 +69,6 @@ export function serveurDesCollectionsAvec(client: ClientSupabase, demandes: Avec
       const brut = await client.appeler<unknown>('changer_de_deck', { p_deck: [...deck] });
       return Array.isArray(brut) ? brut.filter((id): id is string => typeof id === 'string') : [];
     }),
-    commencerUnDuel: (niveau) => client.appeler<number>('commencer_un_duel', { p_niveau: niveau }),
-    terminerUnDuel: (ticket, resultat) => chacunSonTour(async () => lireLaRecompense(await client.appeler<unknown>('terminer_un_duel', { p_ticket: ticket, p_resultat: resultat }))),
     definirUnCode: (code) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('definir_un_code_de_secours', { p_code: code }))),
     declarerMaNaissance: (annee, mois) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('declarer_ma_naissance', { p_annee: annee, p_mois: mois }))),
     recupererParCode: (code) => chacunSonTour(async () => {
@@ -101,8 +89,6 @@ const inactif: ServeurDesCollections = {
   ouvrirUnPaquet: async () => jamais(),
   reclamerRecompense: async () => jamais(),
   changerDeDeck: async () => jamais(),
-  commencerUnDuel: async () => jamais(),
-  terminerUnDuel: async () => jamais(),
   definirUnCode: async () => jamais(),
   declarerMaNaissance: async () => jamais(),
   recupererParCode: async () => jamais(),

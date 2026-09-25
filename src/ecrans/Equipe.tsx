@@ -8,6 +8,7 @@ import { lien } from '../navigation/routes.ts';
 import { amisDisponibles } from '../services/amis.ts';
 import { EMBLEMES, serveurEquipes } from '../services/equipes.ts';
 import type { Embleme, Equipe as EquipeDonnees, MonEquipe } from '../services/equipes.ts';
+import { messageDe } from '../partage/messages.ts';
 import './equipe.css';
 
 type Agir = (action: () => Promise<void>, message: string) => Promise<boolean>;
@@ -34,7 +35,7 @@ export function Equipe() {
       if (verrou.current) return;
       const version = ++generation.current;
       try { const etat = await serveurEquipes().lire(); if (actif && version === generation.current) { setDonnees(etat); setErreur(''); } }
-      catch (e) { if (actif && version === generation.current) setErreur(e instanceof Error ? e.message : String(e)); }
+      catch (e) { if (actif && version === generation.current) setErreur(messageDe(e)); }
     };
     const actualiser = () => { if (document.visibilityState === 'visible') void charger(); };
     void charger();
@@ -46,7 +47,7 @@ export function Equipe() {
     if (verrou.current) return false;
     verrou.current = true; generation.current++; setOccupe(true); setErreur(''); setMessage('');
     try { await action(); setMessage(succes); setDonnees(await serveurEquipes().lire()); return true; }
-    catch (e) { setErreur(e instanceof Error ? e.message : String(e)); return false; }
+    catch (e) { setErreur(messageDe(e)); return false; }
     finally { verrou.current = false; setOccupe(false); }
   };
   const sauvegarde = partie.etat === 'prete' ? partie.sauvegarde : null;

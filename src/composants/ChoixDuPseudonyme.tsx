@@ -3,6 +3,7 @@ import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { pseudoDuJoueur } from '../services/identite.ts';
 import { rejoindreLesJoutes } from '../services/partie.ts';
 import { usePartie } from './usePartie.ts';
+import { messageDe } from '../partage/messages.ts';
 import './choixDuPseudonyme.css';
 
 // Le pseudonyme : un seul nom pour tout le jeu, demandé une seule fois, et public dès qu'il est choisi
@@ -29,7 +30,7 @@ export function ChoixDuPseudonyme({ titre = 'Choisis ton pseudonyme', autoFocus 
     if (occupe) return;
     occuper(true); setErreur('');
     try { await rejoindreLesJoutes(valeur.trim()); onValide?.(); }
-    catch (raison) { setErreur(raison instanceof Error ? raison.message : String(raison)); }
+    catch (raison) { setErreur(messageDe(raison)); }
     finally { occuper(false); }
   }}>
     <h2 id={id}>{titre}</h2>

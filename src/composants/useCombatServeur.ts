@@ -3,6 +3,7 @@ import type { ActionCombat, ChoixCombat, CombatEnLigne, RequeteCombat, ReponseSe
 import { serveurDesCollections } from '../services/collections.ts';
 import { commanderCombat } from '../services/partie.ts';
 import { ErreurDuServeur } from '../services/supabase.ts';
+import { messageDe } from '../partage/messages.ts';
 
 // Une commande garde son identifiant tant que son accusé de réception manque.
 // Une reprise relit toujours la partie du compte, même après un changement d'appareil.
@@ -35,7 +36,7 @@ export function useCombatServeur(pret: boolean, appliquer: (r: ReponseServeurCom
       return true;
     } catch (e) {
       if (e instanceof ErreurDuServeur && e.refus) attente.current = null;
-      if (monte.current) setErreur(e instanceof Error ? e.message : String(e));
+      if (monte.current) setErreur(messageDe(e));
       return false;
     } finally {
       verrou.current = false;

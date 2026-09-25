@@ -10,6 +10,7 @@ import { lien } from '../navigation/routes.ts';
 import { serveurDesCollections } from '../services/collections.ts';
 import { supprimerMonProfilDeJoute } from '../services/joutes.ts';
 import { demanderConfirmation } from '../composants/Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 type Suppression = { etat: 'repos' } | { etat: 'en cours' } | { etat: 'faite' } | { etat: 'erreur'; message: string };
 
@@ -32,7 +33,7 @@ export function Confidentialite() {
       await supprimerMonProfilDeJoute();
       setSuppression({ etat: 'faite' });
     } catch (erreur) {
-      setSuppression({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
+      setSuppression({ etat: 'erreur', message: messageDe(erreur) });
     }
   };
 
