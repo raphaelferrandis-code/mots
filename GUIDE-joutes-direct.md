@@ -47,6 +47,15 @@ l'effacement d'un compte et la récupération par code), les droits sont correct
 joueurs), les trois colonnes et les six déclencheurs sont là, `direct_signaux` est toujours publié en temps réel.
 Aucune partie ni proposition en cours à ce moment-là. Reste à l'essayer à deux (étape 9 d'`A-FAIRE-RAPHAEL.md`).
 
+### Script 18 (le classement) installé le 25 septembre 2026
+
+Collé par Raphaël, vérifié par l'assistant le soir même en lecture seule : `publier_mon_profil` reprend le profil
+retenu, `direct_salon` normalise les filtres, `direct_appliquer` limite à 3 les rencontres classées du jour, récompense
+le gagnant d'un abandon et garde la cote au-dessus de 100, `classement_direct` demande 5 parties et renvoie
+`minimum` et `moi` ; colonne `comptes.profil_precedent` (jsonb), déclencheurs `retenir_le_profil` (profils) et
+`direct_oublier_les_cotes` (comptes) en place ; table `direct_rencontres` protégée (RLS, aucune lecture pour les
+joueurs) ; fonctions internes fermées aux joueurs. Aucune partie en direct jouée à ce moment-là.
+
 ## Règles
 
 - **Solo** : deux humains présents. La cote solo existante sert de point de départ ; les anciennes données ne sont pas effacées.

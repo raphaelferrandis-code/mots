@@ -66,7 +66,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
-| Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | Jeu en ligne ; **script 18 à coller (étape 10)** |
+| Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
 
 ---
 
@@ -183,22 +183,22 @@ après les autres le même verrou. Tes décisions du 25 septembre : un match tro
       **Run**. Réponse attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
 - [x] Vérifié par l'assistant en lecture seule : fonction déployée identique au fichier du dépôt (même empreinte), script 17
       en place (26 fonctions, verrous, droits, colonnes, déclencheurs). Voir [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md).
-- [ ] Deux requêtes « Untitled query » (les vérifications des scripts 16 et 17, en lecture seule) sont restées dans
+- [ ] Quatre requêtes « Untitled query » (les vérifications des scripts 16, 17 et 18, en lecture seule) sont restées dans
       l'éditeur SQL, rubrique PRIVATE : elles peuvent être supprimées.
 - [ ] Essayer avec quelqu'un : chacun lance « Chercher une partie » en Solo ; « Adversaire trouvé ! » apparaît ; la partie
       ne commence que quand les deux ont pressé « J'y vais ! ».
 
-### Étape 10 — Coller le script 18 (le classement contre la triche)
+### Étape 10 — Coller le script 18 (le classement contre la triche) — FAIT le 25 septembre
 
 Tes décisions du 25 septembre : contre le même adversaire, **3 parties classées par jour** ; le gagnant d'un abandon
 **reçoit sa récompense** ; un profil recréé **retrouve sa cote** ; on entre au classement après **5 parties**.
 Détails : [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). **Aucune fonction serveur à redéployer** ; le jeu est déjà
 publié et s'adapte tout seul.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/18-classement.sql → **Copy raw file** → Supabase →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/18-classement.sql → **Copy raw file** → Supabase →
       **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse attendue :
       **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
-- [ ] Le dire à l'assistant : il vérifie en lecture seule.
+- [x] Vérifié par l'assistant en lecture seule : règles, déclencheurs, droits et registre des rencontres en place.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

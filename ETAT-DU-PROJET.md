@@ -2,7 +2,8 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **25 septembre 2026 — le classement contre la triche : jeu publié, `serveur/18-classement.sql` À COLLER (étape 10).**
+> **25 septembre 2026 — le classement contre la triche : EN LIGNE.** `serveur/18-classement.sql` collé par Raphaël,
+> vérifié par l'assistant en lecture seule.
 > Décisions de Raphaël : contre les mêmes adversaires, 3 parties classées par jour (heure de Paris) ; le gagnant d'un
 > abandon ou d'un forfait reçoit sa récompense de victoire ; un profil supprimé puis recréé retrouve son identité et sa
 > cote (`comptes.profil_precedent`) ; on entre au classement après 5 parties classées. Et d'office : filtres de contenu
