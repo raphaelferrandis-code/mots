@@ -313,6 +313,7 @@ button.proposition:focus-visible { border-color: var(--accent); }
 
 .marche__message { margin: 0; color: var(--accent); }
 .marche__encheres { gap: 0; }
+.marche__liste[aria-busy='true'] { opacity: .6; transition: opacity .2s .15s; }
 .enchere { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: start; padding-block: 14px; border-top: 1px solid var(--filet); }
 .enchere:first-child { border-top: 0; padding-top: 0; }
 .enchere__timbre > :is(.tim, .tb), .enchere__timbre > .deck__vide { width: 100%; }

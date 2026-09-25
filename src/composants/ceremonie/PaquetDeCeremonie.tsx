@@ -9,6 +9,7 @@ import type { CSSProperties } from 'react';
 import { SITE } from '../../config/site.ts';
 import { PAQUETS } from '../../jeu/personnalisation.ts';
 import { empreinte } from '../timbre/dessins.ts';
+import { mouvementReduit } from '../mouvement.ts';
 import './ceremonie.css';
 
 function cheminDuCorps(): string {
@@ -113,7 +114,7 @@ export function PaquetDeCeremonie({ modele = 'original', vivant = true, classNam
   // Un marbré par paquet : deux paquets côte à côte ne se ressemblent jamais tout à fait.
   const graine = 1 + (empreinte(id) % 89);
   // L'encre ne bouge pas si le joueur a demandé moins d'animations.
-  const reduit = typeof window !== 'undefined' && (window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.hasAttribute('data-animations-reduites'));
+  const reduit = mouvementReduit();
   return <div className={['cp', className].filter(Boolean).join(' ')} style={{ '--masque-paquet': MASQUE_DU_PAQUET, ...style } as CSSProperties}>
     <div className="cp__inclinaison">
       <div className="cp__corps"><Corps modele={modele} vivant={vivant && !reduit} graine={graine} /><div className="cp__vernis" /><div className="cp__lueur" /></div>

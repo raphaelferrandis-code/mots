@@ -16,6 +16,7 @@ import { preparerAccueil } from '../accueil/modeleAccueil.ts';
 import { useRecompensesSuspendues } from '../Recompenses.tsx';
 import { Timbre } from '../timbre/Timbre.tsx';
 import { useChargement } from '../useChargement.ts';
+import { mouvementReduit } from '../mouvement.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../usePartie.ts';
 import { ApercuDeLAlbum } from './ApercuDeLAlbum.tsx';
 import { Ceremonie } from './Ceremonie.tsx';
@@ -32,7 +33,6 @@ import './comptoir.css';
 type Ouverture = { premier: Promise<CarteObtenue[]>; tirer: () => Promise<CarteObtenue[]>; continuer: boolean; depuis: DOMRect | null; avant: Sauvegarde };
 type Vol = Envol & { cachees: Set<string>; compte: number };
 
-const mouvementReduit = (): boolean => document.documentElement.hasAttribute('data-animations-reduites') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, mouvementReduit() ? Math.min(ms, 40) : ms));
 
 // « aCote » : ce qui se range à droite de l'album (les duels, sur l'accueil).
@@ -55,7 +55,7 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
   // Le paquet s'incline doucement vers le pointeur, sauf quand la cérémonie occupe l'écran.
   useEffect(() => {
     if (ouverture) return;
-    const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduit = mouvementReduit(); // (le réglage du jeu compte aussi, pas seulement celui de l'appareil)
     const pointeur = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
     const penche = { rx: 0, ry: 0 };
     const suivre = (e: PointerEvent): void => { pointeur.x = e.clientX; pointeur.y = e.clientY; };

@@ -4,6 +4,7 @@
 
 import { useEffect, useRef } from 'react';
 import { rosace } from '../timbre/dessins.ts';
+import { mouvementReduit } from '../mouvement.ts';
 
 const ROSACES = [
   { x: .08, y: .24, s: .62, R: 96, r: 35, d: 56, couleur: 'rgba(216,154,92,.17)', vitesse: .035, profondeur: 26 },
@@ -19,7 +20,7 @@ export function FondAnime() {
     const cv = toile.current;
     const c = cv?.getContext('2d');
     if (!cv || !c) return;
-    const reduit = (): boolean => document.documentElement.hasAttribute('data-animations-reduites') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduit = mouvementReduit;
     const pointeur = { nx: .5, ny: .4 };
     let W = 0, H = 0, dpr = 1, px = 0, py = 0, cadre = 0, minuterie = 0;
     let rosaces: (typeof ROSACES[number] & { taille: number; image: HTMLCanvasElement })[] = [];

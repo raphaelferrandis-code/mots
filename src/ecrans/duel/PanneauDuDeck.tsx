@@ -6,6 +6,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Carte } from '../../composants/carte/Carte.tsx';
 import { useActionArmee } from '../../composants/useActionArmee.ts';
+import { mouvementReduit } from '../../composants/mouvement.ts';
 import { ErreurDeChargement } from '../../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../../composants/useChargement.ts';
 import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
@@ -60,8 +61,7 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
   // Un timbre ajouté vole depuis la collection jusqu'à sa place ; les autres glissent vers leur nouvelle place.
   useLayoutEffect(() => {
     const animations: Animation[] = [];
-    const reduire = sauvegarde.reglages.reduireAnimations || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!reduire) places.current.forEach((element, id) => {
+    if (!mouvementReduit()) places.current.forEach((element, id) => {
       const depuisLaCollection = arrivee.current?.id === id ? arrivee.current.rect : null;
       const origineDuVol = depuisLaCollection ?? precedentes.current.get(id);
       if (!origineDuVol) return;

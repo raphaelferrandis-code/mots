@@ -7,9 +7,11 @@ import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../part
 
 const EDITION = 1;
 const DOSSIER = `${import.meta.env.BASE_URL}data/`;
+// L'empreinte des données (vite.config.ts) : une nouvelle édition a une nouvelle adresse, qu'aucun vieux cache ne connaît.
+const VERSION: string = import.meta.env?.VITE_VERSION_DES_DONNEES ?? '';
 
 async function lireJson<T>(chemin: string): Promise<T> {
-  const reponse = await fetch(`${DOSSIER}${chemin}`);
+  const reponse = await fetch(`${DOSSIER}${chemin}${VERSION ? `?v=${VERSION}` : ''}`);
   if (!reponse.ok) throw new Error(`Impossible de charger ${chemin} (erreur ${reponse.status})`);
   return reponse.json() as Promise<T>;
 }

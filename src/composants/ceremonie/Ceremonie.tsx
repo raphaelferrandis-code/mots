@@ -14,6 +14,7 @@ import { PaquetDeCeremonie, MASQUE_DU_PAQUET } from './PaquetDeCeremonie.tsx';
 import { Particules, SONS } from './effets.ts';
 import { ABREGE_DE_LA_NATURE, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, titreDuResume } from './eclats.ts';
 import { useRacineInerte } from '../useRacineInerte.ts';
+import { mouvementReduit } from '../mouvement.ts';
 import './ceremonie.css';
 
 type Phase = 'ouverture' | 'dechirure' | 'sortie' | 'revelation' | 'retournement' | 'revelee' | 'envoi' | 'resume' | 'fermeture';
@@ -44,6 +45,14 @@ const entre = (a: number, b: number): number => a + Math.random() * (b - a);
 export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
   useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
+  // L'éventail des timbres se resserre sur un écran étroit, et suit le téléphone qu'on tourne.
+  const [etroit, setEtroit] = useState(() => window.matchMedia('(max-width: 639.98px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 639.98px)');
+    const suivre = (): void => setEtroit(media.matches);
+    media.addEventListener('change', suivre);
+    return () => media.removeEventListener('change', suivre);
+  }, []);
   const [cartes, setCartes] = useState<CarteObtenue[] | null>(null);
   const [index, setIndex] = useState(0);
   const [revelees, setRevelees] = useState<boolean[]>([]);
@@ -71,7 +80,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
   const pointeur = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 3 });
   const penche = useRef({ rx: 0, ry: 0 });
 
-  const reduit = (): boolean => reduire || document.documentElement.hasAttribute('data-animations-reduites') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduit = (): boolean => reduire || mouvementReduit();
   const D = (ms: number): number => (reduit() ? 1 : ms);
   const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, reduit() ? Math.min(ms, 40) : ms));
   const aller = (p: Phase): void => { phaseRef.current = p; setPhase(p); };
@@ -103,9 +112,9 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
     };
   }, []); // une cérémonie par montage : « Ouvrir le suivant » la relance de l'intérieur
 
-  // Le paquet s'incline vers le pointeur tant qu'il est sur la scène.
+  // Le paquet s'incline vers le pointeur tant qu'il est sur la scène (pas quand le joueur a demandé moins d'animations).
   useEffect(() => {
-    if (phase !== 'ouverture' && phase !== 'dechirure') return;
+    if ((phase !== 'ouverture' && phase !== 'dechirure') || reduit()) return;
     let cadre = 0;
     const boucle = (): void => {
       const paquet = dans<HTMLElement>(emballage.current, '.cp');
@@ -428,7 +437,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
   // ── Le rendu ──
   const n = cartes?.length ?? 0;
   const courante = cartes?.[apercu ?? index] ?? null;
-  const etroit = window.innerWidth < 640;
   const eventail = (k: number): string => aplati
     ? `translateX(${k * (etroit ? 22 : 46)}%) scale(${etroit ? .46 : .62})`
     : `translateX(${k * (etroit ? 22 : 46)}%) translateY(${Math.abs(k) * 5}%) rotate(${k * 7}deg) scale(${etroit ? .46 : .62})`;

@@ -44,9 +44,21 @@
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
       }
     </script>
+
+    <!-- L'attente, avant que le jeu ne se charge (sinon, une page vide 1 à 3 s sur un réseau lent). Le jeu la remplace
+         dès qu'il démarre ; elle n'apparaît qu'au bout d'un instant, pour ne pas clignoter quand tout va vite. -->
+    <style>
+      html, body { background: #0b1729; }
+      .attente-initiale { min-height: 100vh; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 18px;
+        color: #adc3da; font: 15px/1.4 'Segoe UI', system-ui, sans-serif; opacity: 0; animation: attente-apparait .4s ease-out .5s forwards; }
+      .attente-initiale img { width: 180px; height: auto; animation: attente-respire 2.4s ease-in-out infinite; }
+      @keyframes attente-apparait { to { opacity: 1; } }
+      @keyframes attente-respire { 50% { opacity: .55; } }
+      @media (prefers-reduced-motion: reduce) { .attente-initiale img { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="racine"></div>
+    <div id="racine"><div class="attente-initiale" role="status"><img src="./identite/philamots-clair.svg" alt="Philamots" width="180" height="43" /><p>Chargement du jeu…</p></div></div>
     <noscript>
       <p>Philamots est un jeu de cartes à collectionner où chaque carte est un vrai mot de la langue française,
         imprimé comme un timbre-poste. Pour jouer, active JavaScript dans ton navigateur.</p>

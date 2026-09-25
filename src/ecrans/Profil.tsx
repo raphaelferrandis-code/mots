@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent } from 'react';
 import { Identite, Portrait, Embleme } from '../composants/Identite.tsx';
 import { Motif } from '../composants/cosmetiques/Gravures.tsx';
+import { mouvementReduit } from '../composants/mouvement.ts';
 import { DosDeCarte } from '../composants/carte/Carte.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
@@ -58,13 +59,12 @@ export function Profil() {
   function selectionner(id: string) {
     choisir(id); signaler(''); dire('');
     if (window.innerWidth < 768 && essayage.current && essayage.current.getBoundingClientRect().top < 0) {
-      const reduire = sauvegarde.reglages.reduireAnimations || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      essayage.current.scrollIntoView({ block: 'start', behavior: reduire ? 'instant' : 'smooth' });
+      essayage.current.scrollIntoView({ block: 'start', behavior: mouvementReduit() ? 'instant' : 'smooth' });
     }
   }
   function equiper() { personnaliser(categorie, choix); dire(`${nom} équipé.`); signaler(''); }
   function incliner(e: PointerEvent<HTMLDivElement>) {
-    if (sauvegarde.reglages.reduireAnimations || window.matchMedia('(prefers-reduced-motion: reduce)').matches || e.pointerType !== 'mouse') return;
+    if (mouvementReduit() || e.pointerType !== 'mouse') return;
     const b = e.currentTarget.getBoundingClientRect();
     e.currentTarget.style.setProperty('--inclinaison-x', `${(e.clientY-b.top-b.height/2)/b.height*-7}deg`);
     e.currentTarget.style.setProperty('--inclinaison-y', `${(e.clientX-b.left-b.width/2)/b.width*9}deg`);

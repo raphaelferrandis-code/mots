@@ -2,7 +2,7 @@
 // ventes et ses mises. Pour vendre un timbre, on passe par sa fiche (bouton « Vendre ce timbre »).
 // L'écran ne contient aucune règle : tout passe par src/services/partie.ts, et le serveur a le dernier mot.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
@@ -15,6 +15,7 @@ import type { Enchere } from '../jeu/marche.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { decalageDuServeur, encherir, lireLeMarche, lireMesEncheres, retirerDeLaVente } from '../services/partie.ts';
+import type { PageDuMarche } from '../services/marche.ts';
 import { demanderConfirmation } from '../composants/Confirmation.tsx';
 
 const REGLES = EQUILIBRAGE.marche;
@@ -26,12 +27,22 @@ export function Marche() {
   const edition = useChargement(chargerEdition, 'edition');
   const maintenant = useMaintenant(30_000) + decalageDuServeur();
   const [recherche, setRecherche] = useState('');
+  // La recherche part 300 ms après la dernière touche frappée : plus une requête par lettre.
+  const [cherche, setCherche] = useState('');
+  useEffect(() => {
+    const minuterie = window.setTimeout(() => setCherche(recherche.trim().toLowerCase()), 300);
+    return () => window.clearTimeout(minuterie);
+  }, [recherche]);
   const [page, setPage] = useState(0);
   const [tour, setTour] = useState(0); // rechargé après chaque action
   const [message, setMessage] = useState<string | null>(null);
 
   const disponible = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
-  const marche = useChargement(async () => (disponible ? lireLeMarche(recherche.trim().toLowerCase(), page) : null), `marche:${disponible}:${recherche}:${page}:${tour}`);
+  const marche = useChargement(async () => (disponible ? lireLeMarche(cherche, page) : null), `marche:${disponible}:${cherche}:${page}:${tour}`);
+  // Pendant qu'une recherche ou une actualisation charge, la liste précédente reste affichée (estompée), sans clignoter.
+  const derniere = useRef<PageDuMarche | null>(null);
+  if (marche.etat === 'pret' && marche.donnees) derniere.current = marche.donnees;
+  const affichee = marche.etat === 'pret' ? marche.donnees : marche.etat === 'en cours' ? derniere.current : null;
   const miennes = useChargement(async () => (disponible ? lireMesEncheres() : null), `miennes:${disponible}:${tour}`);
   const cartes = edition.etat === 'pret' ? new Map(edition.donnees.cartes.map((c) => [c.id, c])) : null;
 
@@ -57,16 +68,16 @@ export function Marche() {
           {message && <p role="status" className="petit marche__message">{message}</p>}
 
           {marche.etat === 'erreur' && <p className="joute__refus" role="alert">{marche.message}</p>}
-          {marche.etat === 'en cours' && <p className="texte-doux">Ouverture du marché…</p>}
-          {marche.etat === 'pret' && marche.donnees && (
-            <section className="rubrique" aria-label="Enchères en cours">
-              {marche.donnees.total === 0 ? <div className="etat-vide"><h2>{recherche.trim() ? 'Aucun timbre trouvé' : 'Aucune enchère en cours'}</h2>{recherche.trim() && <button className="bouton" onClick={() => { setRecherche(''); setPage(0); }}>Effacer la recherche</button>}</div> : <p className="texte-doux petit">{marche.donnees.total} enchère{marche.donnees.total > 1 ? 's' : ''} en cours.</p>}
+          {marche.etat === 'en cours' && !affichee && <p className="texte-doux">Ouverture du marché…</p>}
+          {affichee && (
+            <section className="rubrique marche__liste" aria-label="Enchères en cours" aria-busy={marche.etat === 'en cours'}>
+              {affichee.total === 0 ? <div className="etat-vide"><h2>{cherche ? 'Aucun timbre trouvé' : 'Aucune enchère en cours'}</h2>{cherche && <button className="bouton" onClick={() => { setRecherche(''); setCherche(''); setPage(0); }}>Effacer la recherche</button>}</div> : <p className="texte-doux petit">{affichee.total} enchère{affichee.total > 1 ? 's' : ''} en cours.</p>}
               <ul className="liste-nue marche__encheres">
-                {marche.donnees.encheres.map((enchere) => (
+                {affichee.encheres.map((enchere) => (
                   <LigneDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />
                 ))}
               </ul>
-              {marche.donnees.total > (page + 1) * REGLES.encheresParPage && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p + 1)}>Enchères suivantes</button>}
+              {affichee.total > (page + 1) * REGLES.encheresParPage && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p + 1)}>Enchères suivantes</button>}
               {page > 0 && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p - 1)}>Enchères précédentes</button>}
             </section>
           )}

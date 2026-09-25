@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
@@ -25,17 +25,29 @@ const TRIS = {
 } as const;
 type Tri = keyof typeof TRIS;
 
+// L'album se souvient, le temps de la visite, de ses filtres et de l'endroit où l'on en était : en revenant d'une fiche
+// (ou d'un autre onglet), on retrouve sa page au lieu de repartir du haut, sans filtre.
+type Souvenir = { rarete: Rarete | ''; type: Nature | ''; faction: string; recherche: string; tri: Tri; pages: number; filtresVisibles: boolean; defilement: number };
+let souvenir: Souvenir | null = null;
+
 export function Collection() {
   const partie = usePartie();
   const edition = useChargement(chargerEdition, 'edition');
-  const [rarete, setRarete] = useState<Rarete | ''>('');
-  const [type, setType] = useState<Nature | ''>('');
-  const [faction, setFaction] = useState('');
-  const [recherche, setRecherche] = useState('');
-  const [tri, setTri] = useState<Tri>('recentes');
-  const [pages, setPages] = useState(1);
+  const [rarete, setRarete] = useState<Rarete | ''>(souvenir?.rarete ?? '');
+  const [type, setType] = useState<Nature | ''>(souvenir?.type ?? '');
+  const [faction, setFaction] = useState(souvenir?.faction ?? '');
+  const [recherche, setRecherche] = useState(souvenir?.recherche ?? '');
+  const [tri, setTri] = useState<Tri>(souvenir?.tri ?? 'recentes');
+  const [pages, setPages] = useState(souvenir?.pages ?? 1);
   const [progressionVisible, setProgressionVisible] = useState(false);
-  const [filtresVisibles, setFiltresVisibles] = useState(false);
+  const [filtresVisibles, setFiltresVisibles] = useState(souvenir?.filtresVisibles ?? false);
+
+  // Le souvenir est pris en quittant l'album, avant que la page suivante ne remplace la sienne (d'où « layout ») ;
+  // la position revient une fois les timbres affichés.
+  const vue = useRef({ rarete, type, faction, recherche, tri, pages, filtresVisibles });
+  vue.current = { rarete, type, faction, recherche, tri, pages, filtresVisibles };
+  useLayoutEffect(() => () => { souvenir = { ...vue.current, defilement: window.scrollY }; }, []);
+  const aRetrouver = useRef(souvenir?.defilement ?? 0);
 
   const pret = partie.etat === 'prete' && edition.etat === 'pret';
   const sauvegarde = partie.etat === 'prete' ? partie.sauvegarde : null;
@@ -90,6 +102,12 @@ export function Collection() {
     };
     return filtrees.sort((a, b) => ordres[tri](a, b) || a.mot.localeCompare(b.mot, 'fr'));
   }, [possedees, sauvegarde, rarete, type, faction, recherche, tri]);
+
+  useEffect(() => {
+    if (!pret || aRetrouver.current === 0) return;
+    window.scrollTo(0, aRetrouver.current);
+    aRetrouver.current = 0;
+  }, [pret]);
 
   if (edition.etat === 'erreur') return <main className="ecran"><h1>Ton album</h1><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></main>;
   if (!pret) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;

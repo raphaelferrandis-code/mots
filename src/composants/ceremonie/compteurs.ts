@@ -3,6 +3,7 @@
 // vraie valeur au moment où les timbres sont rangés, comme sur la maquette.
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { mouvementReduit } from '../mouvement.ts';
 
 export type Compteur = 'encre' | 'xp';
 
@@ -22,7 +23,6 @@ export function libererLesCompteurs(): void {
   prevenir();
 }
 
-const mouvementReduit = (): boolean => document.documentElement.hasAttribute('data-animations-reduites') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Un nombre qui monte (ou descend) jusqu'à sa cible, en ralentissant à la fin.
 export function useNombreAnime(cible: number | null, duree = 900): number | null {
