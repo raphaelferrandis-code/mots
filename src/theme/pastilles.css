@@ -23,8 +23,9 @@
 
 .c-vignette { --losange: #8a96ad; --filet-vignette: rgba(31, 42, 68, .28); color: #1f2a44; background: var(--c-papier, #f1e7d0); }
 .c-vignette::before { content: ''; width: 5px; height: 5px; rotate: 45deg; background: var(--losange); flex-shrink: 0; }
+/* Le losange de rareté reprend la couleur de l'aura du timbre (timbre.css) : vert, bleu, violet, or, irisé. */
 .c-vignette[data-rarete='Peu commune'] { --losange: #5f9a7c; }
-.c-vignette[data-rarete='Rare'] { --losange: var(--c-cuivre, #d89a5c); --filet-vignette: rgba(176, 106, 48, .5); }
+.c-vignette[data-rarete='Rare'] { --losange: #3f86dc; --filet-vignette: rgba(47, 111, 181, .45); }
 .c-vignette[data-rarete='Épique'] { --losange: #7a5bc4; --filet-vignette: rgba(122, 91, 196, .45); }
 .c-vignette[data-rarete='Légendaire'] { --losange: #2a1605; --filet-vignette: rgba(42, 22, 5, .45); color: #2a1605; background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }
 .c-vignette[data-rarete='Hors-série'] { --losange: #2b1447; --filet-vignette: rgba(43, 20, 71, .4); color: #2b1447; background: linear-gradient(100deg, #cfaeff, #ffd9ec 30%, #b57bff 55%, #bfe9ff 80%, #e4ccff) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }

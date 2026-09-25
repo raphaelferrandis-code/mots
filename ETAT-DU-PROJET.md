@@ -2,6 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — la rareté se voit : une aura autour des timbres.** Raphaël ne voyait pas de différence entre
+> les raretés (Commune, Peu commune et Rare étaient presque identiques, et une Commune brillante passait pour le
+> meilleur timbre). Parmi trois pistes (cadre en métal, médaillon, aura), il a choisi **l'aura** : une lueur autour du
+> timbre — Peu commune vert, Rare bleu, Épique violet, Légendaire or (qui respire), Hors-série irisée ; rien pour la
+> Commune ; éteinte tant que le timbre est face cachée. Elle suit le timbre partout (album, deck, duel, cérémonie,
+> accueil, fiche, marché) : `src/composants/timbre/timbre.css`. Le losange « Rare » des pastilles passe du cuivre au
+> bleu. Au passage, les accents des mots dorés (finition brillante) ne sont plus coupés (PÉPÈRE s'affichait PEPERE).
+> Rien à installer. Page de contrôle : `#/timbres` (les six raretés dans chaque finition, en grand et en petit).
+
 > **25 septembre 2026 — les paiements (achats toujours FERMÉS) : EN LIGNE.** `serveur/19-paiements.sql` collé et les
 > quatre fonctions de paiement redéployées par Raphaël, vérifiés par l'assistant en lecture seule (empreintes du code
 > déployé, « Verify JWT » désactivé, production « achats fermés »). Décisions de Raphaël : un joueur qui a payé supprime

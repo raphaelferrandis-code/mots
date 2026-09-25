@@ -12,7 +12,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { Timbre } from '../composants/timbre/Timbre.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import type { CarteIndex, Finition, Nature } from '../partage/types.ts';
-import { RARETES_ORDINAIRES } from '../partage/types.ts';
+import { FINITIONS, RARETES } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import './essaiTimbre.css';
 
@@ -80,11 +80,30 @@ export function EssaiTimbre() {
         </div>
       </section>)}
 
-      <h2>Les raretés (finition normale)</h2>
-      <div className="essai-timbre__timbres">
-        {RARETES_ORDINAIRES.map((rarete) => <figure key={rarete} style={largeur(170)}>
-          <Timbre carte={trouver((c) => c.rarete === rarete, 61)} oblitere={oblitere} cliquable={false} />
-          <figcaption>{rarete}</figcaption>
+      <h2>Les raretés, dans chaque finition</h2>
+      <p className="texte-doux">Même nature partout (Nom) : seule la rareté change d’une colonne à l’autre, seule la finition d’une rangée à l’autre.</p>
+      <div id="raretes" className="essai-timbre__matrice">
+        {FINITIONS.map((finition) => <div key={finition} className="essai-timbre__timbres">
+          {RARETES.map((rarete) => <figure key={rarete} style={largeur(150)}>
+            <Timbre carte={rarete === 'Hors-série' ? parMot('amour') : trouver((c) => c.rarete === rarete && c.type === 'Nom' && [...c.mot].length <= 9, 61)} finition={finition} oblitere={oblitere} cliquable={false} />
+            <figcaption>{rarete}{finition === 'Normale' ? '' : ` · ${finition.toLowerCase()}`}</figcaption>
+          </figure>)}
+        </div>)}
+      </div>
+
+      <h2>Les raretés en petit (album sur téléphone, plateau du duel)</h2>
+      <div id="raretes-petites" className="essai-timbre__timbres">
+        {[110, 56].flatMap((taille) => RARETES.map((rarete, i) => <figure key={`${taille}-${rarete}`} style={largeur(taille)}>
+          <Timbre carte={rarete === 'Hors-série' ? parMot('amour') : trouver((c) => c.rarete === rarete && c.type === (['Nom', 'Verbe', 'Adjectif', 'Nom', 'Verbe'] as const)[i], 17)} oblitere={oblitere} cliquable={false} />
+        </figure>))}
+      </div>
+
+      <h2>Un paquet ordinaire</h2>
+      <p className="texte-doux">Les cinq timbres de la capture de Raphaël (25 septembre) : trois Communes (dont une brillante), une Peu commune, une Rare.</p>
+      <div id="eventail" className="essai-timbre__timbres">
+        {([['atmosphère', 'Normale'], ['hoquet', 'Normale'], ['pépère', 'Brillante'], ['écorné', 'Normale'], ['macumba', 'Normale']] as const).map(([mot, finition]) => <figure key={mot} style={largeur(150)}>
+          <Timbre carte={parMot(mot)} finition={finition} oblitere={oblitere} cliquable={false} />
+          <figcaption>{parMot(mot).rarete}{finition === 'Normale' ? '' : ` · ${finition.toLowerCase()}`}</figcaption>
         </figure>)}
       </div>
 

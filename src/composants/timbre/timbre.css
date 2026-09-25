@@ -117,6 +117,35 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 .tb:is([data-niveau='4'], [data-niveau='5']) .tb__impression::after { border-color: var(--filet-metal); box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .42em var(--filet-metal); opacity: .8; }
 .tb:is([data-niveau='4'], [data-niveau='5']) .tb__valeur { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .tb:is([data-niveau='4'], [data-niveau='5']) .tb__trait--second { stroke: var(--filet-metal); opacity: .7; }
+/* ── La rareté se voit d'abord à son aura ──────────────────────────────────────
+   Choix de Raphaël (25 septembre 2026) : une lueur autour du timbre, aux couleurs de rareté des jeux de cartes
+   (et des pastilles de la cérémonie) — Peu commune vert, Rare bleu, Épique violet, Légendaire or, Hors-série
+   irisé ; la Commune n'en a pas. Deux ombres colorées sous le papier, mesurées en largeur du timbre (elles
+   grandissent avec lui) : un liseré au ras de la dentelure, qui colore aussi les trous, puis un halo plus large.
+   L'élément est en retrait de 2,5 % sous le papier ; l'étalement le ramène au bord. L'aura reste éteinte tant
+   que le timbre est face cachée et s'allume quand il se retourne. */
+.tb__cadre::before {
+  content: ''; position: absolute; inset: 2.5cqw; z-index: -1; pointer-events: none;
+  box-shadow: 0 0 var(--aura-bord-flou, 2.5cqw) var(--aura-bord, 3cqw) var(--aura, transparent), 0 0 var(--aura-flou, 10cqw) var(--aura-etendue, 3.5cqw) var(--aura, transparent);
+  opacity: var(--aura-force, 0);
+  transition: opacity .6s ease-out;
+}
+.tb[data-niveau='2'] { --aura: #6fd39c; --aura-force: .65; --aura-bord: 2.7cqw; --aura-bord-flou: 2cqw; --aura-flou: 7cqw; --aura-etendue: 2cqw; }
+.tb[data-niveau='3'] { --aura: #4f96ea; --aura-force: .9; --aura-bord: 3cqw; --aura-bord-flou: 2.5cqw; --aura-flou: 11cqw; --aura-etendue: 3.5cqw; }
+.tb[data-niveau='4'] { --aura: #a97ff2; --aura-force: 1; --aura-bord: 3.2cqw; --aura-bord-flou: 3cqw; --aura-flou: 14cqw; --aura-etendue: 4.5cqw; }
+.tb[data-niveau='5'] { --aura: #f6c544; --aura-force: 1; --aura-bord: 3.5cqw; --aura-bord-flou: 3cqw; --aura-flou: 17cqw; --aura-etendue: 5.5cqw; }
+.tb[data-niveau='6'] { --aura-force: 1; }
+.tb[data-niveau='6'] .tb__cadre::before { box-shadow: -3cqw -2.5cqw 15cqw 4.5cqw #ff6fa3, 3cqw 2.8cqw 15cqw 4.5cqw #6bd4ff, 0 0 3cqw 3.2cqw #fff0c0; }
+.tb[data-face='verso'] .tb__cadre::before { opacity: 0; transition: none; }
+/* Les Légendaires respirent doucement ; l'aura des Hors-série change de reflet. Jamais en mouvement réduit. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-animations-reduites]) .tb[data-niveau='5']:not([data-face='verso']) .tb__cadre::before { animation: tb-aura 3.4s ease-in-out infinite alternate; }
+  :root:not([data-animations-reduites]) .tb[data-niveau='6']:not([data-face='verso']) .tb__cadre::before { animation: tb-aura 3.4s ease-in-out infinite alternate, tb-aura-irisee 5s ease-in-out infinite alternate; }
+}
+@keyframes tb-aura { from { opacity: 1; } to { opacity: .62; } }
+/* Le reflet glisse sans quitter le rose et le bleu : l'aura d'une Hors-série ne doit jamais passer pour une autre rareté. */
+@keyframes tb-aura-irisee { from { filter: hue-rotate(-35deg); } to { filter: hue-rotate(35deg); } }
+
 /* Hors-série : impression noire, cadre irisé, illustration propre au mot. */
 .tb[data-niveau='6'] { --trait: #fff6dc; }
 .tb[data-niveau='6'] .tb__impression::after { border: .14em solid transparent; border-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f) 1; }
@@ -138,6 +167,8 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
   background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+/* L'or est un fond découpé aux lettres : il lui faut de la place au-dessus pour les accents des capitales (PÉPÈRE). */
+.tb[data-finition='Brillante'] .tb__mot { padding-top: .3em; }
 .tb[data-finition='Brillante'] .tb__vernis {
   background: linear-gradient(115deg, transparent 36%, rgba(255, 226, 160, .6) 47%, rgba(255, 248, 222, .95) 50%, rgba(255, 226, 160, .55) 53%, transparent 64%);
   background-size: 300% 300%; background-position: calc(var(--mx, .5) * 100%) 50%;

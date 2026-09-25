@@ -4,8 +4,9 @@
 // n'importe quelle taille sans rien recalculer.
 //
 // Ce qui vient du jeu : l'attaque et la défense (les deux valeurs du haut), l'origine, la nature (couleur de
-// l'encre), la rareté (cadre et mention imprimée), la finition (reflets), la date d'obtention (cachet) et le
-// cachet « Maîtrisé ». La définition n'est plus imprimée sur le timbre : elle se lit à côté (fiche, cérémonie).
+// l'encre), la rareté (aura autour du timbre, cadre et mention imprimée), la finition (reflets), la date
+// d'obtention (cachet) et le cachet « Maîtrisé ». La définition n'est plus imprimée sur le timbre : elle se lit
+// à côté (fiche, cérémonie).
 
 import { useId, useRef } from 'react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
