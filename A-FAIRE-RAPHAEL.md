@@ -53,7 +53,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 |---|---|
 | Vignette de partage (image quand on partage le lien) | En ligne |
 | Site prêt pour Google (titre, description, plan du site) | En ligne ; **inscription à faire** (étape 4) |
-| Contrôle anti-robot Cloudflare | Clé du site publiée ; **reste à l'activer dans Supabase** (étape 3) |
+| Contrôle anti-robot Cloudflare | **En ligne** (étape 3 faite) |
 | Adversaire de secours des joutes en direct | **En ligne** (étape 2 faite) |
 | Parrainage (3 paquets chacun) | **En ligne** (étape 2 faite) |
 | Nouveaux cadres et avatars de portrait (une récompense par niveau jusqu'au 50) | En ligne |
@@ -74,7 +74,7 @@ Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md).
 - [x] Vérifié avec un joueur d'essai, créé puis supprimé.
 - [x] `secoursEtParrainage: true` dans `src/config/serveur.ts`, jeu publié.
 
-### Étape 3 — Allumer le contrôle anti-robot (10 minutes)
+### Étape 3 — Allumer le contrôle anti-robot — FAIT le 25 septembre
 
 Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
 
@@ -84,9 +84,9 @@ Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
       souvent par `0x4AAAA…`). **Ne jamais lui envoyer la Secret Key.** Pour la retrouver plus tard : Cloudflare →
       **Turnstile** → widget `Philamots` → **Settings**.
 - [x] L'assistant l'écrit dans `src/config/serveur.ts` (`cleAntiRobot`) et publie. Fait le 25 septembre.
-- [ ] **Seulement ensuite** : Supabase → Authentication → Attack Protection → **Enable Captcha protection**,
+- [x] **Seulement ensuite** : Supabase → Authentication → Attack Protection → **Enable Captcha protection**,
       fournisseur **Turnstile by Cloudflare**, coller la **Secret Key**, **Save**.
-- [ ] Ouvrir philamots.fr en navigation privée : le jeu doit s'ouvrir avec 3 paquets.
+- [x] Ouvrir philamots.fr en navigation privée : le jeu doit s'ouvrir avec 3 paquets. Vérifié par Raphaël.
 
 ### Étape 4 — Se faire connaître de Google et de Bing (15 minutes)
 
@@ -125,7 +125,7 @@ Du plus efficace au moins efficace pour démarrer :
    sur la fiche d'un timbre). Une courte vidéo d'ouverture de paquet marche bien aussi.
 4. **Les vidéastes et blogueurs** qui parlent de langue française : un message court avec le lien.
 
-Avant une vraie campagne auprès d'inconnus : l'étape 3 (anti-robot) doit être faite.
+L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'inconnus.
 
 ---
 
