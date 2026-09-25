@@ -111,8 +111,6 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
       </nav>
 
       <div className="navigation__personnel">
-        <a className="lien-amis" href={lien({ ecran: 'amis' })} aria-label="Amis — échanges et défis" title="Amis" aria-current={ecran === 'amis' ? 'page' : undefined}>{DESSINS.amis}</a>
-
         <div className="encre">
           <a className="reserve-encre" href={lien({ ecran: 'paquet' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encreEnClair} Encre — voir les paquets`}>
             <span className="reserve-encre__flacon"><Icone nom="encre" /></span>

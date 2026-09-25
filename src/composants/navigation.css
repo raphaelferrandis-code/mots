@@ -28,14 +28,8 @@
 }
 
 
-/* ── L'espace personnel : amis, Encre, avatar ──────────────────────────────── */
+/* ── L’espace personnel : Encre, avatar ──────────────────────────────── */
 .navigation__personnel { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: auto; }
-.lien-amis {
-  display: grid; place-items: center; width: 44px; height: 44px; box-sizing: border-box; border: 1px solid var(--filet); border-radius: 12px;
-  color: var(--encre-douce); transition: background-color .15s, color .15s;
-}
-.lien-amis svg { width: 21px; height: 21px; }
-.lien-amis[aria-current='page'] { color: var(--accent); border-color: var(--accent); }
 
 .encre { position: relative; display: flex; align-items: center; height: 46px; box-sizing: border-box; padding: 0 6px; border: 1px solid var(--filet); border-radius: 23px; background: var(--carte-fond); }
 .reserve-encre { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-right: 10px; color: var(--encre-douce); text-decoration: none; white-space: nowrap; font-size: 0.82rem; }
@@ -162,7 +156,6 @@
 
 @media (hover: hover) {
   .navigation__lien:hover { color: var(--accent-survol); }
-  .lien-amis:hover { background: var(--papier-fonce); color: var(--encre); }
   .reserve-encre:hover strong { color: var(--accent-survol); }
   .encre__plus:hover { background: var(--accent-survol); }
   .bouton-joueur:hover { color: var(--encre); }
@@ -203,8 +196,6 @@
   .navigation__lien[aria-current='page']::after { top: -1px; bottom: auto; left: 28%; right: 28%; border-radius: 0 0 3px 3px; }
 
   .navigation__personnel { gap: 8px; }
-  .lien-amis { width: 40px; height: 40px; }
-  .lien-amis svg { width: 19px; height: 19px; }
   .encre { height: 40px; padding: 0 4px; border-radius: 20px; }
   .reserve-encre { gap: 7px; padding-right: 7px; }
   .reserve-encre__flacon { width: 28px; height: 28px; }
