@@ -72,6 +72,18 @@
         "serveur/apercu-correspondance.mjs"
       ],
       "port": 5192
+    },
+    {
+      "name": "apercu-production",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--port",
+        "4175",
+        "--strictPort"
+      ],
+      "port": 4175
     }
   ]
 }

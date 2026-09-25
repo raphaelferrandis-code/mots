@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { choisirModePaiements } from './src/services/mode-paiements.ts';
+import { SERVEUR } from './src/config/serveur.ts';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -21,10 +22,35 @@ function empreinteDesDonnees(): string {
 }
 process.env.VITE_VERSION_DES_DONNEES = empreinteDesDonnees();
 
+// La politique de sécurité du contenu (CSP) : le navigateur refuse tout script, cadre ou connexion qui ne vient pas du
+// jeu, de son serveur (Supabase) ou du contrôle anti-robot (Cloudflare Turnstile). Une ceinture de sécurité : si une
+// faille laissait un jour passer du code étranger, il ne pourrait ni s'exécuter, ni envoyer la session ailleurs.
+// Seulement dans le site construit : le serveur de développement a besoin de ses propres scripts.
+function politiqueDeSecurite(): string {
+  const serveur = SERVEUR.adresse ? new URL(SERVEUR.adresse).host : '';
+  const turnstile = 'https://challenges.cloudflare.com';
+  return [
+    "default-src 'self'",
+    `script-src 'self' ${turnstile}`,
+    "style-src 'self' 'unsafe-inline'", // les styles posés par React (style={…}) et l'écran d'attente d'index.html
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    `connect-src 'self'${serveur ? ` https://${serveur} wss://${serveur}` : ''}`,
+    `frame-src ${turnstile}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+}
+
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
   return {
   plugins: [react(), {
+    name: 'politique-de-securite',
+    apply: 'build',
+    transformIndexHtml: () => [{ tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: politiqueDeSecurite() }, injectTo: 'head-prepend' }],
+  }, {
     name: 'version-paiements',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'paiements-version.json', source: JSON.stringify({
