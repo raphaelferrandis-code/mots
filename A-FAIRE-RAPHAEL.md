@@ -52,7 +52,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Chantier | État |
 |---|---|
 | Vignette de partage (image quand on partage le lien) | En ligne |
-| Site prêt pour Google (titre, description, plan du site) | En ligne ; **inscription à faire** (étape 4) |
+| Site prêt pour Google (titre, description, plan du site) | En ligne ; inscrit chez Google et Bing (étape 4 faite) |
 | Contrôle anti-robot Cloudflare | **En ligne** (étape 3 faite) |
 | Adversaire de secours des joutes en direct | **En ligne** (étape 2 faite) |
 | Parrainage (3 paquets chacun) | **En ligne** (étape 2 faite) |
@@ -88,7 +88,7 @@ Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
       fournisseur **Turnstile by Cloudflare**, coller la **Secret Key**, **Save**.
 - [x] Ouvrir philamots.fr en navigation privée : le jeu doit s'ouvrir avec 3 paquets. Vérifié par Raphaël.
 
-### Étape 4 — Se faire connaître de Google et de Bing (15 minutes)
+### Étape 4 — Se faire connaître de Google et de Bing — FAIT le 25 septembre
 
 Détails : [GUIDE-google.md](GUIDE-google.md).
 
@@ -97,7 +97,7 @@ Détails : [GUIDE-google.md](GUIDE-google.md).
       à l'assistant (elle n'est pas secrète). Balise publiée dans `index.html` le 25 septembre.
 - [x] Une fois publiée par l'assistant : **Valider**, puis **Sitemaps** → `sitemap.xml` → **Envoyer**, puis
       **Inspecter l'URL** `https://philamots.fr/` → **Demander une indexation**.
-- [ ] https://www.bing.com/webmasters → **Se connecter** (en haut à droite, avec le compte Google de la Search
+- [x] https://www.bing.com/webmasters → **Se connecter** (en haut à droite, avec le compte Google de la Search
       Console) → sur l'écran « Ajouter votre site », bloc de gauche **Importer depuis GSC** → **Importer** →
       autoriser l'accès → cocher `philamots.fr` → **Importer**.
 
