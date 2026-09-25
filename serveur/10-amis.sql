@@ -42,7 +42,10 @@ begin
   return jsonb_build_object('moi',case when moi.id is null then null else jsonb_build_object('id',moi.id,'pseudo',moi.pseudo) end,
     'relations',(select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'pseudo',p.pseudo,
       'etat',case when a.acceptee then 'ami' when a.demandeur=moi.id then 'envoyee' else 'recue' end,
-      'defiable',jsonb_array_length(public.deck_propre(p.utilisateur,p.deck))=10) order by p.pseudo),'[]')
+      'defiable',jsonb_array_length(public.deck_propre(p.utilisateur,p.deck))=10,
+      'xp',public.xp_du_profil(p.utilisateur),'avatar',p.avatar,'cadre',p.cadre,
+      'vu_le',case when a.acceptee then (extract(epoch from p.vu_le)*1000)::bigint end)
+      || case when a.acceptee then public.vitrine_du_profil(p.utilisateur) else '{}'::jsonb end order by p.pseudo),'[]')
       from public.amities a join public.profils p on p.id=case when a.demandeur=moi.id then a.destinataire else a.demandeur end
       where moi.id in (a.demandeur,a.destinataire)),
     'echanges',(select coalesce(jsonb_agg(to_jsonb(t)),'[]') from (

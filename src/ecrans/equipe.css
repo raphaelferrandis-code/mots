@@ -1,23 +1,115 @@
-.equipe { max-width: 880px; }
-.equipe__entete, .equipe__membres li { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.equipe__identite { display: flex; align-items: center; gap: 20px; }
-.equipe__identite h2, .equipe__identite h3 { overflow-wrap: anywhere; }
-.equipe__embleme { display: grid; place-items: center; flex: 0 0 64px; height: 64px; border: 1px solid var(--accent); color: var(--accent); font-size: 40px; }
-.equipe__carte, .equipe__invitations, .equipe__invitations .bloc { display: grid; gap: 20px; }
-.equipe__membres li { padding-block: 16px; border-bottom: 1px solid var(--filet); }
-.equipe__membres strong { overflow-wrap: anywhere; }
-.equipe__formulaire { margin-top: 20px; }
+/* La page Mon équipe (refonte du 25/09/2026). Pièces communes : composants/correspondance/correspondance.css. */
+.equipe { max-width: 1120px; }
 .equipe fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
-.equipe label { display: grid; gap: 8px; }
-.equipe input:not([type=radio]), .equipe select { width: 100%; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre); font: inherit; }
-.equipe .equipe__emblemes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-block: 24px; }
+.equipe__section { display: flex; flex-direction: column; gap: 18px; }
+.equipe__fonder { padding-top: 30px; border-top: 1px solid var(--filet); }
+.equipe__fonder:first-child, .equipe__section + .equipe__fonder { border-top: 1px solid var(--filet); }
+.equipe .equipe__fonder h2 { font-size: 1.9rem; }
+
+/* Le blason : l'emblème sur son timbre, le nom, le duo et la cote. */
+.blason {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 48px; align-items: center;
+  padding: 40px 44px; border-radius: 18px; border: 1px solid var(--filet);
+  background: linear-gradient(115deg, #17324f 0%, var(--carte-fond) 52%, #0d1c31 100%); box-shadow: 0 18px 40px rgb(0 0 0 / 28%);
+}
+.blason > * { position: relative; }
+.blason .blason__filigrane { position: absolute; right: -30px; top: -120px; font: 400 460px/1 var(--police-signe); color: var(--cuivre); opacity: 0.05; pointer-events: none; }
+.blason__timbre { position: relative; }
+.blason__timbre .cachet { position: absolute; right: -36px; bottom: -18px; width: 80px; height: 80px; background: rgb(16 33 57 / 80%); }
+.blason__centre { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.correspondance .blason__nom { margin: 0 0 10px; font: 700 clamp(2.2rem, 4.5vw, 3.6rem)/1 var(--police-serif); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.blason__actions { display: flex; flex-direction: column; align-items: stretch; gap: 12px; min-width: 210px; }
+.blason__cote { display: grid; justify-items: center; gap: 4px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--filet); background: rgb(11 23 41 / 60%); }
+.blason__cote strong { font: 700 2.2rem/1.1 var(--police-serif); color: var(--papier-timbre); }
+.blason--apercu { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 22px; padding: 32px 28px; text-align: center; }
+.blason--apercu .blason__filigrane { top: auto; bottom: -110px; right: -40px; font-size: 320px; }
+.blason--apercu .blason__nom { font-size: 2.1rem; font-weight: 700; font-family: var(--police-serif); overflow-wrap: anywhere; }
+.blason--apercu p { margin: 0; }
+
+.duo { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 22px; }
+.duo--centre { justify-content: center; }
+.duo__groupe { display: flex; align-items: center; gap: 22px; }
+.duo__membre { display: flex; align-items: center; gap: 14px; }
+.duo__membre > div { display: grid; gap: 6px; }
+.duo__membre strong { font: 700 1.25rem/1 var(--police-serif); overflow-wrap: anywhere; }
+.duo__membre strong .texte-doux { font: 400 0.88rem var(--police-texte); }
+.duo__membre--colonne { flex-direction: column; gap: 8px; font-size: 0.82rem; }
+.duo__et { font: italic 400 3.2rem/1 var(--police-serif); color: var(--cuivre); }
+.duo--centre .duo__et { font-size: 2.4rem; margin-bottom: 26px; }
+.duo__role { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--encre-douce); }
+.duo__role--capitaine { color: var(--classement-or); }
+.duo__role svg { width: 15px; height: 15px; }
+.duo__place { width: 56px; height: 56px; box-sizing: border-box; border-radius: 50%; border: 1.5px dashed var(--filet-fort); }
+
+/* Les panneaux sous le blason. */
+.equipe__panneaux { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: start; }
+.equipe__panneaux--seul { grid-template-columns: minmax(0, 620px); }
+.panneau-equipe { display: flex; flex-direction: column; gap: 18px; padding: 26px; border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond); }
+.panneau-equipe > p { margin: 0; }
+.panneau-equipe .bouton--accent { align-self: stretch; }
+.sieges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.siege { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--filet); min-width: 0; }
+.siege > div { display: grid; gap: 4px; min-width: 0; }
+.siege strong { overflow-wrap: anywhere; }
+.panneau-equipe__regles { border-top: 1px solid var(--filet); padding-top: 12px; font-size: 0.9rem; color: var(--encre-douce); }
+.panneau-equipe__regles summary { cursor: pointer; min-height: 32px; }
+.panneau-equipe__regles p { margin: 8px 0 0; line-height: 1.55; }
+.invitation-envoyee p { margin: 0 0 8px; }
+
+.equipe__formulaire fieldset { display: flex; flex-direction: column; gap: 22px; }
+.equipe__nom { display: grid; gap: 8px; }
+.equipe__nom input { width: 100%; min-height: 52px; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre); font: 700 1.25rem var(--police-serif); }
+.equipe .equipe__emblemes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .equipe__emblemes legend { margin-bottom: 12px; }
-.equipe__choix-embleme { position: relative; padding: 12px; text-align: center; border: 1px solid var(--filet-fort); cursor: pointer; }
-.equipe__choix-embleme:has(:checked) { border-color: var(--accent); background: var(--papier-haut); }
-.equipe__choix-embleme:focus-within { outline: 2px solid var(--focus); }
-.equipe__choix-embleme input { position: absolute; top: 8px; left: 8px; accent-color: var(--accent); }
-.equipe__choix-embleme span[aria-hidden] { font-size: 30px; color: var(--accent); }
-.equipe__inviter { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-.equipe__inviter label { flex: 1; min-width: 180px; }
-.equipe__confirmation { margin-top: 20px; }
-@media (max-width: 400px) { .equipe .equipe__emblemes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.equipe__choix-embleme { position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; box-sizing: border-box; border: 1.5px solid var(--filet); border-radius: 10px; cursor: pointer; }
+.equipe__choix-embleme:has(:checked) { border-color: var(--accent); background: var(--papier-fonce); }
+.equipe__choix-embleme:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.equipe__choix-embleme input { position: absolute; opacity: 0; pointer-events: none; }
+.equipe__sceau { width: 42px; height: 42px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--papier); box-shadow: 0 0 0 1px rgb(216 154 92 / 35%); color: var(--cuivre); font: 400 1.5rem/1 var(--police-signe); }
+.equipe__choix-embleme:has(:checked) .equipe__sceau { background: var(--papier-timbre); color: var(--encre-timbre); }
+.panneau-equipe--edition .equipe__emblemes { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.panneau-equipe--edition .equipe__choix-embleme { flex-direction: column; gap: 6px; padding: 10px 4px 8px; font-size: 0.78rem; color: var(--encre-douce); }
+.equipe__inviter { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.equipe__inviter label { flex: 1; min-width: 180px; display: grid; gap: 8px; }
+.equipe__inviter select { width: 100%; min-height: 46px; padding: 10px; border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre); font: inherit; }
+
+/* Fonder une équipe : le formulaire et son aperçu. */
+.equipe__creation { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 36px; align-items: start; }
+.equipe__creation > .equipe__formulaire { padding: 28px; border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond); }
+.equipe__apercu { display: flex; flex-direction: column; gap: 12px; }
+
+/* Une invitation reçue, comme une enveloppe. */
+.equipe .equipe__invitations { gap: 12px; }
+.invitation-equipe {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 28px; padding: 22px 26px;
+  border-radius: var(--rayon-carte); border: 1px solid rgb(241 138 75 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 45%);
+}
+.invitation-equipe__texte { display: grid; gap: 8px; min-width: 0; }
+.invitation-equipe__texte p { margin: 0; }
+.correspondance .invitation-equipe h2 { font-size: 1.75rem; overflow-wrap: anywhere; }
+.invitation-equipe__actions { display: grid; gap: 8px; }
+
+/* Partir ou dissoudre, à l'écart. */
+.equipe__depart { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; padding: 18px 22px; border-radius: 12px; border: 1px dashed var(--filet); }
+.equipe__depart > p { margin: 0; }
+.equipe__confirmation { flex-basis: 100%; }
+.equipe__confirmation p { margin: 0 0 12px; }
+
+@media (max-width: 1000px) {
+  .blason { grid-template-columns: auto minmax(0, 1fr); gap: 32px; padding: 28px; }
+  .blason__actions { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+  .blason__actions > * { flex: 1; }
+  .equipe__panneaux, .equipe__creation { grid-template-columns: minmax(0, 1fr); }
+  .invitation-equipe { grid-template-columns: auto minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .blason { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+  .blason__timbre .timbre-embleme--grand { width: 120px; height: 148px; }
+  .blason__timbre .timbre-embleme--grand .timbre-embleme__signe { font-size: 3.4rem; }
+  .duo__et { font-size: 2.4rem; }
+  .sieges { grid-template-columns: minmax(0, 1fr); }
+  .panneau-equipe { padding: 18px; }
+  .panneau-equipe--edition .equipe__emblemes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .equipe .equipe__emblemes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invitation-equipe { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+}

@@ -1,0 +1,160 @@
+/* Les pièces communes des pages Amis et Mon équipe (refonte du 25/09/2026) :
+   carte d'expéditeur et onglets, portraits d'amis, cachets de la poste, vitrine, timbres de papier, enveloppe par avion. */
+
+.correspondance {
+  --police-signe: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Apple Symbols', 'DejaVu Sans', var(--police-serif);
+  --cuivre: #d89a5c;
+  --papier-timbre: #f1e7d0;
+  --encre-timbre: #172235;
+  --reussite: #78c99c;
+  display: flex; flex-direction: column; gap: 30px;
+}
+.correspondance h2 { margin: 0; font: 700 1.5rem/1.15 var(--police-serif); color: var(--encre); }
+
+/* Petites capitales étroites, au-dessus des noms et des valeurs. */
+.mention { display: block; font: 500 0.78rem/1.1 var(--police-mention); letter-spacing: 0.14em; text-transform: uppercase; color: var(--encre-douce); }
+.mention--cuivre { font-weight: 600; letter-spacing: 0.2em; color: var(--cuivre); }
+.mention--vive { color: var(--accent); }
+
+.compte {
+  display: inline-block; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px;
+  background: var(--papier-fonce); color: var(--encre); font: 600 0.75rem/22px var(--police-texte); text-align: center;
+}
+.compte--vif { background: var(--accent); color: var(--accent-texte); }
+
+/* Les boutons de la correspondance : l'orange pour la prochaine action, le discret pour le reste. */
+.correspondance .bouton { min-height: 46px; padding: 10px 20px; align-self: auto; gap: 8px; }
+.correspondance .bouton svg { width: 17px; height: 17px; flex-shrink: 0; }
+.correspondance .bouton--accent {
+  background: linear-gradient(110deg, #f7a06a, #e5793a); border-color: #ffb887; border-bottom-color: #9e4c1c;
+  color: var(--accent-texte); font-weight: 600; text-shadow: none;
+}
+.correspondance .bouton--accent::before { border-color: #fff3; }
+.correspondance .bouton--discret { background: transparent; border-color: var(--filet); box-shadow: none; color: var(--encre-douce); text-shadow: none; }
+.correspondance .bouton--discret::before { display: none; }
+.correspondance .bouton--petit { min-height: 40px; padding: 6px 14px; font-size: 0.88rem; }
+.correspondance .bouton--icone { width: 44px; min-height: 44px; padding: 0; }
+.correspondance .bouton--danger-doux { color: #ffb49a; border-color: #7a3b2e; }
+.correspondance .bouton:disabled { background: #1b2937; color: #8fa1b2; border-color: #3b4b5b; box-shadow: inset 0 1px 3px #0005; }
+@media (hover: hover) {
+  .correspondance .bouton--accent:not(:disabled):hover { background: linear-gradient(110deg, #ffb07e, var(--accent)); color: var(--accent-texte); border-color: #ffc9a3; }
+  .correspondance .bouton--discret:not(:disabled):hover { background: var(--papier-fonce); border-color: var(--filet-fort); color: var(--encre); }
+}
+
+/* ── En-tête : carte d'expéditeur et onglets ── */
+.correspondance__entete { display: flex; flex-direction: column; gap: 22px; }
+.carte-expediteur {
+  align-self: flex-start; display: flex; align-items: center; gap: 18px; padding: 14px 14px 14px 18px;
+  border: 1px solid var(--filet); border-radius: var(--rayon-carte); background: var(--carte-fond);
+}
+.carte-expediteur__nom { display: grid; gap: 6px; padding-right: 6px; }
+.carte-expediteur__nom strong { font: 700 1.4rem/1 var(--police-serif); overflow-wrap: anywhere; }
+.onglets-correspondance { display: flex; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--filet); }
+.onglets-correspondance a {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 22px; margin-bottom: -1px;
+  color: var(--encre-douce); text-decoration: none; font-weight: 500; border-bottom: 2px solid transparent;
+}
+.onglets-correspondance a[aria-current='page'] { color: var(--encre); border-bottom-color: var(--accent); }
+.onglets-correspondance a[aria-current='page'] .compte { background: var(--accent); color: var(--accent-texte); }
+.onglets-correspondance__signe { font: 400 1.1rem/1 var(--police-signe); color: var(--cuivre); }
+.onglets-correspondance__outil { margin-left: auto; }
+.onglets-correspondance__outil svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) { .onglets-correspondance a:hover { color: var(--encre); } }
+
+/* ── Le portrait d'un ami : dessin gravé de son avatar et de son cadre, et son niveau ── */
+.correspondant { position: relative; flex: 0 0 auto; display: inline-block; width: var(--taille, 58px); height: var(--taille, 58px); }
+.correspondant .portrait { width: 100%; }
+.correspondant__niveau {
+  position: absolute; right: -6px; bottom: -4px; min-width: 24px; height: 19px; padding: 0 5px; box-sizing: border-box; border-radius: 10px;
+  background: var(--accent); color: var(--accent-texte); font: 700 0.7rem/19px var(--police-texte); text-align: center; box-shadow: 0 0 0 2px var(--papier);
+}
+
+.presence { display: inline-flex; align-items: center; gap: 7px; }
+.presence__point { width: 8px; height: 8px; border-radius: 50%; background: var(--filet-fort); flex-shrink: 0; }
+.presence__point--en-ligne { background: var(--reussite); box-shadow: 0 0 0 3px rgb(120 201 156 / 18%); }
+
+/* ── Le cachet rond de la poste ── */
+.cachet {
+  position: relative; display: grid; place-items: center; flex-shrink: 0; width: 76px; height: 76px; box-sizing: border-box;
+  border: 2px solid currentColor; border-radius: 50%; transform: rotate(var(--inclinaison, -10deg));
+  font: 600 0.7rem/1.05 var(--police-mention); letter-spacing: 0.12em; text-transform: uppercase; text-align: center; color: var(--accent);
+}
+.cachet::before { content: ''; position: absolute; inset: 4px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.7; }
+.cachet > span { display: grid; gap: 2px; padding: 0 8px; }
+.cachet b { font: 700 0.92rem/1 var(--police-serif); letter-spacing: 0.02em; text-transform: none; }
+.cachet--doux { color: var(--encre-douce); }
+.cachet .cachet__chiffre { display: block; font-size: 1.7rem; margin-bottom: 2px; }
+
+/* ── Timbres de papier (emblèmes, illustrations) : dentelure en demi-cercles ── */
+.timbre-papier {
+  --r: 3px; --s: 9px;
+  position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  box-sizing: border-box; padding: calc(var(--r) + 5px); background: var(--papier-timbre); color: var(--encre-timbre);
+  -webkit-mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / var(--s) var(--s) round, linear-gradient(#000 0 0) content-box;
+  mask: radial-gradient(var(--r) at var(--r) var(--r), #0000 97%, #000) calc(-1 * var(--r)) calc(-1 * var(--r)) / var(--s) var(--s) round, linear-gradient(#000 0 0) content-box;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 35%));
+}
+.timbre-papier::after { content: ''; position: absolute; inset: calc(var(--r) + 3px); border: 1.5px solid var(--cuivre); pointer-events: none; }
+.timbre-papier--holo { background: linear-gradient(125deg, #f7e1cf, #dcebf7 30%, #ecdcf5 55%, #f5efd0 80%, #dff3e6); }
+.timbre-embleme { width: 66px; height: 80px; transform: rotate(-3deg); }
+.timbre-embleme small { font: 600 0.45rem/1 var(--police-mention); letter-spacing: 0.25em; text-transform: uppercase; color: #b0652e; }
+.timbre-embleme__signe { font: 400 2rem/1 var(--police-signe); }
+.timbre-embleme em { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: italic 700 0.85rem/1 var(--police-serif); }
+.timbre-embleme--grand { --r: 5px; --s: 14px; width: 156px; height: 192px; gap: 10px; padding: 18px 14px; transform: rotate(-4deg);
+  background: linear-gradient(135deg, var(--papier-timbre) 30%, #fffaf0 45%, var(--papier-timbre) 60%); }
+.timbre-embleme--grand small { font-size: 0.62rem; letter-spacing: 0.3em; }
+.timbre-embleme--grand .timbre-embleme__signe { font-size: 4.6rem; }
+
+/* ── La vitrine d'un ami : ses quatre plus beaux timbres et son nombre de timbres ── */
+.vitrine { display: flex; align-items: center; gap: 8px; }
+.vitrine__timbres { display: grid; grid-template-columns: repeat(4, 56px); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.vitrine__timbre { width: 56px; }
+.vitrine__vide { width: 56px; aspect-ratio: 30 / 38; box-sizing: border-box; border: 1px dashed var(--filet); border-radius: 4px; }
+.vitrine__nombre {
+  flex: 1; min-width: 64px; align-self: stretch; display: grid; place-content: center; text-align: center; gap: 2px;
+  border: 1px dashed var(--filet); border-radius: 6px; font-size: 0.8rem; color: var(--encre-douce); line-height: 1.3;
+}
+.vitrine__nombre strong { display: block; font-size: 0.95rem; color: var(--encre); }
+
+/* ── L'enveloppe par avion du parrainage ── */
+.par-avion { padding: 7px; border-radius: 10px; background: repeating-linear-gradient(135deg, var(--accent) 0 14px, var(--papier) 14px 19px, #315d89 19px 33px, var(--papier) 33px 38px); }
+.par-avion__lettre { display: flex; flex-direction: column; gap: 16px; height: 100%; box-sizing: border-box; padding: 22px; border-radius: 5px; background: var(--carte-fond); }
+.par-avion__lettre > p { margin: 0; }
+.par-avion__tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.par-avion .par-avion__tete h2 { font-size: 1.35rem; padding-top: 6px; }
+.par-avion__texte { font-size: 0.9rem; line-height: 1.55; color: var(--encre-douce); }
+.par-avion__texte strong { color: var(--encre); }
+.par-avion__actions { display: flex; gap: 10px; }
+.par-avion__actions .bouton--accent { flex: 1; }
+.par-avion__bilan { margin-top: auto; display: grid; gap: 9px; padding-top: 14px; border-top: 1px solid var(--filet); font-size: 0.82rem; color: var(--encre-douce); }
+.par-avion__bilan p { margin: 0; }
+.par-avion__compte { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.par-avion__compte strong { color: var(--encre); }
+.par-avion--grand .par-avion__lettre { padding: 28px; gap: 18px; }
+.par-avion--grand .par-avion__tete h2 { font-size: 1.5rem; }
+.par-avion--grand .cachet { width: 84px; height: 84px; }
+.par-avion--grand .par-avion__texte { font-size: 0.95rem; }
+.jauge-parrainage { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+.jauge-parrainage i { height: 6px; background: rgb(224 237 250 / 10%); }
+.jauge-parrainage i.allume { background: var(--cuivre); }
+
+/* ── Champ de saisie avec icône ── */
+.champ-correspondance {
+  display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre-douce);
+}
+.champ-correspondance svg { width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.correspondance .champ-correspondance input { flex: 1; min-width: 0; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--encre); font: inherit; outline: none; }
+.champ-correspondance:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  .correspondance { gap: 22px; }
+  .carte-expediteur { align-self: stretch; }
+  .onglets-correspondance { flex-wrap: nowrap; }
+  .onglets-correspondance a { padding: 0 10px; white-space: nowrap; }
+  .onglets-correspondance__outil { margin-left: auto; padding: 0 10px; }
+  .onglets-correspondance__libelle { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .vitrine__timbres { grid-template-columns: repeat(4, minmax(0, 1fr)); flex: 1; }
+  .vitrine__timbre, .vitrine__vide { width: 100%; }
+  .par-avion__lettre, .par-avion--grand .par-avion__lettre { padding: 18px; }
+}

@@ -115,7 +115,7 @@ it('équipes : récupération du compte, migration répétée et suppression du 
     await l.admin(); await l.db.exec(migrationEquipes()); await l.db.exec(migrationEquipes());
     await l.joueur(2); assert.equal((await l.lire()).equipe!.membres.length, 2);
     await l.rpc('supprimer_mon_profil');
-    await l.joueur(1); assert.deepEqual((await l.lire()).equipe!.membres, [{id:l.profils[1],pseudo:'lecteur1',capitaine:true}]);
+    await l.joueur(1); assert.deepEqual((await l.lire()).equipe!.membres.map(({ id, pseudo, capitaine }) => ({ id, pseudo, capitaine })), [{id:l.profils[1],pseudo:'lecteur1',capitaine:true}]);
     await l.rpc('supprimer_mon_profil');
     await l.admin(); assert.equal((await l.db.query('select * from public.equipes')).rows.length, 0);
   } finally { await l.db.close(); }

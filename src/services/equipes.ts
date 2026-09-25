@@ -1,4 +1,5 @@
 import { chacunSonTour, clientDuServeur } from './compte.ts';
+import type { Apparence } from './amis.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 export const EMBLEMES = [
@@ -7,8 +8,8 @@ export const EMBLEMES = [
   { id: 'lune', signe: '☾', nom: 'Lune' }, { id: 'soleil', signe: '☼', nom: 'Soleil' },
 ] as const;
 export type Embleme = typeof EMBLEMES[number]['id'];
-export type Equipe = { id: string; nom: string; embleme: Embleme;
-  membres: { id: string; pseudo: string; capitaine: boolean }[];
+export type Equipe = { id: string; nom: string; embleme: Embleme; cote?: number | null;
+  membres: (Apparence & { id: string; pseudo: string; capitaine: boolean })[];
   invitation: { id: string; pseudo: string; expire_le: number } | null };
 export type MonEquipe = { moi: string | null; equipe: Equipe | null;
   invitations: { id: string; nom: string; embleme: Embleme; capitaine: string; expire_le: number }[];

@@ -23,6 +23,7 @@ import { equipes } from './equipes.ts';
 import { parrainage } from './parrainage.ts';
 import { secours } from './secours.ts';
 import { activite } from './activite.ts';
+import { portraits } from './portraits.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -380,6 +381,7 @@ end $$;
 ${collections()}
 ${recuperation()}
 ${marche()}
+${portraits()}
 ${amis()}
 ${equipes()}
 ${activite()}
@@ -428,6 +430,19 @@ export function migrationFilDActivite(): string {
     + '-- Ne modifie aucune fonction existante : le client peut être publié avant ou après ce script.\nbegin;\n' + activite() + 'commit;\n';
 }
 
+// Portraits, niveaux, présence et vitrines des amis ; cote de l’équipe. Après 14-fil-d-activite.sql.
+// Seules mes_amis et mon_equipe changent parmi les fonctions déjà installées : elles sont reprises telles quelles.
+export function migrationPortraits(): string {
+  const reprise = (source: string, nom: string) => {
+    const f = source.match(new RegExp(`create or replace function public\\.${nom}\\(\\)[\\s\\S]*?\\nend \\$\\$;`))?.[0];
+    if (!f) throw new Error(`${nom} introuvable`);
+    return f;
+  };
+  return '-- Portraits, niveaux, présence et vitrines des amis ; cote 2v2 de l’équipe. Après 14-fil-d-activite.sql.\n'
+    + '-- Publier le client après ce script : il appelle signaler_presence et lit les nouveaux champs.\nbegin;\n'
+    + portraits() + '\n' + reprise(amis(), 'mes_amis') + '\n\n' + reprise(equipes(), 'mon_equipe') + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -459,5 +474,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '11-equipes.sql'), migrationEquipes());
   writeFileSync(path.join(RACINE, 'serveur', '13-secours-et-parrainage.sql'), migrationSecoursEtParrainage());
   writeFileSync(path.join(RACINE, 'serveur', '14-fil-d-activite.sql'), migrationFilDActivite());
+  writeFileSync(path.join(RACINE, 'serveur', '15-portraits-et-presence.sql'), migrationPortraits());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

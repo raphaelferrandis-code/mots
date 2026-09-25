@@ -21,7 +21,8 @@ export function JoutesDirectes() {
   const inscrit = !!sauvegarde?.joutes.pseudo;
   const direct = useJouteDirecte(inscrit);
   const equipe = useChargement(async () => serveurUtilise && inscrit ? serveurEquipes().lire() : null,`equipe-direct:${inscrit}`);
-  const [mode, setMode] = useState<ModeDirect>('solo');
+  // Le bouton « Jouer en 2 contre 2 » de l'équipe mène à #/joutes/duo_equipe : le mode est déjà choisi.
+  const [mode, setMode] = useState<ModeDirect>(() => window.location.hash.endsWith('/duo_equipe') ? 'duo_equipe' : 'solo');
   const [abandon, setAbandon] = useState(false);
   const horloge = useMaintenant(250);
   const maintenant = horloge + direct.decalage;

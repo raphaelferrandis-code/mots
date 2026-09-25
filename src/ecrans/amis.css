@@ -1,29 +1,162 @@
-.amis { max-width: 1060px; }
-.amis__outils { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.amis .rubrique { margin-block: 24px; }
-.amis__invitation { border-top: 2px solid var(--accent); }
-.amis__recherche { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-block: 20px; }
-.amis label { display: grid; gap: 8px; min-width: 0; flex: 1; }
-.amis input, .amis select { width: 100%; min-height: 44px; min-width: 0; padding: 10px; color: var(--encre); background: var(--papier); border: 1px solid var(--filet-fort); border-radius: 6px; font: inherit; }
-.amis__liste { display: grid; gap: 16px; }
-.amis__ligne { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-block: 12px; }
-.amis__ligne strong { overflow-wrap: anywhere; }
-.amis__ligne p { margin-block: 6px 0; }
-.amis__liste > li + li { border-top: 1px solid var(--filet); }
-.amis__echange { padding-block: 12px; }
-.amis__confirmation { flex-basis: 100%; padding: 20px; border: 1px solid var(--accent); border-radius: var(--rayon); margin-top: 16px; }
-.amis__timbres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-bottom: 24px; }
-.amis__choix { display: grid; gap: 16px; align-content: start; }
-.amis__apercu { display: grid; justify-items: center; text-align: center; }
-.amis__composition { scroll-margin-top: 140px; }
-.amis fieldset { border: 0; padding: 0; margin: 0 0 16px; min-width: 0; }
-@media (max-width: 600px) {
-  .amis__timbres { grid-template-columns: minmax(0, 1fr); }
-  .amis__recherche { display: grid; }
-  .amis__confirmation { padding: 12px; }
-  .amis__composition { scroll-margin-top: 16px; }
-}
+/* La page Amis (refonte du 25/09/2026). Pièces communes : composants/correspondance/correspondance.css. */
+.amis { max-width: 1120px; }
+.amis__disposition { display: grid; grid-template-columns: minmax(0, 1fr) 356px; gap: 40px; align-items: start; }
+.amis__colonne { display: flex; flex-direction: column; gap: 40px; min-width: 0; }
+.amis__cote { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.amis__section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.amis__titre { display: flex; align-items: center; gap: 12px; }
+.amis__entete-liste { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; }
+.amis .petit { margin: 0; }
 
-/* Le lien d'invitation (composants/InviterDesAmis.tsx). */
-.parrainage__lien { display: grid; gap: 10px; margin-block: 12px; }
-.parrainage__lien input { font: inherit; color: inherit; min-height: 44px; padding: 8px 12px; width: 100%; min-width: 0; border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); }
+/* Ajouter un ami, par son pseudonyme. */
+.ajout-ami { display: flex; align-items: flex-end; gap: 10px; }
+.ajout-ami label { flex: 1; display: grid; gap: 6px; min-width: 0; }
+.ajout-ami--compact label { width: 230px; flex: 0 1 auto; }
+
+/* Les demandes : une lettre reçue, ou une demande envoyée en pointillés. */
+.amis .demandes { gap: 10px; }
+.demande { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 16px; padding: 14px 16px 14px 18px; border-radius: 12px; border: 1px dashed var(--filet); }
+.demande--recue { border-style: solid; background: var(--carte-fond); }
+.demande__texte { flex: 1; min-width: 180px; margin: 0; display: grid; gap: 4px; }
+.demande__texte strong { font: 700 1.05rem var(--police-serif); color: var(--encre); overflow-wrap: anywhere; }
+.demande__texte span { font-size: 0.82rem; color: var(--encre-douce); }
+.demande:not(.demande--recue) .demande__texte { color: var(--encre-douce); }
+
+/* Les fiches des amis. */
+.amis .fiches-amis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.fiche-ami {
+  position: relative; display: flex; flex-direction: column; gap: 18px; height: 100%; box-sizing: border-box; padding: 20px;
+  border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: linear-gradient(180deg, #14294a, var(--carte-fond) 60%); box-shadow: var(--ombre);
+}
+.fiche-ami__tete { display: flex; align-items: center; gap: 16px; }
+.fiche-ami__nom { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.fiche-ami__nom strong { font: 700 1.35rem/1.05 var(--police-serif); overflow-wrap: anywhere; }
+.fiche-ami__nom > span { font-size: 0.82rem; }
+.fiche-ami__menu { position: relative; align-self: flex-start; }
+.fiche-ami__menu svg { width: 18px; height: 18px; fill: currentColor; }
+.fiche-ami__options { position: absolute; right: 0; top: calc(100% + 6px); z-index: 2; padding: 6px; border-radius: 10px; border: 1px solid var(--filet-fort); background: var(--papier-fonce); box-shadow: var(--ombre); white-space: nowrap; }
+.fiche-ami__actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px; }
+.fiche-ami__actions .bouton { flex: 1 1 auto; padding-inline: 12px; white-space: nowrap; }
+.fiche-ami__confirmation { padding: 14px; border: 1px solid var(--accent); border-radius: var(--rayon); }
+.fiche-ami__confirmation p { margin: 0 0 12px; }
+.fiche-ami--place {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; min-height: 240px;
+  border: 1.5px dashed var(--filet); background: none; box-shadow: none; color: var(--encre-douce); text-decoration: none; font-size: 0.9rem; line-height: 1.5;
+}
+.fiche-ami--place strong { font: 700 1.25rem var(--police-serif); color: var(--encre); }
+.fiche-ami--place span:last-child { max-width: 250px; }
+.fiche-ami__plus { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; border: 1.5px dashed var(--cuivre); color: var(--cuivre); }
+.fiche-ami__plus svg { width: 22px; height: 22px; }
+@media (hover: hover) { .fiche-ami--place:hover { border-color: var(--cuivre); color: var(--encre); } }
+
+/* Mon équipe, en bref. */
+.mini-equipe { display: flex; flex-direction: column; gap: 16px; padding: 22px; border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond); }
+.mini-equipe > p { margin: 0; }
+.mini-equipe .mention { color: var(--cuivre); font-weight: 600; letter-spacing: 0.2em; }
+.mini-equipe__identite { display: flex; align-items: center; gap: 16px; }
+.mini-equipe__nom { display: grid; gap: 10px; min-width: 0; }
+.mini-equipe__nom > strong { font: 700 1.35rem/1.1 var(--police-serif); overflow-wrap: anywhere; }
+.mini-equipe__duo { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; }
+.mini-equipe__duo > span:last-child { margin-left: 6px; }
+.mini-equipe__actions { display: flex; gap: 10px; }
+.mini-equipe__actions .bouton:first-child { flex: 1; }
+.mini-equipe__actions svg { fill: none; }
+
+/* Les échanges : deux timbres face à face et le cachet de l'échéance. */
+.echanges { padding-top: 32px; border-top: 1px solid var(--filet); scroll-margin-top: 90px; }
+.echanges > p { margin: 0; }
+.amis .echanges__liste { gap: 14px; }
+.echange {
+  display: grid; grid-template-columns: 220px minmax(0, 1fr) auto; align-items: center; gap: 20px 32px; padding: 20px 24px;
+  border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond);
+}
+.echange--recu { border-color: rgb(241 138 75 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 40%); }
+.echange--termine { opacity: 0.8; }
+.echange__qui { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.echange__qui > div { display: grid; gap: 5px; min-width: 0; }
+.echange__qui strong { font: 700 1.05rem var(--police-serif); overflow-wrap: anywhere; }
+.echange--recu .echange__qui .mention { color: var(--accent); }
+.echange__timbres { display: flex; align-items: center; justify-content: center; gap: 22px; min-width: 0; }
+.echange__timbre { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.echange__timbre > div { display: grid; gap: 5px; min-width: 0; }
+.echange__timbre strong { font: italic 700 1.1rem var(--police-serif); overflow-wrap: anywhere; }
+.echange__timbre .texte-doux { font-size: 0.8rem; }
+.echange__vignette { flex: 0 0 76px; }
+.echange__fleche { flex: 0 0 40px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--filet); color: var(--cuivre); }
+.echange__fleche svg { width: 18px; height: 18px; }
+.echange__suite { display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+.echange__suite .cachet { width: 70px; height: 70px; }
+.echange__actions { display: grid; gap: 8px; min-width: 150px; text-align: center; }
+.echange__confirmation { grid-column: 1 / -1; padding: 16px; border: 1px solid var(--accent); border-radius: var(--rayon); }
+.echange__confirmation p { margin: 0 0 12px; }
+.echanges__termines > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--encre-douce); }
+.echanges__termines[open] > summary { margin-bottom: 10px; }
+
+/* Composer une proposition d'échange. */
+.amis__composition { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: var(--rayon-carte); border: 1px solid var(--accent); background: var(--carte-fond); scroll-margin-top: 140px; }
+.amis__composition-tete { display: flex; align-items: center; gap: 16px; }
+.amis__composition-tete p { margin: 6px 0 0; }
+.amis__timbres { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; margin-bottom: 20px; }
+.amis__fleche { margin-top: 30px; }
+.amis__choix { display: grid; gap: 16px; align-content: start; }
+.amis__choix label { display: grid; gap: 8px; }
+.amis__choix input, .amis__choix select { width: 100%; min-height: 44px; min-width: 0; padding: 10px; color: var(--encre); background: var(--papier); border: 1px solid var(--filet-fort); border-radius: 6px; font: inherit; }
+.amis__apercu { display: grid; justify-items: center; text-align: center; }
+.amis fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+/* Le premier pas : un carnet encore vierge. */
+.premier-pas { display: flex; flex-direction: column; gap: 32px; }
+.premier-pas__accroche { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 48px; }
+.premier-pas__accroche > p { margin: 0; max-width: 32em; font: italic 400 1.3rem/1.5 var(--police-serif); color: var(--papier-timbre); }
+.premier-pas__album { display: flex; align-items: center; gap: 14px; padding: 22px 26px; border-radius: var(--rayon-carte); background: #0e1d33; border: 1px solid #243a55; box-shadow: inset 0 2px 12px rgb(0 0 0 / 35%); }
+.premier-pas__moi { --r: 4px; --s: 11px; width: 92px; height: 114px; gap: 8px; transform: rotate(-3deg); }
+.premier-pas__moi em { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: italic 700 0.75rem var(--police-serif); }
+.premier-pas__case { width: 92px; height: 114px; box-sizing: border-box; border: 1.5px dashed var(--filet); border-radius: 4px; display: grid; place-items: center; color: var(--filet-fort); font: italic 400 1.9rem var(--police-serif); }
+.premier-pas__case--1 { border-color: var(--filet-fort); }
+.premier-pas__case--3 { opacity: 0.5; }
+.premier-pas__voies { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
+.voie-pseudo { display: flex; flex-direction: column; gap: 18px; padding: 35px; border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond); }
+.voie-pseudo > p { margin: 0; line-height: 1.55; }
+.voie-pseudo__le-tien { margin-top: auto; display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: 12px; border: 1px dashed var(--filet-fort); background: var(--papier); }
+.voie-pseudo__le-tien > div { flex: 1; display: grid; gap: 6px; min-width: 0; }
+.voie-pseudo__le-tien strong { font: 700 1.6rem/1 var(--police-serif); overflow-wrap: anywhere; }
+.timbre-papier--initiale { width: 60px; height: 74px; transform: rotate(-4deg); font: italic 700 1.6rem/1 var(--police-serif); }
+.ensemble { display: flex; flex-direction: column; gap: 18px; padding-top: 30px; border-top: 1px solid var(--filet); }
+.ensemble h2 { font-size: 1.25rem; }
+.amis .ensemble__liste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ensemble__liste > li { display: flex; align-items: center; gap: 20px; padding: 22px; border-radius: var(--rayon-carte); background: #0e1d33; border: 1px solid #243a55; }
+.ensemble__liste > li > div { display: grid; gap: 6px; }
+.ensemble__liste strong { font: 700 1.15rem var(--police-serif); }
+.ensemble__liste span { font-size: 0.88rem; line-height: 1.45; color: var(--encre-douce); }
+.ensemble__dessin { position: relative; flex: 0 0 92px; height: 84px; display: grid; place-items: center; }
+.ensemble__dessin--echange .timbre-papier { position: absolute; width: 50px; height: 62px; }
+.ensemble__dessin--echange .timbre-papier:first-child { left: 0; top: 6px; transform: rotate(-10deg); }
+.ensemble__dessin--echange .timbre-papier:nth-child(2) { right: 0; top: 14px; transform: rotate(9deg); }
+.ensemble__dessin--echange b { position: absolute; left: 32px; top: 30px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-texte); box-shadow: 0 0 0 3px #0e1d33; }
+.ensemble__dessin--echange b svg { width: 14px; height: 14px; stroke-width: 2.6; }
+.ensemble__dessin--duo { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.ensemble__dessin--duo em { font: italic 400 1.6rem/1 var(--police-serif); color: var(--cuivre); }
+.ensemble__place { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #2d5079, #132640 72%); box-shadow: 0 0 0 2px #0e1d33, 0 0 0 3.5px var(--cuivre); }
+.ensemble__place--vide { background: none; box-shadow: none; border: 1.5px dashed var(--filet-fort); box-sizing: border-box; }
+
+@media (max-width: 1000px) {
+  .amis__disposition { grid-template-columns: minmax(0, 1fr); }
+  .echange { grid-template-columns: minmax(0, 1fr); }
+  .echange__timbres { justify-content: flex-start; flex-wrap: wrap; }
+  .echange__suite { justify-content: flex-start; }
+  .premier-pas__voies, .amis .ensemble__liste { grid-template-columns: minmax(0, 1fr); }
+  .premier-pas__accroche { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+}
+@media (max-width: 700px) {
+  .amis .fiches-amis { grid-template-columns: minmax(0, 1fr); }
+  .ajout-ami, .ajout-ami--compact { width: 100%; }
+  .ajout-ami--compact label { width: auto; flex: 1; }
+  .amis__timbres { grid-template-columns: minmax(0, 1fr); }
+  .amis__fleche { margin: 0 auto; transform: rotate(90deg); }
+  .premier-pas__album { gap: 8px; padding: 16px; justify-content: center; }
+  .premier-pas__moi, .premier-pas__case { width: 64px; height: 80px; }
+  .premier-pas__case--3 { display: none; }
+  .voie-pseudo { padding: 20px; }
+  .ajout-ami:not(.ajout-ami--compact) { flex-direction: column; align-items: stretch; }
+  .amis__composition { padding: 16px; scroll-margin-top: 16px; }
+}

@@ -460,6 +460,10 @@ export async function lireMesAmis() {
 }
 export const demanderUnAmi = (pseudo: string) => surLeServeur(() => serveurDesAmis().demander(pseudo));
 export const repondreAUnAmi = (id: string, action: ActionAmitie) => surLeServeur(() => serveurDesAmis().repondre(id, action));
+// Le portrait et la présence que voient les amis. Silencieux : un échec (hors ligne, migration 15 absente) ne concerne pas le joueur.
+export async function signalerPresence(avatar: string, cadre: string): Promise<void> {
+  try { await serveurPret(); await serveurDesAmis().signaler(avatar, cadre); } catch { /* rien à signaler */ }
+}
 export const lireAlbumAmi = (id: string) => surLeServeur(() => serveurDesAmis().album(id));
 export const proposerUnEchange = (id: string, ami: string, offerte: TimbreEchange, demandee: TimbreEchange) => surLeServeur(() => serveurDesAmis().proposer(id, ami, offerte, demandee));
 export async function repondreAUnEchange(id: string, action: ActionEchange) {

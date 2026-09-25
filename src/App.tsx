@@ -8,6 +8,7 @@ import { Classement } from './ecrans/Classement.tsx';
 import { useEffect, useRef } from 'react';
 import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
+import { usePresence } from './composants/usePresence.ts';
 import { Accueil } from './ecrans/Accueil.tsx';
 import { Collection } from './ecrans/Collection.tsx';
 import { Confidentialite } from './ecrans/Confidentialite.tsx';
@@ -67,6 +68,7 @@ export function App() {
   const route = useRoute();
   const partie = usePartie();
   const cle = route.ecran === 'carte' ? `carte/${route.id}` : route.ecran;
+  usePresence();
 
   // À chaque changement d'écran : on repart du haut de la page, l'onglet du navigateur change de titre, et le
   // clavier repart du titre du nouvel écran (sauf au tout premier affichage, où l'on ne dérange pas le navigateur).

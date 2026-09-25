@@ -44,14 +44,19 @@ create trigger depart_equipier after delete on public.equipiers for each row exe
 
 create or replace function public.mon_equipe() returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare moi uuid; mon_equipe uuid;
+declare moi uuid; mon_equipe uuid; cote integer;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   select id into moi from public.profils where utilisateur=auth.uid();
   select equipe into mon_equipe from public.equipiers where profil=moi;
+  -- La cote 2v2 vient des joutes en direct (12-joutes-direct.sql), absentes d'une installation sans elles.
+  if mon_equipe is not null and to_regclass('public.direct_cotes') is not null then
+    execute 'select cote from public.direct_cotes where mode=''duo_equipe'' and sujet=$1' into cote using mon_equipe;
+  end if;
   return jsonb_build_object('moi',moi,
-    'equipe',(select jsonb_build_object('id',e.id,'nom',e.nom,'embleme',e.embleme,
-      'membres',(select jsonb_agg(jsonb_build_object('id',p.id,'pseudo',p.pseudo,'capitaine',m.place=1) order by m.place)
+    'equipe',(select jsonb_build_object('id',e.id,'nom',e.nom,'embleme',e.embleme,'cote',cote,
+      'membres',(select jsonb_agg(jsonb_build_object('id',p.id,'pseudo',p.pseudo,'capitaine',m.place=1,
+          'xp',public.xp_du_profil(p.utilisateur),'avatar',p.avatar,'cadre',p.cadre,'vu_le',(extract(epoch from p.vu_le)*1000)::bigint) order by m.place)
         from public.equipiers m join public.profils p on p.id=m.profil where m.equipe=e.id),
       'invitation',(select jsonb_build_object('id',i.id,'pseudo',p.pseudo,'expire_le',extract(epoch from i.expire_le)*1000)
         from public.invitations_equipe i join public.profils p on p.id=i.destinataire where i.equipe=e.id and i.expire_le>now()))
