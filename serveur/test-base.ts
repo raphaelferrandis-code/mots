@@ -6,7 +6,7 @@ export async function baseDeTest(combats = false) {
   const db = new PGlite({ extensions: { unaccent } });
   await db.exec(`create role anon; create role authenticated;
     create schema auth; create schema extensions;
-    create table auth.users(id uuid primary key);
+    create table auth.users(id uuid primary key, is_anonymous boolean not null default false);
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     grant usage on schema auth to authenticated, anon;`);
   if (combats) await db.exec('create role service_role;');
@@ -14,7 +14,8 @@ export async function baseDeTest(combats = false) {
   const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333'];
   for (const [i, id] of ids.entries()) {
     await db.query('insert into auth.users values ($1)', [id]);
-    await db.query('insert into public.comptes(utilisateur,encre,encre_achetee) values ($1,200,100)', [id]);
+    // Des joueurs installés depuis un mois : un compte neuf n'aurait ni échanges ni marché (serveur/parrainage.ts).
+    await db.query("insert into public.comptes(utilisateur,encre,encre_achetee,cree_le) values ($1,200,100,now()-interval '30 days')", [id]);
     await db.query('insert into public.profils(utilisateur,pseudo,pseudo_cle) values ($1,$2,$2)', [id, `lecteur${i}`]);
   }
   await db.exec(`insert into public.cartes values ('mot-nom','Commune','{}');`);

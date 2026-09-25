@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — parrainage confirmé et comptes neufs : jeu publié, `serveur/16-parrainage-confirme.sql` À
+> COLLER (étape 8 d'`A-FAIRE-RAPHAEL.md`).** Décisions de Raphaël : le filleul reçoit ses 3 paquets dès son premier duel ;
+> le parrain reçoit les siens quand le filleul a relié un compte Google ou e-mail ET terminé un duel un autre jour
+> (heure de Paris) dans les 14 jours après son arrivée ; 10 filleuls récompensés par mois ; un compte de moins de
+> 3 jours ne peut ni échanger, ni enchérir, ni vendre ; les parrainages déjà validés restent acquis. Le jeu lit
+> `confirmation` dans la réponse de `mon_parrainage` : avant le script, il garde les anciens textes. La dernière
+> migration est désormais la 16.
+
 > **25 septembre 2026 — audit complet du code : [AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md).** Aucune faille
 > critique. Priorités restantes : parrainage et comptes jetables, verrou unique du serveur, classement manipulable, tests
 > du tirage côté serveur. **Corrigé le jour même (« joueur bloqué ») :** filet d'erreur (plus de page vide), fond animé

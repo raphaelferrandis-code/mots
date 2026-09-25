@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { baseDeTest } from './test-base.ts';
 import { parrainage, ALPHABET_DU_CODE, LONGUEUR_DU_CODE, PLAFOND_DES_PAQUETS_OFFERTS } from './parrainage.ts';
 import { secours } from './secours.ts';
-import { migrationSecoursEtParrainage } from './fabriquer-le-script.ts';
+import { migrationParrainageConfirme, migrationSecoursEtParrainage } from './fabriquer-le-script.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 
 const PA = EQUILIBRAGE.parrainage;
@@ -14,17 +14,19 @@ const NOUVEAU = '44444444-4444-4444-8444-444444444444';
 const AUTRE = '55555555-5555-4555-8555-555555555555';
 
 type Parrainage = {
-  code: string; paquets: number; invites: number; valides: number; nouveaux: (string | null)[]; enAttente: number;
-  parrain: { pseudo: string | null; valide: boolean; verse: boolean; verseMaintenant: boolean } | null;
+  code: string; paquets: number; confirmation: boolean; invites: number; valides: number; recompenses: number; aConfirmer: number;
+  nouveaux: (string | null)[]; enAttente: number;
+  parrain: { pseudo: string | null; valide: boolean; verse: boolean; verseMaintenant: boolean;
+    confirme: boolean; manqueCompte: boolean; manqueJour: boolean; echu: boolean } | null;
   etat: { paquets: { stock: number } } | null;
 };
 
 async function laboratoire() {
   const b = await baseDeTest(true);
   await b.db.exec(secours() + parrainage());
-  // Deux nouveaux venus, sans profil : ils arrivent par un lien d'invitation.
+  // Deux nouveaux venus, sans profil ni compte relié (invités) : ils arrivent par un lien d'invitation.
   for (const id of [NOUVEAU, AUTRE]) {
-    await b.db.query('insert into auth.users values ($1)', [id]);
+    await b.db.query('insert into auth.users(id,is_anonymous) values ($1,true)', [id]);
     await b.db.query('insert into public.comptes(utilisateur) values ($1)', [id]);
   }
   const ids = [...b.ids, NOUVEAU, AUTRE];
@@ -49,7 +51,15 @@ async function laboratoire() {
     await b.db.query('update public.combats set archive=true where id=$1', [id]); // comme combat_creer au combat suivant
     await b.db.query('update public.comptes set combats_joues=combats_joues+1 where utilisateur=$1', [ids[i]]);
   };
-  return { ...b, ids, en, rpc, monParrainage, declarer, stock, terminerUnCombat };
+  // Le filleul relie un compte Google ou e-mail (ou redevient un simple invité).
+  const relierUnCompte = async (i: number, relie = true) => { await b.admin(); await b.db.query('update auth.users set is_anonymous=$2 where id=$1', [ids[i], !relie]); };
+  // Le lendemain : son premier duel recule d'un jour, et il en termine un autre.
+  const revenirLeLendemain = async (i: number) => {
+    await b.admin(); await b.db.query("update public.parrainages set valide_le=valide_le-interval '1 day' where filleul=$1", [ids[i]]);
+    await terminerUnCombat(i);
+  };
+  const confirmer = async (i: number) => { await relierUnCompte(i); await revenirLeLendemain(i); };
+  return { ...b, ids, en, rpc, monParrainage, declarer, stock, terminerUnCombat, relierUnCompte, revenirLeLendemain, confirmer };
 }
 
 it('donne à chaque joueur un code d’invitation stable et lisible', async () => {
@@ -60,7 +70,7 @@ it('donne à chaque joueur un code d’invitation stable et lisible', async () =
     assert.ok([...premier.code].every(c => ALPHABET_DU_CODE.includes(c)));
     assert.equal((await l.monParrainage(0)).code, premier.code);
     assert.notEqual((await l.monParrainage(1)).code, premier.code);
-    assert.deepEqual({ ...premier, code: '' }, { code: '', paquets: PA.paquetsOfferts, invites: 0, valides: 0, nouveaux: [], enAttente: 0, parrain: null, etat: null });
+    assert.deepEqual({ ...premier, code: '' }, { code: '', paquets: PA.paquetsOfferts, confirmation: true, invites: 0, valides: 0, recompenses: 0, aConfirmer: 0, nouveaux: [], enAttente: 0, parrain: null, etat: null });
   } finally { await l.db.close(); }
 });
 
@@ -69,6 +79,7 @@ it('n’accepte que les vrais nouveaux venus, une seule fois, sans boucle', asyn
   try {
     const { code } = await l.monParrainage(0);
     assert.deepEqual(await l.declarer(3, 'INCONNU1'), { accepte: false, raison: 'Ce lien d\'invitation n\'est pas valable.' });
+    await l.admin(); await l.db.query('update public.comptes set cree_le=now() where utilisateur=$1', [l.ids[0]]);
     assert.match((await l.declarer(0, code)).raison!, /propre lien/);
     // Un compte de plus de sept jours n'est plus un nouveau venu.
     await l.admin(); await l.db.query("update public.comptes set cree_le=now()-interval '8 days' where utilisateur=$1", [l.ids[4]]);
@@ -91,31 +102,84 @@ it('n’accepte que les vrais nouveaux venus, une seule fois, sans boucle', asyn
   } finally { await l.db.close(); }
 });
 
-it('récompense le premier duel terminé : le filleul aussitôt, le parrain à sa visite suivante', async () => {
+it('récompense le filleul dès son premier duel, et le parrain quand le filleul est confirmé', async () => {
   const l = await laboratoire();
   try {
     const { code } = await l.monParrainage(0);
     await l.declarer(3, code);
     const departFilleul = await l.stock(3);
     const departParrain = await l.stock(0);
-    assert.deepEqual((await l.monParrainage(3)).parrain, { pseudo: 'lecteur0', valide: false, verse: false, verseMaintenant: false });
+    const attendu = { pseudo: 'lecteur0', valide: false, verse: false, verseMaintenant: false, confirme: false, manqueCompte: true, manqueJour: true, echu: false };
+    assert.deepEqual((await l.monParrainage(3)).parrain, attendu);
     // Un duel abandonné ne compte pas.
     await l.terminerUnCombat(3, true);
     assert.equal(await l.stock(3), departFilleul);
+    // Le premier duel : le filleul est récompensé aussitôt, le parrain pas encore.
     await l.terminerUnCombat(3);
     assert.equal(await l.stock(3), departFilleul + PA.paquetsOfferts);
-    assert.equal(await l.stock(0), departParrain, 'rien n’est versé au parrain pendant la partie d’un autre');
-    const vueDuFilleul = await l.monParrainage(3);
-    assert.deepEqual(vueDuFilleul.parrain, { pseudo: 'lecteur0', valide: true, verse: true, verseMaintenant: false });
-    const visite = await l.monParrainage(0);
-    assert.deepEqual([visite.invites, visite.valides, visite.nouveaux, visite.enAttente], [1, 1, [null], 0]);
+    assert.deepEqual((await l.monParrainage(3)).parrain, { ...attendu, valide: true, verse: true });
+    let visite = await l.monParrainage(0);
+    assert.deepEqual([visite.invites, visite.valides, visite.recompenses, visite.aConfirmer, visite.nouveaux, visite.enAttente], [1, 1, 0, 1, [], 0]);
+    // Un autre duel le même jour ne compte pas pour la confirmation, et ne rapporte rien de plus au filleul.
+    await l.terminerUnCombat(3);
+    assert.equal(await l.stock(3), departFilleul + PA.paquetsOfferts);
+    assert.equal((await l.monParrainage(3)).parrain!.manqueJour, true);
+    // Revenu le lendemain, mais toujours simple invité : pas encore confirmé.
+    await l.revenirLeLendemain(3);
+    assert.deepEqual((await l.monParrainage(3)).parrain, { ...attendu, valide: true, verse: true, manqueJour: false });
+    assert.deepEqual((await l.monParrainage(0)).nouveaux, []);
+    assert.equal(await l.stock(0), departParrain);
+    // Il relie un compte (sans rien jouer de plus) : la visite suivante du parrain le confirme et lui verse ses paquets.
+    await l.relierUnCompte(3);
+    visite = await l.monParrainage(0);
+    assert.deepEqual([visite.recompenses, visite.aConfirmer, visite.nouveaux, visite.enAttente], [1, 0, [null], 0]);
     assert.equal(visite.etat!.paquets.stock, departParrain + PA.paquetsOfferts);
     assert.equal(await l.stock(0), departParrain + PA.paquetsOfferts);
     const suivante = await l.monParrainage(0);
     assert.deepEqual([suivante.nouveaux, suivante.etat], [[], null], 'versé une seule fois');
-    // Un deuxième duel ne rapporte rien de plus.
-    await l.terminerUnCombat(3);
+    assert.deepEqual((await l.monParrainage(3)).parrain, { ...attendu, valide: true, verse: true, manqueJour: false, manqueCompte: false, confirme: true });
+    // D'autres duels ne rapportent rien de plus à personne.
+    await l.revenirLeLendemain(3);
     assert.equal(await l.stock(3), departFilleul + PA.paquetsOfferts);
+    assert.deepEqual((await l.monParrainage(0)).nouveaux, []);
+  } finally { await l.db.close(); }
+});
+
+it('ne confirme ni un compte jetable, ni un filleul revenu trop tard', async () => {
+  const l = await laboratoire();
+  try {
+    const { code } = await l.monParrainage(0);
+    await l.declarer(3, code);
+    await l.declarer(4, code);
+    // Un compte jetable : il joue deux jours de suite, mais ne relie jamais de compte.
+    await l.terminerUnCombat(3);
+    await l.revenirLeLendemain(3);
+    // Un filleul qui relie un compte, mais revient jouer après le délai.
+    await l.terminerUnCombat(4);
+    await l.relierUnCompte(4);
+    await l.admin(); await l.db.query(`update public.comptes set cree_le=now()-interval '${PA.joursPourRevenirJouer + 1} days' where utilisateur=$1`, [l.ids[4]]);
+    await l.revenirLeLendemain(4);
+    assert.deepEqual((await l.monParrainage(4)).parrain!.echu, true);
+    const visite = await l.monParrainage(0);
+    assert.deepEqual([visite.valides, visite.recompenses, visite.aConfirmer, visite.nouveaux], [2, 0, 1, []], 'seul le compte jetable pourrait encore l’être, s’il reliait un compte');
+  } finally { await l.db.close(); }
+});
+
+it('garde acquis les parrainages validés avant la règle de confirmation, une seule fois', async () => {
+  const l = await laboratoire();
+  try {
+    // Une base d'avant le 25/09 : un filleul validé à son premier duel, parrain récompensé mais pas encore payé.
+    await l.admin();
+    await l.db.exec('alter table public.parrainages drop column deuxieme_jour_le, drop column confirme_le');
+    await l.db.query('insert into public.parrainages(filleul,parrain,valide_le,filleul_verse_le,parrain_du) values ($1,$2,now(),now(),true)', [l.ids[3], l.ids[0]]);
+    await l.db.exec(parrainage());
+    const premiere = await l.monParrainage(0);
+    assert.deepEqual([premiere.valides, premiere.recompenses, premiere.nouveaux], [1, 1, [null]], 'payé à sa visite, comme avant');
+    await l.declarer(4, premiere.code);
+    await l.terminerUnCombat(4);
+    await l.admin(); await l.db.exec(parrainage()); // le script relancé ne confirme pas les nouveaux venus
+    const visite = await l.monParrainage(0);
+    assert.deepEqual([visite.valides, visite.recompenses, visite.aConfirmer, visite.nouveaux], [2, 1, 1, []]);
   } finally { await l.db.close(); }
 });
 
@@ -130,6 +194,8 @@ it('garde les paquets offerts tant que la réserve est pleine, sans perdre ceux 
     await l.terminerUnCombat(3);
     assert.equal(await l.stock(3), PLAFOND_DES_PAQUETS_OFFERTS - 1, 'pas de place : rien n’est versé');
     assert.equal((await l.monParrainage(3)).enAttente, 1);
+    assert.equal((await l.monParrainage(0)).enAttente, 0, 'le filleul n’est pas encore confirmé');
+    await l.confirmer(3);
     assert.equal((await l.monParrainage(0)).enAttente, 1);
     // Le filleul ouvre des paquets : la place revient, les paquets offerts arrivent.
     await l.admin(); await l.db.query('update public.comptes set stock=2, reference=now() where utilisateur=$1', [l.ids[3]]);
@@ -149,17 +215,18 @@ it('ne récompense le parrain que pour un nombre limité de filleuls par mois', 
   try {
     const { code } = await l.monParrainage(0);
     await l.admin();
-    // Des filleuls déjà validés ce mois-ci, jusqu'à la limite.
+    // Des filleuls déjà confirmés ce mois-ci, jusqu'à la limite.
     for (let i = 0; i < PA.filleulsRecompensesParMois; i++) {
       const id = crypto.randomUUID();
       await l.db.query('insert into auth.users values ($1)', [id]);
       await l.db.query('insert into public.comptes(utilisateur) values ($1)', [id]);
-      await l.db.query('insert into public.parrainages(filleul,parrain,valide_le,parrain_du,parrain_verse_le) values ($1,$2,now(),true,now())', [id, l.ids[0]]);
+      await l.db.query('insert into public.parrainages(filleul,parrain,valide_le,confirme_le,parrain_du,parrain_verse_le) values ($1,$2,now(),now(),true,now())', [id, l.ids[0]]);
     }
     await l.declarer(3, code);
     await l.terminerUnCombat(3);
+    await l.confirmer(3);
     const visite = await l.monParrainage(0);
-    assert.deepEqual([visite.valides, visite.nouveaux, visite.enAttente], [PA.filleulsRecompensesParMois + 1, [], 0]);
+    assert.deepEqual([visite.valides, visite.recompenses, visite.aConfirmer, visite.nouveaux, visite.enAttente], [PA.filleulsRecompensesParMois + 1, PA.filleulsRecompensesParMois, 0, [], 0]);
     assert.equal((await l.monParrainage(3)).parrain!.verse, true, 'le filleul, lui, est récompensé');
   } finally { await l.db.close(); }
 });
@@ -222,5 +289,14 @@ it('le script 13 s’applique deux fois de suite sans erreur', async () => {
   try {
     await b.db.exec(migrationSecoursEtParrainage());
     await b.db.exec(migrationSecoursEtParrainage());
+  } finally { await b.db.close(); }
+});
+
+it('le script 16 s’applique après le 13, deux fois de suite sans erreur', async () => {
+  const b = await baseDeTest(true);
+  try {
+    await b.db.exec(migrationSecoursEtParrainage());
+    await b.db.exec(migrationParrainageConfirme());
+    await b.db.exec(migrationParrainageConfirme());
   } finally { await b.db.close(); }
 });

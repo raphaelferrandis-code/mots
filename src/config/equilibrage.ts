@@ -247,12 +247,22 @@ export const EQUILIBRAGE = {
   // des paquets. Le parrain n'est récompensé que pour un nombre limité de filleuls par mois (contre les faux comptes).
   // Les paquets offerts ne font jamais dépasser la réserve la plus grande du jeu : sinon, ils attendent qu'il y ait
   // de la place (serveur/parrainage.ts).
+  // Décision de Raphaël du 25/09/2026 (après l'audit) : le filleul reçoit ses paquets dès son premier duel, mais le
+  // parrain n'est récompensé qu'une fois le filleul « confirmé » — un compte Google ou e-mail relié, et un duel terminé
+  // un autre jour que le premier, dans les jours qui suivent son arrivée. Un compte jetable ne passe ni l'un ni l'autre.
   parrainage: {
     paquetsOfferts: 3,
     filleulsRecompensesParMois: 10,
     // Un filleul se déclare dans les jours qui suivent son arrivée, avant son premier duel.
     joursPourSeDeclarer: 7,
+    // Le duel d'un autre jour doit être joué dans ce délai après l'arrivée du filleul.
+    joursPourRevenirJouer: 14,
   },
+
+  // ── Les comptes neufs (décision de Raphaël du 25/09/2026) ─────────────────
+  // Pendant ses premiers jours, un compte ne fait passer aucun timbre ni aucune Encre à un autre joueur : ni échange, ni
+  // enchère, ni vente. Sinon, des comptes jetables videraient leurs paquets de départ vers un compte principal.
+  comptesNeufs: { joursAvantLesEchanges: 3 },
 
   // ── L'adversaire de secours des joutes en direct (décision de Raphaël du 24/09/2026) ─
   // Quand personne n'est libre, le jeu propose un duel contre un joueur simulé, sans effet sur le classement.

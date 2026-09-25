@@ -124,3 +124,34 @@ it('récupérer un compte conserve les amis et propositions ; supprimer son prof
     assert.deepEqual((await l.rpc<CarnetAmis>('mes_amis')).echanges, []);
   } finally { await l.db.close(); }
 });
+
+it('un compte neuf ne fait passer aucun timbre ni aucune Encre : ni échange, ni vente, ni enchère', async () => {
+  const l = await laboratoire();
+  const neuf = async (i: number, oui: boolean) => { await l.admin(); await l.db.query(`update public.comptes set cree_le=now()-interval '${oui ? 1 : 30} days' where utilisateur=$1`, [l.ids[i]]); };
+  try {
+    await l.lier();
+    // Proposer : ni le joueur neuf, ni à un joueur neuf.
+    await neuf(1, true);
+    await assert.rejects(l.proposer(), /Ce joueur vient d'arriver : les échanges avec lui s'ouvrent le \d\d\/\d\d à \d\d:\d\d\./);
+    await neuf(1, false); await neuf(0, true);
+    await assert.rejects(l.proposer(), /Les échanges et le marché s'ouvrent 3 jours après ton arrivée : le \d\d\/\d\d/);
+    // Accepter une proposition faite avant : même règle.
+    await neuf(0, false);
+    const id = await l.proposer();
+    await neuf(1, true);
+    await l.joueur(1);
+    await assert.rejects(l.rpc('repondre_echange', [id, 'accepter']), /3 jours après ton arrivée/);
+    await l.rpc('repondre_echange', [id, 'refuser']); // refuser reste possible
+    // Le marché : un compte neuf ne vend pas et n'enchérit pas.
+    await neuf(0, true);
+    await assert.rejects(l.vendre(), /3 jours après ton arrivée/);
+    await neuf(0, false);
+    const vente = await l.vendre();
+    await l.joueur(1);
+    await assert.rejects(l.rpc('encherir', [vente, 100]), /3 jours après ton arrivée/);
+    await neuf(1, false);
+    await l.joueur(1);
+    await l.rpc('encherir', [vente, 100]);
+    await assert.rejects(l.rpc('exiger_un_compte_etabli', [l.ids[0], true]), /permission denied/);
+  } finally { await l.db.close(); }
+});

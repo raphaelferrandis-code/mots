@@ -224,6 +224,7 @@ begin
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
   if p_heures is null or p_heures not in (${M.dureesEnHeures.join(', ')}) then raise exception 'Durée inconnue.'; end if;
   if p_finition is null or p_finition not in (${liste(FINITIONS)}) then raise exception 'Finition inconnue.'; end if;
   -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
@@ -295,6 +296,7 @@ begin
   select * into c from public.comptes where utilisateur = moi for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
   if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verra le vendeur.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf n'achète rien (serveur/parrainage.ts)
   select * into e from public.encheres where id = p_enchere for update;
   if not found or e.etat <> 'ouverte' or e.ferme_le <= now() then raise exception 'Cette enchère est terminée.'; end if;
   if e.vendeur = moi then raise exception 'C''est ta propre vente.'; end if;

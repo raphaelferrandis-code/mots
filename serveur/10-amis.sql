@@ -130,6 +130,8 @@ begin
     or p_finition_demandee not in ('Normale','Brillante','Holographique') then raise exception 'Finition inconnue.'; end if;
   if p_offerte=p_demandee and p_finition_offerte=p_finition_demandee then raise exception 'Choisis deux timbres différents.'; end if;
   select utilisateur into autre from public.profils where id=p_ami;
+  perform public.exiger_un_compte_etabli(auth.uid(),true); -- un compte neuf ne fait rien passer (serveur/parrainage.ts)
+  perform public.exiger_un_compte_etabli(autre,false);
   if not exists(select 1 from public.possessions where utilisateur=auth.uid() and carte=p_offerte and coalesce((finitions->>p_finition_offerte)::integer,0)>0)
     or not exists(select 1 from public.possessions where utilisateur=autre and carte=p_demandee and coalesce((finitions->>p_finition_demandee)::integer,0)>0)
     then raise exception 'Un des timbres n''est plus disponible. Actualise les collections.'; end if;
@@ -170,6 +172,8 @@ begin
     if not public.sont_amis(e.expediteur,e.destinataire) then raise exception 'Vous n''êtes plus amis.'; end if;
     select utilisateur into a from public.profils where id=e.expediteur;
     select utilisateur into b from public.profils where id=e.destinataire;
+    perform public.exiger_un_compte_etabli(b,true); -- même règle qu'à la proposition
+    perform public.exiger_un_compte_etabli(a,false);
     perform 1 from public.comptes where utilisateur in (a,b) order by utilisateur for update;
     perform public.prelever_echange(a,e.offerte,e.finition_offerte);
     perform public.prelever_echange(b,e.demandee,e.finition_demandee);

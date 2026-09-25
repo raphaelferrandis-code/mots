@@ -63,6 +63,8 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Mot adverse caché jusqu'à la parade, pose alternée (anti-triche) | **En ligne** (étape 6 faite) |
 | Refonte des écrans Duel (préparation, partie, parade, combat animé, fin) | En ligne |
 | Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
+| Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
+| Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | Jeu en ligne ; **script 16 à coller (étape 8)** |
 
 ---
 
@@ -110,8 +112,9 @@ Détails : [GUIDE-google.md](GUIDE-google.md).
       navigateur. Ces deux parcours n'ont jamais été faits avec un vrai compte.
 - [ ] Partager `philamots.fr` dans WhatsApp (à soi-même) : l'image doit apparaître. WhatsApp peut garder l'ancien
       aperçu quelques heures.
-- [ ] Envoyer son lien d'invitation (Profil → **Mes amis**) à un proche, et vérifier que chacun reçoit 3 paquets
-      après le premier duel du proche.
+- [ ] Envoyer son lien d'invitation (Profil → **Mes amis**) à un proche, et vérifier qu'il reçoit 3 paquets après
+      son premier duel. Après l'étape 8, le parrain ne reçoit les siens que lorsque le proche a relié un compte Google
+      ou e-mail **et** rejoué un autre jour.
 - [ ] Créer son **code de secours** (Profil → Ton compte), si ce n'est pas déjà fait.
 
 ### Étape 6 — Redéployer les deux fonctions du serveur (mot adverse caché) — FAIT le 25 septembre
@@ -142,6 +145,26 @@ Détails : [GUIDE-portraits-et-presence.md](GUIDE-portraits-et-presence.md).
       (fonctions à jour, droits corrects, premier signal de présence reçu).
 - [ ] Vérifier sur philamots.fr : Profil → **Mes amis** → la fiche d'un ami montre son portrait, son niveau, « En
       ligne » ou « Passage il y a… » et ses plus beaux timbres.
+
+### Étape 8 — Installer le script 16 (parrainage confirmé et comptes neufs)
+
+Pourquoi : l'audit du 25 septembre a montré qu'on pouvait créer des comptes jetables, se parrainer soi-même, puis
+faire remonter leurs paquets vers son vrai compte par les échanges et le marché. Tes décisions du 25 septembre :
+- le filleul reçoit toujours ses **3 paquets dès son premier duel** ;
+- le parrain reçoit les siens quand le filleul a **relié un compte Google ou e-mail** et **terminé un duel un autre
+  jour**, dans les 14 jours après son arrivée ; toujours **10 filleuls récompensés par mois** au plus ;
+- pendant ses **3 premiers jours**, un compte ne peut **ni échanger, ni enchérir, ni vendre** ;
+- les parrainages déjà validés restent acquis.
+
+Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md). **Aucune fonction serveur à redéployer.**
+Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas collé, rien ne change pour les joueurs.
+
+- [ ] Ouvrir https://github.com/raphaelferrandis-code/mots/blob/main/serveur/16-parrainage-confirme.sql → icône
+      **Copy raw file** (deux carrés superposés, en haut à droite).
+- [ ] Supabase → **SQL Editor** → **New query** ; vérifier que le petit menu à gauche de **Save** indique
+      **Database** ; coller ; **Run**. Réponse attendue : **Success. No rows returned** (un avertissement « Potential
+      issue detected » peut apparaître : le confirmer).
+- [ ] Le dire à l'assistant : il vérifie avec un joueur d'essai jetable, puis le supprime.
 
 ---
 
@@ -184,7 +207,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 - Ne jamais ouvrir les paiements sans demande explicite, ne jamais lire, copier ni afficher une clé secrète
   (Supabase, Stripe, Cloudflare).
 - Changement du serveur : modifier `serveur/*.ts`, lancer `npm run serveur:script`, ajouter une **nouvelle**
-  migration numérotée (la dernière est la 14) ; ne jamais recoller une ancienne migration.
+  migration numérotée (la dernière est la 16) ; ne jamais recoller une ancienne migration.
 - Bancs locaux sans compte distant : `node serveur/apercu-direct.mjs` (joutes en direct à quatre) et
   `node serveur/apercu-secours-parrainage.mjs` (parrainage et adversaire de secours).
 - Ne committer que ses propres fichiers, par leur nom ; tenir à jour l'en-tête d'`ETAT-DU-PROJET.md` et cette page.

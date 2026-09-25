@@ -1,59 +1,19 @@
--- L’adversaire de secours des joutes en direct et le parrainage. Après 12-joutes-direct.sql.
+-- Le parrainage confirmé et les comptes neufs. Après 15-portraits-et-presence.sql.
 -- Aucune fonction serveur (Edge) à redéployer : le client peut être publié avant ou après ce script.
 begin;
-create or replace function public.combat_creer(p_utilisateur uuid, p_requete uuid, p_action jsonb, p_etat jsonb, p_vue jsonb) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare c public.comptes%rowtype; ancien public.combats%rowtype;
-begin
-  select * into c from public.comptes where utilisateur=p_utilisateur for update;
-  if not found or not c.progression_active then raise exception 'Le serveur des combats n''est pas disponible.'; end if;
-  select * into ancien from public.combats where id=p_requete;
-  if found then
-    if ancien.utilisateur <> p_utilisateur or (ancien.commandes->p_requete::text) is distinct from p_action then raise exception 'Identifiant de commande déjà utilisé.'; end if;
-    return public.combat_reponse(p_utilisateur,ancien.id);
-  end if;
-  select * into ancien from public.combats where utilisateur=p_utilisateur and not archive for update;
-  if found and not ancien.termine then return public.combat_reponse(p_utilisateur,ancien.id); end if;
-  if p_etat->'deckDepart' is distinct from c.deck or jsonb_array_length(c.deck) <> 10 or public.deck_propre(p_utilisateur,c.deck) <> c.deck
-    then raise exception 'Ton deck a changé pendant la préparation. Réessaie.'; end if;
-  if p_etat->'adversaire'->>'type' = 'joute' then
-    if not exists(select 1 from public.profils where utilisateur=p_utilisateur) then raise exception 'Publie d''abord ton profil.'; end if;
-    if not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and utilisateur is distinct from p_utilisateur)
-      then raise exception 'Cet adversaire n''est plus disponible.'; end if;
-    -- Un défi sans classement vise un ami, ou un joueur maison : l'adversaire de secours des joutes (serveur/secours.ts).
-    if coalesce((p_etat->'adversaire'->>'amical')::boolean,false) and not public.sont_amis(
-      (select id from public.profils where utilisateur=p_utilisateur),(p_etat->'adversaire'->'profil'->>'id')::uuid)
-      and not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and maison)
-      then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
-  end if;
-  perform public.autoriser_joute(p_utilisateur); -- quota commun, conservé après retrait du profil
-  update public.combats set archive=true where utilisateur=p_utilisateur and not archive and termine;
-  insert into public.combats(id,utilisateur,etat,vue,commandes) values(p_requete,p_utilisateur,p_etat,p_vue,jsonb_build_object(p_requete::text,p_action));
-  -- Le détail des parties n'est utile qu'aux reprises et aux litiges récents. Les totaux restent dans le compte.
-  delete from public.combats where utilisateur=p_utilisateur and archive and maj_le < now()-interval '30 days';
-  return public.combat_reponse(p_utilisateur,p_requete);
-end $$;
 
--- ── L'adversaire de secours ──────────────────────────────────────────────────
--- Quelques joueurs maison proches de la cote du joueur, dont le deck est complet et ne contient aucun mot masqué par
--- ses filtres. Le jeu essaie le premier, puis les suivants si le serveur des combats en refuse un.
-create or replace function public.adversaires_de_secours(p_masques text[]) returns jsonb
+-- ── Les comptes neufs ────────────────────────────────────────────────────────
+create or replace function public.exiger_un_compte_etabli(p_utilisateur uuid, p_moi boolean) returns void
 language plpgsql security definer set search_path = '' as $$
-declare moi public.profils%rowtype;
+declare ouvert timestamptz := (select c.cree_le + interval '3 days' from public.comptes c where c.utilisateur = p_utilisateur);
 begin
-  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  select * into moi from public.profils where utilisateur = auth.uid() and not maison;
-  if not found then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
-  return coalesce((select jsonb_agg(jsonb_build_object('id', x.id, 'pseudo', x.pseudo, 'cote', x.cote) order by x.rang) from (
-    select p.id, p.pseudo, p.cote, abs(p.cote - moi.cote) + random() * 150 as rang
-    from public.profils p
-    where p.maison and jsonb_typeof(p.deck) = 'array' and jsonb_array_length(p.deck) = 10
-      and (select count(*) from jsonb_array_elements_text(p.deck) d join public.cartes c on c.id = d.value
-        where not (c.registre && coalesce(p_masques, '{}'::text[]))) = 10
-    order by rang limit 5) x), '[]'::jsonb);
+  if ouvert is null or ouvert <= now() then return; end if;
+  if p_moi then
+    raise exception 'Les échanges et le marché s''ouvrent 3 jours après ton arrivée : le %.', to_char(ouvert at time zone 'Europe/Paris', 'DD/MM à HH24:MI');
+  end if;
+  raise exception 'Ce joueur vient d''arriver : les échanges avec lui s''ouvrent le %.', to_char(ouvert at time zone 'Europe/Paris', 'DD/MM à HH24:MI');
 end $$;
-revoke execute on function public.adversaires_de_secours(text[]) from public, anon;
-grant execute on function public.adversaires_de_secours(text[]) to authenticated;
+revoke execute on function public.exiger_un_compte_etabli(uuid, boolean) from public, anon, authenticated;
 
 -- ── Le parrainage ────────────────────────────────────────────────────────────
 alter table public.comptes add column if not exists code_parrain text;
@@ -268,4 +228,182 @@ revoke execute on function public.verser_les_paquets_de_parrainage(uuid), public
   public.parrainage_apres_combat(), public.parrainage_apres_direct() from public, anon, authenticated;
 revoke execute on function public.declarer_mon_parrain(text), public.mon_parrainage() from public, anon;
 grant execute on function public.declarer_mon_parrain(text), public.mon_parrainage() to authenticated;
+create or replace function public.proposer_echange(p_id uuid,p_ami uuid,p_offerte text,p_finition_offerte text,p_demandee text,p_finition_demandee text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid; autre uuid; ancien public.echanges%rowtype;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923);
+  select id into moi from public.profils where utilisateur=auth.uid();
+  select * into ancien from public.echanges where id=p_id;
+  if found then
+    if ancien.expediteur is distinct from moi or ancien.destinataire is distinct from p_ami
+      or ancien.offerte is distinct from p_offerte or ancien.finition_offerte is distinct from p_finition_offerte
+      or ancien.demandee is distinct from p_demandee or ancien.finition_demandee is distinct from p_finition_demandee
+      then raise exception 'Identifiant d''échange déjà utilisé.'; end if;
+    return;
+  end if;
+  if moi is null or not public.sont_amis(moi,p_ami) then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
+  if p_finition_offerte is null or p_finition_demandee is null or p_finition_offerte not in ('Normale','Brillante','Holographique')
+    or p_finition_demandee not in ('Normale','Brillante','Holographique') then raise exception 'Finition inconnue.'; end if;
+  if p_offerte=p_demandee and p_finition_offerte=p_finition_demandee then raise exception 'Choisis deux timbres différents.'; end if;
+  select utilisateur into autre from public.profils where id=p_ami;
+  perform public.exiger_un_compte_etabli(auth.uid(),true); -- un compte neuf ne fait rien passer (serveur/parrainage.ts)
+  perform public.exiger_un_compte_etabli(autre,false);
+  if not exists(select 1 from public.possessions where utilisateur=auth.uid() and carte=p_offerte and coalesce((finitions->>p_finition_offerte)::integer,0)>0)
+    or not exists(select 1 from public.possessions where utilisateur=autre and carte=p_demandee and coalesce((finitions->>p_finition_demandee)::integer,0)>0)
+    then raise exception 'Un des timbres n''est plus disponible. Actualise les collections.'; end if;
+  if (select count(*) from public.echanges where etat='attente' and expire_le>now() and (expediteur=moi or destinataire=p_ami))>=20
+    then raise exception 'Trop d''échanges en attente. Termine-les avant de continuer.'; end if;
+  insert into public.echanges(id,expediteur,destinataire,offerte,finition_offerte,demandee,finition_demandee)
+    values(p_id,moi,p_ami,p_offerte,p_finition_offerte,p_demandee,p_finition_demandee);
+end $$;
+
+create or replace function public.repondre_echange(p_id uuid,p_action text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare moi uuid; e public.echanges%rowtype; a uuid; b uuid; voulu text;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- même ordre que le marché et la récupération de compte
+  select id into moi from public.profils where utilisateur=auth.uid();
+  select * into e from public.echanges where id=p_id and moi in (expediteur,destinataire) for update;
+  if not found then raise exception 'Échange introuvable.'; end if;
+  voulu:=case when p_action='accepter' and moi=e.destinataire then 'accepte'
+    when p_action='refuser' and moi=e.destinataire then 'refuse'
+    when p_action='annuler' and moi=e.expediteur then 'annule' else null end;
+  if voulu is null then raise exception 'Cette action n''est pas permise.'; end if;
+  if e.etat=voulu then return public.etat_du_compte(auth.uid()); end if;
+  if e.etat<>'attente' or e.expire_le<=now() then raise exception 'Cet échange est terminé ou expiré.'; end if;
+  if voulu='accepte' then
+    if not public.sont_amis(e.expediteur,e.destinataire) then raise exception 'Vous n''êtes plus amis.'; end if;
+    select utilisateur into a from public.profils where id=e.expediteur;
+    select utilisateur into b from public.profils where id=e.destinataire;
+    perform public.exiger_un_compte_etabli(b,true); -- même règle qu'à la proposition
+    perform public.exiger_un_compte_etabli(a,false);
+    perform 1 from public.comptes where utilisateur in (a,b) order by utilisateur for update;
+    perform public.prelever_echange(a,e.offerte,e.finition_offerte);
+    perform public.prelever_echange(b,e.demandee,e.finition_demandee);
+    perform public.rendre_un_timbre(b,e.offerte,e.finition_offerte,now(),public.pseudonyme_de(a));
+    perform public.rendre_un_timbre(a,e.demandee,e.finition_demandee,now(),public.pseudonyme_de(b));
+    update public.comptes set deck=public.deck_propre(utilisateur,deck),maj_le=now() where utilisateur in (a,b);
+    update public.profils set deck=public.deck_propre(utilisateur,deck),maj_le=now() where utilisateur in (a,b);
+  end if;
+  update public.echanges set etat=voulu where id=p_id;
+  return public.etat_du_compte(auth.uid());
+end $$;
+
+create or replace function public.mettre_en_vente(p_carte text, p_finition text, p_mise integer, p_achat_immediat integer, p_heures integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  possession public.possessions%rowtype;
+  rarete text;
+  plancher integer;
+  restantes jsonb;
+  e public.encheres%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verront les acheteurs.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf ne vend rien (serveur/parrainage.ts)
+  if p_heures is null or p_heures not in (12, 24, 48) then raise exception 'Durée inconnue.'; end if;
+  if p_finition is null or p_finition not in ('Normale', 'Brillante', 'Holographique') then raise exception 'Finition inconnue.'; end if;
+  -- Les plafonds ne s'appliquent plus à partir de la formule « Collectionneur ».
+  if (select count(*) from public.encheres where vendeur = moi and etat = 'ouverte') >= 10 then
+    raise exception 'Tu as déjà 10 ventes en cours : attends qu''elles se terminent.';
+  end if;
+  select k.rarete into rarete from public.cartes k where k.id = p_carte;
+  if not found then raise exception 'Cette carte est inconnue.'; end if;
+  plancher := case rarete when 'Commune' then 5 when 'Peu commune' then 10 when 'Rare' then 30 when 'Épique' then 100 when 'Légendaire' then 300 when 'Hors-série' then 1000 else 1 end;
+  if p_mise is null or p_mise < plancher then raise exception 'La mise de départ d''un timbre % est d''au moins % Encre.', lower(rarete), plancher; end if;
+  if p_achat_immediat is not null and p_achat_immediat < p_mise then raise exception 'Le prix d''achat immédiat ne peut pas être plus bas que la mise de départ.'; end if;
+  if p_mise > 1000000 or coalesce(p_achat_immediat, 0) > 1000000 then raise exception 'Ce prix est déraisonnable.'; end if;
+
+  select * into possession from public.possessions where utilisateur = moi and carte = p_carte for update;
+  if not found or coalesce((possession.finitions ->> p_finition)::integer, 0) < 1 then raise exception 'Tu ne possèdes pas ce timbre dans cette finition.'; end if;
+  -- Le timbre sort de l'album : une finition de moins, ou la carte entière s'il ne reste rien.
+  restantes := case when (possession.finitions ->> p_finition)::integer > 1
+    then jsonb_set(possession.finitions, array[p_finition], to_jsonb((possession.finitions ->> p_finition)::integer - 1))
+    else possession.finitions - p_finition end;
+  if restantes = '{}'::jsonb then
+    delete from public.possessions where utilisateur = moi and carte = p_carte;
+    update public.comptes set deck = (select coalesce(jsonb_agg(d) filter (where d <> p_carte), '[]'::jsonb) from jsonb_array_elements_text(deck) d), maj_le = now() where utilisateur = moi;
+  else
+    update public.possessions set finitions = restantes where utilisateur = moi and carte = p_carte;
+  end if;
+
+  insert into public.encheres (vendeur, carte, finition, obtenue_le, mise_de_depart, achat_immediat, ferme_le)
+  values (moi, p_carte, p_finition, possession.obtenue_le, p_mise, p_achat_immediat, now() + make_interval(hours => p_heures))
+  returning * into e;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
+create or replace function public.encherir(p_enchere bigint, p_montant integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  moi uuid := auth.uid();
+  c public.comptes%rowtype;
+  e public.encheres%rowtype;
+  minimum integer;
+  montant integer := p_montant;
+  achats integer;
+  pris_achetee integer;
+  precedente public.mises%rowtype;
+begin
+  if moi is null then raise exception 'Connexion requise.'; end if;
+  perform public.cloturer_les_encheres();
+  select * into c from public.comptes where utilisateur = moi for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if not exists (select 1 from public.profils where utilisateur = moi) then raise exception 'Choisis d''abord ton pseudonyme (dans les joutes) : c''est lui que verra le vendeur.'; end if;
+  perform public.exiger_un_compte_etabli(moi, true); -- un compte neuf n'achète rien (serveur/parrainage.ts)
+  select * into e from public.encheres where id = p_enchere for update;
+  if not found or e.etat <> 'ouverte' or e.ferme_le <= now() then raise exception 'Cette enchère est terminée.'; end if;
+  if e.vendeur = moi then raise exception 'C''est ta propre vente.'; end if;
+  -- Celui qui est déjà en tête n'a pas à surenchérir sur lui-même — sauf pour acheter tout de suite.
+  if e.meilleur_encherisseur = moi and (e.achat_immediat is null or coalesce(p_montant, 0) < e.achat_immediat) then raise exception 'Tu es déjà en tête.'; end if;
+  -- Les joueurs gratuits : 10 achats par jour au plus (les mises en tête comptent comme des achats en cours).
+  if true then
+    select count(*) into achats from public.encheres where (meilleur_encherisseur = moi and etat = 'ouverte' and id <> e.id)
+      or (acheteur = moi and etat = 'vendue' and cloturee_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc');
+    if achats >= 10 then raise exception 'Tu as déjà 10 achats aujourd''hui : reviens demain.'; end if;
+  end if;
+  minimum := case when e.meilleure_mise is null then e.mise_de_depart else e.meilleure_mise + greatest(1, ceil(e.meilleure_mise * 0.05)::integer) end;
+  if e.achat_immediat is not null and montant >= e.achat_immediat then montant := e.achat_immediat;
+  elsif montant is null or montant < minimum then raise exception 'La mise doit être d''au moins % Encre.', minimum;
+  end if;
+  -- Au marché, l'Encre achetée compte autant que celle gagnée en jouant (elle ne sert qu'ici).
+  if c.encre + c.encre_achetee + (case when e.meilleur_encherisseur = moi then e.meilleure_mise else 0 end) < montant then
+    raise exception 'Pas assez d''Encre : il te faut % Encre.', montant;
+  end if;
+
+  -- L'Encre change de mains : la mienne est bloquée, celle du précédent lui revient — chacune dans sa bourse.
+  if e.meilleur_encherisseur is not null then
+    select * into precedente from public.mises where enchere = e.id and encherisseur = e.meilleur_encherisseur order by id desc limit 1;
+    update public.comptes
+      set encre_achetee = encre_achetee + coalesce(precedente.part_achetee, 0),
+          encre = encre + e.meilleure_mise - coalesce(precedente.part_achetee, 0), maj_le = now()
+      where utilisateur = e.meilleur_encherisseur;
+  end if;
+  select * into c from public.comptes where utilisateur = moi;
+  pris_achetee := least(c.encre_achetee, montant);
+  update public.comptes set encre_achetee = encre_achetee - pris_achetee, encre = encre - (montant - pris_achetee), maj_le = now()
+    where utilisateur = moi;
+  insert into public.mises (enchere, encherisseur, montant, part_achetee) values (e.id, moi, montant, pris_achetee);
+  update public.encheres set meilleure_mise = montant, meilleur_encherisseur = moi,
+    -- Une mise dans les 5 dernières minutes prolonge l'enchère d'autant.
+    ferme_le = case when e.achat_immediat is not null and montant >= e.achat_immediat then now()
+                    when e.ferme_le - now() < interval '5 minutes' then now() + interval '5 minutes'
+                    else e.ferme_le end
+    where id = e.id;
+  -- Un achat immédiat se règle sur-le-champ.
+  if e.achat_immediat is not null and montant >= e.achat_immediat then perform public.cloturer_une_enchere(e.id); end if;
+  select * into e from public.encheres where id = p_enchere;
+  return jsonb_build_object('enchere', public.enchere_en_json(e), 'etat', public.etat_du_compte(moi));
+end $$;
+
 commit;

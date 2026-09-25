@@ -21,7 +21,7 @@ const b = await baseDeTest(true);
 await b.db.exec(direct() + secours() + parrainage());
 await b.db.exec(cartes({ cartes: brut.cartes, meta: { edition: 1, version: 'test' } }));
 const NOUVEAU = '44444444-4444-4444-8444-444444444444';
-await b.db.query('insert into auth.users values($1)', [NOUVEAU]);
+await b.db.query('insert into auth.users(id,is_anonymous) values($1,true)', [NOUVEAU]); // un invité, comme tout visiteur
 await b.db.query('insert into public.comptes(utilisateur) values($1)', [NOUVEAU]);
 const joueurs = [b.ids[0], NOUVEAU];
 for (const uid of joueurs) {

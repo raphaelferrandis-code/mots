@@ -19,21 +19,30 @@
 - Page **Amis** : chaque joueur a son lien d'invitation (`https://philamots.fr/?parrain=XXXXXXXX`), avec les
   boutons « Copier le lien » et « Partager… », et le compte de ses invités.
 - Le nouveau venu qui arrive par ce lien voit sur l'accueil : « Bienvenue ! … t'a invité. Termine ton premier
-  duel : vous recevrez chacun 3 paquets. »
+  duel : tu recevras 3 paquets. »
 - Quand il **termine son premier duel sans l'abandonner** (entraînement, défi, adversaire de secours ou joute en
-  direct), il reçoit **3 paquets** aussitôt. Le parrain reçoit les siens à sa visite suivante, avec un message
-  « Merci pour l'invitation ! ».
+  direct), il reçoit **3 paquets** aussitôt.
+- **Depuis le script 16 (décision du 25 septembre 2026)**, le parrain ne reçoit les siens que lorsque le filleul est
+  **confirmé** : il a **relié un compte Google ou e-mail**, et il a **terminé un duel un autre jour** que le premier
+  (heure de Paris), dans les **14 jours** après son arrivée. Le parrain les reçoit à sa visite suivante, avec un
+  message « Merci pour l'invitation ! … a confirmé son inscription ». Tant que ce n'est pas fait, le filleul voit sur
+  l'accueil « Remercie … » avec ce qu'il lui reste à faire, et le parrain voit combien de ses invités doivent encore
+  le faire. Les parrainages validés avant le script 16 restent acquis.
+- **Comptes neufs** (script 16) : pendant ses **3 premiers jours**, un compte ne peut ni proposer ni accepter un
+  échange, ni enchérir, ni vendre. Le serveur répond « Les échanges et le marché s'ouvrent 3 jours après ton arrivée :
+  le JJ/MM à HH:MM. » Sinon, des comptes jetables feraient remonter leurs paquets vers un compte principal.
 - Garde-fous contre les faux comptes :
   - seul un **nouveau joueur** peut se déclarer invité (compte de moins de 7 jours, aucun duel terminé), une
     seule fois ;
   - on ne peut pas s'inviter soi-même, ni s'inviter l'un l'autre ;
-  - le parrain est récompensé pour **10 filleuls par mois** au plus (le filleul, lui, l'est toujours) ;
+  - le parrain est récompensé pour **10 filleuls confirmés par mois** au plus (le filleul, lui, l'est toujours) ;
+  - un compte invité (sans Google ni e-mail) n'est jamais confirmé ;
   - le premier duel est vérifié par le serveur des combats : le navigateur ne peut pas le déclarer.
 - Les paquets offerts ne font jamais dépasser **15 paquets en réserve**. Sans place, ils attendent, et le joueur
   voit : « Des paquets t'attendent ».
 - La page Confidentialité explique ce que le serveur retient.
 
-Tous ces réglages sont dans `src/config/equilibrage.ts` (rubriques `parrainage` et `secours`).
+Tous ces réglages sont dans `src/config/equilibrage.ts` (rubriques `parrainage`, `comptesNeufs` et `secours`).
 
 ## Vérifications faites
 

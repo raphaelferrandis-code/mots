@@ -20,7 +20,7 @@ import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recupera
 import { combats } from './combats.ts';
 import { amis } from './amis.ts';
 import { equipes } from './equipes.ts';
-import { parrainage } from './parrainage.ts';
+import { comptesNeufs, parrainage } from './parrainage.ts';
 import { secours } from './secours.ts';
 import { activite } from './activite.ts';
 import { portraits } from './portraits.ts';
@@ -380,6 +380,7 @@ end $$;
 
 ${collections()}
 ${recuperation()}
+${comptesNeufs()}
 ${marche()}
 ${portraits()}
 ${amis()}
@@ -443,6 +444,22 @@ export function migrationPortraits(): string {
     + portraits() + '\n' + reprise(amis(), 'mes_amis') + '\n\n' + reprise(equipes(), 'mon_equipe') + '\n\ncommit;\n';
 }
 
+// Le parrainage confirmé et les comptes neufs (décisions du 25/09/2026). Après 15-portraits-et-presence.sql.
+// Seules les quatre fonctions qui font passer un timbre ou de l'Encre changent parmi celles du marché et des amis :
+// elles sont reprises telles quelles.
+export function migrationParrainageConfirme(): string {
+  const reprise = (source: string, nom: string) => {
+    const f = source.match(new RegExp(`create or replace function public\\.${nom}\\([\\s\\S]*?\\nend \\$\\$;`))?.[0];
+    if (!f) throw new Error(`${nom} introuvable`);
+    return f;
+  };
+  return '-- Le parrainage confirmé et les comptes neufs. Après 15-portraits-et-presence.sql.\n'
+    + '-- Aucune fonction serveur (Edge) à redéployer : le client peut être publié avant ou après ce script.\nbegin;\n'
+    + comptesNeufs() + parrainage()
+    + ['proposer_echange', 'repondre_echange'].map((nom) => reprise(amis(), nom)).join('\n\n') + '\n\n'
+    + ['mettre_en_vente', 'encherir'].map((nom) => reprise(marche(), nom)).join('\n\n') + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -475,5 +492,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '13-secours-et-parrainage.sql'), migrationSecoursEtParrainage());
   writeFileSync(path.join(RACINE, 'serveur', '14-fil-d-activite.sql'), migrationFilDActivite());
   writeFileSync(path.join(RACINE, 'serveur', '15-portraits-et-presence.sql'), migrationPortraits());
+  writeFileSync(path.join(RACINE, 'serveur', '16-parrainage-confirme.sql'), migrationParrainageConfirme());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }
