@@ -22,7 +22,7 @@
 > 1. **Vignette de partage et Google — publiés.** Image 1200 × 630 avec trois timbres quand on partage le lien,
 >    titre d'accueil descriptif, fiche du jeu pour les moteurs, `robots.txt`, `sitemap.xml`. **À faire par Raphaël :
 >    Google Search Console et Bing** (`GUIDE-google.md`) ; balise de vérification de Google publiée le 25/09 dans
->    `index.html`, reste à valider, envoyer le sitemap et importer dans Bing.
+>    `index.html`, site validé et sitemap envoyé par Raphaël le 25/09 ; reste à importer dans Bing.
 > 2. **Contrôle anti-robot Cloudflare Turnstile — EN LIGNE depuis le 25/09.** Le jeu envoie un jeton à l'ouverture
 >    d'un compte et à l'envoi d'un code e-mail (`cleAntiRobot` réglée) ; Raphaël a activé le contrôle dans Supabase
 >    avec la clé secrète et vérifié en navigation privée (`GUIDE-anti-robot.md`). En cas de souci : le décocher dans
