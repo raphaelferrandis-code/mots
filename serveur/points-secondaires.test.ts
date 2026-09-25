@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { baseDeTest } from './test-base.ts';
 import { cartes } from './collections.ts';
+import { direct } from './direct.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 
@@ -194,5 +195,19 @@ it('le fil d’activité note la Légendaire tirée d’un paquet, pas celle ach
     await b.admin();
     assert.equal((await b.db.query('select 1 from public.possessions where utilisateur = $1 and carte = $2', [b.ids[1], legendaire.id])).rows.length, 1);
     assert.deepEqual(await fil(), apresLePaquet, 'l’achat ne fait pas de bruit');
+  } finally { await b.db.close(); }
+});
+
+it('une équipe dissoute emporte sa cote 2v2, et seulement elle', async () => {
+  const b = await baseDeTest(true);
+  try {
+    await b.db.exec(direct());
+    const equipe = randomUUID();
+    const autre = randomUUID();
+    await b.db.query("insert into public.equipes(id, nom, nom_cle, embleme) values ($1, 'Les Plumes', 'lesplumes', 'plume'), ($2, 'Les Lunes', 'leslunes', 'lune')", [equipe, autre]);
+    await b.db.query("insert into public.direct_cotes(mode, sujet, cote) values ('duo_equipe', $1, 1100), ('duo_equipe', $2, 1050), ('duo_solo', $1, 990)", [equipe, autre]);
+    await b.db.query('delete from public.equipes where id = $1', [equipe]);
+    const reste = (await b.db.query<{ mode: string; sujet: string }>('select mode, sujet from public.direct_cotes order by mode, sujet')).rows;
+    assert.deepEqual(reste.map((r) => [r.mode, r.sujet]), [['duo_equipe', autre], ['duo_solo', equipe]]);
   } finally { await b.db.close(); }
 });

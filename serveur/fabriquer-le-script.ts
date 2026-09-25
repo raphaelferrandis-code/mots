@@ -24,7 +24,7 @@ import { comptesNeufs, parrainage } from './parrainage.ts';
 import { secours } from './secours.ts';
 import { activite } from './activite.ts';
 import { portraits } from './portraits.ts';
-import { direct } from './direct.ts';
+import { direct, OUBLIER_L_EQUIPE_SQL } from './direct.ts';
 import { classement } from './classement.ts';
 import { paiementsSuppressionEtVerification } from './paiements.ts';
 import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
@@ -519,7 +519,7 @@ export function migrationPaiements(): string {
 // Les points secondaires de l'audit (25/09/2026). Après 19-paiements.sql. Paquet, cadeau et vente sans doublon après
 // une coupure de réseau ; filtres des paquets contrôlés ; fil d'activité réservé aux paquets ; code de secours unique
 // et de l'alphabet du jeu ; vieux essais de récupération oubliés ; vente conclue gardée sans son vendeur ; histoire des
-// prix fermée aux comptes inconnus.
+// prix fermée aux comptes inconnus ; la cote 2v2 d'une équipe dissoute effacée.
 export function migrationPointsSecondaires(): string {
   return '-- Les points secondaires de l’audit. Après 19-paiements.sql. Redéployer aussi les fonctions combats et joutes-direct.\nbegin;\n'
     + INDEX_DU_CODE_SQL + '\n' + DEMANDES_TRAITEES_SQL + '\n' + VENDEUR_FACULTATIF_SQL + '\n\n'
@@ -528,6 +528,7 @@ export function migrationPointsSecondaires(): string {
     + 'drop function if exists public.mettre_en_vente(text, text, integer, integer, integer);\n\n'
     + ['tirer_les_cartes', 'ouvrir_un_paquet', 'reclamer_recompense', 'mettre_en_vente', 'mes_encheres', 'historique_de_la_cote',
       'definir_un_code_de_secours', 'recuperer_par_code', 'activite_trouvaille'].map((nom) => reprise(structure(), nom)).join('\n\n')
+    + '\n\n' + OUBLIER_L_EQUIPE_SQL + '\n'
     + '\nrevoke execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) from public, anon;\n'
     + 'grant execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) to authenticated;\n'
     + '\ncommit;\n';

@@ -356,6 +356,17 @@ begin
   end;
   return new;
 end $$;
+
+create or replace function public.direct_oublier_l_equipe() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+  delete from public.direct_cotes where mode='duo_equipe' and sujet=old.id;
+  return old;
+end $$;
+drop trigger if exists direct_oublier_l_equipe on public.equipes;
+create trigger direct_oublier_l_equipe after delete on public.equipes for each row execute function public.direct_oublier_l_equipe();
+revoke all on function public.direct_oublier_l_equipe() from public,anon,authenticated;
+
 revoke execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) from public, anon;
 grant execute on function public.ouvrir_un_paquet(text[], uuid), public.reclamer_recompense(text, text[], uuid), public.mettre_en_vente(text, text, integer, integer, integer, uuid) to authenticated;
 

@@ -364,6 +364,15 @@ begin
 end $$;
 drop trigger if exists direct_oublier_les_cotes on public.comptes;
 create trigger direct_oublier_les_cotes before delete on public.comptes for each row execute function public.direct_oublier_les_cotes();
+create or replace function public.direct_oublier_l_equipe() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+  delete from public.direct_cotes where mode='duo_equipe' and sujet=old.id;
+  return old;
+end $$;
+drop trigger if exists direct_oublier_l_equipe on public.equipes;
+create trigger direct_oublier_l_equipe after delete on public.equipes for each row execute function public.direct_oublier_l_equipe();
+revoke all on function public.direct_oublier_l_equipe() from public,anon,authenticated;
 
 -- Les anciens clients ne peuvent plus démarrer une joute classée contre un double.
 create or replace function public.direct_refuser_double() returns trigger

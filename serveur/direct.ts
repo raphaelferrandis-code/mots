@@ -6,6 +6,17 @@ import { VERROU_DU_DIRECT } from './verrous.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 const D = EQUILIBRAGE.direct;
 const J = EQUILIBRAGE.joute;
+// Une équipe dissoute (ou partie avec son dernier équipier) emporte sa cote 2v2 : plus rien ne la relie à personne.
+export const OUBLIER_L_EQUIPE_SQL = String.raw`create or replace function public.direct_oublier_l_equipe() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+  delete from public.direct_cotes where mode='duo_equipe' and sujet=old.id;
+  return old;
+end $$;
+drop trigger if exists direct_oublier_l_equipe on public.equipes;
+create trigger direct_oublier_l_equipe after delete on public.equipes for each row execute function public.direct_oublier_l_equipe();
+revoke all on function public.direct_oublier_l_equipe() from public,anon,authenticated;`;
+
 export function direct(): string { return String.raw`
 create table if not exists public.direct_parties (
   id uuid primary key default gen_random_uuid(), mode text not null check(mode in ('solo','duo_solo','duo_equipe')),
@@ -370,6 +381,7 @@ begin
 end $$;
 drop trigger if exists direct_oublier_les_cotes on public.comptes;
 create trigger direct_oublier_les_cotes before delete on public.comptes for each row execute function public.direct_oublier_les_cotes();
+${OUBLIER_L_EQUIPE_SQL}
 
 -- Les anciens clients ne peuvent plus démarrer une joute classée contre un double.
 create or replace function public.direct_refuser_double() returns trigger
