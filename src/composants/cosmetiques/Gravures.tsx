@@ -1,4 +1,7 @@
-import { useId } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
+import { ornement } from '../../jeu/personnalisation.ts';
+import { DESSINS_AVATARS } from './dessins/avatars.ts';
+import { DESSINS_CADRES } from './dessins/cadres.ts';
 
 // Dessins originaux en SVG : un seul tracé net à toutes les tailles, sans textures téléchargées.
 export function Motif({ nom }: { nom: string }) {
@@ -25,27 +28,55 @@ export function Embleme({ motif }: { motif: string }) {
   </svg>;
 }
 
+// Les cadres et les avatars de la refonte : des chaînes SVG animées en SMIL (voir dessins/outils.ts).
+// Le repère visible va de 10 à 190 : ce qui dépasse (ailes, couronne, moustaches) déborde volontairement du portrait.
+const REPERE = '10 10 180 180';
+const prefixe = (id: string) => 'g' + id.replace(/[^a-zA-Z0-9]/g, '');
+
+function dessinDuPortrait(u: string, cadre: string, avatar: string | null): string {
+  const bord = DESSINS_CADRES[cadre], visage = avatar ? DESSINS_AVATARS[avatar] : undefined;
+  const teinteCadre = ornement(cadre)?.teinte ?? '#bacbde';
+  const fond = bord?.fond?.(u + 'k', teinteCadre) ?? '';
+  const devant = bord ? bord.dessin(u + 'c', teinteCadre) : '<circle cx="100" cy="100" r="61" fill="none" stroke="#4a6687" stroke-width="1.2"/>';
+  if (avatar === null) return fond + devant;
+  const disque = `<defs><radialGradient id="${u}d" cx=".5" cy=".42" r=".62"><stop stop-color="#243650"/><stop offset=".7" stop-color="#101c2e"/><stop offset="1" stop-color="#08111e"/></radialGradient><clipPath id="${u}p"><circle cx="100" cy="100" r="60"/></clipPath></defs><circle cx="100" cy="100" r="60" fill="url(#${u}d)"/>`;
+  const dessin = visage ? `<g clip-path="url(#${u}p)"><svg x="46" y="46" width="108" height="108" viewBox="0 0 100 100" overflow="visible">${visage(u + 'a', ornement(avatar)?.teinte ?? '#eccba0')}</svg></g>` : '';
+  return fond + disque + dessin + devant;
+}
+
+// Les animations SMIL tournent d'elles-mêmes : on les fige (à leur image de départ) quand l'objet n'est pas
+// mis en avant, ou quand le joueur ou son système demandent moins d'animations.
+function useAnimationsSvg(anime: boolean, contenu: string) {
+  const ref = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const svg = ref.current;
+    if (!svg || typeof svg.pauseAnimations !== 'function') return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const regler = () => {
+      if (!anime || media.matches || document.documentElement.hasAttribute('data-animations-reduites')) { svg.pauseAnimations(); svg.setCurrentTime(0); }
+      else svg.unpauseAnimations();
+    };
+    regler();
+    media.addEventListener('change', regler);
+    const observateur = new MutationObserver(regler);
+    observateur.observe(document.documentElement, { attributes: true, attributeFilter: ['data-animations-reduites'] });
+    return () => { media.removeEventListener('change', regler); observateur.disconnect(); };
+  }, [anime, contenu]);
+  return ref;
+}
+
+/** Le portrait complet : fond du cadre, disque, avatar, puis le cadre par-dessus. `cadre` vide : simple filet. */
+export function PortraitGrave({ avatar, cadre, anime = false }: { avatar: string; cadre: string; anime?: boolean }) {
+  const u = prefixe(useId());
+  const contenu = useMemo(() => dessinDuPortrait(u, cadre, avatar), [u, cadre, avatar]);
+  const ref = useAnimationsSvg(anime, contenu);
+  return <svg ref={ref} className="portrait-grave" viewBox={REPERE} overflow="visible" aria-hidden="true" dangerouslySetInnerHTML={{ __html: contenu }} />;
+}
+
+/** Le cadre seul, pour entourer autre chose qu'un avatar (podium du classement). */
 export function CadreGrave({ modele, anime = false }: { modele: string; anime?: boolean }) {
-  const id = useId();
-  const botanique = ['laurier', 'ronces', 'floraison'].includes(modele);
-  return <svg className={`cadre-grave cadre-grave--${modele}`} data-anime={anime} viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
-    <defs><linearGradient id={id} x2=".8" y2="1"><stop stopColor="currentColor" /><stop offset=".48" stopColor="#f3f3e8" /><stop offset=".62" stopColor="currentColor" stopOpacity=".35" /><stop offset="1" stopColor="currentColor" /></linearGradient></defs>
-    <circle cx="100" cy="100" r="68" strokeOpacity=".35" /><circle cx="100" cy="100" r="72" stroke={`url(#${id})`} strokeWidth="2" />
-    {modele === 'simple' && <><circle cx="100" cy="100" r="77" strokeOpacity=".4" />{[0,90,180,270].map((r)=><path key={r} transform={`rotate(${r} 100 100)`} d="m96 22 4-5 4 5-4 5Z" fill="currentColor" />)}</>}
-    {modele === 'postal' && <><circle cx="100" cy="100" r="83" strokeDasharray="3 4" strokeWidth="4" /><circle cx="100" cy="100" r="89" strokeOpacity=".5" /><path d="M25 146q12-8 24 0m-21 6q12-8 24 0m-17 6q12-8 24 0" /><path d="m92 19 8-7 8 7-8 6Z" fill="currentColor" /></>}
-    {botanique && <g className="cadre__flore">{[-1,1].map((c)=><g key={c} transform={`translate(${c < 0 ? 200 : 0} 0) scale(${c} 1)`}>
-      <path d="M93 180C23 167 2 83 48 34" strokeWidth="2.5" />
-      {[0,1,2,3,4,5,6].map((i)=><g key={i} transform={`rotate(${i*17-50} 100 100)`}>
-        {modele === 'ronces' ? <path d="M27 96 9 80l14 29-10 9 20-4" strokeWidth="2" /> : <><path d="M23 106Q-1 90 9 73Q29 81 23 106ZM25 105Q42 82 35 72Q20 83 25 105Z" fill={`url(#${id})`} fillOpacity=".55" /><path d="M23 105 10 78" strokeWidth=".6" /></>}
-      </g>)}
-    </g>)}{modele === 'floraison' && [0,60,120,180,240,300].map((r)=><g className="cadre__fleur" key={r} transform={`rotate(${r} 100 100) translate(100 18)`}>{[0,72,144,216,288].map((a)=><ellipse key={a} rx="4" ry="9" cy="-5" transform={`rotate(${a})`} fill="currentColor" fillOpacity=".7" />)}<circle r="3" fill="#fff4dd" /></g>)}</g>}
-    {['vitrail', 'cristal'].includes(modele) && <g className="cadre__facettes">{Array.from({length: modele === 'cristal' ? 8 : 12},(_,i)=><g key={i} transform={`rotate(${i*(modele === 'cristal' ? 45 : 30)} 100 100)`}><path d="m100 5 11 19-5 16h-12l-5-16Z" fill={`url(#${id})`} fillOpacity=".45" /><path d="m100 5-3 19 3 16 3-16ZM89 24h22" strokeOpacity=".6" />{modele === 'cristal' && <path d="m79 23 7-12 3 20-7 12Z" fill="currentColor" fillOpacity=".2" />}</g>)}<path d="M47 41 100 19l53 22 28 59-28 59-53 22-53-22-28-59Z" strokeOpacity=".5" /></g>}
-    {modele === 'maree' && <>{[0,90,180,270].map((r)=><g key={r} transform={`rotate(${r} 100 100)`}><path d="M30 89C-3 37 66 5 72 35c4 17-21 19-17 6M33 81C15 45 48 24 60 32" strokeWidth="2" /><path d="m33 82-8 15 1-18" fill="currentColor" /></g>)}</>}
-    {modele === 'eclipse' && <><path d="M100 14a86 86 0 0 0 0 172A71 86 0 0 1 100 14Z" fill={`url(#${id})`} fillOpacity=".45" /><circle cx="100" cy="100" r="87" strokeDasharray="1 7" />{[25,75,130].map((y,i)=><path key={y} transform={`translate(${172+i*3} ${y})`} d="m0-7 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="currentColor" />)}</>}
-    {modele === 'astral' && <><g className="cadre__orbite"><ellipse cx="100" cy="100" rx="94" ry="77" transform="rotate(-35 100 100)" /><ellipse cx="100" cy="100" rx="94" ry="77" transform="rotate(35 100 100)" strokeOpacity=".45" /><path d="m100 0 5 11-5 11-5-11Z" fill="#f4e6ff" /><circle cx="100" cy="183" r="4" fill="currentColor" /></g><g className="cadre__etoiles">{[0,60,120,180,240,300].map((r)=><path key={r} transform={`rotate(${r} 100 100)`} d="m100 14 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z" fill={`url(#${id})`} />)}</g></>}
-    {modele === 'brasier' && <g className="cadre__ailes">{[-1,1].map((c)=><g key={c} transform={`translate(${c < 0 ? 200 : 0} 0) scale(${c} 1)`}><path d="M79 178C13 163 6 81 10 33l25 40-9-51 28 49C17 123 48 146 79 178Z" fill={`url(#${id})`} fillOpacity=".5" /><path d="M18 60q2 58 35 92M25 92l17 39M34 144l-22-16m38 35-24-10" /></g>)}<path d="m100 9 12 15-12 13-12-13Z" fill="currentColor" /></g>}
-    {modele === 'aurore' && <g className="cadre__voiles">{[0,60,120].map((r,i)=><ellipse key={r} cx="100" cy="100" rx="85" ry="76" transform={`rotate(${r} 100 100)`} stroke={['#a5f5d1','#8ccae9','#cdb6ef'][i]} strokeWidth="4" strokeDasharray="130 40 50 300" />)}<circle cx="100" cy="100" r="92" strokeDasharray="1 12" /></g>}
-    {anime && <g className="cadre__poussieres">{[15,65,130,210,285].map((r,i)=><circle key={r} cx="100" cy={8+i%3*5} r={i%2+1.5} transform={`rotate(${r} 100 100)`} fill="#efffff" stroke="none" />)}</g>}
-    {modele !== 'simple' && <path d="m89 179 11-6 11 6-11 14Z" fill={`url(#${id})`} strokeWidth="1.5" />}
-  </svg>;
+  const u = prefixe(useId());
+  const contenu = useMemo(() => dessinDuPortrait(u, modele, null), [u, modele]);
+  const ref = useAnimationsSvg(anime, contenu);
+  return <svg ref={ref} className="cadre-grave" viewBox={REPERE} overflow="visible" aria-hidden="true" dangerouslySetInnerHTML={{ __html: contenu }} />;
 }

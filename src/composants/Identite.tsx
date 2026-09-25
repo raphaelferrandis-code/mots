@@ -2,16 +2,15 @@ import type { CSSProperties } from 'react';
 import { ornement, profilVisible, progressionDuNiveau } from '../jeu/personnalisation.ts';
 import type { ProfilPersonnel } from '../jeu/personnalisation.ts';
 import { useMaintenant, usePartie } from './usePartie.ts';
-import { CadreGrave, Embleme } from './cosmetiques/Gravures.tsx';
+import { PortraitGrave } from './cosmetiques/Gravures.tsx';
 import './profil.css';
 export { Embleme } from './cosmetiques/Gravures.tsx';
 
+/** `cadre` vide : l'avatar seul, dans un simple filet. */
 export function Portrait({ avatar, cadre, anime = true }: { avatar: string; cadre: string; anime?: boolean }) {
   const bord = ornement(cadre);
-  return <span className="portrait" style={{ '--cadre': bord?.teinte, '--portrait': ornement(avatar)?.teinte } as CSSProperties}>
-    <span className="portrait__fond" />
-    <span className="portrait__embleme"><Embleme motif={avatar} /></span>
-    <CadreGrave modele={cadre} anime={anime && bord?.anime} />
+  return <span className="portrait" style={{ '--cadre': bord?.teinte } as CSSProperties}>
+    <PortraitGrave avatar={avatar} cadre={cadre} anime={anime && !!(bord?.anime || ornement(avatar)?.anime)} />
   </span>;
 }
 export function Identite({ profil, pseudo, apercu = false }: { profil: ProfilPersonnel; pseudo?: string; apercu?: boolean }) {

@@ -92,7 +92,8 @@ export function Profil() {
         <div className="vestiaire__fiche">
           <span className="vestiaire__famille">{selection?.famille ?? 'Correspondances'}{selection?.anime && <span> · Animé</span>}</span>
           <h2 aria-live="polite">{nom}</h2>
-          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
+          {selection?.description && <p className="vestiaire__description">{selection.description}</p>}
+          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique{selection.prestige ? ` · offert au niveau ${selection.prestige}` : ''}</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
           {equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
             : disponible ? <button className="bouton vestiaire__action" onClick={equiper}>Équiper</button>
             : succesSelectionne ? <button className="bouton vestiaire__action" onClick={() => { ciblerSucces(succesSelectionne.id); changerVue('succes'); }}>Voir le succès <span>↗</span></button>
@@ -114,14 +115,14 @@ export function Profil() {
               <span className="cosmetique__badge" aria-hidden="true">{item?.premium ? '✦' : ''}</span>
               <span className="cosmetique__visuel">
                 {categorie === 'cadre' ? <Portrait avatar={profil.avatar} cadre={o.id} anime={actif} />
-                  : categorie === 'avatar' ? <Embleme motif={o.id} />
+                  : categorie === 'avatar' ? <Portrait avatar={o.id} cadre="" anime={actif} />
                   : categorie === 'paquet' ? <PaquetScelle modele={o.id} />
                   : categorie === 'dos' ? <DosDeCarte modele={o.id} etiquette={o.nom} anime={actif} />
                   : categorie === 'couleur' ? <span className="cosmetique__encrier"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true"><path d="m30 27-8 19v35q28 13 56 0V46l-8-19ZM30 16h40v11H30Z" strokeWidth="2" /><path d="M24 51q28 10 52 0v29q-26 10-52 0Z" fill="currentColor" fillOpacity=".5" /><path d="M31 45v28" strokeWidth="4" opacity=".6" /><path d="m50 37 8 12-8 12-8-12Z" fill="currentColor" /></svg></span>
                   : <span className="cosmetique__titre" data-titre={o.id}><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true"><Motif nom={FAMILLES_SUCCES[succesDuTitre(o.id)?.famille ?? 'collection'].motif} /></svg></span>}
               </span>
               <span className="cosmetique__cartouche"><span className="cosmetique__nom">{o.nom}</span>
-              <span className="cosmetique__acces">{profil[categorie] === o.id ? '✓ Équipé' : libre ? 'Disponible' : item?.succes ? <><Verrou /> Succès</> : item?.premium ? <><Verrou /> Premium</> : <><Verrou /> Niv. {item?.niveau}</>}</span></span>
+              <span className="cosmetique__acces">{profil[categorie] === o.id ? '✓ Équipé' : libre ? 'Disponible' : item?.succes ? <><Verrou /> Succès</> : item?.premium ? <><Verrou /> Premium{item.prestige ? ` · Niv. ${item.prestige}` : ''}</> : <><Verrou /> Niv. {item?.niveau}</>}</span></span>
             </button>;
           })}
         </div>

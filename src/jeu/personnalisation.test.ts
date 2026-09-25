@@ -4,6 +4,8 @@ import { acheterOrnement, nouveauProfil, progressionDuNiveau, relireProfil, estD
 import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import { fusionner } from './synchronisation.ts';
 import { FORMULE_GRATUITE, cosmetiquesPremium } from './formule.ts';
+import { DESSINS_AVATARS } from '../composants/cosmetiques/dessins/avatars.ts';
+import { DESSINS_CADRES } from '../composants/cosmetiques/dessins/cadres.ts';
 
 it('réserve les objets premium aux formules, quels que soient le niveau, les achats ou le solde', () => {
   const profil = { ...nouveauProfil(), xp: 1_000_000, achats: ['astral'] };
@@ -26,14 +28,35 @@ it('réserve le rendu premium à l’achat définitif et conserve les choix', ()
   assert.equal(cosmetiquesPremium({ ...FORMULE_GRATUITE, achatUnique: true }, 9999), true);
 });
 
-it('propose 94 objets identifiables, dont 12 cadres et huit emballages libres', () => {
-  assert.equal(ORNEMENTS.length + PAQUETS.length, 94);
-  assert.equal(new Set(ORNEMENTS.map(o => o.id)).size, ORNEMENTS.length);
-  assert.equal(ORNEMENTS.filter(o => o.categorie === 'cadre').length, 12);
-  for (const categorie of ['avatar', 'couleur', 'dos']) assert.equal(ORNEMENTS.filter(o => o.categorie === categorie).length, 8);
+it('propose 134 objets identifiables, dont 34 cadres, 26 avatars et huit emballages libres', () => {
+  assert.equal(ORNEMENTS.length + PAQUETS.length, 134);
+  assert.equal(new Set([...ORNEMENTS, ...PAQUETS].map(o => o.id)).size, ORNEMENTS.length + PAQUETS.length);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'cadre').length, 34);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'avatar').length, 26);
+  for (const categorie of ['couleur', 'dos']) assert.equal(ORNEMENTS.filter(o => o.categorie === categorie).length, 8);
   assert.equal(ORNEMENTS.filter(o => o.categorie === 'titre').length, 50);
   assert.equal(PAQUETS.length, 8);
   assert.ok(ORNEMENTS.filter(o => o.categorie === 'cadre' && o.anime).every(o => o.premium));
+});
+
+it('étale les récompenses jusqu’au niveau 50, une par niveau, et dessine chaque cadre et chaque avatar', () => {
+  const paliers = ORNEMENTS.filter(o => o.categorie !== 'titre').map(o => o.premium ? o.prestige : o.niveau > 1 ? o.niveau : undefined).filter((n): n is number => n !== undefined);
+  for (let n = 2; n <= 50; n++) assert.ok(paliers.includes(n), `rien à gagner au niveau ${n}`);
+  assert.equal(Math.max(...paliers), 50);
+  for (const o of ORNEMENTS.filter(o => o.categorie === 'cadre')) assert.ok(DESSINS_CADRES[o.id], `cadre sans dessin : ${o.id}`);
+  for (const o of ORNEMENTS.filter(o => o.categorie === 'avatar')) assert.ok(DESSINS_AVATARS[o.id], `avatar sans dessin : ${o.id}`);
+});
+
+it('offre les pièces de prestige au niveau annoncé, même sans formule', () => {
+  const couronne = ornement('grand-philateliste')!;
+  assert.equal(couronne.premium, true);
+  assert.equal(couronne.prestige, 50);
+  const seuil = 25 * 49 * 52;
+  assert.equal(estDisponible({ ...nouveauProfil(), xp: seuil - 1 }, couronne), false);
+  assert.equal(estDisponible({ ...nouveauProfil(), xp: seuil }, couronne), true);
+  const fidele = { ...nouveauProfil(), xp: seuil, cadre: 'grand-philateliste', avatar: 'kitsune' };
+  assert.equal(profilVisible(fidele, null, 0).cadre, 'grand-philateliste');
+  assert.equal(profilVisible(fidele, null, 0).avatar, 'plume');
 });
 
 it('franchit les niveaux exactement au palier, même après plusieurs niveaux gagnés', () => {
@@ -59,7 +82,7 @@ it('migre les sauvegardes et répare les équipements inconnus ou verrouillés',
   assert.equal(relireProfil({ achats: ['constellation'], dos: 'constellation' }).dos, 'constellation');
   for (const p of PAQUETS) assert.equal(relireProfil({ paquet: p.id }).paquet, p.id);
   const sauvegarde = nouvelleSauvegarde(0, 3);
-  sauvegarde.profil = { ...nouveauProfil(), xp: 350, avatar: 'boussole', paquet: 'herbier' };
+  sauvegarde.profil = { ...nouveauProfil(), xp: 350, avatar: 'colombe', paquet: 'herbier' };
   assert.deepEqual(relireSauvegarde(JSON.parse(JSON.stringify(sauvegarde)), 0), sauvegarde);
 });
 it('conserve XP et équipement pendant une synchronisation, et récupère les achats du compte', () => {

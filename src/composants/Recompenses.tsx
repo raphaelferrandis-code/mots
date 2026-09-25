@@ -4,7 +4,7 @@ import { FAMILLES_SUCCES } from '../jeu/catalogueSucces.ts';
 import { ORNEMENTS } from '../jeu/personnalisation.ts';
 import { nouvellesRecompenses, resumerLesRecompenses } from '../jeu/recompenses.ts';
 import type { Recompense } from '../jeu/recompenses.ts';
-import type { ProfilPersonnel } from '../jeu/personnalisation.ts';
+import type { Ornement, ProfilPersonnel } from '../jeu/personnalisation.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import { Motif } from './cosmetiques/Gravures.tsx';
 import './recompenses.css';
@@ -30,7 +30,9 @@ export function GainDuDuel({ resultat, encre, xp }: { resultat: Resultat; encre:
 export function CarteRecompense({ recompense, pseudo, equipe, onEquiper }: { recompense: Recompense; pseudo: string; equipe?: boolean; onEquiper?: () => void }) {
   const succes = recompense.type === 'titre' ? recompense.succes : null;
   const famille = succes ? FAMILLES_SUCCES[succes.famille] : null;
-  const objets = recompense.type === 'niveau' ? ORNEMENTS.filter(o => !o.premium && o.categorie !== 'titre' && o.niveau > recompense.avant && o.niveau <= recompense.niveau) : [];
+  // Les pièces premium ne comptent que si elles sont offertes à ce niveau (prestige).
+  const palier = (o: Ornement) => o.premium ? o.prestige ?? 0 : o.niveau;
+  const objets = recompense.type === 'niveau' ? ORNEMENTS.filter(o => o.categorie !== 'titre' && palier(o) > recompense.avant && palier(o) <= recompense.niveau) : [];
   return <div className="recompense" data-type={recompense.type} style={{ '--metal-recompense': famille?.teinte ?? '#d7c397' } as CSSProperties}>
     <span className="recompense__rubrique">{succes ? 'Succès accompli' : 'Niveau atteint'}</span>
     {recompense.type === 'niveau' ? <>
