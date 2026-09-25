@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
@@ -90,6 +91,7 @@ export function Collection() {
     return filtrees.sort((a, b) => ordres[tri](a, b) || a.mot.localeCompare(b.mot, 'fr'));
   }, [possedees, sauvegarde, rarete, type, faction, recherche, tri]);
 
+  if (edition.etat === 'erreur') return <main className="ecran"><h1>Ton album</h1><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></main>;
   if (!pret) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
   const filtrer = <T,>(regler: (valeur: T) => void) => (valeur: T): void => { regler(valeur); setPages(1); };

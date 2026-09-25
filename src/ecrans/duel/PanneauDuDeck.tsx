@@ -6,6 +6,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Carte } from '../../composants/carte/Carte.tsx';
 import { useActionArmee } from '../../composants/useActionArmee.ts';
+import { ErreurDeChargement } from '../../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../../composants/useChargement.ts';
 import { EQUILIBRAGE, attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { NATURES } from '../../jeu/aidesDuDuel.ts';
@@ -110,6 +111,7 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
     if (window.matchMedia('(max-width: 999px)').matches) panneau.current?.scrollIntoView({ block: 'start' });
   }, [cartes, enEdition]);
 
+  if (edition.etat === 'erreur') return <section className="panneau-deck"><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></section>;
   if (!cartes) return <section className="panneau-deck" aria-busy="true"><p className="preparation__note" role="status">Chargement du deck…</p></section>;
 
   const ajouter = (carte: CarteIndex, source: HTMLElement): void => {

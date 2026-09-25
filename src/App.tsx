@@ -6,6 +6,7 @@ import { Compte } from './ecrans/Compte.tsx';
 import { Recompenses } from './composants/Recompenses.tsx';
 import { Classement } from './ecrans/Classement.tsx';
 import { useEffect, useRef } from 'react';
+import { FiletDErreur } from './composants/FiletDErreur.tsx';
 import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
 import { usePresence } from './composants/usePresence.ts';
@@ -64,6 +65,21 @@ function allerAuContenu(essaisRestants = 20, depuis: Element | null = document.a
   cible.focus({ preventScroll: true });
 }
 
+// La sauvegarde de l'appareil n'a pas pu être lue : tous les écrans en ont besoin, on le dit une fois pour toutes
+// (sinon chaque écran affichait « Chargement… » pour toujours).
+function PartieIllisible({ message }: { message: string }) {
+  return (
+    <main className="ecran">
+      <h1>Ta partie n'a pas pu être ouverte</h1>
+      <section className="bloc bloc--alerte" role="alert">
+        <p>Le navigateur n'a pas réussi à lire ta partie sur cet appareil. Recharge la page ; si le problème revient, écris à <a href="mailto:contact@philamots.fr">contact@philamots.fr</a>.</p>
+        <p className="texte-doux petit">{message}</p>
+        <button type="button" className="bouton" onClick={() => window.location.reload()}>Recharger la page</button>
+      </section>
+    </main>
+  );
+}
+
 export function App() {
   const route = useRoute();
   const partie = usePartie();
@@ -89,7 +105,7 @@ export function App() {
     <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null} pseudo={partie.etat === 'prete' ? partie.sauvegarde.profil.pseudo : ''} />
-      <Ecran key={cle} route={route} />
+      {partie.etat === 'erreur' ? <PartieIllisible message={partie.message} /> : <FiletDErreur key={cle}><Ecran route={route} /></FiletDErreur>}
     </div></Recompenses>
   );
 }

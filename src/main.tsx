@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
+import { FiletDErreur } from './composants/FiletDErreur.tsx';
 import { surveillerConnexion, traiterRetourConnexion } from './services/connexion.ts';
 import { retenirLInvitation } from './services/invitation.ts';
 import './theme/polices.ts';
@@ -16,6 +17,6 @@ async function demarrer() {
   retenirLInvitation();
   await traiterRetourConnexion();
   surveillerConnexion();
-  createRoot(document.getElementById('racine')!).render(<StrictMode><App /></StrictMode>);
+  createRoot(document.getElementById('racine')!).render(<StrictMode><FiletDErreur><App /></FiletDErreur></StrictMode>);
 }
 void demarrer();

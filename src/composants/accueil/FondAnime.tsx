@@ -49,6 +49,7 @@ export function FondAnime() {
       px += (pointeur.nx - .5 - px) * .04; py += (pointeur.ny - .5 - py) * .04;
       c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
       for (const r of rosaces) {
+        if (r.taille <= 12) continue; // rosace vide (voir « construire ») : « drawImage » refuse un canevas de largeur nulle
         c.save(); c.translate(r.x * W - px * r.profondeur, r.y * H - py * r.profondeur); c.rotate(t * r.vitesse);
         c.drawImage(r.image, -r.taille / 2, -r.taille / 2, r.taille, r.taille); c.restore();
       }

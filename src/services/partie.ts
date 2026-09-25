@@ -281,7 +281,10 @@ async function ouvrirSurLAppareil(action: (sauvegarde: Sauvegarde, contexte: Par
 async function ouvrirSurLeServeur(type?: 'achat' | 'hebdomadaire'): Promise<CarteObtenue[]> {
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
   const masques = registresMasques(partie.sauvegarde);
-  const [reponse, edition] = await Promise.all([surLeServeur(() => type ? serveurDesCollections.reclamerRecompense(type, masques) : serveurDesCollections.ouvrirUnPaquet(masques)), chargerEdition()]);
+  // L'édition d'abord : si elle ne se charge pas, le paquet reste fermé, au lieu d'être ouvert sur le serveur sans que le
+  // joueur voie ses cartes.
+  const edition = await chargerEdition();
+  const reponse = await surLeServeur(() => type ? serveurDesCollections.reclamerRecompense(type, masques) : serveurDesCollections.ouvrirUnPaquet(masques));
   const connues = new Map(edition.cartes.map((c) => [c.id, c]));
   appliquer(reponse.etat);
   return reponse.cartes.flatMap((t) => {

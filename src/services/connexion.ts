@@ -32,8 +32,11 @@ export function compteConnecte(): boolean {
 }
 
 // La collection reste sur le serveur ; l'appareil repart avec une nouvelle identité d'invité.
+// Sans réseau ou avec une session expirée, le serveur ne peut pas être prévenu : l'appareil oublie quand même la session,
+// sinon le bouton échouerait à chaque clic.
 export async function deconnecter(): Promise<void> {
-  verifierStockageConnexion(); await authentification.deconnecter();
+  verifierStockageConnexion();
+  try { await authentification.deconnecter(); } catch { /* le jeton oublié n'est plus utilisable depuis cet appareil */ }
   installerConnexion(null, false); window.location.reload();
 }
 

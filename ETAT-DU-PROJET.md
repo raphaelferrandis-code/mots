@@ -2,6 +2,13 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — audit complet du code : [AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md).** Aucune faille
+> critique. Priorités restantes : parrainage et comptes jetables, verrou unique du serveur, classement manipulable, tests
+> du tirage côté serveur. **Corrigé le jour même (« joueur bloqué ») :** filet d'erreur (plus de page vide), fond animé
+> d'une fenêtre de taille nulle, « Réessayer » sur l'album et le deck, partie illisible expliquée au lieu de
+> « Chargement… » sans fin, déconnexion possible sans réseau, édition chargée avant l'ouverture d'un paquet sur le serveur.
+> Aucun changement côté Supabase.
+
 > **25 septembre 2026 — refontes des écrans Duel et des Amis/Équipe : en ligne.** Publiées avec le jeu du 25/09.
 > Duel (`BRIEF-duel.md`) : préparation réunie avec le Deck (quatre modes en onglets, deck éditable sur place), partie
 > (barres de vie graduées, main et pioche), parade plein écran avec minuteur, résolution animée, nouveaux sons, écran
