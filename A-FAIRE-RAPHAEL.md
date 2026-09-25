@@ -53,7 +53,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 |---|---|
 | Vignette de partage (image quand on partage le lien) | En ligne |
 | Site prêt pour Google (titre, description, plan du site) | En ligne ; **inscription à faire** (étape 4) |
-| Contrôle anti-robot Cloudflare | Construit, **éteint** (étape 3) |
+| Contrôle anti-robot Cloudflare | Clé du site publiée ; **reste à l'activer dans Supabase** (étape 3) |
 | Adversaire de secours des joutes en direct | **En ligne** (étape 2 faite) |
 | Parrainage (3 paquets chacun) | **En ligne** (étape 2 faite) |
 | Nouveaux cadres et avatars de portrait (une récompense par niveau jusqu'au 50) | En ligne |
@@ -78,12 +78,12 @@ Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md).
 
 Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
 
-- [ ] Créer un compte gratuit chez Cloudflare (https://dash.cloudflare.com/sign-up), puis **Turnstile** →
+- [x] Créer un compte gratuit chez Cloudflare (https://dash.cloudflare.com/sign-up), puis **Turnstile** →
       **Add widget** : nom `Philamots`, domaines `philamots.fr` et `www.philamots.fr`, mode **Managed**.
-- [ ] Après **Create**, Cloudflare affiche deux clés. Envoyer à l'assistant la **Site Key** (publique, commence
+- [x] Après **Create**, Cloudflare affiche deux clés. Envoyer à l'assistant la **Site Key** (publique, commence
       souvent par `0x4AAAA…`). **Ne jamais lui envoyer la Secret Key.** Pour la retrouver plus tard : Cloudflare →
       **Turnstile** → widget `Philamots` → **Settings**.
-- [ ] L'assistant l'écrit dans `src/config/serveur.ts` (`cleAntiRobot`) et publie.
+- [x] L'assistant l'écrit dans `src/config/serveur.ts` (`cleAntiRobot`) et publie. Fait le 25 septembre.
 - [ ] **Seulement ensuite** : Supabase → Authentication → Attack Protection → **Enable Captcha protection**,
       fournisseur **Turnstile by Cloudflare**, coller la **Secret Key**, **Save**.
 - [ ] Ouvrir philamots.fr en navigation privée : le jeu doit s'ouvrir avec 3 paquets.

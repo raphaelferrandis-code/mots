@@ -22,10 +22,9 @@
 > 1. **Vignette de partage et Google — publiés.** Image 1200 × 630 avec trois timbres quand on partage le lien,
 >    titre d'accueil descriptif, fiche du jeu pour les moteurs, `robots.txt`, `sitemap.xml`. **À faire par Raphaël :
 >    Google Search Console et Bing** (`GUIDE-google.md`) ; m'envoyer la balise de vérification de Google.
-> 2. **Contrôle anti-robot Cloudflare Turnstile — publié, éteint.** Le jeu envoie un jeton à l'ouverture d'un compte
->    et à l'envoi d'un code e-mail dès qu'une clé du site est réglée (`cleAntiRobot`). **À faire par Raphaël :**
->    créer le contrôle chez Cloudflare, m'envoyer la clé publique, puis activer le contrôle dans Supabase — dans cet
->    ordre (`GUIDE-anti-robot.md`).
+> 2. **Contrôle anti-robot Cloudflare Turnstile — clé du site publiée le 25/09, reste à l'activer dans Supabase.** Le jeu envoie un jeton à l'ouverture d'un compte
+>    et à l'envoi d'un code e-mail (`cleAntiRobot` réglée). **À faire par Raphaël :** activer le contrôle dans
+>    Supabase avec la clé secrète (`GUIDE-anti-robot.md`, étape 3).
 > 3. **Adversaire de secours** (décisions de Raphaël : sans classement, proposé après 30 s) et 4. **parrainage**
 >    (3 paquets chacun au premier duel terminé du filleul, 10 filleuls récompensés par mois) — **code publié,
 >    script 13 installé sur Supabase le 25/09 (par
