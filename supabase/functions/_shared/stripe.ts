@@ -72,7 +72,9 @@ export function verifierPrix(prix: Objet, offre: Offre, mode: ModePaiement = 'te
   }
 }
 
-export type Droits = { album: boolean; fin: string | null; ouvert: boolean };
+// « renouvele » : un abonnement qui sera encore prélevé (ni résilié, ni résilié à l'échéance). Il empêche de supprimer
+// son compte tant qu'il court (décision de Raphaël du 25/09/2026 : résilier d'abord, puis supprimer soi-même).
+export type Droits = { album: boolean; fin: string | null; ouvert: boolean; renouvele: boolean };
 // Lecture de l'état actuel, pas du contenu ancien d'un événement : doublons et
 // notifications reçues dans le désordre produisent les mêmes droits.
 export async function lireDroits(stripe: Stripe, client: string, compte: string, mode: ModePaiement = 'test'): Promise<Droits> {
@@ -109,5 +111,6 @@ export async function lireDroits(stripe: Stripe, client: string, compte: string,
       }
     }
   }
-  return { album, fin: fin ? new Date(fin * 1000).toISOString() : null, ouvert: ouverts.length > 0 };
+  const renouvele = abonnements.some(s => ['active', 'trialing', 'past_due', 'unpaid'].includes(s.status) && s.cancel_at_period_end !== true && !s.cancel_at);
+  return { album, fin: fin ? new Date(fin * 1000).toISOString() : null, ouvert: ouverts.length > 0, renouvele };
 }

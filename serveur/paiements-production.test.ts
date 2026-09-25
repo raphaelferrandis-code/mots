@@ -76,7 +76,7 @@ it('webhook : instantanés récents et données anciennes ne remplacent pas les 
     if (url.pathname === '/rest/v1/paiements_production') return Response.json([liaison]);
     if (url.pathname === '/rest/v1/rpc/verrouiller_paiement_production') return Response.json(liaison);
     if (url.pathname === '/rest/v1/rpc/appliquer_paiement_production') {
-      assert.deepEqual(JSON.parse(String(options?.body)), { p_id: 'liaison', p_verrou: 'verrou', p_album: false, p_fin: null, p_ouvert: false });
+      assert.deepEqual(JSON.parse(String(options?.body)), { p_id: 'liaison', p_verrou: 'verrou', p_album: false, p_fin: null, p_ouvert: false, p_renouvele: false });
       applications++;
     } else assert.equal(url.pathname, '/rest/v1/rpc/liberer_paiement_production');
     return Response.json(null);

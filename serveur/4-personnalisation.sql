@@ -42,6 +42,7 @@ as $$
       'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
       'encreAchetee', c.encre_achetee,
       'anneeDeNaissance', c.annee_de_naissance,
+      'moisDeNaissance', c.mois_de_naissance,
       'cadeauAchatReclame', c.cadeau_achat_reclame,
       'paquetsHebdomadaires', (public.actualiser_offres(c)).reserve_hebdo,
       'prochainPaquetHebdomadaire', public.en_millisecondes((public.actualiser_offres(c)).prochain_hebdo)

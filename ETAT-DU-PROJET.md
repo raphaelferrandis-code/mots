@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — les paiements (achats toujours FERMÉS) : jeu publié ; `serveur/19-paiements.sql` À COLLER, PUIS
+> les quatre fonctions de paiement à redéployer (étape 11).** Décisions de Raphaël : un joueur qui a payé supprime
+> lui-même son compte (un abonnement qui se renouvelle se résilie d'abord) ; mois et année de naissance déclarés une fois
+> pour toutes, paiement à partir du mois qui suit les 18 ans. D'office : un clic sur « acheter » ne bloque plus la
+> suppression, une collection avec des achats n'est pas écrasée par une récupération par code, client ou session Stripe
+> perdus retrouvés au lieu d'un blocage définitif, « Vérifier mes avantages » limité à une fois toutes les 20 s, messages
+> d'erreur sans détail technique. La dernière migration est désormais la 19.
+
 > **25 septembre 2026 — le tirage du serveur est testé** (`serveur/tirage.test.ts`, point 5 de l'audit) : les mêmes
 > réglages que le navigateur, sur une vraie base PostgreSQL avec toute l'édition. Rien à installer. Les cinq priorités
 > de l'audit sont traitées ; restent ses points secondaires, dont les paiements à régler avant d'ouvrir les achats.

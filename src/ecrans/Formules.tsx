@@ -13,7 +13,7 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { ETAGES, abonnementActif, nomDeLaFormule, peutPayer, prixEnClair } from '../jeu/formule.ts';
 import type { Etage, Formule } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
-import { declarerMonAge } from '../services/partie.ts';
+import { declarerMaNaissance } from '../services/partie.ts';
 import { PaiementsTest } from '../composants/PaiementsTest.tsx';
 import { paiement, paiementsDeTest, paiementsDisponibles } from '../services/paiements.ts';
 import { useAchatsOuverts } from '../composants/useAchatsOuverts.ts';
@@ -95,7 +95,7 @@ function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; ach
   const compte = partie.etat === 'prete' ? partie.compte : null;
   const surLeServeur = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
   const active = compte && (offre.cle === 'necessaire' ? compte.formule.achatUnique : abonnementActif(compte.formule));
-  const pret = achatsOuverts && surLeServeur && compte && !!compte.codeDeSecoursLe && peutPayer(compte.formule, anneeActuelle()) && !active;
+  const pret = achatsOuverts && surLeServeur && compte && !!compte.codeDeSecoursLe && peutPayer(compte.formule) && !active;
 
   useEffect(() => {
     const element = dialogue.current;
@@ -130,37 +130,43 @@ function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; ach
   </dialog>;
 }
 
-// L'âge n'est demandé qu'après le clic sur Acheter. On ne garde que l'année.
+// L'âge n'est demandé qu'après le clic sur Acheter : le mois et l'année de naissance (décision du 25/09/2026), de quoi
+// savoir précisément si le joueur a 18 ans. Rien d'autre n'est conservé, et la déclaration est définitive.
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 function Age({ formule }: { formule: Formule }) {
-  const [saisie, setSaisie] = useState('');
+  // Une ancienne déclaration de l'année seule : le serveur accepte qu'on la complète par le mois, avec la même année.
+  const [annee, setAnnee] = useState(formule.anneeDeNaissance !== null ? String(formule.anneeDeNaissance) : '');
+  const [mois, setMois] = useState('');
   const [etat, setEtat] = useState<{ etat: 'repos' | 'en cours' } | { etat: 'erreur'; message: string }>({ etat: 'repos' });
-  const annee = anneeActuelle();
-  const majeur = peutPayer(formule, annee);
+  const cetteAnnee = anneeActuelle();
+  const majeur = peutPayer(formule);
 
   const envoyer = async (evenement: FormEvent): Promise<void> => {
     evenement.preventDefault();
-    const valeur = Number(saisie);
-    if (!Number.isInteger(valeur) || valeur < annee - 120 || valeur > annee) {
-      setEtat({ etat: 'erreur', message: 'Cette année de naissance n’est pas possible.' });
+    const a = Number(annee);
+    const m = Number(mois);
+    if (!Number.isInteger(a) || a < cetteAnnee - 120 || a > cetteAnnee || !Number.isInteger(m) || m < 1 || m > 12) {
+      setEtat({ etat: 'erreur', message: 'Cette date de naissance n’est pas possible.' });
       return;
     }
     setEtat({ etat: 'en cours' });
     try {
-      await declarerMonAge(valeur);
+      await declarerMaNaissance(a, m);
       setEtat({ etat: 'repos' });
     } catch (erreur) {
       setEtat({ etat: 'erreur', message: erreur instanceof Error ? erreur.message : String(erreur) });
     }
   };
 
-  if (formule.anneeDeNaissance !== null) {
+  if (formule.anneeDeNaissance !== null && formule.moisDeNaissance !== null) {
     return (
       <section className="rubrique">
         <h2>Ton âge</h2>
         <p className="petit">
-          Tu as déclaré être né en {formule.anneeDeNaissance}.{' '}
+          Tu as déclaré être né en {MOIS[formule.moisDeNaissance - 1]} {formule.anneeDeNaissance}.{' '}
           {majeur ? 'Ton âge est confirmé pour cet achat.' : `Le paiement est réservé aux ${AGE} ans et plus : tout le reste du jeu t'est ouvert.`}
         </p>
+        <p className="texte-doux petit">Une erreur ? Écris à <a href="mailto:contact@philamots.fr">contact@philamots.fr</a>.</p>
       </section>
     );
   }
@@ -169,15 +175,21 @@ function Age({ formule }: { formule: Formule }) {
     <section className="rubrique">
       <h2>Ton âge</h2>
       <p className="texte-doux petit">
-        Pour confirmer ton choix, indique ton année de naissance. Le paiement est réservé aux {AGE} ans et plus.
-        Seule l’année est conservée.
+        Pour confirmer ton choix, indique ton mois et ton année de naissance. Le paiement est réservé aux {AGE} ans et plus.
+        Seuls le mois et l’année sont conservés, et ils ne pourront plus être changés.
       </p>
       <form className="joute__saisie" onSubmit={(e) => void envoyer(e)}>
+        <label htmlFor="mois-de-naissance"><strong>Mois de naissance</strong></label>
+        <select id="mois-de-naissance" required disabled={etat.etat === 'en cours'} value={mois} onChange={(e) => setMois(e.target.value)}>
+          <option value="" disabled>Choisir…</option>
+          {MOIS.map((nom, i) => <option key={nom} value={i + 1}>{nom}</option>)}
+        </select>
         <label htmlFor="annee-de-naissance"><strong>Année de naissance</strong></label>
-        <input id="annee-de-naissance" type="number" inputMode="numeric" min={annee - 120} max={annee} required disabled={etat.etat === 'en cours'} value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="1990" />
+        <input id="annee-de-naissance" type="number" inputMode="numeric" min={cetteAnnee - 120} max={cetteAnnee} required
+          disabled={etat.etat === 'en cours' || formule.anneeDeNaissance !== null} value={annee} onChange={(e) => setAnnee(e.target.value)} placeholder="1990" />
         {etat.etat === 'erreur' && <p className="joute__refus" role="alert">{etat.message}</p>}
         <div className="rangee-de-boutons">
-          <button type="submit" className="bouton" disabled={etat.etat === 'en cours'}>{etat.etat === 'en cours' ? 'Enregistrement…' : 'Confirmer mon âge'}</button>
+          <button type="submit" className="bouton" disabled={etat.etat === 'en cours'}>{etat.etat === 'en cours' ? 'Enregistrement…' : 'Confirmer ma date de naissance'}</button>
         </div>
       </form>
     </section>

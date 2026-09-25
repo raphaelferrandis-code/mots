@@ -733,6 +733,9 @@ begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(20260923);
   perform pg_advisory_xact_lock(20260924); -- l'effacement retire aussi le profil : dans l'ordre (serveur/verrous.ts)
+  -- Un effacement voulu par le joueur, et non le remplacement d'une collection : ses achats ne l'empêchent pas, sauf un
+  -- abonnement qui se renouvelle encore (serveur/paiements.ts).
+  perform set_config('philamots.effacement_voulu', 'oui', true);
   delete from auth.users where id = auth.uid();
 end $$;
 

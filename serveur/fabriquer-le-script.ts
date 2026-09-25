@@ -26,6 +26,7 @@ import { activite } from './activite.ts';
 import { portraits } from './portraits.ts';
 import { direct } from './direct.ts';
 import { classement } from './classement.ts';
+import { paiementsSuppressionEtVerification } from './paiements.ts';
 import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -387,6 +388,9 @@ begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
   perform pg_advisory_xact_lock(${VERROU_DU_MARCHE});
   perform pg_advisory_xact_lock(${VERROU_DU_DIRECT}); -- l'effacement retire aussi le profil : dans l'ordre (serveur/verrous.ts)
+  -- Un effacement voulu par le joueur, et non le remplacement d'une collection : ses achats ne l'empêchent pas, sauf un
+  -- abonnement qui se renouvelle encore (serveur/paiements.ts).
+  perform set_config('philamots.effacement_voulu', 'oui', true);
   delete from auth.users where id = auth.uid();
 end $$;
 
@@ -460,9 +464,10 @@ export function migrationPortraits(): string {
 // Le parrainage confirmé et les comptes neufs (décisions du 25/09/2026). Après 15-portraits-et-presence.sql.
 // Seules les quatre fonctions qui font passer un timbre ou de l'Encre changent parmi celles du marché et des amis :
 // elles sont reprises telles quelles.
-// Une fonction SQL reprise telle quelle d'un script fabriqué, pour une migration qui ne change qu'elle.
+// Une fonction SQL reprise telle quelle d'un script fabriqué, pour une migration qui ne change qu'elle
+// (en plpgsql, elle finit par « end $$; » ; en SQL, par « $$; »).
 function reprise(source: string, nom: string): string {
-  const f = source.match(new RegExp(`create or replace function public\\.${nom}\\([\\s\\S]*?\\nend \\$\\$;`))?.[0];
+  const f = source.match(new RegExp(`create or replace function public\\.${nom}\\([\\s\\S]*?\\n(?:end )?\\$\\$;`))?.[0];
   if (!f) throw new Error(`${nom} introuvable`);
   return f;
 }
@@ -496,6 +501,19 @@ export function migrationClassement(): string {
   return '-- Le classement : filtres normalisés, rencontres limitées, récompense du gagnant, cote retrouvée, seuil d’entrée.\n'
     + '-- Après 17-tenue-du-serveur.sql. Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après.\nbegin;\n'
     + classement() + direct() + reprise(structure(), 'publier_mon_profil') + '\n\ncommit;\n';
+}
+
+// Les paiements (décisions du 25/09/2026). Après 18-classement.sql, et après 8-paiements-test.sql et
+// 9-paiements-production.sql. Le joueur supprime lui-même son compte (abonnement résilié d'abord), déclare son mois et
+// son année de naissance une fois pour toutes ; les règles des deux environnements sont dans serveur/paiements.ts.
+export function migrationPaiements(): string {
+  return '-- Les paiements : suppression par le joueur, mois et année de naissance, vérifications Stripe. Après 18-classement.sql.\n'
+    + '-- Puis redéployer les quatre fonctions de paiement (elles lisent les nouvelles colonnes).\nbegin;\n'
+    + 'alter table public.comptes add column if not exists mois_de_naissance smallint;\n\n'
+    + ['etat_du_compte', 'declarer_ma_naissance', 'declarer_mon_age', 'supprimer_mon_compte'].map((nom) => reprise(structure(), nom)).join('\n\n')
+    + '\nrevoke execute on function public.declarer_ma_naissance(integer, integer) from public, anon;\n'
+    + 'grant execute on function public.declarer_ma_naissance(integer, integer) to authenticated;\n'
+    + paiementsSuppressionEtVerification() + '\ncommit;\n';
 }
 
 export function joueursMaison(edition: IndexEdition): string {
@@ -533,5 +551,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '16-parrainage-confirme.sql'), migrationParrainageConfirme());
   writeFileSync(path.join(RACINE, 'serveur', '17-tenue-du-serveur.sql'), migrationTenueDuServeur());
   writeFileSync(path.join(RACINE, 'serveur', '18-classement.sql'), migrationClassement());
+  writeFileSync(path.join(RACINE, 'serveur', '19-paiements.sql'), migrationPaiements());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

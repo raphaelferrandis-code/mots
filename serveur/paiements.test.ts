@@ -29,7 +29,7 @@ for (const mode of ['test', 'production'] as const) it(`Stripe ${mode} : droits,
   const PRIX = mode === 'production' ? PRIX_PRODUCTION : PRIX_TEST;
   const reel = mode === 'production';
   let rembourseAlbum = 0; let rembourseAbonnement = 0; let finAbonnement: number | null = null;
-  let facturePayee = true; let renouvellement = false; let litige = false;
+  let facturePayee = true; let renouvellement = false; let litige = false; let aEcheance = false;
   const stripe: Stripe = async path => {
     const p = new URL(`https://stripe.invalid/${path}`);
     const result = (data: Objet[]) => ({ data, has_more: false });
@@ -39,27 +39,31 @@ for (const mode of ['test', 'production'] as const) it(`Stripe ${mode} : droits,
       const album = p.searchParams.get('payment_intent') === 'pi_album';
       return result([{ livemode: reel, customer: 'cus_test', paid: true, status: 'succeeded', amount: album ? 599 : 499, amount_refunded: album ? rembourseAlbum : rembourseAbonnement, disputed: litige }]);
     }
-    if (p.pathname === '/subscriptions') return result([{ id: 'sub_test', livemode: reel, metadata: { compte: 'compte', offre: 'collectionneur' }, status: finAbonnement ? 'canceled' : 'active', ended_at: finAbonnement }]);
+    if (p.pathname === '/subscriptions') return result([{ id: 'sub_test', livemode: reel, metadata: { compte: 'compte', offre: 'collectionneur' }, status: finAbonnement ? 'canceled' : 'active', ended_at: finAbonnement, cancel_at_period_end: aEcheance }]);
     if (p.pathname === '/invoices') return result(facturePayee ? [{ id: 'in_test', livemode: reel, customer: 'cus_test', paid: true, amount_paid: 499, payment_intent: 'pi_sub' }] : []);
     if (p.pathname === '/invoices/in_test/lines') return result([{ price: { id: PRIX.collectionneur.id }, quantity: 1, proration: false, period: { end: renouvellement ? 3000 : 2000 } }]);
     throw new Error(path);
   };
   const droits = () => lireDroits(stripe, 'cus_test', 'compte', mode);
   const initial = await droits();
-  assert.deepEqual(initial, { album: true, ouvert: true, fin: new Date(2000_000).toISOString() });
+  assert.deepEqual(initial, { album: true, ouvert: true, fin: new Date(2000_000).toISOString(), renouvele: true });
   assert.deepEqual(await droits(), initial, 'répéter une notification ne change pas les droits');
   facturePayee = false;
   assert.equal((await droits()).fin, null, 'abonnement actif sans facture payée ne suffit pas');
   facturePayee = true; renouvellement = true;
   assert.equal((await droits()).fin, new Date(3000_000).toISOString());
+  // Résilié à l'échéance : l'abonnement court encore (ouvert), mais ne se renouvellera plus.
+  aEcheance = true;
+  assert.deepEqual([(await droits()).ouvert, (await droits()).renouvele], [true, false]);
+  aEcheance = false;
   finAbonnement = 2500;
-  assert.deepEqual(await droits(), { album: true, ouvert: false, fin: new Date(2500_000).toISOString() });
+  assert.deepEqual(await droits(), { album: true, ouvert: false, fin: new Date(2500_000).toISOString(), renouvele: false });
   rembourseAlbum = 100;
   assert.equal((await droits()).album, true, 'remboursement partiel : droits conservés');
   rembourseAlbum = 599; rembourseAbonnement = 499;
-  assert.deepEqual(await droits(), { album: false, ouvert: false, fin: null });
+  assert.deepEqual(await droits(), { album: false, ouvert: false, fin: null, renouvele: false });
   rembourseAlbum = 0; rembourseAbonnement = 0; litige = true;
-  assert.deepEqual(await droits(), { album: false, ouvert: false, fin: null });
+  assert.deepEqual(await droits(), { album: false, ouvert: false, fin: null, renouvele: false });
 });
 
 it('Stripe : parcourt toutes les pages au lieu de perdre les anciens achats', async () => {
@@ -133,7 +137,7 @@ for (const mode of ['test', 'production'] as const) it(`HTTP ${mode} : Checkout 
   const network: typeof fetch = async (input, options) => {
     const url = new URL(String(input));
     if (url.pathname === '/auth/v1/user') return Response.json({ id });
-    if (url.pathname === '/rest/v1/comptes') return Response.json([{ annee_de_naissance: 1990, code_defini_le: '2026-01-01' }]);
+    if (url.pathname === '/rest/v1/comptes') return Response.json([{ annee_de_naissance: 1990, mois_de_naissance: 6, code_defini_le: '2026-01-01' }]);
     if (url.pathname === `/rest/v1/paiements_${mode}`) return Response.json([liaison]);
     if (url.pathname.includes('/rest/v1/rpc/')) {
       const nom = url.pathname.split('/').at(-1)?.replace('_production', '_test');

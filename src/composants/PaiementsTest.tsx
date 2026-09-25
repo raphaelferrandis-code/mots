@@ -12,7 +12,7 @@ export function PaiementsTest() {
   const [message, setMessage] = useState('');
   if (partie.etat !== 'prete' || !partie.compte) return null;
   const { formule, codeDeSecoursLe } = partie.compte;
-  const pret = !!codeDeSecoursLe && peutPayer(formule, new Date().getFullYear());
+  const pret = !!codeDeSecoursLe && peutPayer(formule);
   const retour = new URLSearchParams(window.location.search).get('paiement');
   async function lancer(action: 'achat' | 'portail' | 'synchroniser', offre?: CleDeFormule) {
     setOccupe(true); setMessage('');

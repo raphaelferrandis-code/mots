@@ -45,7 +45,7 @@ Cette limite est inscrite dans le serveur, pas seulement dans ce texte.
 Le paiement se fait par `[…prestataire…]`. Philamots ne reçoit ni ne conserve aucune donnée bancaire.
 Les prix sont en euros, toutes taxes comprises.
 
-**Le paiement est réservé aux personnes de 18 ans et plus.** Le jeu demande l'année de naissance avant tout achat.
+**Le paiement est réservé aux personnes de 18 ans et plus.** Le jeu demande le mois et l'année de naissance avant tout achat ; ils ne peuvent plus être changés ensuite (correction sur demande à contact@philamots.fr).
 Le reste du jeu est ouvert à tous, sans condition d'âge.
 
 ## 4. L'abonnement

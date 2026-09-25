@@ -67,6 +67,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
 | Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
+| Paiements : suppression par le joueur, mois et année de naissance, reprises après une panne de Stripe | Jeu en ligne ; **script 19 puis quatre fonctions à redéployer (étape 11)** |
 
 ---
 
@@ -200,6 +201,25 @@ publié et s'adapte tout seul.
       **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
 - [x] Vérifié par l'assistant en lecture seule : règles, déclencheurs, droits et registre des rencontres en place.
 
+### Étape 11 — Coller le script 19, PUIS redéployer les quatre fonctions de paiement
+
+Tes décisions du 25 septembre : un joueur qui a payé **supprime lui-même son compte** (après avoir résilié un
+abonnement qui se renouvelle) ; l'âge se déclare par **le mois et l'année de naissance**, une fois pour toutes. Les
+achats restent **fermés** : rien ne change pour les joueurs tant que tu ne demandes pas leur ouverture.
+Détails : [GUIDE-paiements-production.md](GUIDE-paiements-production.md). **L'ordre compte** : le script d'abord.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/19-paiements.sql → **Copy raw file** → Supabase →
+      **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run** (confirmer
+      l'avertissement « Potential issue detected » s'il apparaît).
+- [ ] **Ensuite**, Supabase → **Edge Functions**, pour chacune des quatre fonctions ci-dessous : l'ouvrir → onglet
+      **Code** → remplacer tout le code par le contenu du fichier (sur GitHub : ouvrir le fichier → **Copy raw file**)
+      → **Deploy** :
+      - `paiement` ← `serveur/deploiement-paiements/paiement.ts.txt`
+      - `paiement-production` ← `serveur/deploiement-paiements/paiement-production.ts.txt`
+      - `stripe-webhook` ← `serveur/deploiement-paiements/stripe-webhook.ts.txt`
+      - `stripe-webhook-production` ← `serveur/deploiement-paiements/stripe-webhook-production.ts.txt`
+- [ ] Le dire à l'assistant : il vérifie en lecture seule (script et code déployé).
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de
@@ -252,7 +272,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 - Ne jamais ouvrir les paiements sans demande explicite, ne jamais lire, copier ni afficher une clé secrète
   (Supabase, Stripe, Cloudflare).
 - Changement du serveur : modifier `serveur/*.ts`, lancer `npm run serveur:script`, ajouter une **nouvelle**
-  migration numérotée (la dernière est la 18) ; ne jamais recoller une ancienne migration.
+  migration numérotée (la dernière est la 19) ; ne jamais recoller une ancienne migration.
 - Bancs locaux sans compte distant : `node serveur/apercu-direct.mjs` (joutes en direct à quatre) et
   `node serveur/apercu-secours-parrainage.mjs` (parrainage et adversaire de secours).
 - Ne committer que ses propres fichiers, par leur nom ; tenir à jour l'en-tête d'`ETAT-DU-PROJET.md` et cette page.

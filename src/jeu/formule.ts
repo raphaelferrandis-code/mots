@@ -4,10 +4,10 @@ export type CleDeFormule = 'necessaire' | 'collectionneur';
 export type Abonnement = 'aucun' | 'collectionneur' | 'expert';
 export type Formule = {
   niveau: number; achatUnique: boolean; abonnement: Abonnement; jusquAu: number | null;
-  encreAchetee: number; anneeDeNaissance: number | null;
+  encreAchetee: number; anneeDeNaissance: number | null; moisDeNaissance: number | null;
   cadeauAchatReclame?: boolean; paquetsHebdomadaires?: number; prochainPaquetHebdomadaire?: number | null;
 };
-export const FORMULE_GRATUITE: Formule = { niveau: 0, achatUnique: false, abonnement: 'aucun', jusquAu: null, encreAchetee: 0, anneeDeNaissance: null };
+export const FORMULE_GRATUITE: Formule = { niveau: 0, achatUnique: false, abonnement: 'aucun', jusquAu: null, encreAchetee: 0, anneeDeNaissance: null, moisDeNaissance: null };
 const objet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const nombre = (v: unknown): number => typeof v === 'number' && Number.isFinite(v) ? v : 0;
 export function lireFormule(brut: unknown): Formule {
@@ -18,6 +18,7 @@ export function lireFormule(brut: unknown): Formule {
     jusquAu: typeof brut.jusquAu === 'number' && Number.isFinite(brut.jusquAu) ? brut.jusquAu : null,
     encreAchetee: Math.max(0, Math.floor(nombre(brut.encreAchetee))),
     anneeDeNaissance: typeof brut.anneeDeNaissance === 'number' && Number.isFinite(brut.anneeDeNaissance) ? brut.anneeDeNaissance : null,
+    moisDeNaissance: typeof brut.moisDeNaissance === 'number' && Number.isInteger(brut.moisDeNaissance) && brut.moisDeNaissance >= 1 && brut.moisDeNaissance <= 12 ? brut.moisDeNaissance : null,
     ...(typeof brut.cadeauAchatReclame === 'boolean' ? { cadeauAchatReclame: brut.cadeauAchatReclame } : {}),
     ...(typeof brut.paquetsHebdomadaires === 'number' ? { paquetsHebdomadaires: Math.max(0, Math.floor(nombre(brut.paquetsHebdomadaires))) } : {}),
     ...(typeof brut.prochainPaquetHebdomadaire === 'number' ? { prochainPaquetHebdomadaire: nombre(brut.prochainPaquetHebdomadaire) } : {}),
@@ -54,7 +55,12 @@ export const ETAGES: Etage[] = [
   ] },
 ];
 export const prixEnClair = (etage: Etage): string => `${etage.prix.toFixed(2).replace('.', ',').replace(',00', '')} € ${etage.parMois ? 'par mois' : 'une fois'}`;
-export const peutPayer = (f: Formule, annee: number): boolean => f.anneeDeNaissance !== null && annee - f.anneeDeNaissance >= P.ageMinimumPourPayer;
+// 18 ans révolus au mois près (décision du 25/09/2026) : à partir du premier jour du mois qui suit celui de ses 18 ans.
+// Même règle que le serveur de paiement (majeur, supabase/functions/_shared/paiements.ts).
+export const peutPayer = (f: Formule, maintenant = Date.now()): boolean => f.anneeDeNaissance !== null && f.moisDeNaissance !== null
+  && Date.UTC(f.anneeDeNaissance + P.ageMinimumPourPayer, f.moisDeNaissance, 1) <= maintenant;
+// Ce qu'un joueur perdrait en effaçant son compte : ses achats (Mon album, un abonnement qui court encore).
+export const achatsEnCours = (f: Formule, maintenant = Date.now()): boolean => f.achatUnique || abonnementActif(f, maintenant);
 export function nomDeLaFormule(f: Formule): string | null {
   return [f.achatUnique ? 'Mon album' : '', abonnementActif(f) ? 'Collectionneur' : ''].filter(Boolean).join(' + ') || null;
 }

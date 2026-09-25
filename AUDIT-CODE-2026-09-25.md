@@ -20,6 +20,10 @@ Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2
 > serveur sur toute l'édition (paquets de départ, garantie de Légendaire, Encre des doublons, finitions, raretés par
 > emplacement sur 3 000 paquets, Hors-série, plafond quotidien d'Encre) ; sept erreurs glissées exprès dans le SQL ont
 > toutes été attrapées.
+> **Corrigé le 25/09 (script 19 et fonctions de paiement, à installer) :** les cinq points « Paiements » — suppression du
+> compte (un clic sans paiement ne bloque plus ; le joueur supprime seul, abonnement résilié d'abord), achat plus jamais
+> bloqué après une panne de Stripe, vérification limitée à une fois toutes les 20 s, âge au mois près et figé, messages
+> d'erreur. Sept erreurs glissées exprès dans ces règles : toutes attrapées par les tests.
 > Le reste de ce document est toujours à faire.
 
 ## En bref

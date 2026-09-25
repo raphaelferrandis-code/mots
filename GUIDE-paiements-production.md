@@ -63,7 +63,35 @@ Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droit
 5. Garder `PAIEMENTS_PRODUCTION_OUVERTS=false` (absent = fermé également).
    La publication GitHub Pages prépare maintenant l'interface de production.
    L'interface consulte l'état du serveur au chargement, au retour dans l'onglet et
-   toutes les 30 secondes. Serveur fermé, indisponible ou incompatible = achat désactivé.
+   toutes les 60 secondes tant que l'onglet est visible. Serveur fermé, indisponible ou incompatible = achat désactivé.
+
+## Règles du 25 septembre 2026 (script 19 et fonctions redéployées)
+
+Décisions de Raphaël :
+- **Un joueur qui a payé supprime lui-même son compte** (« Effacer ma partie », Réglages). Si son abonnement
+  « Collectionneur » se renouvelle encore, le serveur lui demande de le résilier d'abord (« Gérer mon abonnement ») ;
+  une résiliation à l'échéance suffit. Il est prévenu qu'il perd ce qu'il a acheté. La ligne de paiement reste, sans
+  le joueur (`utilisateur` vide, `client_stripe` gardé) : la trace comptable est chez Stripe, et un remboursement ou
+  un litige annoncé plus tard est appliqué sans erreur.
+- **L'âge se déclare par le mois et l'année de naissance**, une fois pour toutes (`declarer_ma_naissance`). On peut
+  payer à partir du premier jour du mois qui suit ses 18 ans. Une correction passe par contact@philamots.fr. Une
+  ancienne déclaration de l'année seule peut être complétée une fois, par la même année.
+
+Et d'office (audit du 25/09) :
+- un clic sur « acheter » sans paiement ne bloque plus rien ;
+- une collection qui a des achats ne peut pas être remplacée par une autre lors d'une récupération par code ;
+- si Stripe ne répond pas à la création du client ou de la session de paiement, le jeu ne bloque plus l'achat pour
+  toujours : au-delà de dix minutes, il cherche chez Stripe ce qui a pu être créé (client par ses métadonnées,
+  session encore ouverte) et le reprend ; sinon il recommence avec une nouvelle clé d'idempotence ;
+- « Vérifier mes avantages » n'interroge Stripe qu'une fois toutes les 20 secondes au plus (`synchronise_le`) ;
+- une demande mal formée reçoit un 400, et une panne un message général (le détail reste dans les journaux de
+  Supabase).
+
+Installation : **d'abord** `serveur/19-paiements.sql` (SQL Editor), **puis** redéployer les quatre fonctions
+`paiement`, `paiement-production`, `stripe-webhook` et `stripe-webhook-production` avec les fichiers de
+`serveur/deploiement-paiements/`. Dans l'autre ordre, les paiements échoueraient jusqu'au collage du script (les
+nouvelles fonctions lisent les nouvelles colonnes). Aucune permission Stripe à ajouter : la recherche de clients et la
+liste des sessions sont couvertes par l'écriture Customers et Checkout Sessions.
 
 ## Ouverture et fermeture
 
@@ -124,8 +152,8 @@ Subscription et Dispute de la documentation Stripe.
 - Le code de secours reste requis avant achat. Le travail parallèle sur la connexion
   e-mail et Google est décrit dans `GUIDE-connexion.md` ; l'e-mail de facturation
   Stripe n'est pas l'identité du joueur.
-- La suppression d'une collection liée à Stripe est bloquée avec contact du support.
-  Préparer un parcours complet évitant les abonnements orphelins avant lancement.
+- Suppression par le joueur depuis le 25/09/2026 (voir plus haut) : un abonnement qui se renouvelle doit être résilié
+  d'abord, donc pas d'abonnement orphelin. La politique de remboursement reste à décider (conditions de vente).
 - Lecture de l'historique complet : limite de 20 pages par liste, verrou de 90 secondes.
   Un dépassement échoue sans appliquer de droits issus d'une lecture incomplète.
   Registre durable par paiement et file de reprise à prévoir avant montée en charge.

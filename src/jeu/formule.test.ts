@@ -48,9 +48,14 @@ describe('les formules payantes', () => {
 
   it('réserve le paiement aux majeurs', () => {
     const age = EQUILIBRAGE.payant.ageMinimumPourPayer;
-    assert.equal(peutPayer(FORMULE_GRATUITE, 2026), false, 'sans année de naissance, on ne peut pas payer');
-    assert.equal(peutPayer({ ...FORMULE_GRATUITE, anneeDeNaissance: 2026 - age + 1 }, 2026), false);
-    assert.equal(peutPayer({ ...FORMULE_GRATUITE, anneeDeNaissance: 2026 - age }, 2026), true);
+    const le = (annee: number, mois: number, jour = 1) => Date.UTC(annee, mois - 1, jour);
+    assert.equal(peutPayer(FORMULE_GRATUITE, le(2026, 9)), false, 'sans date de naissance, on ne peut pas payer');
+    assert.equal(peutPayer({ ...FORMULE_GRATUITE, anneeDeNaissance: 2000 }, le(2026, 9)), false, 'l’année seule ne suffit plus');
+    const neEnMars = { ...FORMULE_GRATUITE, anneeDeNaissance: 2026 - age, moisDeNaissance: 3 };
+    assert.equal(peutPayer(neEnMars, le(2026, 3, 31)), false, 'pas encore sûr d’avoir 18 ans pendant le mois de son anniversaire');
+    assert.equal(peutPayer(neEnMars, le(2026, 4, 1)), true);
+    assert.equal(lireFormule({ moisDeNaissance: 13 }).moisDeNaissance, null);
+    assert.equal(lireFormule({ moisDeNaissance: 7 }).moisDeNaissance, 7);
   });
 });
 

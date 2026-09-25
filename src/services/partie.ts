@@ -498,9 +498,10 @@ export async function encherir(id: number, montant: number): Promise<Enchere> {
 }
 
 // ── La version payante (décision n° 34) ────────────────────────────────────
-// L'année de naissance n'est demandée qu'à qui regarde les formules : le paiement est réservé aux majeurs.
-export async function declarerMonAge(annee: number): Promise<void> {
-  appliquer(await surLeServeur(() => serveurDesCollections.declarerMonAge(annee)));
+// Le mois et l'année de naissance ne sont demandés qu'à qui regarde les formules : le paiement est réservé aux majeurs.
+// Déclarés une fois pour toutes (le serveur refuse ensuite de les changer).
+export async function declarerMaNaissance(annee: number, mois: number): Promise<void> {
+  appliquer(await surLeServeur(() => serveurDesCollections.declarerMaNaissance(annee, mois)));
 }
 
 // ── La cote (décision n° 38) ───────────────────────────────────────────────

@@ -129,14 +129,287 @@ async function lireDroits(stripe, client, compte, mode = "test") {
 			}
 		}
 	}
+	const renouvele = abonnements.some((s) => [
+		"active",
+		"trialing",
+		"past_due",
+		"unpaid"
+	].includes(s.status) && s.cancel_at_period_end !== true && !s.cancel_at);
 	return {
 		album,
 		fin: fin ? (/* @__PURE__ */ new Date(fin * 1e3)).toISOString() : null,
-		ouvert: ouverts.length > 0
+		ouvert: ouverts.length > 0,
+		renouvele
 	};
 }
 //#endregion
+//#region src/config/equilibrage.ts
+var EQUILIBRAGE = {
+	statMaximale: 10,
+	bonusDefenseParRarete: {
+		"Commune": 0,
+		"Peu commune": 0,
+		"Rare": 1,
+		"Épique": 1,
+		"Légendaire": 2,
+		"Hors-série": 3
+	},
+	bonusAttaqueParRarete: {
+		"Commune": 0,
+		"Peu commune": 0,
+		"Rare": 1,
+		"Épique": 2,
+		"Légendaire": 3,
+		"Hors-série": 6
+	},
+	minimumHorsSerie: {
+		attaque: 12,
+		defense: 8
+	},
+	paquets: {
+		minutesEntreDeuxPaquets: 10,
+		stockMaximum: 10,
+		paquetsDeDepart: 3,
+		emplacements: [
+			{
+				"Commune": 70,
+				"Peu commune": 25,
+				"Rare": 5
+			},
+			{
+				"Commune": 70,
+				"Peu commune": 25,
+				"Rare": 5
+			},
+			{
+				"Commune": 70,
+				"Peu commune": 25,
+				"Rare": 5
+			},
+			{
+				"Peu commune": 75,
+				"Rare": 20,
+				"Épique": 5
+			},
+			{
+				"Rare": 74,
+				"Épique": 22,
+				"Légendaire": 4
+			}
+		],
+		paquetsAvantLegendaireGarantie: 40,
+		chanceHorsSerie: 1 / 1e3
+	},
+	encreParDoublon: {
+		"Commune": 1,
+		"Peu commune": 3,
+		"Rare": 10,
+		"Épique": 30,
+		"Légendaire": 100,
+		"Hors-série": 500
+	},
+	finitions: {
+		chances: {
+			"Brillante": 1 / 12,
+			"Holographique": 1 / 80
+		},
+		encre: {
+			"Normale": 1,
+			"Brillante": 3,
+			"Holographique": 10
+		}
+	},
+	duel: {
+		tailleDuDeck: 10,
+		cartesEnMain: 3,
+		pointsDeVie: 20,
+		manchesMaximum: 10,
+		secondesPourRepondre: 15,
+		partDeLaDefense: .5,
+		degatsMinimum: 1,
+		partDesDegatsApresParade: .5,
+		bonusDeType: 2,
+		bonusDeFaction: 1,
+		bonusDePetiteFaction: 2,
+		petiteFactionJusquA: 160,
+		cransDeRareteDeLOrdinateur: {
+			"Facile": 0,
+			"Normal": 1,
+			"Difficile": 2
+		},
+		ecartDeForceDeLOrdinateur: {
+			"Facile": 1,
+			"Normal": 0,
+			"Difficile": 0
+		},
+		cartesProchesPourLOrdinateur: 6,
+		paradeDeLOrdinateur: {
+			selonLaRarete: {
+				"Commune": .7,
+				"Peu commune": .6,
+				"Rare": .45,
+				"Épique": .3,
+				"Légendaire": .15,
+				"Hors-série": .7
+			},
+			selonLeNiveau: {
+				"Facile": .7,
+				"Normal": 1,
+				"Difficile": 1
+			}
+		},
+		encreParVictoire: {
+			"Facile": 20,
+			"Normal": 30,
+			"Difficile": 45
+		},
+		encreParDefaite: 5,
+		victoiresPleinesParJour: 3,
+		partDeLEncreEnsuite: .25,
+		reussitesPourLaMaitrise: 5
+	},
+	joute: {
+		coteDeDepart: 1e3,
+		coteMinimale: 100,
+		facteurK: 32,
+		echelle: 400,
+		rencontresClasseesParJour: 3,
+		partiesPourEtreClasse: 5,
+		ligues: [
+			{
+				nom: "Apprenti",
+				aPartirDe: 0
+			},
+			{
+				nom: "Lecteur",
+				aPartirDe: 1100
+			},
+			{
+				nom: "Lettré",
+				aPartirDe: 1250
+			},
+			{
+				nom: "Érudit",
+				aPartirDe: 1400
+			},
+			{
+				nom: "Académicien",
+				aPartirDe: 1550
+			},
+			{
+				nom: "Immortel",
+				aPartirDe: 1700
+			}
+		],
+		ecartsDeCoteProposes: [
+			-120,
+			0,
+			120
+		],
+		joueursProchesParProposition: 8,
+		adversairesRecentsEvites: 6,
+		savoirParDefaut: {
+			"Commune": .9,
+			"Peu commune": .85,
+			"Rare": .75,
+			"Épique": .6,
+			"Légendaire": .5,
+			"Hors-série": .9
+		},
+		paradeParDefaut: {
+			"Commune": .85,
+			"Peu commune": .75,
+			"Rare": .6,
+			"Épique": .45,
+			"Légendaire": .3,
+			"Hors-série": .85
+		},
+		poidsDeLEstimation: 4,
+		encreParVictoire: 35
+	},
+	marche: {
+		commission: .1,
+		dureesEnHeures: [
+			12,
+			24,
+			48
+		],
+		prolongationEnMinutes: 5,
+		surencherMinimale: .05,
+		ventesEnCoursAuPlus: 10,
+		achatsParJourAuPlus: 10,
+		planchers: {
+			"Commune": 5,
+			"Peu commune": 10,
+			"Rare": 30,
+			"Épique": 100,
+			"Légendaire": 300,
+			"Hors-série": 1e3
+		},
+		encheresParPage: 30,
+		cloturesParAppel: 50,
+		cote: {
+			fenetreEnJours: 30,
+			historiqueEnJours: 90,
+			ventesMontrees: 30,
+			conservationEnJours: 400
+		}
+	},
+	payant: {
+		minutesEntreDeuxPaquets: 8,
+		stockMaximum: 15,
+		multiplicateurDEncre: 1,
+		renteQuotidienne: 0,
+		bonusXpPourcent: 25,
+		joursEntrePaquetsHebdomadaires: 7,
+		dernierEmplacementHebdomadaire: {
+			"Épique": 89,
+			"Légendaire": 10,
+			"Hors-série": 1
+		},
+		formules: [{
+			cle: "necessaire",
+			niveau: 1,
+			nom: "Mon album",
+			prix: 5.99,
+			parMois: false
+		}, {
+			cle: "collectionneur",
+			niveau: 2,
+			nom: "Collectionneur",
+			prix: 4.99,
+			parMois: true
+		}],
+		ageMinimumPourPayer: 18
+	},
+	parrainage: {
+		paquetsOfferts: 3,
+		filleulsRecompensesParMois: 10,
+		joursPourSeDeclarer: 7,
+		joursPourRevenirJouer: 14
+	},
+	comptesNeufs: { joursAvantLesEchanges: 3 },
+	direct: {
+		secondesPourAccepter: 20,
+		secondesDePresenceDansLaFile: 150
+	},
+	secours: { attenteAvantDeProposerEnSecondes: 30 },
+	paquetsEntreDeuxRappelsDExport: 100
+};
+//#endregion
 //#region supabase/functions/_shared/paiements.ts
+var Refus = class extends Error {
+	statut;
+	constructor(message, statut = 400) {
+		super(message);
+		this.statut = statut;
+	}
+};
+var DELAI_AVANT_DE_CHERCHER = 6e5;
+var DELAI_ENTRE_DEUX_VERIFICATIONS = 2e4;
+function majeur(annee, mois, maintenant = Date.now()) {
+	return Number.isInteger(annee) && Number.isInteger(mois) && mois >= 1 && mois <= 12 && Date.UTC(annee + EQUILIBRAGE.payant.ageMinimumPourPayer, mois, 1) <= maintenant;
+}
 function creerPaiements(config, requete = fetch) {
 	const mode = config.mode ?? "test";
 	const reel = mode === "production";
@@ -173,7 +446,7 @@ function creerPaiements(config, requete = fetch) {
 			},
 			...body === void 0 ? {} : { body: JSON.stringify(body) }
 		});
-		if (!r.ok) throw new Error("Synchronisation du paiement indisponible. Réessaie dans un instant.");
+		if (!r.ok) throw new Refus("Synchronisation du paiement indisponible. Réessaie dans un instant.", 503);
 		const texte = await r.text();
 		return texte ? JSON.parse(texte) : null;
 	}
@@ -199,7 +472,8 @@ function creerPaiements(config, requete = fetch) {
 		if (!l.client_stripe) return {
 			album: false,
 			fin: null,
-			ouvert: false
+			ouvert: false,
+			renouvele: false
 		};
 		const droits = await lireDroits(stripe, l.client_stripe, l.id, mode);
 		await rpc("appliquer_paiement_test", {
@@ -207,9 +481,14 @@ function creerPaiements(config, requete = fetch) {
 			p_verrou: l.verrou,
 			p_album: droits.album,
 			p_fin: droits.fin,
-			p_ouvert: droits.ouvert
+			p_ouvert: droits.ouvert,
+			p_renouvele: droits.renouvele
 		});
 		return droits;
+	}
+	async function clientDejaCree(compte) {
+		const r = await stripe(`customers/search?query=${encodeURIComponent(`metadata['compte']:'${compte}'`)}`);
+		return (Array.isArray(r.data) ? r.data : []).find((c) => c.metadata?.application === application && c.metadata?.compte === compte) ?? null;
 	}
 	async function paiement(req) {
 		if (req.method === "GET" && new URL(req.url).searchParams.get("action") === "etat") return json({
@@ -236,30 +515,49 @@ function creerPaiements(config, requete = fetch) {
 			if (!auth.ok) return json({ erreur: "Session expirée. Retrouve ton compte avant de payer." }, 401);
 			const user = await auth.json();
 			if (!reel && !config.testeurs.includes(user.id)) return json({ erreur: "Les paiements sont réservés aux comptes de test autorisés." }, 403);
-			const body = await req.json();
-			if (![
+			let body;
+			try {
+				body = await req.json();
+			} catch {
+				return json({ erreur: "Demande illisible." }, 400);
+			}
+			if (!body || typeof body !== "object" || typeof body.action !== "string" || ![
 				"achat",
 				"portail",
 				"synchroniser"
 			].includes(body.action)) return json({ erreur: "Action inconnue." }, 400);
 			if (body.action === "achat" && reel && config.achatsOuverts !== true) return json({ erreur: "Les achats ne sont pas encore ouverts." }, 403);
-			if (body.action === "achat" && !Object.hasOwn(prix, body.offre)) return json({ erreur: "Offre inconnue." }, 400);
-			const comptes = await db(`comptes?utilisateur=eq.${encodeURIComponent(user.id)}&select=annee_de_naissance,code_defini_le`);
+			if (body.action === "achat" && (typeof body.offre !== "string" || !Object.hasOwn(prix, body.offre))) return json({ erreur: "Offre inconnue." }, 400);
+			const comptes = await db(`comptes?utilisateur=eq.${encodeURIComponent(user.id)}&select=annee_de_naissance,mois_de_naissance,code_defini_le`);
 			if (comptes.length !== 1) return json({ erreur: "Ouvre ta collection avant de continuer." }, 409);
-			if (body.action === "achat" && (!comptes[0].code_defini_le || !comptes[0].annee_de_naissance || (/* @__PURE__ */ new Date()).getUTCFullYear() - comptes[0].annee_de_naissance < 18)) return json({ erreur: "Déclare ton âge et crée ton code de secours dans les Réglages avant l’achat." }, 403);
+			if (body.action === "achat" && (!comptes[0].code_defini_le || !majeur(comptes[0].annee_de_naissance, comptes[0].mois_de_naissance))) return json({ erreur: "Déclare ton mois et ton année de naissance, et crée ton code de secours dans les Réglages, avant l’achat." }, 403);
 			const existantes = body.action === "achat" ? null : await db(`paiements_${suffixe}?utilisateur=eq.${encodeURIComponent(user.id)}&select=*`);
 			if (existantes && !existantes[0]?.client_stripe) return json({ erreur: "Aucun paiement associé à ce compte dans cet environnement." }, 409);
-			return await sousVerrou((existantes ? existantes[0] : await rpc("preparer_paiement_test", { p_utilisateur: user.id })).id, async (l) => {
+			const liaison = existantes ? existantes[0] : await rpc("preparer_paiement_test", { p_utilisateur: user.id });
+			const action = body.action;
+			return await sousVerrou(liaison.id, async (l) => {
 				if (!l.client_stripe) {
-					if (Date.now() - Date.parse(l.cree_le) > 828e5) throw new Error("Création Stripe à vérifier avant de poursuivre. Contacte contact@philamots.fr.");
-					l.client_stripe = (await stripe("customers", {
+					const age = Date.now() - Date.parse(l.cree_le);
+					l.client_stripe = ((age > DELAI_AVANT_DE_CHERCHER ? await clientDejaCree(l.id) : null) ?? await stripe("customers", {
 						"metadata[compte]": l.id,
 						"metadata[application]": application
-					}, `client-${l.id}`)).id;
+					}, age > DELAI_AVANT_DE_CHERCHER ? `client-${l.id}-${crypto.randomUUID()}` : `client-${l.id}`)).id;
 					await enregistrer(l);
 				}
-				if (body.action === "synchroniser") return json(await synchroniser(l));
-				if (body.action === "portail") {
+				if (action === "synchroniser") {
+					if (l.synchronise_le && Date.now() - Date.parse(l.synchronise_le) < DELAI_ENTRE_DEUX_VERIFICATIONS) {
+						const [c] = await db(`comptes?utilisateur=eq.${encodeURIComponent(user.id)}&select=achat_unique,abonnement_jusqu_au`);
+						return json({
+							album: !!c?.achat_unique,
+							fin: c?.abonnement_jusqu_au ?? null,
+							ouvert: !!l.abonnement_ouvert,
+							renouvele: !!l.abonnement_renouvele,
+							recent: true
+						});
+					}
+					return json(await synchroniser(l));
+				}
+				if (action === "portail") {
 					const configuration = await stripe("billing_portal/configurations", {
 						"business_profile[headline]": reel ? "Philamots" : "Philamots — environnement de test",
 						"features[subscription_cancel][enabled]": "true",
@@ -283,6 +581,14 @@ function creerPaiements(config, requete = fetch) {
 					const s = await stripe(`checkout/sessions/${ancienne.id}`);
 					if (s.status === "open") return json({ url: s.url });
 					delete l.sessions[offre];
+				} else if (ancienne && Date.now() - ancienne.cree > DELAI_AVANT_DE_CHERCHER) {
+					const ouverte = (await liste(stripe, `checkout/sessions?customer=${encodeURIComponent(l.client_stripe)}&status=open`)).find((s) => s.metadata?.compte === l.id && s.metadata?.offre === offre);
+					if (ouverte?.url) {
+						ancienne.id = ouverte.id;
+						await enregistrer(l);
+						return json({ url: ouverte.url });
+					}
+					delete l.sessions[offre];
 				}
 				if (!l.sessions[offre]) {
 					l.sessions[offre] = {
@@ -292,7 +598,6 @@ function creerPaiements(config, requete = fetch) {
 					await enregistrer(l);
 				}
 				const tentative = l.sessions[offre];
-				if (Date.now() - tentative.cree > 828e5) throw new Error("Un ancien paiement doit être vérifié avant de réessayer.");
 				const modeCheckout = offre === "necessaire" ? "payment" : "subscription";
 				const prefixe = modeCheckout === "payment" ? "payment_intent_data" : "subscription_data";
 				const session = await stripe("checkout/sessions", {
@@ -315,7 +620,9 @@ function creerPaiements(config, requete = fetch) {
 				return json({ url: session.url });
 			});
 		} catch (erreur) {
-			return json({ erreur: erreur instanceof Error ? erreur.message : "Paiement indisponible." }, 503);
+			if (erreur instanceof Refus) return json({ erreur: erreur.message }, erreur.statut);
+			console.error("Paiement :", erreur);
+			return json({ erreur: "Le paiement est indisponible pour l’instant. Réessaie dans un moment." }, 503);
 		}
 	}
 	async function webhook(req) {

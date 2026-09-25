@@ -4,6 +4,7 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import type { ReglagesDuJoueur } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
+import { achatsEnCours } from '../jeu/formule.ts';
 import { effacerLaPartieEtLeProfil } from '../services/joutes.ts';
 import { telechargerUnFichier } from '../services/partage.ts';
 import { changerUnReglage, exporterLaSauvegarde, importerUneSauvegarde } from '../services/partie.ts';
@@ -53,7 +54,11 @@ export function Reglages() {
   // Le profil de joute gardé par le serveur part avec la partie. Si le serveur ne répond pas, rien n'est effacé :
   // le joueur garderait sinon un profil au classement sans plus pouvoir le retirer.
   const effacer = async (): Promise<void> => {
-    if (!window.confirm('Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ? Cette action est définitive.')) return;
+    // Un joueur qui a payé efface lui-même son compte (décision du 25/09/2026) : il doit savoir ce qu'il perd. Un
+    // abonnement qui se renouvelle encore se résilie d'abord : le serveur le rappelle s'il le faut.
+    const achats = partie.etat === 'prete' && partie.compte !== null && achatsEnCours(partie.compte.formule)
+      ? ' Tu perdras aussi ce que tu as acheté (« Mon album », ton abonnement).' : '';
+    if (!window.confirm(`Effacer toute ta partie (collection, Encre, paquets) sur cet appareil, et ton profil de joutes classées ?${achats} Cette action est définitive.`)) return;
     try {
       await effacerLaPartieEtLeProfil();
       setMessage('Partie effacée : tu repars de zéro, avec trois paquets.');

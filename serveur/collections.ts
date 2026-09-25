@@ -82,6 +82,7 @@ create table if not exists public.comptes (
   -- qu'au marché, jamais à acheter un paquet. Anciennes bourses conservées pour compatibilité.
   encre_achetee integer not null default 0 check (encre_achetee >= 0),
   annee_de_naissance integer, -- demandée seulement à qui veut payer, pas à tout le monde
+  mois_de_naissance smallint, -- avec l'année (décision du 25/09/2026) : de quoi savoir précisément si le joueur a 18 ans
   rente_le date, -- le jour du dernier versement de la rente quotidienne
   code_hache text, -- l'empreinte du code de secours (recuperation.ts) ; jamais le code lui-même
   code_defini_le timestamptz,
@@ -100,6 +101,7 @@ alter table public.comptes
 alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
 -- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
+alter table public.comptes add column if not exists mois_de_naissance smallint;
 create index if not exists comptes_par_code on public.comptes (code_hache);
 
 -- Une ancienne sauvegarde doit être validée par l'administrateur : le client ne
@@ -213,6 +215,7 @@ as $$
       'jusquAu', public.en_millisecondes(c.abonnement_jusqu_au),
       'encreAchetee', c.encre_achetee,
       'anneeDeNaissance', c.annee_de_naissance,
+      'moisDeNaissance', c.mois_de_naissance,
       'cadeauAchatReclame', c.cadeau_achat_reclame,
       'paquetsHebdomadaires', (public.actualiser_offres(c)).reserve_hebdo,
       'prochainPaquetHebdomadaire', public.en_millisecondes((public.actualiser_offres(c)).prochain_hebdo)
@@ -541,18 +544,35 @@ end $$;
 drop function if exists public.acheter_un_paquet(text[]);
 
 -- L'âge, déclaré par le joueur au moment où il regarde la version payante (décision du 22/09/2026 : le paiement
--- est réservé aux majeurs). On ne garde que l'année : c'est assez pour savoir, et c'est le moins qu'on puisse demander.
-create or replace function public.declarer_mon_age(p_annee integer) returns jsonb
+-- est réservé aux majeurs). Depuis le 25/09/2026 : le mois et l'année, pour savoir précisément si le joueur a 18 ans
+-- (c'est le moins qu'on puisse demander), déclarés une fois pour toutes — une correction passe par contact@philamots.fr.
+-- Une ancienne déclaration de l'année seule peut être complétée une fois, par la même année.
+create or replace function public.declarer_ma_naissance(p_annee integer, p_mois integer) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 declare
-  annee_actuelle integer := extract(year from now())::integer;
+  c public.comptes%rowtype;
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
-  if p_annee is null or p_annee < annee_actuelle - 120 or p_annee > annee_actuelle then raise exception 'Cette année de naissance n''est pas possible.'; end if;
-  update public.comptes set annee_de_naissance = p_annee, maj_le = now() where utilisateur = auth.uid();
+  if p_annee is null or p_mois is null or p_mois < 1 or p_mois > 12 or p_annee < extract(year from now())::integer - 120
+     or make_date(p_annee, p_mois, 1) > (now() at time zone 'Europe/Paris')::date then
+    raise exception 'Cette date de naissance n''est pas possible.';
+  end if;
+  select * into c from public.comptes where utilisateur = auth.uid() for update;
   if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if c.mois_de_naissance is not null or (c.annee_de_naissance is not null and c.annee_de_naissance <> p_annee) then
+    raise exception 'Ta date de naissance est déjà déclarée. Pour la corriger, écris à contact@philamots.fr.';
+  end if;
+  update public.comptes set annee_de_naissance = p_annee, mois_de_naissance = p_mois, maj_le = now() where utilisateur = auth.uid();
   return public.etat_du_compte(auth.uid());
+end $$;
+
+-- L'ancienne déclaration (l'année seule) : un jeu resté ouvert depuis doit être rechargé.
+create or replace function public.declarer_mon_age(p_annee integer) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  raise exception 'Recharge la page : le jeu demande maintenant ton mois et ton année de naissance.';
 end $$;
 
 -- Le deck : seulement des cartes possédées, ${D.tailleDuDeck} au plus. Rend le deck tel qu'il est enregistré.
@@ -651,7 +671,7 @@ commit;
 export const FONCTIONS_DES_COLLECTIONS = [
   'public.reclamer_recompense(text, text[])', 'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
   'public.ouvrir_un_paquet(text[])', 'public.changer_de_deck(jsonb)',
-  'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)',
+  'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)', 'public.declarer_ma_naissance(integer, integer)',
 ];
 export const FONCTIONS_INTERNES = [
   ...INTERNES_PROGRESSION,
