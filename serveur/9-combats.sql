@@ -349,7 +349,7 @@ end $$;
 
 
 -- ═════════════════════════════════════════════════════════════════════════════
--- LES COLLECTIONS SUR LE SERVEUR (BRIEF-marche.md, §5a)
+-- LES COLLECTIONS SUR LE SERVEUR (docs/BRIEF-marche.md, §5a)
 -- Le serveur tient l'Encre, la réserve de paquets, le deck et les timbres de chaque joueur, tire lui-même les
 -- paquets (avec son horloge), verse l'Encre des duels, et importe une seule fois la collection de l'appareil.
 -- Les règles sont celles de src/jeu/ ; les chiffres viennent de src/config/equilibrage.ts.
@@ -376,7 +376,7 @@ create table if not exists public.comptes (
   jour date, -- le jour des dernières victoires comptées (plafond quotidien des récompenses)
   victoires_du_jour integer not null default 0,
   importee_le timestamptz, -- la collection de l'appareil a été importée, une seule fois
-  -- La version payante (décision n° 34, offre arrêtée le 22/09/2026 : voir BRIEF-version-payante.md).
+  -- La version payante (décision n° 34, offre arrêtée le 22/09/2026 : voir docs/BRIEF-version-payante.md).
   achat_unique boolean not null default false, -- la formule « Le nécessaire », versée une seule fois
   abonnement text not null default 'aucun' check (abonnement in ('aucun', 'collectionneur', 'expert')),
   abonnement_jusqu_au timestamptz,
@@ -1150,7 +1150,7 @@ revoke execute on function public.retenir_le_profil() from public, anon, authent
 
 
 -- ═════════════════════════════════════════════════════════════════════════════
--- LA RÉCUPÉRATION DU COMPTE : LE CODE DE SECOURS (BRIEF-marche.md, §7 bis)
+-- LA RÉCUPÉRATION DU COMPTE : LE CODE DE SECOURS (docs/BRIEF-marche.md, §7 bis)
 -- ═════════════════════════════════════════════════════════════════════════════
 
 -- Les essais de récupération, pour qu'un code ne puisse pas se deviner à force d'essayer.
@@ -1235,7 +1235,7 @@ revoke execute on function public.exiger_un_compte_etabli(uuid, boolean) from pu
 
 
 -- ═════════════════════════════════════════════════════════════════════════════
--- LE MARCHÉ : LES ENCHÈRES ENTRE JOUEURS (BRIEF-marche.md, décisions n° 37 à 42)
+-- LE MARCHÉ : LES ENCHÈRES ENTRE JOUEURS (docs/BRIEF-marche.md, décisions n° 37 à 42)
 -- ═════════════════════════════════════════════════════════════════════════════
 
 -- ── Les tables ───────────────────────────────────────────────────────────────

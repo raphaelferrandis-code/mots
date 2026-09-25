@@ -1,4 +1,4 @@
-// Le deck, à droite de la préparation (BRIEF-duel.md § 2) : les dix emplacements, remplis ou vides (dentelés),
+// Le deck, à droite de la préparation (docs/duel/BRIEF-duel.md § 2) : les dix emplacements, remplis ou vides (dentelés),
 // et l'analyse du deck. « Modifier » passe le panneau en édition sur place : chaque timbre du deck reçoit une
 // pastille pour le retirer, et la collection apparaît en dessous avec une pastille pour ajouter.
 // Le deck est enregistré à chaque changement, et le dernier changement peut être annulé.

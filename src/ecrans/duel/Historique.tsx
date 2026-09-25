@@ -1,4 +1,4 @@
-// L'historique du duel (BRIEF-duel.md § 3) : un losange par manche possible, gagnée, perdue ou nulle,
+// L'historique du duel (docs/duel/BRIEF-duel.md § 3) : un losange par manche possible, gagnée, perdue ou nulle,
 // et la manche en cours en surbrillance. Il remplace le texte « Manche 1 / 10 ».
 
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';

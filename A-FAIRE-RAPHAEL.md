@@ -63,7 +63,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Mot adverse caché jusqu'à la parade, pose alternée (anti-triche) | **En ligne** (étape 6 faite) |
 | Refonte des écrans Duel (préparation, partie, parade, combat animé, fin) | En ligne |
 | Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
-| Audit complet du code ([AUDIT-CODE-2026-09-25.md](AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
+| Audit complet du code ([docs/AUDIT-CODE-2026-09-25.md](docs/AUDIT-CODE-2026-09-25.md)) et corrections « joueur bloqué » | En ligne |
 | Parrainage durci (parrain payé à la confirmation du filleul) et comptes neufs sans échanges | **En ligne** (étape 8 faite) |
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
 | Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
@@ -75,7 +75,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 
 ### Étape 2 — Installer le script 13 (parrainage et adversaire de secours) — FAIT le 25 septembre
 
-Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md).
+Détails : [docs/GUIDE-secours-et-parrainage.md](docs/GUIDE-secours-et-parrainage.md).
 
 - [x] Script `serveur/13-secours-et-parrainage.sql` collé dans Supabase par l'assistant, avec l'autorisation de
       Raphaël.
@@ -84,7 +84,7 @@ Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md).
 
 ### Étape 3 — Allumer le contrôle anti-robot — FAIT le 25 septembre
 
-Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
+Détails : [docs/GUIDE-anti-robot.md](docs/GUIDE-anti-robot.md).
 
 - [x] Créer un compte gratuit chez Cloudflare (https://dash.cloudflare.com/sign-up), puis **Turnstile** →
       **Add widget** : nom `Philamots`, domaines `philamots.fr` et `www.philamots.fr`, mode **Managed**.
@@ -98,7 +98,7 @@ Détails : [GUIDE-anti-robot.md](GUIDE-anti-robot.md).
 
 ### Étape 4 — Se faire connaître de Google et de Bing — FAIT le 25 septembre
 
-Détails : [GUIDE-google.md](GUIDE-google.md).
+Détails : [docs/GUIDE-google.md](docs/GUIDE-google.md).
 
 - [x] https://search.google.com/search-console → **Ajouter une propriété** → **Préfixe de l'URL** →
       `https://philamots.fr/` → méthode **Balise HTML** : envoyer la ligne `<meta name="google-site-verification" …>`
@@ -124,7 +124,7 @@ Détails : [GUIDE-google.md](GUIDE-google.md).
 
 Pourquoi : jusqu'ici, le serveur envoyait au navigateur le mot adverse **et sa définition** dès le début de la
 manche ; un joueur pouvait les lire. Désormais, avant la parade, on ne voit que la nature, l'attaque et la défense.
-Détails : [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) et [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md).
+Détails : [docs/GUIDE-combats-serveur.md](docs/GUIDE-combats-serveur.md) et [docs/GUIDE-joutes-direct.md](docs/GUIDE-joutes-direct.md).
 **Aucun script SQL à coller.**
 
 - [x] **D'abord le jeu** : publié le 25 septembre (mise en ligne en vert). Dans cet ordre, rien ne casse : le
@@ -142,7 +142,7 @@ Détails : [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) et [GUIDE-joutes
 
 ### Étape 7 — Installer le script 15 (portraits et présence des amis) — FAIT le 25 septembre
 
-Détails : [GUIDE-portraits-et-presence.md](GUIDE-portraits-et-presence.md).
+Détails : [docs/GUIDE-portraits-et-presence.md](docs/GUIDE-portraits-et-presence.md).
 
 - [x] Script `serveur/15-portraits-et-presence.sql` en place dans Supabase, contrôlé par l'assistant en lecture seule
       (fonctions à jour, droits corrects, premier signal de présence reçu).
@@ -159,7 +159,7 @@ faire remonter leurs paquets vers son vrai compte par les échanges et le march�
 - pendant ses **3 premiers jours**, un compte ne peut **ni échanger, ni enchérir, ni vendre** ;
 - les parrainages déjà validés restent acquis.
 
-Détails : [GUIDE-secours-et-parrainage.md](GUIDE-secours-et-parrainage.md). **Aucune fonction serveur à redéployer.**
+Détails : [docs/GUIDE-secours-et-parrainage.md](docs/GUIDE-secours-et-parrainage.md). **Aucune fonction serveur à redéployer.**
 Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas collé, rien ne change pour les joueurs.
 
 - [x] Script `serveur/16-parrainage-confirme.sql` collé dans Supabase par Raphaël.
@@ -174,7 +174,7 @@ Le jeu est déjà publié et s'adapte tout seul : tant que le script n'est pas c
 Pourquoi : l'écran des joutes interrogeait le serveur toutes les 2,5 secondes, et tous les joueurs attendaient les uns
 après les autres le même verrou. Tes décisions du 25 septembre : un match trouvé s'accepte avec **« J'y vais ! » en
 20 secondes**, ne pas accepter **ne coûte rien**, et un onglet caché **reste dans la file** avec une alerte. Détails :
-[GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). Le jeu est déjà publié et s'adapte tout seul.
+[docs/GUIDE-joutes-direct.md](docs/GUIDE-joutes-direct.md). Le jeu est déjà publié et s'adapte tout seul.
 
 - [x] **D'abord la fonction** : Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
       `serveur/deploiement-direct/joutes-direct.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
@@ -183,7 +183,7 @@ après les autres le même verrou. Tes décisions du 25 septembre : un match tro
       **Copy raw file** → Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller →
       **Run**. Réponse attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected »).
 - [x] Vérifié par l'assistant en lecture seule : fonction déployée identique au fichier du dépôt (même empreinte), script 17
-      en place (26 fonctions, verrous, droits, colonnes, déclencheurs). Voir [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md).
+      en place (26 fonctions, verrous, droits, colonnes, déclencheurs). Voir [docs/GUIDE-joutes-direct.md](docs/GUIDE-joutes-direct.md).
 - [ ] Essayer avec quelqu'un : chacun lance « Chercher une partie » en Solo ; « Adversaire trouvé ! » apparaît ; la partie
       ne commence que quand les deux ont pressé « J'y vais ! ».
 
@@ -191,7 +191,7 @@ après les autres le même verrou. Tes décisions du 25 septembre : un match tro
 
 Tes décisions du 25 septembre : contre le même adversaire, **3 parties classées par jour** ; le gagnant d'un abandon
 **reçoit sa récompense** ; un profil recréé **retrouve sa cote** ; on entre au classement après **5 parties**.
-Détails : [GUIDE-joutes-direct.md](GUIDE-joutes-direct.md). **Aucune fonction serveur à redéployer** ; le jeu est déjà
+Détails : [docs/GUIDE-joutes-direct.md](docs/GUIDE-joutes-direct.md). **Aucune fonction serveur à redéployer** ; le jeu est déjà
 publié et s'adapte tout seul.
 
 - [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/18-classement.sql → **Copy raw file** → Supabase →
@@ -204,7 +204,7 @@ publié et s'adapte tout seul.
 Tes décisions du 25 septembre : un joueur qui a payé **supprime lui-même son compte** (après avoir résilié un
 abonnement qui se renouvelle) ; l'âge se déclare par **le mois et l'année de naissance**, une fois pour toutes. Les
 achats restent **fermés** : rien ne change pour les joueurs tant que tu ne demandes pas leur ouverture.
-Détails : [GUIDE-paiements-production.md](GUIDE-paiements-production.md). **L'ordre compte** : le script d'abord.
+Détails : [docs/GUIDE-paiements-production.md](docs/GUIDE-paiements-production.md). **L'ordre compte** : le script d'abord.
 
 - [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/19-paiements.sql → **Copy raw file** → Supabase →
       **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run** (confirmer
@@ -241,8 +241,8 @@ promotion ou dès qu'une limite atteint **70 %**.
 
 Du plus efficace au moins efficace pour démarrer :
 
-1. **Les proches d'abord : cinq testeurs pendant plusieurs jours** ([GUIDE-testeurs.md](GUIDE-testeurs.md),
-   retours dans [RETOURS-testeurs.md](RETOURS-testeurs.md)). Avec le parrainage allumé, chaque invitation leur
+1. **Les proches d'abord : cinq testeurs pendant plusieurs jours** ([docs/GUIDE-testeurs.md](docs/GUIDE-testeurs.md),
+   retours dans [docs/RETOURS-testeurs.md](docs/RETOURS-testeurs.md)). Avec le parrainage allumé, chaque invitation leur
    rapporte des paquets.
 2. **Les groupes de passionnés de mots** : groupes Facebook de Scrabble, de langue française, de philatélie ;
    professeurs de français et de FLE ; Reddit (r/france, r/French) ; Mastodon et Bluesky. Se présenter comme le
@@ -259,7 +259,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 
 - Juger les sons du jeu à l'oreille (duels, carillon des paquets).
 - Essayer le marché sur deux appareils.
-- Avant tout paiement réel : remplir les blancs de [CGV-brouillon.md](CGV-brouillon.md) et consulter un juriste.
+- Avant tout paiement réel : remplir les blancs de [docs/CGV-brouillon.md](docs/CGV-brouillon.md) et consulter un juriste.
   **Les achats restent fermés** ; ils ne s'ouvrent que sur une demande explicite de Raphaël.
 
 ---

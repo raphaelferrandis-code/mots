@@ -1,4 +1,4 @@
-// La partie (BRIEF-duel.md § 3) : l'en-tête (l'adversaire à gauche, toi à droite), l'historique des manches, le ring
+// La partie (docs/duel/BRIEF-duel.md § 3) : l'en-tête (l'adversaire à gauche, toi à droite), l'historique des manches, le ring
 // où « Son mot » et « Ton mot » se font face autour du médaillon, la barre d'action toujours au même endroit, et la
 // main avec la pioche. L'écran n'applique aucune règle : Duel.tsx mène la partie, ce composant la montre.
 //

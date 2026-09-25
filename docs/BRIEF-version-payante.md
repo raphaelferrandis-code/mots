@@ -62,7 +62,7 @@ Tout cela est vérifié : par les tests automatiques, par un scénario dans un P
 échu, rente versée une fois par jour, Encre doublée, Encre achetée qui ne paie pas un paquet, plafonds du marché),
 et dans le navigateur.
 
-**Pour essayer une formule**, il suffit d'une ligne dans l'éditeur SQL de Supabase : voir `GUIDE-supabase.md`,
+**Pour essayer une formule**, il suffit d'une ligne dans l'éditeur SQL de Supabase : voir `docs/GUIDE-supabase.md`,
 étape 11.
 
 ## 3. Ce qui n'est pas construit
@@ -81,7 +81,7 @@ décoratif, cela ne bloque rien, et cela demande un travail de dessin. À faire 
 | 2 | **Les 240 joueurs maison** | Raphaël les retirera « quand il y aura du monde ». **Attention : l'échéance qui compte est le premier euro encaissé, pas le nombre de joueurs.** Un jeu payant qui fait croire à de vrais adversaires est une pratique commerciale trompeuse. Ils sont marqués `maison` dans la base : les retirer est l'affaire d'une ligne. |
 | 3 | **Les mineurs** | **Fait.** Année de naissance demandée avant l'achat, paiement réservé aux 18 ans et plus. |
 | 4 | **Le compte récupérable** | **Un seul moyen existe** : le code de secours. La connexion par e-mail attend un nom de domaine, remis à plus tard. Je recommande, à défaut, de **rendre la création du code de secours obligatoire avant tout achat**. |
-| 5 | **Les mentions de vente** | **Brouillon écrit** : `CGV-brouillon.md`. Il attend l'identité juridique de Raphaël et la relecture d'un juriste. |
+| 5 | **Les mentions de vente** | **Brouillon écrit** : `docs/CGV-brouillon.md`. Il attend l'identité juridique de Raphaël et la relecture d'un juriste. |
 | 6 | **Un contact réel** | Attend le nom de domaine, donc une adresse dédiée. En attendant, la page Confidentialité renvoie à la page publique du projet. |
 
 ### Sur le point 1 : ce que la décision sur l'Encre a changé
@@ -105,7 +105,7 @@ aucune Encre ni aucun timbre ne peut ressortir du jeu en argent.
 
 ## 5. La suite, dans l'ordre
 
-1. Raphaël remplit les blancs de `CGV-brouillon.md` : forme juridique, adresse, immatriculation.
+1. Raphaël remplit les blancs de `docs/CGV-brouillon.md` : forme juridique, adresse, immatriculation.
 2. Un juriste relit ce texte et tranche la question du §4.
 3. Raphaël fixe le prix de l'Encre à l'unité.
 4. Je rends la création du code de secours obligatoire avant tout achat, ou l'on attend le nom de domaine et la

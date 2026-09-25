@@ -1,4 +1,4 @@
-// Mettre un timbre en vente aux enchères (BRIEF-marche.md, étape M3) : la finition, la mise de départ, un prix
+// Mettre un timbre en vente aux enchères (docs/BRIEF-marche.md, étape M3) : la finition, la mise de départ, un prix
 // d'achat immédiat facultatif, la durée. Les règles sont vérifiées ici pour prévenir le joueur avant l'envoi
 // (src/jeu/marche.ts), puis une seconde fois par le serveur, qui a le dernier mot.
 

@@ -1,6 +1,6 @@
 # Compte rendu — ce que contiennent vraiment les données
 
-*Phase 0a, 21 septembre 2026. Tous les chiffres détaillés sont dans [data/exploration/chiffres.md](data/exploration/chiffres.md), regénérable avec `npm run exploration` (30 secondes).*
+*Phase 0a, 21 septembre 2026. Tous les chiffres détaillés sont dans [data/exploration/chiffres.md](../data/exploration/chiffres.md), regénérable avec `npm run exploration` (30 secondes).*
 
 ---
 

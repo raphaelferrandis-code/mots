@@ -1,6 +1,6 @@
 # Guide des testeurs — Philamots
 
-*Pour Raphaël, qui recrute cinq personnes, et pour ces cinq personnes. Écrit le 22 septembre 2026, pour la fin de la phase 4 du brief (`BRIEF-v2.md`, §8) : la phase est validée quand cinq testeurs extérieurs ont joué plusieurs jours et que leurs retours sont notés dans `RETOURS-testeurs.md`.*
+*Pour Raphaël, qui recrute cinq personnes, et pour ces cinq personnes. Écrit le 22 septembre 2026, pour la fin de la phase 4 du brief (`docs/BRIEF-v2.md`, §8) : la phase est validée quand cinq testeurs extérieurs ont joué plusieurs jours et que leurs retours sont notés dans `docs/RETOURS-testeurs.md`.*
 
 ## 1. Ce qu'on teste
 
@@ -61,7 +61,7 @@ Une capture d'écran vaut souvent mieux qu'une explication.
 
 ## 6. Ce que Raphaël en fait
 
-Chaque retour est recopié dans `RETOURS-testeurs.md` (un tableau par testeur, puis une synthèse). Les remarques qui reviennent chez plusieurs testeurs deviennent des décisions ; les chiffres d'équilibrage (rythme des paquets, difficulté, temps de réponse) se règlent dans `src/config/equilibrage.ts` et se vérifient avec les simulateurs (`npm run simulation:collection`, `npm run simulation:duel`).
+Chaque retour est recopié dans `docs/RETOURS-testeurs.md` (un tableau par testeur, puis une synthèse). Les remarques qui reviennent chez plusieurs testeurs deviennent des décisions ; les chiffres d'équilibrage (rythme des paquets, difficulté, temps de réponse) se règlent dans `src/config/equilibrage.ts` et se vérifient avec les simulateurs (`npm run simulation:collection`, `npm run simulation:duel`).
 
 ## 7. À savoir sur les données
 

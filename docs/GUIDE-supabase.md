@@ -1,8 +1,8 @@
 # Brancher le serveur des joutes (Supabase) — guide pas à pas
 
-> **Comptes Google et e-mail :** suivre [GUIDE-connexion.md](GUIDE-connexion.md) pour activer les fournisseurs, le rattachement des invités et les e-mails de connexion. Les descriptions historiques de comptes uniquement anonymes ci-dessous sont remplacées par ce complément.
+> **Comptes Google et e-mail :** suivre [docs/GUIDE-connexion.md](GUIDE-connexion.md) pour activer les fournisseurs, le rattachement des invités et les e-mails de connexion. Les descriptions historiques de comptes uniquement anonymes ci-dessous sont remplacées par ce complément.
 
-> **Client actuel :** le complément [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) remplace l’ordre d’installation historique ci-dessous. La migration `9-combats.sql` et la fonction `combats` sont nécessaires avant publication. Elles sont prêtes et testées localement ; leur application au serveur distant n’a pas été effectuée dans cette intervention.
+> **Client actuel :** le complément [docs/GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) remplace l’ordre d’installation historique ci-dessous. La migration `9-combats.sql` et la fonction `combats` sont nécessaires avant publication. Elles sont prêtes et testées localement ; leur application au serveur distant n’a pas été effectuée dans cette intervention.
 
 > **Migration appliquée le 23 septembre 2026 :** serveur/6-offres.sql exécuté avec succès sur le projet Supabase cgubfyxyivgufslpwlld. Contrôle avant/après : 38 comptes, 254 possessions, 77 Encre, inchangés. RPC de récompense disponible aux joueurs connectés ; tirage interne inaccessible. Aucun droit payant attribué et aucun déploiement du client dans cette intervention. Cette note remplace les indications antérieures disant que la migration reste à appliquer.
 
@@ -15,7 +15,7 @@ Aucun droit payant accordé automatiquement, aucun paiement branché. Pour les e
 
 Le cadeau n’est réclamable qu’une fois : modifier le drapeau achat_unique ne le réinitialise pas. Premier paquet spécial à l’activation, puis tous les sept jours. Prolongation continue : échéancier conservé. Reprise après expiration : nouvelle période. Les droits acquis et les paquets déjà stockés restent conservés après expiration.
 
-Tests sur PostgreSQL embarqué (PGlite), pas sur le serveur distant. Migration et déploiement restent à effectuer. Les descriptions historiques ci-dessous sont remplacées par BRIEF-version-payante.md.
+Tests sur PostgreSQL embarqué (PGlite), pas sur le serveur distant. Migration et déploiement restent à effectuer. Les descriptions historiques ci-dessous sont remplacées par docs/BRIEF-version-payante.md.
 
 
 *Pour Raphaël. Compter une demi-heure. Aucune ligne de commande : tout se fait dans le navigateur.*
@@ -127,7 +127,7 @@ Sur le site, écran **Duel** → onglet **Joutes classées** :
 
 ## Étape 8 — Les collections sur le serveur (ajoutée le 22 septembre 2026)
 
-Depuis la décision du marché (`BRIEF-marche.md`, §2), le serveur doit devenir propriétaire des collections : c'est lui qui
+Depuis la décision du marché (`docs/BRIEF-marche.md`, §2), le serveur doit devenir propriétaire des collections : c'est lui qui
 tire les paquets, compte l'Encre et connaît le propriétaire de chaque timbre. **En service depuis le 22 septembre 2026** (`collectionsSurLeServeur: true` dans `src/config/serveur.ts`) : les scripts ci-dessous ont été
 collés, et le jeu vérifié contre le vrai serveur. Ce qui suit reste utile pour un nouveau projet, ou pour recoller les scripts.
 
@@ -148,7 +148,7 @@ Ce qui se passera alors pour les joueurs :
 - sans réseau, ils voient leur collection mais n'ouvrent pas de paquet (un message le dit, avec un bouton « Réessayer ») ;
 - « Importer une sauvegarde » disparaît des réglages (l'export reste possible, comme copie) ;
 - leur compte anonyme, lié au navigateur, porte désormais leur collection : perdre son navigateur, c'est perdre sa
-  collection tant qu'il n'y a pas de moyen de récupération (question 6 du `BRIEF-marche.md`, §7).
+  collection tant qu'il n'y a pas de moyen de récupération (question 6 du `docs/BRIEF-marche.md`, §7).
 
 Comment je l'ai vérifié sans toucher au vrai serveur : les scripts ont été joués dans un Postgres en mémoire (PGlite) avec un
 scénario de 34 vérifications (tirage, recharge, achat, garantie de Légendaire, mots masqués, doublons, deck, duels, joutes,
@@ -173,7 +173,7 @@ il faudra un service d'envoi (par exemple Resend ou Brevo, qui ont une offre gra
 
 ## Étape 10 — Le marché aux enchères et la cote des timbres (ajoutée le 22 septembre 2026, soir)
 
-Étapes M3 et M4 du plan du marché (`BRIEF-marche.md`) : l'onglet « Marché », où l'on met ses timbres aux enchères et où
+Étapes M3 et M4 du plan du marché (`docs/BRIEF-marche.md`) : l'onglet « Marché », où l'on met ses timbres aux enchères et où
 l'on mise sur ceux des autres, et la **cote** de chaque timbre, sur sa fiche. Tout se passe sur le serveur : les enchères,
 l'Encre bloquée par une mise, la clôture, la commission de 10 %, le relevé des prix. Pour l'installer :
 
@@ -201,7 +201,7 @@ le serveur refuse cette partie aux autres comptes.
 ## Étape 11 — La version payante (ajoutée le 22 septembre 2026, soir)
 
 Les trois formules sont construites, mais **rien ne permet encore de payer** : c'est voulu, et
-`BRIEF-version-payante.md` dit pourquoi. Pour installer les règles :
+`docs/BRIEF-version-payante.md` dit pourquoi. Pour installer les règles :
 
 1. SQL Editor → New query → coller de nouveau **tout** `serveur/1-structure.sql` → menu sur **Database** → Run.
 2. Rien d'autre.
@@ -255,7 +255,7 @@ Un identifiant technique, son pseudonyme, sa cote, les dix cartes de son deck, e
 
 ## Ce que ce classement vaut
 
-C'est un classement **« de confiance »** (voir `BRIEF-joutes.md`, §5) : le téléphone du joueur annonce le résultat de la joute, et le serveur calcule la cote. Le serveur refuse les abus les plus grossiers (plus de 40 joutes par heure, une joute de moins de 45 secondes, un résultat annoncé deux fois), mais un tricheur décidé peut gonfler sa cote. C'est suffisant entre amis et pour des testeurs ; ce ne l'est pas pour un classement avec des récompenses de valeur.
+C'est un classement **« de confiance »** (voir `docs/BRIEF-joutes.md`, §5) : le téléphone du joueur annonce le résultat de la joute, et le serveur calcule la cote. Le serveur refuse les abus les plus grossiers (plus de 40 joutes par heure, une joute de moins de 45 secondes, un résultat annoncé deux fois), mais un tricheur décidé peut gonfler sa cote. C'est suffisant entre amis et pour des testeurs ; ce ne l'est pas pour un classement avec des récompenses de valeur.
 ## Mise à jour du 23 septembre 2026 — Encre réservée aux enchères
 
 Le code supprime l’achat de paquets avec toute forme d’Encre. **Migration appliquée au serveur le 23 septembre 2026.**

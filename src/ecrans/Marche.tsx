@@ -1,4 +1,4 @@
-// Le marché : les enchères entre joueurs (BRIEF-marche.md). On y mise, on y achète tout de suite, on y suit ses
+// Le marché : les enchères entre joueurs (docs/BRIEF-marche.md). On y mise, on y achète tout de suite, on y suit ses
 // ventes et ses mises. Pour vendre un timbre, on passe par sa fiche (bouton « Vendre ce timbre »).
 // L'écran ne contient aucune règle : tout passe par src/services/partie.ts, et le serveur a le dernier mot.
 

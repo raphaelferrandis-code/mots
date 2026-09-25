@@ -1,4 +1,4 @@
-// La récupération du compte (décision n° 36, BRIEF-marche.md §7 bis) : le code de secours.
+// La récupération du compte (décision n° 36, docs/BRIEF-marche.md §7 bis) : le code de secours.
 // Le joueur note un code ; sur un autre appareil, ce code transfère sa collection et son profil de joute au compte
 // anonyme de l'appareil. Le serveur n'en garde que l'empreinte. (L'e-mail par lien magique viendra à part : le service
 // d'e-mail fourni par Supabase est limité à deux messages par heure.)
@@ -12,7 +12,7 @@ export const ESSAIS_DE_RECUPERATION_PAR_HEURE = 10;
 export function recuperation(): string {
   return String.raw`
 -- ═════════════════════════════════════════════════════════════════════════════
--- LA RÉCUPÉRATION DU COMPTE : LE CODE DE SECOURS (BRIEF-marche.md, §7 bis)
+-- LA RÉCUPÉRATION DU COMPTE : LE CODE DE SECOURS (docs/BRIEF-marche.md, §7 bis)
 -- ═════════════════════════════════════════════════════════════════════════════
 
 -- Les essais de récupération, pour qu'un code ne puisse pas se deviner à force d'essayer.

@@ -1,6 +1,6 @@
 # Combats vérifiés et progression synchronisée
 
-Mise à jour du 24 septembre 2026 : moteur version 2 et client `12f50a4` déployés avec les amis. Les attaques sont automatiques, suivies d’une seule question de définition pour la parade. Les anciennes parties restent reprises par le moteur. La migration `10-amis.sql` ajoute les défis amicaux sans variation de cote ni statistiques classées ; voir [GUIDE-amis.md](GUIDE-amis.md) pour le contrôle de cette publication.
+Mise à jour du 24 septembre 2026 : moteur version 2 et client `12f50a4` déployés avec les amis. Les attaques sont automatiques, suivies d’une seule question de définition pour la parade. Les anciennes parties restent reprises par le moteur. La migration `10-amis.sql` ajoute les défis amicaux sans variation de cote ni statistiques classées ; voir [docs/GUIDE-amis.md](GUIDE-amis.md) pour le contrôle de cette publication.
 
 La migration 9 et la fonction `combats` ont été installées le 23 septembre 2026 sur le projet Supabase du jeu. Le client de cette révision exige ce moteur serveur. Pour toute nouvelle installation, respecter l’ordre ci-dessous.
 
@@ -62,4 +62,4 @@ npm run build
 
 Le test navigateur `node serveur/verifier-combats-navigateur.mjs` nécessite Playwright et Chrome, ou `BROWSER_CHANNEL` adapté. `PLAYWRIGHT_MODULE` peut pointer vers une installation existante de Playwright. Il lance un aperçu local sur le port 5187 et une base PostgreSQL embarquée. Tous les appels Supabase sont interceptés, aucune base distante n’est modifiée. Il teste une victoire, la perte d’un accusé après validation, la reprise, un conflit entre onglets, l’archive locale et l’affichage mobile. La capture `test-combat-mobile.png` est un artefact de contrôle.
 
-Les tests unitaires/intégration couvrent aussi les refus d’identité et de résultats injectés, les permissions SQL, la cote à l’abandon, le temps serveur, le temps illimité, l’expiration, le bonus fractionnaire, les paquets, la récupération et la réinstallation. Les essais humains sont préparés dans `ESSAIS-JOUEURS.md`.
+Les tests unitaires/intégration couvrent aussi les refus d’identité et de résultats injectés, les permissions SQL, la cote à l’abandon, le temps serveur, le temps illimité, l’expiration, le bonus fractionnaire, les paquets, la récupération et la réinstallation. Les essais humains sont préparés dans `docs/ESSAIS-JOUEURS.md`.

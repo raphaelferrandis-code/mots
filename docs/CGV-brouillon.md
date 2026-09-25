@@ -1,6 +1,6 @@
 # Conditions générales de vente — brouillon
 
-> **Mise à jour du 23 septembre 2026 : offre à réécrire avant toute utilisation.** Raphaël retient un achat unique et un seul abonnement, dont les avantages sont validés dans BRIEF-version-payante.md ; paiement toujours fermé. Toute l’Encre est réservée aux enchères et aucun paquet ne peut être acheté avec. Le tableau à trois formules ci-dessous est historique, pas l’offre de lancement. `philamots.fr` et HTTPS sont opérationnels ; contact@philamots.fr fonctionne ; le vendeur, les moyens de paiement, les contacts et la validation juridique restent à compléter.
+> **Mise à jour du 23 septembre 2026 : offre à réécrire avant toute utilisation.** Raphaël retient un achat unique et un seul abonnement, dont les avantages sont validés dans docs/BRIEF-version-payante.md ; paiement toujours fermé. Toute l’Encre est réservée aux enchères et aucun paquet ne peut être acheté avec. Le tableau à trois formules ci-dessous est historique, pas l’offre de lancement. `philamots.fr` et HTTPS sont opérationnels ; contact@philamots.fr fonctionne ; le vendeur, les moyens de paiement, les contacts et la validation juridique restent à compléter.
 
 > **⚠️ Ce texte n'est pas utilisable en l'état, et je ne suis pas juriste.**
 >

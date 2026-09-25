@@ -1,4 +1,4 @@
-// La préparation du duel : les onglets Jouer et Deck réunis (BRIEF-duel.md § 2).
+// La préparation du duel : les onglets Jouer et Deck réunis (docs/duel/BRIEF-duel.md § 2).
 // À gauche, le mode (quatre onglets de même niveau), l'adversaire, le temps par définition et la récompense du jour ;
 // à droite, le deck. Un seul bouton principal, dont le libellé et la légende suivent le mode choisi.
 // Aucune règle ici : les chiffres viennent de config/equilibrage.ts, les amis, l'équipe et les cotes du serveur.

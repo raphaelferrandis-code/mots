@@ -3,7 +3,7 @@
 24 septembre 2026 — **Code publié, fonctions et migration installées, achats réels fermés.**
 Les secrets Stripe de production, la destination webhook et le réglage JWT des deux
 fonctions sont installés. Sonde signée sans effet : HTTP 200 ; état public : achats
-fermés. Voir `ACTIVATION-paiements.md` pour les preuves et les conditions de reprise.
+fermés. Voir `docs/ACTIVATION-paiements.md` pour les preuves et les conditions de reprise.
 Les essais effectués avec Raphi concernent le sandbox. Les tests automatiques du
 mode production simulent Stripe : aucun débit réel n'a été effectué.
 
@@ -40,7 +40,7 @@ Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droit
 
 ## Installation effectuée, procédure reproductible achats fermés
 
-État détaillé et reprise de la tâche : `ACTIVATION-paiements.md`.
+État détaillé et reprise de la tâche : `docs/ACTIVATION-paiements.md`.
 
 1. Conserver les secrets et fonctions de test. Appliquer
    `serveur/9-paiements-production.sql` après `serveur/8-paiements-test.sql`.
@@ -51,7 +51,7 @@ Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droit
    pour ces fonctions : elles vérifient elles-mêmes l'utilisateur ou la signature.
 3. Dans Stripe production, créer le webhook :
    `https://cgubfyxyivgufslpwlld.supabase.co/functions/v1/stripe-webhook-production`
-   Sélectionner les 12 événements décrits dans `GUIDE-paiements-test.md`.
+   Sélectionner les 12 événements décrits dans `docs/GUIDE-paiements-test.md`.
 4. Saisir dans Supabase uniquement `STRIPE_LIVE_SECRET_KEY` (`rk_live_…` ou `sk_live_…`),
    `STRIPE_LIVE_WEBHOOK_SECRET` (`whsec_…`) et `SITE_URL_PRODUCTION=https://philamots.fr`.
    Les secrets doivent provenir du même compte réel que les tarifs. Supabase fournit
@@ -155,7 +155,7 @@ Subscription et Dispute de la documentation Stripe.
 - Finaliser informations commerciales, fiscalité, conditions de vente, consentements,
   remboursement et support avec la situation réelle de l'activité.
 - Le code de secours reste requis avant achat. Le travail parallèle sur la connexion
-  e-mail et Google est décrit dans `GUIDE-connexion.md` ; l'e-mail de facturation
+  e-mail et Google est décrit dans `docs/GUIDE-connexion.md` ; l'e-mail de facturation
   Stripe n'est pas l'identité du joueur.
 - Suppression par le joueur depuis le 25/09/2026 (voir plus haut) : un abonnement qui se renouvelle doit être résilié
   d'abord, donc pas d'abonnement orphelin. La politique de remboursement reste à décider (conditions de vente).

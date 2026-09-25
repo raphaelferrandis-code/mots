@@ -1,4 +1,4 @@
-// L'analyse du deck (BRIEF-duel.md § 2) : le triangle des types avec la répartition du deck, une phrase qui dit
+// L'analyse du deck (docs/duel/BRIEF-duel.md § 2) : le triangle des types avec la répartition du deck, une phrase qui dit
 // sa force et son point faible, et les origines qui peuvent s'enchaîner. Tout vient de jeu/aidesDuDuel.ts.
 
 import { useId } from 'react';

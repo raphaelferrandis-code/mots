@@ -1,5 +1,5 @@
 // Les collections côté service. Quand le serveur en est propriétaire (src/config/serveur.ts, collectionsSurLeServeur :
-// BRIEF-marche.md, §5a), tout ce qui a de la valeur — les timbres, l'Encre, les paquets, le deck, les récompenses —
+// docs/BRIEF-marche.md, §5a), tout ce qui a de la valeur — les timbres, l'Encre, les paquets, le deck, les récompenses —
 // passe par ses fonctions (serveur/collections.ts). Sinon, le jeu vit sur l'appareil comme avant, et ce service est inactif.
 
 import { SERVEUR } from '../config/serveur.ts';

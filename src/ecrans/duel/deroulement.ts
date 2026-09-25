@@ -1,4 +1,4 @@
-// Le déroulé animé d'une manche (BRIEF-duel.md § 3) : ce que l'écran montre, et quand. Les règles ont déjà tranché
+// Le déroulé animé d'une manche (docs/duel/BRIEF-duel.md § 3) : ce que l'écran montre, et quand. Les règles ont déjà tranché
 // (Duel.tsx reçoit la manche jouée d'un coup) ; ce hook ne fait que l'égrener pour le joueur.
 //
 //   choix : le mot adverse arrive face cachée (nature, attaque, défense) ; il ne se retourne qu'à l'ouverture de la

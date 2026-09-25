@@ -26,7 +26,7 @@ export const serveurRegle = SERVEUR.adresse !== '' && SERVEUR.clePublique !== ''
 export const serveurUtilise = serveurRegle && vraiServeurPermis();
 // Le parrainage et l'adversaire de secours, une fois leur script installé sur le serveur.
 export const secoursEtParrainage = serveurUtilise && SERVEUR.secoursEtParrainage;
-// Le contrôle anti-robot, quand une clé est réglée (voir GUIDE-anti-robot.md).
+// Le contrôle anti-robot, quand une clé est réglée (voir docs/GUIDE-anti-robot.md).
 export const jetonAntiRobot = SERVEUR.cleAntiRobot !== '' ? creerAntiRobot(SERVEUR.cleAntiRobot) : undefined;
 
 let client: ClientSupabase | undefined;

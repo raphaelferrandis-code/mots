@@ -2,7 +2,7 @@
 // PSEUDONYMES INTERDITS
 // La liste des mots refusés dans les pseudonymes des joutes. Raphaël peut la compléter.
 // Elle sert deux fois : dans le jeu (src/jeu/pseudo.ts) et sur le serveur — après une modification,
-// lancer « npm run serveur:script » puis recoller serveur/supabase.sql dans Supabase (voir GUIDE-supabase.md).
+// lancer « npm run serveur:script » puis recoller serveur/supabase.sql dans Supabase (voir docs/GUIDE-supabase.md).
 //
 // Écrire les mots en minuscules, sans accents ni espaces. Le filtre reconnaît tout seul les accents, les majuscules,
 // les lettres répétées (« coooon »), les lettres séparées (« c.o.n ») et les chiffres mis pour des lettres (« c0n »).

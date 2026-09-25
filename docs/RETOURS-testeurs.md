@@ -1,6 +1,6 @@
 # Retours des testeurs — MOTS
 
-*Rempli par Raphaël à partir des messages des testeurs (voir `GUIDE-testeurs.md`). Une section par testeur, puis une synthèse. Les décisions prises passent ensuite dans `BRIEF-v2.md` (§10.1) et dans `src/config/equilibrage.ts`.*
+*Rempli par Raphaël à partir des messages des testeurs (voir `docs/GUIDE-testeurs.md`). Une section par testeur, puis une synthèse. Les décisions prises passent ensuite dans `docs/BRIEF-v2.md` (§10.1) et dans `src/config/equilibrage.ts`.*
 
 ## Les testeurs
 

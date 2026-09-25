@@ -201,7 +201,7 @@ export const EQUILIBRAGE = {
     encreParVictoire: 35,
   },
 
-  // ── Le marché : les enchères entre joueurs (BRIEF-marche.md, décisions n° 37 à 42) ──
+  // ── Le marché : les enchères entre joueurs (docs/BRIEF-marche.md, décisions n° 37 à 42) ──
   marche: {
     // Part de l'Encre payée qui disparaît à chaque vente : c'est ce qui empêche l'Encre de s'accumuler.
     commission: 0.1,
@@ -226,7 +226,7 @@ export const EQUILIBRAGE = {
 
   // ── La version payante (décision n° 34) ───────────────────────────────────
   // Ce qu'un compte payant reçoit de plus. Le compte porte un drapeau « payant » (serveur/collections.ts) ;
-  // personne ne l'a encore, et il n'existe aucun moyen de payer : voir BRIEF-version-payante.md.
+  // personne ne l'a encore, et il n'existe aucun moyen de payer : voir docs/BRIEF-version-payante.md.
   // Avantages validés le 23 septembre 2026. Prix indicatifs, paiement non branché.
   payant: {
     // Recharge et réserve de l'abonnement uniquement.

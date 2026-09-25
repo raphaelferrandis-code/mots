@@ -57,7 +57,7 @@ préparation ne constituent pas cette demande. Ne pas créer de paiement réel p
 4. Informations de vendeur et CGV : Raphi n'a pas encore créé son entreprise.
    Il a prévu de la créer après la sortie gratuite. Ne pas déclarer cette étape faite,
    ne pas inventer de SIREN, d'adresse de vendeur ou de régime fiscal.
-   `CGV-brouillon.md` est un ancien brouillon, pas des conditions publiables validées.
+   `docs/CGV-brouillon.md` est un ancien brouillon, pas des conditions publiables validées.
 
 ## Le jour de l'ouverture
 

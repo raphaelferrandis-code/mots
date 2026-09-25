@@ -68,7 +68,7 @@ Si l’activation d’un hébergement OVH propose de modifier le pointage web, c
 - Passer les adresses de partage de `src/config/site.ts` à `https://philamots.fr/` une fois le site accessible.
 - Afficher le contact dans la page Confidentialité et les documents de vente après validation de la boîte.
 - Mettre à jour les adresses documentées et contrôler les liens de connexion Supabase lors de leur mise en place.
-- Appliquer la mise à jour serveur décrite dans `GUIDE-supabase.md` avant de publier les changements locaux.
+- Appliquer la mise à jour serveur décrite dans `docs/GUIDE-supabase.md` avant de publier les changements locaux.
 
 La boîte de contact sert aux échanges avec les joueurs. L’envoi automatique de liens de connexion reste un
 chantier distinct : choix du service d’envoi, authentification du domaine et configuration Supabase.

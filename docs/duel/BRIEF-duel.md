@@ -4,7 +4,7 @@
 
 Philamots est en ligne sur philamots.fr. Les écrans Duel existent déjà et fonctionnent : Jouer, Deck, Classement, la partie contre l'ordinateur, la parade par définition et l'écran de résultat.
 
-Un prototype autonome a été réalisé : `prototype-duel.html`. C'est un seul fichier HTML sans dépendance. Il sert de **référence visuelle et comportementale** pour la refonte. Ouvre-le dans un navigateur, son activé, et joue au moins un duel complet en Facile, puis un en Normal, avant d'écrire la moindre ligne.
+Un prototype autonome a été réalisé : `docs/duel/prototype-duel.html`. C'est un seul fichier HTML sans dépendance. Il sert de **référence visuelle et comportementale** pour la refonte. Ouvre-le dans un navigateur, son activé, et joue au moins un duel complet en Facile, puis un en Normal, avant d'écrire la moindre ligne.
 
 L'objectif est de rendre ces écrans plus clairs, mieux hiérarchisés et plus spectaculaires, **sans toucher aux règles du jeu**. C'est une refonte de présentation.
 

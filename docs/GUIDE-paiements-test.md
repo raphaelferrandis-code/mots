@@ -200,7 +200,7 @@ au paiement ; sa résolution nécessite une vérification administrative dans ce
 
 ## Limites avant production
 
-La préparation séparée de la production est décrite dans `GUIDE-paiements-production.md`.
+La préparation séparée de la production est décrite dans `docs/GUIDE-paiements-production.md`.
 Les fonctions de test conservent leurs clés, tarifs et restrictions actuels.
 
 - Cette intégration est volontairement **limitée aux tests** : clés réelles refusées,

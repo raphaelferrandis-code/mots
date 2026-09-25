@@ -1,4 +1,4 @@
-// Le marché : les enchères entre joueurs (BRIEF-marche.md, décisions n° 37 à 42). Le serveur tient tout : le timbre
+// Le marché : les enchères entre joueurs (docs/BRIEF-marche.md, décisions n° 37 à 42). Le serveur tient tout : le timbre
 // mis en vente quitte l'album du vendeur et attend dans l'enchère ; chaque mise bloque l'Encre de l'enchérisseur et rend
 // celle du précédent ; à l'heure dite, la première fonction du marché appelée clôt l'enchère (le serveur n'a pas besoin
 // de tâche planifiée) : le timbre va à l'acheteur, l'Encre au vendeur moins la commission, qui disparaît.
@@ -20,7 +20,7 @@ const cas = (valeurs: readonly string[], valeur: (v: string) => string | number)
 export function marche(): string {
   return String.raw`
 -- ═════════════════════════════════════════════════════════════════════════════
--- LE MARCHÉ : LES ENCHÈRES ENTRE JOUEURS (BRIEF-marche.md, décisions n° 37 à 42)
+-- LE MARCHÉ : LES ENCHÈRES ENTRE JOUEURS (docs/BRIEF-marche.md, décisions n° 37 à 42)
 -- ═════════════════════════════════════════════════════════════════════════════
 
 -- ── Les tables ───────────────────────────────────────────────────────────────

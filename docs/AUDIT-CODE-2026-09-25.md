@@ -3,7 +3,7 @@
 Audit en lecture seule : aucun fichier du jeu n'a été modifié, aucun appel au vrai serveur, aucun secret lu ni affiché.
 Cinq examens menés en parallèle (base de données, fonctions serveur et paiements, services du navigateur, règles du jeu et tests, interface), puis recoupés : les points principaux ont été revérifiés dans le code.
 
-Les audits précédents (`ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `AUDIT-UI-UX-2026-09-23.md`, `SUIVI-CORRECTIONS-2026-09-23.md`) ont été lus pour ne pas redire ce qui est déjà corrigé.
+Les audits précédents (`docs/ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `docs/AUDIT-UI-UX-2026-09-23.md`, `docs/SUIVI-CORRECTIONS-2026-09-23.md`) ont été lus pour ne pas redire ce qui est déjà corrigé.
 
 > **Corrigé le 25/09 (lot « joueur bloqué ») :** n° 2 (filet d'erreur et fond animé), n° 6 en partie (album et deck ont
 > « Réessayer » ; une partie illisible est expliquée une seule fois dans `App.tsx` au lieu de « Chargement… » sur chaque

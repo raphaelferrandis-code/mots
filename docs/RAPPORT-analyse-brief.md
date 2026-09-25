@@ -1,7 +1,7 @@
 # Rapport d'analyse — Brief « MOTS »
 
 *Analyse du brief du jeu de cartes à collectionner des mots de la langue française.*
-*Date : 21 septembre 2026 — la version améliorée se trouve dans `BRIEF-v2.md`.*
+*Date : 21 septembre 2026 — la version améliorée se trouve dans `docs/BRIEF-v2.md`.*
 
 ---
 
@@ -147,7 +147,7 @@ Dans le même esprit, l'attaque « Scrabble » favorise mécaniquement les mots 
 
 ## 7. Suites données (21 septembre 2026)
 
-Ce rapport reste une photo de l'analyse du brief d'origine. **Pour les décisions, c'est `BRIEF-v2.md` (§10.1) qui fait foi.**
+Ce rapport reste une photo de l'analyse du brief d'origine. **Pour les décisions, c'est `docs/BRIEF-v2.md` (§10.1) qui fait foi.**
 
 Raphaël a validé les recommandations 1 à 4, et modifié deux points :
 - les mots familiers sont conservés, **avec une option dans les Réglages pour les masquer** ;

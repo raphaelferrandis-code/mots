@@ -1,4 +1,4 @@
-// Quand le serveur tient la collection (BRIEF-marche.md, §5a), l'appareil n'en garde qu'une copie. Ce fichier dit
+// Quand le serveur tient la collection (docs/BRIEF-marche.md, §5a), l'appareil n'en garde qu'une copie. Ce fichier dit
 // comment l'état venu du serveur se glisse dans la sauvegarde locale, ce que l'appareil garde en propre (réglages,
 // archive de l'ancienne progression), et ce qu'on envoie au serveur pour importer, une fois, une partie
 // qui vivait sur l'appareil. Fonctions pures : rien n'est lu ni écrit ici.

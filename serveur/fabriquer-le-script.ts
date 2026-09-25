@@ -1,4 +1,4 @@
-// Fabrique les trois scripts à coller dans Supabase (voir GUIDE-supabase.md) :
+// Fabrique les trois scripts à coller dans Supabase (voir docs/GUIDE-supabase.md) :
 //   serveur/1-structure.sql       les tables, les règles d'accès et les fonctions des joutes et des collections ;
 //   serveur/2-joueurs-maison.sql  les joueurs maison, pour que les joutes aient du monde dès le premier jour ;
 //   serveur/3-cartes.sql          les cartes de l'édition, pour que le serveur tire lui-même les paquets.

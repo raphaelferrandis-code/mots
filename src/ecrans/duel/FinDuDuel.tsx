@@ -1,4 +1,4 @@
-// L'écran de fin (BRIEF-duel.md § 3) : un sceau, le titre (Victoire, Défaite, Égalité) et une phrase de contexte,
+// L'écran de fin (docs/duel/BRIEF-duel.md § 3) : un sceau, le titre (Victoire, Défaite, Égalité) et une phrase de contexte,
 // les gains d'Encre et d'XP qui défilent, trois statistiques, et les boutons dans l'ordre de la hiérarchie.
 // Les gains affichés sont ceux que le serveur (ou la sauvegarde locale) a réellement accordés.
 

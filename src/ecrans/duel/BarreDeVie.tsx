@@ -1,4 +1,4 @@
-// La barre de vie d'un camp (BRIEF-duel.md § 3) : graduée d'un trait par point, elle se vide en deux temps
+// La barre de vie d'un camp (docs/duel/BRIEF-duel.md § 3) : graduée d'un trait par point, elle se vide en deux temps
 // (la vie tombe d'un coup, une traînée rouge la suit), et clignote quand il reste peu de points.
 
 import type { CSSProperties, ReactNode } from 'react';

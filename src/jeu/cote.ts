@@ -1,4 +1,4 @@
-// La cote d'un timbre (BRIEF-marche.md, brique E ; décision n° 38), telle que le serveur la décrit : par finition, la
+// La cote d'un timbre (docs/BRIEF-marche.md, brique E ; décision n° 38), telle que le serveur la décrit : par finition, la
 // médiane des prix de ses ventes des derniers jours, relevée une fois par jour (serveur/marche.ts). Tout le monde voit
 // la cote du jour ; la version payante voit son histoire : la série jour par jour, les dernières ventes, les
 // statistiques. Fonctions pures : relecture de ce que le serveur envoie, texte en clair, courbe prête à dessiner.

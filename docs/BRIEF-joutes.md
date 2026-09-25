@@ -1,6 +1,6 @@
 # Les joutes classées — plan du serveur
 
-*Version 2 du 21 septembre 2026. Ce document complète `BRIEF-v2.md`. Il décrit le passage des joutes sans serveur aux joutes entre vrais joueurs. **Décisions de Raphaël (21/09/2026) : hébergeur Supabase ; pseudonymes choisis librement par les joueurs, avec un filtre des mots offensants ; le jeu ne signale pas que certains adversaires sont des « joueurs maison ».** Les scripts du serveur et le guide de mise en route sont prêts : `serveur/` et `GUIDE-supabase.md`.*
+*Version 2 du 21 septembre 2026. Ce document complète `docs/BRIEF-v2.md`. Il décrit le passage des joutes sans serveur aux joutes entre vrais joueurs. **Décisions de Raphaël (21/09/2026) : hébergeur Supabase ; pseudonymes choisis librement par les joueurs, avec un filtre des mots offensants ; le jeu ne signale pas que certains adversaires sont des « joueurs maison ».** Les scripts du serveur et le guide de mise en route sont prêts : `serveur/` et `docs/GUIDE-supabase.md`.*
 
 > **Légende :** 🟡 = proposition à confirmer par Raphaël.
 
@@ -26,7 +26,7 @@ Tout le mode de jeu fonctionne, avec un « faux serveur » logé dans le navigat
 | **Joueurs maison** : 240 adversaires fabriqués à partir des cartes (`src/jeu/joueursMaison.ts`), pour que les joutes aient du monde dès le premier jour. Sans serveur, ce sont les seuls adversaires ; avec le serveur, ils sont installés dans la base aux côtés des vrais joueurs, marqués en interne pour pouvoir être retirés en une ligne | `src/services/joutes.ts`, `serveur/2-joueurs-maison.sql` | fait |
 | Pseudonyme choisi par le joueur, avec filtre des mots offensants (dans le jeu **et** sur le serveur) | `src/jeu/pseudo.ts`, `src/config/pseudos-interdits.ts` | fait, testé |
 | Le branchement à Supabase (compte anonyme, profil, adversaires, joute, classement), actif dès que `src/config/serveur.ts` est rempli | `src/services/supabase.ts`, `src/services/joutes.ts` | fait ; **vérifié de bout en bout contre le vrai projet le 21/09/2026** (compte anonyme, profil, adversaires, classement, pseudonymes, joute complète, garde-fous, effacement) |
-| Les scripts de la base et le guide pas à pas | `serveur/`, `GUIDE-supabase.md` | prêts |
+| Les scripts de la base et le guide pas à pas | `serveur/`, `docs/GUIDE-supabase.md` | prêts |
 
 Le passage au serveur ne touche ni aux règles ni aux écrans : il suffit de remplir `src/config/serveur.ts`.
 
@@ -47,7 +47,7 @@ Le passage au serveur ne touche ni aux règles ni aux écrans : il suffit de rem
 - **Pseudonymes choisis librement** (décision de Raphaël), de 3 à 16 caractères, en lettres latines, chiffres, espaces, tirets et apostrophes. Un **filtre** refuse les mots grossiers, haineux ou sexuels, et ceux qui feraient passer le joueur pour un responsable du jeu ; il déjoue les ruses courantes (accents, majuscules, lettres répétées ou séparées, chiffres mis pour des lettres). Le jeu propose aussi un pseudonyme tiré de ses mots (« Frangipane 43 »). **Limites à connaître :** aucun filtre n'est parfait (un mot court collé à un autre en minuscules, « groscon », passe) ; un joueur peut écrire son vrai nom ; et un pseudonyme choquant qui passerait au travers se corrige à la main dans la base (voir le guide). La liste des mots est dans `src/config/pseudos-interdits.ts`.
 - Ce que le serveur garde : un identifiant technique, le pseudonyme, la cote, le deck, des compteurs de bonnes réponses. **Ni nom, ni e-mail, ni localisation.**
 - **Fait le 21/09/2026 :** le joueur **rejoint** les joutes par un clic (« Rejoindre les joutes »), après avoir lu ce qui sera envoyé : avant cela, rien ne quitte son appareil et aucun compte n'est créé. La **page « Confidentialité »** du jeu (`#/confidentialite`) dit ce qui est gardé, pourquoi et par qui, et porte le bouton **« Supprimer mon profil de joute »** (profil, joutes et compte anonyme effacés ; vérifié contre le vrai serveur). « Effacer ma partie » supprime aussi ce profil ; si le serveur ne répond pas, rien n'est effacé et le joueur peut réessayer. Cette page doit rester fidèle à `serveur/1-structure.sql` : la mettre à jour avec lui.
-- La question des **mineurs** reste celle du §10.3 de `BRIEF-v2.md` (public visé). Le jeu ne demande pas d'e-mail, mais le pseudonyme est désormais un texte libre : un enfant peut y écrire son vrai nom. À trancher avec le public visé.
+- La question des **mineurs** reste celle du §10.3 de `docs/BRIEF-v2.md` (public visé). Le jeu ne demande pas d'e-mail, mais le pseudonyme est désormais un texte libre : un enfant peut y écrire son vrai nom. À trancher avec le public visé.
 
 ## 5. La triche : ce qu'on peut promettre, et ce qu'on ne peut pas
 
@@ -56,7 +56,7 @@ Il faut être clair là-dessus avant d'ouvrir un classement.
 - **Toutes les définitions sont dans les fichiers publics du jeu.** Un tricheur décidé peut programmer un robot qui répond juste à tout. On ne peut pas l'empêcher ; on peut le repérer (réponses trop rapides, trop régulières) et l'écarter du classement.
 - **Étape 1 — classement « de confiance »** 🟡 : le téléphone annonce le résultat, le serveur calcule la cote et applique des garde-fous (pas plus de 40 joutes par heure, pas de joute de moins de 45 secondes, un seul résultat par joute commencée). Suffisant entre amis et pour les premiers testeurs. Un tricheur peut gonfler sa cote.
 - **Étape 2 — le serveur arbitre** : il tire lui-même les questions et vérifie les réponses. Les règles du jeu sont écrites à part des écrans et sans rien du navigateur : le serveur peut faire tourner exactement les mêmes. Plus de travail ; à faire avant tout classement « sérieux » ou toute récompense de valeur.
-- **Les collections actuelles** vivent sur le téléphone et sont modifiables. Tant que les paquets ne sont pas tirés par le serveur, un deck peut être fabriqué de toutes pièces. 🟡 Proposition : l'accepter à l'étape 1 (le jeu est équilibré pour que la connaissance compte plus que les cartes), et le régler à l'étape 2 avec le tirage des paquets côté serveur, comme `BRIEF-v2.md` l'annonçait.
+- **Les collections actuelles** vivent sur le téléphone et sont modifiables. Tant que les paquets ne sont pas tirés par le serveur, un deck peut être fabriqué de toutes pièces. 🟡 Proposition : l'accepter à l'étape 1 (le jeu est équilibré pour que la connaissance compte plus que les cartes), et le régler à l'étape 2 avec le tirage des paquets côté serveur, comme `docs/BRIEF-v2.md` l'annonçait.
 
 ## 6. Quel hébergeur ? 🟡
 
@@ -81,7 +81,7 @@ Vérifié sur leurs sites le 21 septembre 2026 (ces offres changent : à revéri
 2. coller dans son tableau de bord le script que je fournirai (il crée les tables, les règles d'accès et le calcul de la cote) ;
 3. recopier dans un fichier du jeu les deux valeurs **publiques** du projet (son adresse et sa clé publique — elles sont faites pour être visibles, contrairement à la clé secrète, qui ne doit jamais quitter le tableau de bord).
 
-**Claude** : les scripts de la base (`serveur/`), le branchement du jeu (`src/services/joutes.ts`, `src/services/supabase.ts`), les tests, le guide pas à pas (`GUIDE-supabase.md`) — faits. La page Confidentialité et le bouton « Supprimer mon profil de joute » sont faits (§4). Quand le serveur ne répond pas, les joutes affichent un message et l'entraînement reste disponible.
+**Claude** : les scripts de la base (`serveur/`), le branchement du jeu (`src/services/joutes.ts`, `src/services/supabase.ts`), les tests, le guide pas à pas (`docs/GUIDE-supabase.md`) — faits. La page Confidentialité et le bouton « Supprimer mon profil de joute » sont faits (§4). Quand le serveur ne répond pas, les joutes affichent un message et l'entraînement reste disponible.
 
 ## 8. Décisions à prendre
 

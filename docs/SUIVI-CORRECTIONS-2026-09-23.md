@@ -34,7 +34,7 @@ Les corrections techniques prévues sont implémentées et testées localement, 
 
 ## Migration et mise en service
 
-La procédure actuelle est décrite dans [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) : **migration 9 et fonction serveur combats avant publication du client**. La migration 9 inclut les corrections de la migration 8. Les étapes ci-dessous documentent le premier lot et sont remplacées par ce guide pour le client actuel.
+La procédure actuelle est décrite dans [docs/GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) : **migration 9 et fonction serveur combats avant publication du client**. La migration 9 inclut les corrections de la migration 8. Les étapes ci-dessous documentent le premier lot et sont remplacées par ce guide pour le client actuel.
 
 1. Sauvegarder la base et noter les nombres de comptes, possessions, enchères ouvertes et les sommes des deux bourses.
 2. Exécuter la migration 8 sur une base de validation avant de la publier. Elle utilise une transaction et peut être réappliquée. Les tests locaux vérifient cette réexécution.
@@ -76,8 +76,8 @@ Les tests locaux ne valident pas la charge concurrente d’un vrai PostgreSQL. L
 
 Le 23 septembre 2026, la migration 9 et la fonction `combats` ont été installées sur Supabase. Les comptes, possessions et soldes ont été contrôlés avant et après : 40 comptes, 274 possessions, 242 profils, 80 Encre et 0 Encre achetée. Un export ciblé en lecture seule a été conservé localement hors Git. Les tests distants ont validé les paquets, le deck, une réponse en entraînement, la reprise, la réémission idempotente, le conflit de révision, l’abandon, l’archivage et une joute contre un joueur maison avec cote serveur. Les comptes temporaires de contrôle ont ensuite été supprimés. Les anciennes fonctions de résultat sont interdites aux clients ; les RPC de combat sont réservées au serveur.
 
-[GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) détaille l’ordre d’installation et les contrôles. La fonction autonome générée se trouve dans `serveur/deploiement-combats/combats.ts.txt`.
+[docs/GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) détaille l’ordre d’installation et les contrôles. La fonction autonome générée se trouve dans `serveur/deploiement-combats/combats.ts.txt`.
 
-[ESSAIS-JOUEURS.md](ESSAIS-JOUEURS.md) fournit le protocole J1/J2/J7, les observations à recueillir et le format du relevé. `simulateurs/essais-joueurs.ts` produit un rapport descriptif depuis les observations volontaires, sans modifier les paramètres. Les groupes trop petits sont signalés. Aucun résultat humain ni changement de gains n’a été inventé.
+[docs/ESSAIS-JOUEURS.md](ESSAIS-JOUEURS.md) fournit le protocole J1/J2/J7, les observations à recueillir et le format du relevé. `simulateurs/essais-joueurs.ts` produit un rapport descriptif depuis les observations volontaires, sans modifier les paramètres. Les groupes trop petits sont signalés. Aucun résultat humain ni changement de gains n’a été inventé.
 
 La vérification serveur empêche les résultats arbitraires envoyés par le navigateur ; elle ne garantit pas qu’un joueur ne consulte pas les définitions publiques. Les profils historiques et leurs anciennes cotes restent conservés. Les contrôles locaux ne constituent pas une mesure de charge concurrente du serveur distant.

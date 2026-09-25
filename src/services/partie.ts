@@ -9,7 +9,7 @@ import { appliquerIdentite, pseudoDuJoueur, verifierIdentite } from './identite.
 // La partie du joueur : sa sauvegarde en mémoire, les actions qui la modifient, et son enregistrement.
 // Les écrans ne touchent jamais au stockage : ils passent par ici.
 //
-// Deux fonctionnements, selon src/config/serveur.ts (collectionsSurLeServeur, BRIEF-marche.md §5a) :
+// Deux fonctionnements, selon src/config/serveur.ts (collectionsSurLeServeur, docs/BRIEF-marche.md §5a) :
 //  • la partie vit sur l'appareil : les règles de src/jeu/ s'appliquent ici, et tout est enregistré sur place ;
 //  • le serveur en est propriétaire : tout ce qui a de la valeur (timbres, Encre, paquets, deck, récompenses) passe
 //    par ses fonctions (src/services/collections.ts), et l'appareil n'en garde qu'une copie, tenue à jour après
@@ -449,7 +449,7 @@ export function recevoirLaCoteDuServeur(cote: number): void {
   enregistrer({ ...partie.sauvegarde, joutes: { ...partie.sauvegarde.joutes, cote } });
 }
 
-// ── Le marché (BRIEF-marche.md, étape M3) ───────────────────────────────────
+// ── Le marché (docs/BRIEF-marche.md, étape M3) ───────────────────────────────────
 // Les enchères vivent sur le serveur : l'appareil les affiche, et après chaque action, l'état du compte que le
 // serveur renvoie (Encre, timbres) remplace le sien.
 export const lireLeMarche = (recherche: string, page: number): Promise<PageDuMarche> => surLeServeur(() => serveurDuMarche.marche(recherche, page));

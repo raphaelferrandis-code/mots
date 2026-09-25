@@ -102,5 +102,5 @@ Tant que ce n'est pas fait, les joueurs ne voient rien de nouveau : un interrupt
 
 Aucune fonction serveur (Edge) n'est à redéployer. Le script peut être relancé sans danger.
 
-**Le faire avant d'activer le contrôle anti-robot** (`GUIDE-anti-robot.md`) : ma vérification crée un joueur
+**Le faire avant d'activer le contrôle anti-robot** (`docs/GUIDE-anti-robot.md`) : ma vérification crée un joueur
 d'essai, ce que le contrôle anti-robot empêchera ensuite depuis un programme.

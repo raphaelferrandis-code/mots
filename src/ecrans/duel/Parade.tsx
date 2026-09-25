@@ -1,4 +1,4 @@
-// La parade (BRIEF-duel.md § 3) : un panneau plein écran avec le mot adverse en grand, sa nature, un minuteur
+// La parade (docs/duel/BRIEF-duel.md § 3) : un panneau plein écran avec le mot adverse en grand, sa nature, un minuteur
 // circulaire qui vire au rouge dans les cinq dernières secondes (avec un bip doux), et les quatre définitions
 // (touches 1 à 4). Le retour est immédiat : la bonne réponse en vert, la mauvaise en rouge, la bonne toujours révélée.
 //

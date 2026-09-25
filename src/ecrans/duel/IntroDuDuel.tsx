@@ -1,4 +1,4 @@
-// L'intro du duel (BRIEF-duel.md § 3) : les deux adversaires glissent depuis les bords, et « Duel » tombe au centre
+// L'intro du duel (docs/duel/BRIEF-duel.md § 3) : les deux adversaires glissent depuis les bords, et « Duel » tombe au centre
 // comme un coup de tampon. Plein écran, par-dessus toute la page ; elle se referme d'elle-même.
 
 import { useEffect, useRef } from 'react';
