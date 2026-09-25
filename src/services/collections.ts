@@ -11,6 +11,8 @@ import type { EtatDuCompte, Recuperation } from '../jeu/synchronisation.ts';
 import { FINITIONS } from '../partage/types.ts';
 import type { Finition, Registre } from '../partage/types.ts';
 import { chacunSonTour, clientDuServeur, serveurUtilise } from './compte.ts';
+import { appelerAvecUneDemande, avecUneDemande } from './demandes.ts';
+import type { AvecUneDemande } from './demandes.ts';
 import { ErreurDuServeur } from './supabase.ts';
 import type { ClientSupabase } from './supabase.ts';
 
@@ -51,23 +53,25 @@ function lireLaRecompense(brut: unknown): Recompense {
   return { encre: typeof lu.encre === 'number' ? lu.encre : 0, reduite: lu.reduite === true, etat: lireEtat(lu.etat) };
 }
 
-// Le service branché sur un client donné : celui du serveur dans le jeu, une doublure dans les tests.
-export function serveurDesCollectionsAvec(client: ClientSupabase): ServeurDesCollections {
+// Le service branché sur un client donné : celui du serveur dans le jeu, une doublure dans les tests. Un paquet ou un
+// cadeau redemandé après une coupure reprend son identifiant de demande (services/demandes.ts).
+export function serveurDesCollectionsAvec(client: ClientSupabase, demandes: AvecUneDemande = avecUneDemande): ServeurDesCollections {
   return {
     actif: true,
-    monCompte: async () => { const brut = await client.appeler<unknown>('mon_compte'); return brut === null ? null : lireEtat(brut); },
+    // Dans la file, comme les actions : une lecture partie avant un achat ne peut pas revenir après lui.
+    monCompte: () => chacunSonTour(async () => { const brut = await client.appeler<unknown>('mon_compte'); return brut === null ? null : lireEtat(brut); }),
     ouvrirMonCompte: () => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('ouvrir_mon_compte'))),
     importer: (sauvegarde) => chacunSonTour(async () => {
       const envoi = aImporter(sauvegarde);
       return lireEtat(await client.appeler<unknown>('importer_ma_collection', { p_cree_le: envoi.creeLe, p_encre: envoi.encre, p_paquets: envoi.paquets, p_cartes: envoi.cartes, p_deck: envoi.deck }));
     }),
     ouvrirUnPaquet: (masques) => chacunSonTour(async () => {
-      const brut = await client.appeler<unknown>('ouvrir_un_paquet', { p_masques: [...masques] });
+      const brut = await appelerAvecUneDemande<unknown>(client, demandes, 'paquet', 'ouvrir_un_paquet', { p_masques: [...masques] });
       const lu = estUnObjet(brut) ? brut : {};
       return { cartes: lireLesCartesTirees(lu.cartes), etat: lireEtat(lu.etat) };
     }),
     reclamerRecompense: (type, masques) => chacunSonTour(async () => {
-      const brut = await client.appeler<unknown>('reclamer_recompense', { p_type: type, p_masques: [...masques] });
+      const brut = await appelerAvecUneDemande<unknown>(client, demandes, `cadeau:${type}`, 'reclamer_recompense', { p_type: type, p_masques: [...masques] });
       const lu = estUnObjet(brut) ? brut : {};
       return { cartes: lireLesCartesTirees(lu.cartes), etat: lireEtat(lu.etat) };
     }),

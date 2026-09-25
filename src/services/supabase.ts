@@ -42,8 +42,8 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     try { reponse = await exterieur.requete(`${base}/auth/v1/${chemin}`, { method: 'POST', headers: enTetes, body: JSON.stringify(corps), signal: AbortSignal.timeout(20_000) }); } catch { throw new ErreurDuServeur(PANNE, false); }
     if (reponse.status === 400 || reponse.status === 401 || reponse.status === 403 || reponse.status === 422) return 'refusee';
     if (!reponse.ok) throw new ErreurDuServeur(PANNE, false);
-    const lue = await reponse.json() as { access_token?: string; refresh_token?: string; expires_in?: number };
-    if (!lue.access_token || !lue.refresh_token) throw new ErreurDuServeur(PANNE, false);
+    const lue = await reponse.json().catch(() => null) as { access_token?: string; refresh_token?: string; expires_in?: number } | null;
+    if (!lue?.access_token || !lue.refresh_token) throw new ErreurDuServeur(PANNE, false);
     const session: Session = { acces: lue.access_token, renouvellement: lue.refresh_token, expireLe: exterieur.maintenant() + (lue.expires_in ?? 3600) * 1000 };
     enMemoire = session;
     exterieur.ecrireLaSession(session);
@@ -52,10 +52,12 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
 
   // Un renouvellement refusé ne doit jamais remplacer silencieusement la collection.
   // Seule la récupération explicitement demandée peut créer une session de destination.
-  function session(forcerLeRenouvellement = false, conserverCompte = false, recuperation = false): Promise<Session> {
+  // « rejete » : le jeton que le serveur vient de refuser (401) ; il en faut un autre.
+  function session(rejete: string | null = null, conserverCompte = false, recuperation = false): Promise<Session> {
     const obtenir = async () => {
       const gardee = exterieur.lireLaSession() ?? enMemoire;
-      if (gardee && !forcerLeRenouvellement && gardee.expireLe - exterieur.maintenant() > MARGE_AVANT_EXPIRATION) return gardee;
+      // (Un autre onglet a pu renouveler la session entre-temps : son jeton suffit, s'il n'est pas celui qui a été refusé.)
+      if (gardee && gardee.acces !== rejete && gardee.expireLe - exterieur.maintenant() > MARGE_AVANT_EXPIRATION) return gardee;
       if (gardee) {
         const renouvelee = await demanderUneSession('token?grant_type=refresh_token', { refresh_token: gardee.renouvellement });
         if (renouvelee !== 'refusee') return renouvelee;
@@ -67,30 +69,39 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       if (nouvelle === 'refusee') throw new ErreurDuServeur(exterieur.jetonAntiRobot ? ANTI_ROBOT : "Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant.", false);
       return nouvelle;
     };
+    // Une ouverture déjà en cours, commencée avant le refus, peut rendre le jeton refusé : on l'attend, puis on en relance
+    // une qui renouvelle vraiment (sinon la nouvelle tentative repartait avec le même jeton, et l'appareil passait hors ligne).
+    if (rejete !== null && ouverture) {
+      const ensuite = () => session(rejete, conserverCompte, recuperation);
+      return ouverture.then((s) => (s.acces !== rejete ? s : ensuite()), ensuite);
+    }
     ouverture ??= (exterieur.sessionExclusive ? exterieur.sessionExclusive(obtenir) : obtenir()).finally(() => { ouverture = null; });
     return ouverture;
   }
 
   // Appelle une fonction de la base. Un refus motivé par la fonction (pseudonyme pris, trop de joutes…) arrive
   // sous forme d'ErreurDuServeur dont le message peut être montré tel quel au joueur.
-  async function appeler<T>(fonction: string, parametres: object = {}, dejaRenouvelee = false): Promise<T> {
-    const { acces } = await session(dejaRenouvelee, false, fonction === 'recuperer_par_code');
+  async function appeler<T>(fonction: string, parametres: object = {}, rejete: string | null = null): Promise<T> {
+    const { acces } = await session(rejete, false, fonction === 'recuperer_par_code');
     let reponse: Response;
     try {
       reponse = await exterieur.requete(`${base}/rest/v1/rpc/${fonction}`, { method: 'POST', headers: { ...enTetes, Authorization: `Bearer ${acces}` }, body: JSON.stringify(parametres), signal: AbortSignal.timeout(20_000) });
     } catch { throw new ErreurDuServeur(PANNE, false); }
-    if (reponse.status === 401 && !dejaRenouvelee) return appeler<T>(fonction, parametres, true);
+    if (reponse.status === 401 && rejete === null) return appeler<T>(fonction, parametres, acces);
     if (!reponse.ok) {
       const erreur = await reponse.json().catch(() => null) as { code?: string; message?: string } | null;
       // « P0001 » : une exception levée exprès par nos fonctions, avec un message écrit pour le joueur.
       if (erreur?.code === 'P0001' && erreur.message) throw new ErreurDuServeur(erreur.message, true);
       // « PGRST202 » : la fonction n'existe pas encore sur le serveur (script pas recollé) — ce n'est pas une panne.
-      if (reponse.status === 404 && erreur?.code === 'PGRST202') throw new ErreurDuServeur("Le serveur du jeu n'est pas à jour : cette fonction n'y est pas encore installée.", true);
+      if (reponse.status === 404 && erreur?.code === 'PGRST202') throw new ErreurDuServeur("Le serveur du jeu n'est pas à jour : cette fonction n'y est pas encore installée.", true, 404);
       throw new ErreurDuServeur(PANNE, false);
     }
-    // Une fonction qui ne rend rien (supprimer_mon_profil) répond sans contenu.
-    const texte = reponse.status === 204 ? '' : await reponse.text();
-    return (texte === '' ? null : JSON.parse(texte)) as T;
+    // Une fonction qui ne rend rien (supprimer_mon_profil) répond sans contenu. Une page HTML glissée par un intermédiaire
+    // (portail Wi-Fi, proxy) n'est pas une réponse du jeu : c'est une panne, pas « Unexpected token < ».
+    try {
+      const texte = reponse.status === 204 ? '' : await reponse.text();
+      return (texte === '' ? null : JSON.parse(texte)) as T;
+    } catch { throw new ErreurDuServeur(PANNE, false); }
   }
 
   // Cet appareil a-t-il un compte ? Tant qu'il n'en a pas, rien n'a jamais été envoyé au serveur.
@@ -112,11 +123,12 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     } catch { throw new ErreurDuServeur('Paiement indisponible. Réessaie dans un instant.', false); }
     const resultat = await reponse.json().catch(() => null);
     if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Paiement indisponible.', true);
+    if (resultat === null) throw new ErreurDuServeur('Paiement indisponible. Réessaie dans un instant.', false);
     return resultat as T;
   }
 
-  async function appelerCombat<T>(corps: object, renouveler = false): Promise<T> {
-    const { acces } = await session(renouveler, true);
+  async function appelerCombat<T>(corps: object, rejete: string | null = null): Promise<T> {
+    const { acces } = await session(rejete, true);
     let reponse: Response;
     try {
       reponse = await exterieur.requete(`${base}/functions/v1/combats`, {
@@ -124,22 +136,22 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
         body: JSON.stringify(corps), signal: AbortSignal.timeout(20_000),
       });
     } catch { throw new ErreurDuServeur(PANNE, false); }
-    if (reponse.status === 401 && !renouveler) return appelerCombat<T>(corps, true);
+    if (reponse.status === 401 && rejete === null) return appelerCombat<T>(corps, acces);
     const resultat = await reponse.json().catch(() => null);
     if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Le serveur des combats est indisponible. Réessaie.', reponse.status < 500, reponse.status);
     if (!resultat || !('combat' in resultat) || !resultat.etat) throw new ErreurDuServeur(PANNE, false);
     return resultat as T;
   }
 
-  async function appelerDirect<T>(corps: object, renouveler = false): Promise<T> {
-    const { acces } = await session(renouveler, true);
+  async function appelerDirect<T>(corps: object, rejete: string | null = null): Promise<T> {
+    const { acces } = await session(rejete, true);
     let reponse: Response;
     try {
       reponse = await exterieur.requete(`${base}/functions/v1/joutes-direct`, {
         method:'POST', headers:{...enTetes,Authorization:`Bearer ${acces}`}, body:JSON.stringify(corps), signal:AbortSignal.timeout(20_000),
       });
     } catch { throw new ErreurDuServeur(PANNE,false); }
-    if (reponse.status === 401 && !renouveler) return appelerDirect<T>(corps,true);
+    if (reponse.status === 401 && rejete === null) return appelerDirect<T>(corps,acces);
     const resultat = await reponse.json().catch(() => null);
     if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Joutes en direct indisponibles.',reponse.status<500,reponse.status);
     if (!resultat || !('partie' in resultat) || typeof resultat.maintenant !== 'number') throw new ErreurDuServeur(PANNE,false);
@@ -153,11 +165,11 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       reponse = await exterieur.requete(`${base}/rest/v1/rpc/${fonction}`, { method: 'POST', headers: enTetes, body: '{}', signal: AbortSignal.timeout(20_000) });
     } catch { throw new ErreurDuServeur(PANNE, false); }
     if (!reponse.ok) throw new ErreurDuServeur(PANNE, false, reponse.status);
-    return await reponse.json() as T;
+    try { return await reponse.json() as T; } catch { throw new ErreurDuServeur(PANNE, false); }
   }
 
   // L'authentification utilise la même session que les collections et les achats.
-  const lireSession = () => session(false, true);
+  const lireSession = () => session(null, true);
   return { appeler, appelerPaiement, appelerCombat, appelerDirect, lireSansCompte, aUneSession, oublierLaSession, lireSession };
 }
 

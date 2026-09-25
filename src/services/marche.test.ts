@@ -3,6 +3,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { serveurDuMarcheAvec } from './marche.ts';
+import { creerLesDemandes } from './demandes.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 type Appel = { fonction: string; parametres: object };
@@ -18,7 +19,7 @@ function doublure(reponses: Record<string, unknown>) {
     aUneSession: () => true,
     oublierLaSession: () => {},
   } as unknown as ClientSupabase;
-  return { service: serveurDuMarcheAvec(client), appels };
+  return { service: serveurDuMarcheAvec(client, creerLesDemandes(() => 0, () => 'demande-1')), appels };
 }
 
 const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: [], maintenant: 5000, cartes: {}, codeDeSecoursLe: null };
@@ -44,7 +45,7 @@ describe('le service du marché', () => {
     assert.equal(mise.enchere.enTete, true);
     assert.equal((await service.retirer(3)).encre, 12);
     assert.deepEqual(appels.map((a) => [a.fonction, a.parametres]), [
-      ['mettre_en_vente', { p_carte: 'zeugma-nom', p_finition: 'Normale', p_mise: 30, p_achat_immediat: null, p_heures: 24 }],
+      ['mettre_en_vente', { p_carte: 'zeugma-nom', p_finition: 'Normale', p_mise: 30, p_achat_immediat: null, p_heures: 24, p_demande: 'demande-1' }],
       ['encherir', { p_enchere: 3, p_montant: 30 }],
       ['retirer_de_la_vente', { p_enchere: 3 }],
     ]);

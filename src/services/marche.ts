@@ -10,6 +10,8 @@ import { lireEtat } from '../jeu/synchronisation.ts';
 import type { EtatDuCompte } from '../jeu/synchronisation.ts';
 import type { Finition } from '../partage/types.ts';
 import { chacunSonTour, clientDuServeur, serveurUtilise } from './compte.ts';
+import { appelerAvecUneDemande, avecUneDemande } from './demandes.ts';
+import type { AvecUneDemande } from './demandes.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 export type PageDuMarche = { encheres: Enchere[]; total: number; maintenant: number };
@@ -37,7 +39,8 @@ function lireLaReponse(brut: unknown): ReponseDuMarche {
   return { enchere, etat: lireEtat(lu.etat) };
 }
 
-export function serveurDuMarcheAvec(client: ClientSupabase): ServeurDuMarche {
+// Une mise en vente redemandée après une coupure reprend son identifiant de demande (services/demandes.ts).
+export function serveurDuMarcheAvec(client: ClientSupabase, demandes: AvecUneDemande = avecUneDemande): ServeurDuMarche {
   return {
     actif: true,
     marche: async (recherche, page) => {
@@ -50,7 +53,10 @@ export function serveurDuMarcheAvec(client: ClientSupabase): ServeurDuMarche {
       const brut = estUnObjet(lu) ? lu : {};
       return { ventes: lireDesEncheres(brut.ventes), mises: lireDesEncheres(brut.mises), maintenant: nombre(brut.maintenant) };
     },
-    mettreEnVente: (carte, finition, mise, achatImmediat, heures) => chacunSonTour(async () => lireLaReponse(await client.appeler<unknown>('mettre_en_vente', { p_carte: carte, p_finition: finition, p_mise: mise, p_achat_immediat: achatImmediat, p_heures: heures }))),
+    mettreEnVente: (carte, finition, mise, achatImmediat, heures) => chacunSonTour(async () => {
+      const parametres = { p_carte: carte, p_finition: finition, p_mise: mise, p_achat_immediat: achatImmediat, p_heures: heures };
+      return lireLaReponse(await appelerAvecUneDemande<unknown>(client, demandes, `vente:${JSON.stringify(parametres)}`, 'mettre_en_vente', parametres));
+    }),
     retirer: (id) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('retirer_de_la_vente', { p_enchere: id }))),
     encherir: (id, montant) => chacunSonTour(async () => lireLaReponse(await client.appeler<unknown>('encherir', { p_enchere: id, p_montant: montant }))),
     cotes: async (carte) => lireCotes(await client.appeler<unknown>('cotes', { p_carte: carte })),

@@ -23,7 +23,7 @@ import type { Niveau } from '../jeu/duel.ts';
 import { mettreAJour, ouvrirUnPaquetGratuit, registresMasques } from '../jeu/partie.ts';
 import type { RequeteCombat, ReponseServeurCombat } from '../jeu/combat.ts';
 import { chacunSonTour, clientDuServeur, lireIdentiteLocale, secoursEtParrainage } from './compte.ts';
-import { sauvegardeDuCompte } from '../jeu/changementCompte.ts';
+import { sauvegardeDuCompte, sauvegardeVoisine } from '../jeu/changementCompte.ts';
 import type { CarteObtenue, Ouverture } from '../jeu/partie.ts';
 import type { ProfilDeJoute } from '../jeu/joute.ts';
 import { enregistrerLeDeck, noterUneParade, noterUneReponse, terminerUnDuel, terminerUneJoute } from '../jeu/progression.ts';
@@ -35,7 +35,7 @@ import type { Finition, Rarete, Registre } from '../partage/types.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from '../jeu/sauvegarde.ts';
 import type { ReglagesDuJoueur, Sauvegarde } from '../jeu/sauvegarde.ts';
 import { afficherUnCode, estUnCodeValable, fabriquerUnCode, normaliserUnCode } from '../jeu/codeDeSecours.ts';
-import { aQuelqueChoseAImporter, fusionner, lireEtat } from '../jeu/synchronisation.ts';
+import { aQuelqueChoseAImporter, estPerime, fusionner, lireEtat } from '../jeu/synchronisation.ts';
 import { lireParrainage } from '../jeu/parrainage.ts';
 import type { MonParrainage } from '../jeu/parrainage.ts';
 import { invitationEnAttente, oublierLInvitation, retenirLesFilleulsRecompenses } from './invitation.ts';
@@ -91,11 +91,21 @@ function publier(nouvelle: Partie): void {
   for (const prevenir of abonnes) prevenir();
 }
 
+// Deux onglets du jeu ouverts sur l'appareil : ce que l'un enregistre (un avatar, un réglage, un paquet ouvert) arrive
+// dans l'autre, au lieu d'être écrasé à sa prochaine écriture. L'onglet qui reçoit n'écrit rien : pas d'écho.
+const entreOnglets = typeof window !== 'undefined' && typeof BroadcastChannel === 'function' ? new BroadcastChannel('mots.sauvegarde') : null;
+entreOnglets?.addEventListener('message', (evenement: MessageEvent) => {
+  if (partie.etat !== 'prete') return;
+  const voisine = sauvegardeVoisine(evenement.data, identiteLocale, maintenant());
+  if (voisine) publier({ ...partie, sauvegarde: voisine });
+});
+
 // Enregistre la sauvegarde. Les écritures se suivent une à une, pour que la dernière gagne toujours.
 function enregistrer(sauvegarde: Sauvegarde): void {
   if (partie.etat !== 'prete') return;
   sauvegarde = { ...actualiserLesSucces(sauvegarde, editionDesSucces), identiteLocale };
   publier({ ...partie, sauvegarde });
+  try { entreOnglets?.postMessage(sauvegarde); } catch { /* un onglet de moins à prévenir */ }
   ecritures = ecritures.then(() => ecrireLaSauvegarde(sauvegarde)).then((emplacement) => {
     if (partie.etat === 'prete' && partie.emplacement !== emplacement) publier({ ...partie, emplacement });
   });
@@ -134,9 +144,12 @@ export function demarrerLaPartie(): Promise<void> {
 
 // ── Le serveur des collections ─────────────────────────────────────────────
 
-// Ce que le serveur vient de dire remplace ce que l'appareil croyait.
+// Ce que le serveur vient de dire remplace ce que l'appareil croyait — sauf s'il le disait avant le dernier état appliqué
+// (dernierEtat, à l'heure du serveur).
+let dernierEtat = 0;
 function appliquer(etat: EtatDuCompte): void {
-  if (partie.etat !== 'prete') return;
+  if (partie.etat !== 'prete' || estPerime(etat, dernierEtat)) return;
+  dernierEtat = Math.max(dernierEtat, etat.maintenant);
   decalage = etat.maintenant - Date.now();
   publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, formule: etat.formule } });
   enregistrer(fusionner(partie.sauvegarde, etat));
@@ -455,11 +468,11 @@ export function recevoirLaCoteDuServeur(cote: number): void {
 export const lireLeMarche = (recherche: string, page: number): Promise<PageDuMarche> => surLeServeur(() => serveurDuMarche.marche(recherche, page));
 
 export async function lireMesAmis() {
-  return surLeServeur(() => chacunSonTour(async () => {
-    const etat = await serveurDesCollections.monCompte();
+  return surLeServeur(async () => {
+    const etat = await serveurDesCollections.monCompte(); // (déjà dans la file des actions)
     if (etat) appliquer(etat);
     return serveurDesAmis().lire();
-  }));
+  });
 }
 export const demanderUnAmi = (pseudo: string) => surLeServeur(() => serveurDesAmis().demander(pseudo));
 export const repondreAUnAmi = (id: string, action: ActionAmitie) => surLeServeur(() => serveurDesAmis().repondre(id, action));
@@ -536,6 +549,7 @@ export async function toutEffacer(): Promise<void> {
   generationIdentite++;
   await ecritures;
   await effacerLaSauvegarde();
+  dernierEtat = 0;
   publier({ ...partie, serveur: etatDuServeurAuDepart(), compte: null });
   enregistrer(nouvelleSauvegarde(maintenant(), EQUILIBRAGE.paquets.paquetsDeDepart));
   if (serveurDesCollections.actif) void synchroniser();

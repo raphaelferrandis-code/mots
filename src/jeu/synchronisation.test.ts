@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
-import { aImporter, aQuelqueChoseAImporter, fusionner, lireEtat, lireRecuperation } from './synchronisation.ts';
+import { aImporter, aQuelqueChoseAImporter, estPerime, fusionner, lireEtat, lireRecuperation } from './synchronisation.ts';
 import { FORMULE_GRATUITE } from './formule.ts';
 import type { EtatDuCompte } from './synchronisation.ts';
 
@@ -82,6 +82,13 @@ describe('la collection tenue par le serveur', () => {
     assert.deepEqual(fusion.deck, ['zeugma-nom', 'cabale-nom'], 'le deck ne garde que des cartes possédées');
     assert.equal(fusion.reglages.sonsPaquets, false);
     assert.equal(fusion.joutes.pseudo, 'Zeugma 12');
+  });
+
+  it('écarte un état plus ancien que le dernier appliqué (une lecture doublée par un achat)', () => {
+    assert.equal(estPerime({ maintenant: 1000 }, 2000), true);
+    assert.equal(estPerime({ maintenant: 2000 }, 2000), false, 'le même instant est pris');
+    assert.equal(estPerime({ maintenant: 3000 }, 2000), false);
+    assert.equal(estPerime({ maintenant: 0 }, 2000), false, 'une heure inconnue ne bloque rien');
   });
 
   it('relit un état du serveur sans rien supposer de sa forme', () => {

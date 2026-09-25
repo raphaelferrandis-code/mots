@@ -148,6 +148,53 @@ describe('le client Supabase', () => {
     assert.deepEqual(monde.appels.map((a) => a.adresse.split('/').at(-1)), ['commencer_une_joute', 'token?grant_type=refresh_token', 'commencer_une_joute']);
   });
 
+  it('après un refus (401), relance un vrai renouvellement même si une ouverture de session était déjà en cours', async () => {
+    let gardee: Session | null = { acces: 'refuse', renouvellement: 'renouvellement-0', expireLe: 9_999_999_999 };
+    let renouvellements = 0;
+    const porte = () => { let ouvrir: () => void = () => {}; const p = new Promise<void>((r) => { ouvrir = r; }); return { p, ouvrir: () => ouvrir() }; };
+    const reponseDeA = porte(); // retient le refus reçu par le premier appel
+    const verrou = porte(); // retient l'ouverture de session du second appel (le verrou partagé entre onglets)
+    let exclusives = 0;
+    const io = {
+      maintenant: () => 1_000_000, lireLaSession: () => gardee, ecrireLaSession: (s: Session | null) => { gardee = s; },
+      requete: (async (adresse: string, options: RequestInit) => {
+        if (adresse.includes('refresh_token')) { renouvellements++; return Response.json({ ...JETONS, access_token: `acces-${renouvellements + 1}` }); }
+        const jeton = (options.headers as Record<string, string>).Authorization;
+        if (adresse.endsWith('/a') && jeton === 'Bearer refuse') await reponseDeA.p;
+        return jeton === 'Bearer refuse' ? new Response('{}', { status: 401 }) : Response.json(jeton);
+      }) as typeof fetch,
+      sessionExclusive: async <T,>(action: () => Promise<T>): Promise<T> => { if (++exclusives === 2) await verrou.p; return action(); },
+    };
+    const client = creerLeClient('https://projet.supabase.co', 'publique', io);
+    const tour = () => new Promise((r) => setTimeout(r, 0));
+    const a = client.appeler<string>('a'); // A a sa session et attend sa réponse
+    await tour();
+    const b = client.appeler<string>('b'); // B ouvre une session, retenue par le verrou
+    await tour();
+    reponseDeA.ouvrir(); // A reçoit son refus pendant l'ouverture de B
+    await tour();
+    verrou.ouvrir();
+    assert.equal(await a, 'Bearer acces-2', 'la nouvelle tentative de A porte un jeton neuf');
+    assert.equal(await b, 'Bearer acces-2');
+    assert.equal(renouvellements, 1, 'un seul renouvellement pour les deux');
+  });
+
+  it('une page HTML glissée par un intermédiaire est une panne, pas « Unexpected token < »', async () => {
+    const page = '<!doctype html><html><body>Connexion au Wi-Fi</body></html>';
+    const monde = (session: Session | null) => {
+      const client = creerLeClient('https://projet.supabase.co', 'publique', {
+        maintenant: () => 1_000_000, lireLaSession: () => session, ecrireLaSession: () => {},
+        requete: (async () => new Response(page, { status: 200, headers: { 'Content-Type': 'text/html' } })) as typeof fetch,
+      });
+      return client;
+    };
+    const valable: Session = { acces: 'a', renouvellement: 'r', expireLe: 9_999_999_999 };
+    const panne = (erreur: unknown) => erreur instanceof ErreurDuServeur && !erreur.refus && erreur.message.includes('ne répond pas');
+    await assert.rejects(monde(valable).appeler('mon_compte'), panne);
+    await assert.rejects(monde(null).appeler('mon_compte'), panne, 'ouverture de session');
+    await assert.rejects(monde(null).lireSansCompte('fil_d_activite'), panne);
+  });
+
   it("ne crée pas de nouveau compte sur une simple panne de réseau : il signale la panne", async () => {
     const gardee: Session = { acces: 'vieux', renouvellement: 'renouvellement-0', expireLe: 0 };
     const monde = fauxMonde(() => 'panne', gardee);
@@ -164,7 +211,7 @@ describe('le client Supabase', () => {
     await assert.rejects(interne.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && !erreur.refus && !erreur.message.includes('technique'));
 
     const absente = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 404, corps: { code: 'PGRST202', message: 'Could not find the function public.recuperer_par_code' } }));
-    await assert.rejects(absente.client.appeler('recuperer_par_code'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.message.includes("pas à jour"));
+    await assert.rejects(absente.client.appeler('recuperer_par_code'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.statut === 404 && erreur.message.includes("pas à jour"));
 
     const ferme = fauxMonde(() => ({ statut: 422, corps: { msg: 'Anonymous sign-ins are disabled' } }));
     await assert.rejects(ferme.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.message.includes("n'accepte pas"));

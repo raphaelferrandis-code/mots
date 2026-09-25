@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { nouvelleSauvegarde } from '../jeu/sauvegarde.ts';
 import { serveurDesCollectionsAvec } from './collections.ts';
+import { creerLesDemandes } from './demandes.ts';
 import { ErreurDuServeur } from './supabase.ts';
 import type { ClientSupabase } from './supabase.ts';
 
@@ -11,16 +12,19 @@ type Appel = { fonction: string; parametres: object };
 
 function doublure(reponses: Record<string, unknown>) {
   const appels: Appel[] = [];
+  let numero = 0;
   const client = {
     appeler: async <T,>(fonction: string, parametres: object = {}): Promise<T> => {
       appels.push({ fonction, parametres });
       if (!(fonction in reponses)) throw new Error(`fonction inconnue : ${fonction}`);
-      return reponses[fonction] as T;
+      const reponse = reponses[fonction];
+      if (reponse instanceof Error) throw reponse;
+      return reponse as T;
     },
     aUneSession: () => true,
     oublierLaSession: () => {},
   } as unknown as ClientSupabase;
-  return { service: serveurDesCollectionsAvec(client), appels };
+  return { service: serveurDesCollectionsAvec(client, creerLesDemandes(() => 0, () => `demande-${++numero}`)), appels };
 }
 
 const ETAT = { encre: 12, paquets: { stock: 2, reference: 1000, ouverts: 4, sansLegendaire: 1 }, deck: ['a-nom'], maintenant: 5000, cartes: { 'a-nom': { obtenueLe: 900, doublons: 0, finitions: { Normale: 1 } } }, codeDeSecoursLe: null, formule: { niveau: 0, achatUnique: false, abonnement: 'aucun', jusquAu: null, encreAchetee: 0, anneeDeNaissance: null, moisDeNaissance: null } };
@@ -53,11 +57,25 @@ describe('le service des collections', () => {
     const tirage = { cartes: [{ id: 'b-nom', finition: 'Brillante', nouvelle: true, nouvelleFinition: true, encre: 0 }, { id: 'c-nom', finition: 'Dorée' }, 'rien'], etat: ETAT };
     const { service, appels } = doublure({ ouvrir_un_paquet: tirage });
     const ouvert = await service.ouvrirUnPaquet(['Familier']);
-    assert.deepEqual(appels[0], { fonction: 'ouvrir_un_paquet', parametres: { p_masques: ['Familier'] } });
+    assert.deepEqual(appels[0], { fonction: 'ouvrir_un_paquet', parametres: { p_masques: ['Familier'], p_demande: 'demande-1' } });
     assert.deepEqual(ouvert.cartes, [{ id: 'b-nom', finition: 'Brillante', nouvelle: true, nouvelleFinition: true, encre: 0 }]);
     assert.equal(ouvert.etat.encre, 12);
     await service.ouvrirUnPaquet([]);
-    assert.equal(appels[1].fonction, 'ouvrir_un_paquet');
+    assert.deepEqual(appels[1], { fonction: 'ouvrir_un_paquet', parametres: { p_masques: [], p_demande: 'demande-2' } }, 'un nouveau paquet, une nouvelle demande');
+  });
+
+  it('un paquet ou un cadeau redemandé après une panne garde son identifiant de demande', async () => {
+    const reponses: Record<string, unknown> = { ouvrir_un_paquet: new ErreurDuServeur('Le serveur du jeu ne répond pas.', false), reclamer_recompense: new ErreurDuServeur('Le serveur du jeu ne répond pas.', false) };
+    const { service, appels } = doublure(reponses);
+    await assert.rejects(service.ouvrirUnPaquet([]));
+    await assert.rejects(service.reclamerRecompense('achat', []));
+    reponses.ouvrir_un_paquet = { cartes: [], etat: ETAT };
+    reponses.reclamer_recompense = { cartes: [], etat: ETAT };
+    await service.ouvrirUnPaquet(['Familier']);
+    await service.reclamerRecompense('achat', []);
+    assert.deepEqual(appels.map((a) => [a.fonction, (a.parametres as { p_demande?: string }).p_demande]), [
+      ['ouvrir_un_paquet', 'demande-1'], ['reclamer_recompense', 'demande-2'], ['ouvrir_un_paquet', 'demande-1'], ['reclamer_recompense', 'demande-2'],
+    ]);
   });
 
   it('enregistre le deck, et joue les duels avec un ticket', async () => {

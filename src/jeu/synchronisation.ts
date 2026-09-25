@@ -89,6 +89,10 @@ export function lireEtat(brut: unknown): EtatDuCompte {
   };
 }
 
+// Un état plus ancien que le dernier appliqué (une lecture partie avant un achat, et arrivée après lui) ne doit pas
+// l'effacer à l'écran. « maintenant » est l'heure de la transaction du serveur ; 0 : inconnue, l'état est pris.
+export const estPerime = (etat: Pick<EtatDuCompte, 'maintenant'>, dernier: number): boolean => etat.maintenant > 0 && etat.maintenant < dernier;
+
 // Ce que le serveur tient pour vrai remplace ce que l'appareil croyait ; ce que l'appareil garde en propre reste.
 export function fusionner(locale: Sauvegarde, etat: EtatDuCompte): Sauvegarde {
   const cartes: Record<string, CartePossedee> = {};
