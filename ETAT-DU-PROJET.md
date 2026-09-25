@@ -2,6 +2,20 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — nouveaux cadres et avatars de portrait : publiés.** Choisis par Raphaël sur une planche de tri en
+> trois passes : 34 cadres et 26 avatars (gratuits gravés, débloqués en métal, premium animés), une récompense par niveau
+> jusqu'au 50 avec la courbe d'XP inchangée (le niveau 12 était atteint en un ou deux jours). Trois pièces premium sont
+> offertes aux fidèles (« prestige ») : Œil de l'oracle niv. 30, Nébuleuse niv. 40, Couronne du Grand Philatéliste
+> niv. 50. Dessins dans `src/composants/cosmetiques/dessins/`, catalogue dans `src/jeu/personnalisation.ts`.
+> Aucun changement côté Supabase.
+
+> **25 septembre 2026 — refonte graphique (brief `BRIEF-ceremonie.md`, maquette de Claude) : publiée.**
+> Nouveau timbre partout (aspect de la maquette, avec attaque, défense et origine), cérémonie d'ouverture de paquet
+> (déchirure au geste, révélation une par une, « Tout révéler », rangement animé dans l'album), nouvel accueil (comptoir,
+> album en aperçu, duels, fond animé, fil d'activité de tous les joueurs). Détails et décisions : `GUIDE-refonte-ceremonie.md`.
+> **À faire par Raphaël :** installer `serveur/14-fil-d-activite.sql` (sans lui, le fil reste caché). La dernière migration
+> est désormais la 14.
+
 > **25 septembre 2026 — faire connaître le jeu.** Raphaël a demandé comment promouvoir le site (déjà public sur
 > philamots.fr) et a choisi quatre chantiers :
 > 1. **Vignette de partage et Google — publiés.** Image 1200 × 630 avec trois timbres quand on partage le lien,

@@ -26,6 +26,7 @@ import type { Resultat } from '../jeu/progression.ts';
 import { meilleureFinition, TEMPS_DE_REPONSE } from '../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { lien } from '../navigation/routes.ts';
+import { SousOngletsDuel } from '../composants/SousOngletsDuel.tsx';
 import type { CarteIndex, Finition } from '../partage/types.ts';
 import { deckJouable, motDeLOrdinateur, poserLEpreuve, preparerUnDuel, reglerLaManche } from '../services/duel.ts';
 import type { Adversaire, Terrain } from '../services/duel.ts';
@@ -256,16 +257,16 @@ export function Duel() {
       <main className="ecran duel-salon">
         {incidentServeur}
         <h1 className="visuellement-cache">Les duels</h1>
+        <SousOngletsDuel actif="duel" />
         <header className="duel-salon__modes">
 
           <div className="modes" role="tablist" aria-label="Mode de duel" onKeyDown={choisirAuxFleches(MODES, mode, setMode)}>
             <button type="button" role="tab" id="onglet-entrainement" aria-controls="panneau-des-duels" aria-selected={mode === 'entrainement'} tabIndex={mode === 'entrainement' ? 0 : -1} onClick={() => setMode('entrainement')}>Entraînement</button>
             <button type="button" role="tab" id="onglet-joute" aria-controls="panneau-des-duels" aria-selected={mode === 'joute'} tabIndex={mode === 'joute' ? 0 : -1} onClick={() => setMode('joute')}>Joutes classées</button>
           </div>
-          <nav className="duel-salon__raccourcis" aria-label="Amis, équipe et classements">
+          <nav className="duel-salon__raccourcis" aria-label="Amis et équipe">
             <a className="bouton outil" href={lien({ ecran: 'amis' })}>Défier un ami</a>
             <a className="bouton outil" href={lien({ ecran: 'equipe' })}>Mon équipe</a>
-            <a className="bouton outil" href={lien({ ecran: 'classement' })}>Classements</a>
           </nav>
         </header>
 

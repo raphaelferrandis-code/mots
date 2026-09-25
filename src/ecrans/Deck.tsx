@@ -6,6 +6,7 @@ import type { CSSProperties } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { SousOngletsDuel } from '../composants/SousOngletsDuel.tsx';
 import { ConseilsComposition } from '../composants/ConseilsComposition.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
@@ -138,6 +139,7 @@ export function Deck() {
 
   return (
     <main className="ecran ecran--large atelier-deck">
+      <SousOngletsDuel actif="deck" />
       <Entete titre="Ton deck">
         {deck.length} / {REGLES.tailleDuDeck} timbres
       </Entete>
@@ -154,7 +156,7 @@ export function Deck() {
               {deck.map((carte, index) => (
                 <div className="atelier-deck__place" key={carte.id} style={{ '--nature': encresDe(carte.type)[1] } as CSSProperties} ref={(element) => { if (element) places.current.set(carte.id, element); else places.current.delete(carte.id); }}>
                   <span className="atelier-deck__numero" aria-hidden="true">{String(index + 1).padStart(2, '0')}<span>−</span></span>
-                  <CarteLegendee carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} onChoisir={() => retirer(carte)} action="retirer du deck" />
+                  <CarteLegendee carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} obtenuLe={sauvegarde.cartes[carte.id].obtenueLe} onChoisir={() => retirer(carte)} action="retirer du deck" />
                 </div>
               ))}
               {Array.from({ length: REGLES.tailleDuDeck - deck.length }, (_, i) => <div key={`vide-${i}`} className="atelier-deck__place atelier-deck__place--vide" aria-hidden="true"><span className="atelier-deck__numero">{String(deck.length + i + 1).padStart(2, '0')}</span><div className="atelier-deck__empreinte"><span>+</span></div></div>)}
@@ -203,7 +205,7 @@ export function Deck() {
               {disponibles.length === 0 && <div className="etat-vide"><h2>Aucun timbre ne correspond</h2><button type="button" className="bouton" onClick={() => { setRecherche(''); setType(''); setFaction(''); setPages(1); }}>Effacer les filtres</button></div>}
               <div className="rangee-de-cartes" ref={disponiblesRef}>
                 {disponibles.slice(0, pages * PAR_PAGE).map((carte) => (
-                  <div key={carte.id} data-carte-id={carte.id}><Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} onChoisir={() => ajouter(carte)} action="ajouter au deck" /></div>
+                  <div key={carte.id} data-carte-id={carte.id}><Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id].maitriseeLe} obtenuLe={sauvegarde.cartes[carte.id].obtenueLe} onChoisir={() => ajouter(carte)} action="ajouter au deck" /></div>
                 ))}
               </div>
               {disponibles.length > pages * PAR_PAGE && (

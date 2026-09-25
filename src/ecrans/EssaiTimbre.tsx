@@ -1,0 +1,129 @@
+// Page d'essai du timbre de la refonte (n'existe que pendant le développement, à l'adresse #/timbres).
+// Lot 1 du brief de la cérémonie : les quatre aspects à trois tailles, puis raretés, natures, verso et cas limites.
+
+import { useState } from 'react';
+import type { CSSProperties } from 'react';
+import { Carte } from '../composants/carte/Carte.tsx';
+import { Ceremonie } from '../composants/ceremonie/Ceremonie.tsx';
+import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
+import '../composants/accueil/refonte.css';
+import type { CarteObtenue } from '../jeu/partie.ts';
+import { Entete } from '../composants/Entete.tsx';
+import { Timbre } from '../composants/timbre/Timbre.tsx';
+import { useChargement } from '../composants/useChargement.ts';
+import type { CarteIndex, Finition, Nature } from '../partage/types.ts';
+import { RARETES_ORDINAIRES } from '../partage/types.ts';
+import { chargerEdition } from '../services/cartes.ts';
+import './essaiTimbre.css';
+
+const TAILLES = [{ nom: 'Cérémonie', largeur: 300 }, { nom: 'Deck', largeur: 160 }, { nom: 'Plateau', largeur: 56 }];
+const NATURES: Nature[] = ['Nom', 'Verbe', 'Adjectif', 'Adverbe'];
+const MAITRISE = new Date(2026, 8, 21).getTime();
+
+export function EssaiTimbre() {
+  const edition = useChargement(chargerEdition, 'edition');
+  const [oblitere, setOblitere] = useState(true);
+  const [verso, setVerso] = useState(true);
+  const [sons, setSons] = useState(true);
+  const [essai, setEssai] = useState<Promise<CarteObtenue[]> | null>(null);
+  if (edition.etat !== 'pret') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
+
+  const { cartes } = edition.donnees;
+  const trouver = (test: (c: CarteIndex) => boolean, rang = 0): CarteIndex => { const liste = cartes.filter(test); return liste[rang % Math.max(1, liste.length)] ?? cartes[0]; };
+  const parMot = (mot: string): CarteIndex => trouver((c) => c.mot === mot);
+  const aspects: { nom: string; carte: CarteIndex; finition: Finition }[] = [
+    { nom: 'Courant', carte: trouver((c) => c.rarete === 'Commune' && c.type === 'Nom', 40), finition: 'Normale' },
+    { nom: 'Doré à chaud', carte: trouver((c) => c.rarete === 'Rare' && c.type === 'Adjectif', 12), finition: 'Brillante' },
+    { nom: 'Holographique', carte: trouver((c) => c.rarete === 'Épique' && c.type === 'Nom', 7), finition: 'Holographique' },
+    { nom: 'Hors-série', carte: parMot('amour'), finition: 'Normale' },
+  ];
+  const largeur = (px: number): CSSProperties => ({ width: px });
+  const paquetDEssai: CarteObtenue[] = [
+    { carte: aspects[0].carte, finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 },
+    { carte: aspects[1].carte, finition: 'Brillante', nouvelle: false, nouvelleFinition: false, encre: 6 },
+    { carte: aspects[2].carte, finition: 'Holographique', nouvelle: false, nouvelleFinition: true, encre: 0 },
+    { carte: trouver((c) => c.rarete === 'Légendaire', 9), finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 },
+    { carte: aspects[3].carte, finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 },
+  ];
+
+  return (
+    <main className="ecran ecran--large essai-timbre">
+      <Entete surtitre="Développement · lot 1" titre="Le timbre de la refonte">Survole ou touche un timbre pour faire jouer les reflets.</Entete>
+      <div className="rangee-de-boutons">
+        <label className="essai-timbre__option"><input type="checkbox" checked={oblitere} onChange={(e) => setOblitere(e.target.checked)} /> Cachet posé</label>
+      </div>
+
+      <h2>Cérémonie d’essai</h2>
+      <p className="texte-doux">Un faux paquet qui montre chaque effet (courant, doré, holographique, Légendaire, Hors-série). Rien n’est tiré ni enregistré.</p>
+      <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(paquetDEssai))}>Ouvrir la cérémonie d’essai</button>
+      {essai && <Ceremonie premier={essai} tirer={() => Promise.resolve(paquetDEssai)} continuer={false} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
+        sons={sons} onSons={setSons} reduire={false} onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
+
+      <h2>Fil d’activité (exemples)</h2>
+      <p className="texte-doux">En local, le serveur n’est pas branché : voici le fil avec des événements d’exemple.</p>
+      <FilDActivite evenements={[
+        { genre: 'trouvaille', pseudo: 'J.J.', mot: 'palimpseste', rarete: 'Rare', finition: 'Holographique', cote: null, le: 0 },
+        { genre: 'victoire', pseudo: 'Faekia', mot: null, rarete: null, finition: null, cote: 1042, le: 0 },
+        { genre: 'trouvaille', pseudo: 'Pylum', mot: 'grimoire', rarete: 'Légendaire', finition: 'Normale', cote: null, le: 0 },
+        { genre: 'arrivee', pseudo: 'Etiee', mot: null, rarete: null, finition: null, cote: null, le: 0 },
+        { genre: 'trouvaille', pseudo: 'Choco', mot: 'amour', rarete: 'Hors-série', finition: 'Normale', cote: null, le: 0 },
+      ]} />
+
+      <h2>Les quatre aspects, à trois tailles</h2>
+      {TAILLES.map((taille) => <section key={taille.nom} className="essai-timbre__rangee">
+        <h3>{taille.nom} · {taille.largeur} px</h3>
+        <div className="essai-timbre__timbres">
+          {aspects.map((a) => <figure key={a.nom} style={largeur(taille.largeur)}>
+            <Timbre carte={a.carte} finition={a.finition} oblitere={oblitere} cliquable={false} />
+            {taille.largeur > 100 && <figcaption>{a.nom}</figcaption>}
+          </figure>)}
+        </div>
+      </section>)}
+
+      <h2>Les raretés (finition normale)</h2>
+      <div className="essai-timbre__timbres">
+        {RARETES_ORDINAIRES.map((rarete) => <figure key={rarete} style={largeur(170)}>
+          <Timbre carte={trouver((c) => c.rarete === rarete, 61)} oblitere={oblitere} cliquable={false} />
+          <figcaption>{rarete}</figcaption>
+        </figure>)}
+      </div>
+
+      <h2>Les natures</h2>
+      <div className="essai-timbre__timbres">
+        {NATURES.map((nature) => <figure key={nature} style={largeur(170)}>
+          <Timbre carte={trouver((c) => c.type === nature && c.rarete === 'Peu commune', 83)} oblitere={oblitere} cliquable={false} />
+          <figcaption>{nature}</figcaption>
+        </figure>)}
+      </div>
+
+      <h2>Le verso</h2>
+      <div className="rangee-de-boutons"><button type="button" className="bouton" onClick={() => setVerso((v) => !v)}>{verso ? 'Montrer le recto' : 'Montrer le verso'}</button></div>
+      <div className="essai-timbre__timbres">
+        {['gomme', 'entrelacs', 'constellation', 'dragon-dos'].map((dos) => <figure key={dos} style={largeur(200)}>
+          <Timbre carte={aspects[1].carte} finition="Brillante" verso montrerVerso={verso} dos={dos} oblitere={oblitere} cliquable={false} reagir />
+          <figcaption>Dos « {dos} »</figcaption>
+        </figure>)}
+      </div>
+
+      <h2>Cas limites</h2>
+      <div className="essai-timbre__timbres">
+        {['anticonstitutionnellement', 'électro-encéphalogramme', 'dictionnaire'].map((mot) => <figure key={mot} style={largeur(200)}>
+          <Timbre carte={parMot(mot)} oblitere={oblitere} cliquable={false} />
+          <figcaption>{mot}</figcaption>
+        </figure>)}
+        <figure style={largeur(200)}>
+          <Timbre carte={aspects[0].carte} oblitere={oblitere} maitriseeLe={MAITRISE} cliquable={false} />
+          <figcaption>Mot maîtrisé</figcaption>
+        </figure>
+      </div>
+
+      <h2>Avant / après</h2>
+      <div className="essai-timbre__timbres">
+        {aspects.map((a) => <figure key={a.nom} style={largeur(200)}>
+          <Carte carte={a.carte} finition={a.finition} cliquable={false} />
+          <figcaption>Actuel · {a.nom}</figcaption>
+        </figure>)}
+      </div>
+    </main>
+  );
+}

@@ -6,7 +6,6 @@ import { CarteRecompense, GainDuDuel, Recompenses, useRecompensesSuspendues } fr
 import { SUCCES } from '../jeu/catalogueSucces.ts';
 import { Carte, DosDeCarte } from '../composants/carte/Carte.tsx';
 import { nouveauProfil, ORNEMENTS } from '../jeu/personnalisation.ts';
-import { TimbreAReveler } from '../composants/paquet/TimbreAReveler.tsx';
 import { ChoixFinition } from '../composants/carte/ChoixFinition.tsx';
 import { TimbreManipulable } from '../composants/carte/TimbreManipulable.tsx';
 import type { Finition } from '../partage/types.ts';
@@ -20,8 +19,6 @@ const MAITRISE = new Date(2026, 8, 21).getTime();
 
 export function Galerie() {
   const [retournees, setRetournees] = useState<string[]>([]);
-  const [revelations, setRevelations] = useState<string[]>([]);
-  const [essai, setEssai] = useState(0);
   const [recompenseEssai, setRecompenseEssai] = useState(0);
   const [finitionComparee, setFinitionComparee] = useState<Finition>('Normale');
   const edition = useChargement(chargerEdition, 'edition');
@@ -48,14 +45,6 @@ export function Galerie() {
         <TimbreManipulable carte={ordinaires[0]} finition={finitionComparee} maitriseeLe={null} />
         <ChoixFinition finitions={{ Normale: 2, Brillante: 1, Holographique: 1 }} choisie={finitionComparee} onChoisir={setFinitionComparee} />
       </div>
-      <h2>Révélation du paquet</h2>
-      <div className="rangee-de-boutons"><button className="bouton" onClick={() => setRevelations([...FINITIONS, 'Légendaire', 'Hors-série'])}>Tout révéler</button><button className="bouton" onClick={() => { setRevelations([]); setEssai((n) => n + 1); }}>Rejouer la révélation</button></div>
-      <ul className="paquet" aria-label="Essai de révélation">
-        {[...FINITIONS, 'Légendaire', 'Hors-série'].map((nom) => <li key={`${essai}-${nom}`} className="paquet__place">
-          <TimbreAReveler carte={nom === 'Hors-série' ? horsSerie[0] : nom === 'Légendaire' ? ordinaires.find((c) => c.rarete === 'Légendaire')! : ordinaires[0]} finition={nom === 'Brillante' || nom === 'Holographique' ? nom : 'Normale'} retournee={revelations.includes(nom)} onRetourner={() => setRevelations((r) => [...r, nom])} etiquette={`Révéler ${nom}`} />
-          <span className="paquet__etiquette">{nom}</span>
-        </li>)}
-      </ul>
       <h2>Matières d’impression</h2>
       <p className="texte-doux">Même timbre, cinq matières. Déplacez le pointeur sur les gravures. Nacrée et Encre latente sont des spécimens hors tirage.</p>
       <div className="galerie galerie--matieres">

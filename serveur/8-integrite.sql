@@ -1925,6 +1925,91 @@ revoke execute on function public.mon_equipe(),public.creer_equipe(uuid,text,tex
 grant execute on function public.mon_equipe(),public.creer_equipe(uuid,text,text),public.modifier_equipe(uuid,text,text),
   public.inviter_equipier(uuid,uuid),public.repondre_invitation_equipe(uuid,text),public.quitter_equipe(uuid),public.dissoudre_equipe(uuid) to authenticated;
 
+
+-- ── Le fil d'activité ────────────────────────────────────────────────────────
+create table if not exists public.activite (
+  id bigint generated always as identity primary key,
+  cree_le timestamptz not null default now(),
+  genre text not null check (genre in ('trouvaille', 'victoire', 'arrivee')),
+  pseudo text not null,
+  mot text,                 -- le timbre trouvé
+  rarete text,
+  finition text,
+  cote integer              -- la cote après une victoire
+);
+create index if not exists activite_recente on public.activite (cree_le desc);
+alter table public.activite enable row level security;
+revoke all on public.activite from public, anon, authenticated;
+
+-- Note un événement, et oublie ceux de plus de 7 jours.
+create or replace function public.noter_activite(p_genre text, p_pseudo text, p_mot text, p_rarete text, p_finition text, p_cote integer) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_pseudo is null or p_pseudo = '' then return; end if;
+  insert into public.activite (genre, pseudo, mot, rarete, finition, cote) values (p_genre, p_pseudo, p_mot, p_rarete, p_finition, p_cote);
+  delete from public.activite where cree_le < now() - interval '7 days';
+end $$;
+
+-- Une trouvaille remarquable : une carte Légendaire ou Hors-série qui entre dans l'album, ou une finition
+-- holographique qui s'y ajoute. Le mot vient de l'identifiant de la carte (« callipyge-adj » → « callipyge »).
+create or replace function public.activite_trouvaille() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare pseudo text; rarete text; finition text;
+begin
+  begin
+    select p.pseudo into pseudo from public.profils p where p.utilisateur = new.utilisateur and not p.maison;
+    if pseudo is null then return new; end if;
+    select k.rarete into rarete from public.cartes k where k.id = new.carte;
+    if coalesce((new.finitions ->> 'Holographique')::integer, 0) > 0
+       and (tg_op = 'INSERT' or coalesce((old.finitions ->> 'Holographique')::integer, 0) = 0) then finition := 'Holographique';
+    end if;
+    if finition is not null or (tg_op = 'INSERT' and rarete in ('Légendaire', 'Hors-série')) then
+      perform public.noter_activite('trouvaille', pseudo, regexp_replace(new.carte, '-(nom|verbe|adj|adv)$', ''), rarete, coalesce(finition, 'Normale'), null);
+    end if;
+  exception when others then null; -- le fil ne doit jamais bloquer un tirage
+  end;
+  return new;
+end $$;
+drop trigger if exists activite_trouvaille on public.possessions;
+create trigger activite_trouvaille after insert or update of finitions on public.possessions
+  for each row execute function public.activite_trouvaille();
+
+-- Une victoire en joute classée, et l'arrivée d'un nouveau joueur (son pseudonyme publié). Un joueur qui change de
+-- pseudonyme le change aussi dans le fil ; un joueur qui retire son profil en disparaît (droit à l'effacement).
+create or replace function public.activite_profil() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if tg_op = 'DELETE' then
+    delete from public.activite where pseudo = old.pseudo;
+    return old;
+  end if;
+  begin
+    if new.maison or new.utilisateur is null then return new; end if;
+    if tg_op = 'INSERT' then
+      perform public.noter_activite('arrivee', new.pseudo, null, null, null, null);
+    else
+      if new.pseudo is distinct from old.pseudo then update public.activite set pseudo = new.pseudo where pseudo = old.pseudo; end if;
+      if new.gagnees > old.gagnees then perform public.noter_activite('victoire', new.pseudo, null, null, null, new.cote); end if;
+    end if;
+  exception when others then null; -- le fil ne doit jamais bloquer une joute
+  end;
+  return new;
+end $$;
+drop trigger if exists activite_profil on public.profils;
+create trigger activite_profil after insert or delete or update of gagnees, pseudo on public.profils
+  for each row execute function public.activite_profil();
+
+-- Les derniers événements, du plus récent au plus ancien. Ouvert à tous, même sans compte.
+create or replace function public.fil_d_activite() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('genre', a.genre, 'pseudo', a.pseudo, 'mot', a.mot, 'rarete', a.rarete,
+    'finition', a.finition, 'cote', a.cote, 'le', (extract(epoch from a.cree_le) * 1000)::bigint) order by a.cree_le desc), '[]'::jsonb)
+  from (select * from public.activite order by cree_le desc limit 24) a
+$$;
+revoke execute on function public.noter_activite(text, text, text, text, text, integer), public.activite_trouvaille(), public.activite_profil() from public, anon, authenticated;
+revoke execute on function public.fil_d_activite() from public;
+grant execute on function public.fil_d_activite() to anon, authenticated;
+
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
 revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[]), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[]), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;

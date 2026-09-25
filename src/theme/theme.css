@@ -39,6 +39,8 @@
   --police-texte: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --police-chiffres: var(--police-texte);
   --police-mention: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --police-douce: 'Jost', 'Futura', 'Century Gothic', 'Trebuchet MS', sans-serif;
+  --police-etroite: 'Oswald', 'Arial Narrow', 'Roboto Condensed', Impact, sans-serif;
 
   /* Mesures */
   --rayon: 12px;

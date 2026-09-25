@@ -71,7 +71,7 @@ export function FicheCarte({ id }: { id: string }) {
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
         <div className="fiche__visuel">
-          <div className="fiche__carte"><TimbreManipulable key={carte.id} carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} /></div>
+          <div className="fiche__carte"><TimbreManipulable key={carte.id} carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} obtenuLe={possedee?.obtenueLe ?? null} /></div>
           {possedee && carte.rarete !== 'Hors-série' && <ChoixFinition finitions={possedee.finitions} choisie={finition} indisponible={partage.etat === 'en cours'} onChoisir={(f) => { setExemplaire({ id: carte.id, finition: f }); setPartage({ etat: 'repos' }); }} />}
           {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
           {possedee && (

@@ -1,0 +1,211 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   LE TIMBRE DE LA REFONTE (maquette de la cérémonie)
+   Ratio fixe 30/38. L'échelle vaut 1/30 de la largeur : toutes les cotes sont en em.
+   Textures (--perf, --grain-papier, --filigrane) : posées sur la page par dessins.ts.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.tb {
+  --encre-timbre: #3557a8;
+  --trait: #f6ecd6;
+  --texte-impression: #f7eed9;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 30 / 38;
+  container-type: inline-size;
+  isolation: isolate;
+  /* Le timbre peut être un lien ou un bouton : on efface leur habillage par défaut. */
+  padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+a.tb, button.tb { cursor: pointer; }
+a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f0c48f); outline-offset: 3px; }
+.tb span { display: block; }
+.tb__cadre { position: absolute; inset: 0; container-type: inline-size; }
+.tb .tb__echelle { position: absolute; inset: 0; font-size: calc(100cqw / 30); } /* spécifique : aucune règle de la page ne doit la changer */
+
+.tb__face {
+  position: absolute; inset: 0; overflow: hidden;
+  -webkit-mask: var(--perf) center / 100% 100% no-repeat;
+  mask: var(--perf) center / 100% 100% no-repeat;
+}
+.tb[data-face='recto'] .tb__verso, .tb[data-face='verso'] .tb__recto { visibility: hidden; }
+
+/* ── Le papier et l'impression ──────────────────────────────────────────────── */
+
+.tb__papier { position: absolute; inset: 0; background: radial-gradient(130% 100% at 25% 12%, #fcf6e6 0%, #f0e4c8 58%, #e1cfa8 100%); }
+.tb__papier::after { content: ''; position: absolute; inset: 0; background-image: var(--grain-papier); opacity: .5; mix-blend-mode: multiply; }
+.tb__impression {
+  position: absolute; inset: 2.15em; overflow: hidden;
+  background-color: var(--encre-timbre);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .07) 0 .09em, transparent .09em .27em),
+    radial-gradient(120% 90% at 50% 38%, rgba(255, 255, 255, .14), rgba(0, 0, 0, .3));
+  box-shadow: inset 0 0 0 .14em rgba(0, 0, 0, .3);
+}
+.tb__impression::after { content: ''; position: absolute; inset: .6em; border: .08em solid rgba(246, 236, 214, .45); pointer-events: none; }
+
+.tb__haut {
+  position: absolute; top: .95em; left: 1.05em; right: 1.05em;
+  display: flex !important; justify-content: space-between; align-items: flex-start;
+}
+.tb__valeur {
+  display: flex !important; flex-direction: column; align-items: center;
+  font-family: var(--police-serif); font-weight: 900; font-size: 2.7em; line-height: .85; color: var(--texte-impression);
+  font-variant-numeric: lining-nums;
+}
+.tb__valeur small { margin-top: .16em; font-family: var(--police-etroite); font-weight: 500; font-size: .3em; letter-spacing: .12em; text-transform: uppercase; line-height: 1; }
+.tb__origine {
+  padding-top: .25em; text-align: center;
+  font-family: var(--police-etroite); font-weight: 500; font-size: 1em; line-height: 1.18; letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(246, 236, 214, .88);
+}
+/* Le rang de rareté : un losange par rang, sous l'origine (une étoile pour les Hors-série). */
+.tb__rang { margin-top: .35em; font-size: .78em; letter-spacing: .28em; line-height: 1; color: var(--texte-impression); opacity: .9; }
+.tb:is([data-niveau='4'], [data-niveau='5']) .tb__rang { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 1; }
+.tb[data-niveau='6'] .tb__rang { font-size: 1.3em; background: linear-gradient(90deg, #ff8fb0, #ffe38a, #9dffc8, #8fdcff, #cfaeff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tb__vignette { position: absolute; left: 50%; top: 48.5%; width: 21.5em; height: 21.5em; translate: -50% -50%; }
+.tb__vignette svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.tb__trait { stroke: var(--trait); fill: none; }
+.tb__disque { fill: var(--encre-timbre); }
+.tb__initiale { font-family: var(--police-serif); font-style: italic; font-weight: 700; font-size: 66px; fill: var(--texte-impression); }
+.tb__mot {
+  position: absolute; left: .4em; right: .4em; bottom: 1.15em;
+  text-align: center; white-space: nowrap;
+  font-family: var(--police-etroite); font-weight: 600; font-size: var(--taille-mot, 2em); line-height: 1;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--texte-impression);
+}
+.tb__mention {
+  position: absolute; left: 0; right: 0; bottom: .82em;
+  text-align: center; white-space: nowrap;
+  font-family: var(--police-etroite); font-size: .72em; letter-spacing: .22em; text-transform: uppercase;
+  color: rgba(78, 54, 26, .62);
+}
+
+/* ── Lumières : le vernis (finition) et la lueur (partout) ─────────────────── */
+
+.tb__vernis, .tb__lueur { position: absolute; inset: 0; pointer-events: none; }
+.tb__lueur { background: radial-gradient(circle at var(--gx, 32%) var(--gy, 22%), rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 52%); mix-blend-mode: soft-light; }
+
+/* ── Le cachet d'oblitération, posé quand le timbre est révélé ──────────────── */
+
+.tb__cachet { position: absolute; right: -6.6em; top: 4.6em; width: 23.5em; rotate: -14deg; opacity: 0; color: #141a2c; mix-blend-mode: multiply; pointer-events: none; }
+.tb__cachet svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tb__cachet text { fill: currentColor; font-family: var(--police-etroite); }
+.tb__cachet-tour { font-size: 10px; letter-spacing: 1.8px; }
+.tb__cachet-jour { font-size: 15px; font-weight: 600; }
+.tb__cachet-annee { font-size: 12px; }
+.tb[data-oblitere] .tb__cachet { opacity: .82; }
+
+/* Le cachet « Maîtrisé » (composant partagé avec l'ancienne carte), en em de l'échelle. */
+.tb .tim__maitrise { position: absolute; left: 1.4em; top: 11.5em; width: 14em; color: #4a2a8a; opacity: .85; mix-blend-mode: multiply; pointer-events: none; z-index: 4; }
+.tb .tampon__trait { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.tb .tampon__trait--fin { stroke-width: .9; }
+.tb .tampon__trait--fort { stroke-width: 3; }
+.tb .tampon__maitrise, .tb .tampon__date { fill: currentColor; font-family: var(--police-etroite); font-weight: 600; }
+.tb .tampon__maitrise { font-size: 15px; letter-spacing: .08em; }
+.tb .tampon__date { font-size: 9.5px; }
+
+/* ── La rareté : le cadre de l'impression et la mention du bas ─────────────── */
+
+/* Rare : double filet. Peu commune et au-delà : la petite rosace passe à une seconde encre, chaude. */
+.tb[data-niveau='2'] .tb__trait--second, .tb[data-niveau='3'] .tb__trait--second { stroke: #f3c9a0; opacity: .75; }
+.tb[data-niveau='3'] .tb__impression::after { box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .4em rgba(246, 236, 214, .35); }
+/* Épique : argent. Légendaire : or. Filets doubles et valeurs au métal. */
+.tb[data-niveau='4'] { --metal: linear-gradient(100deg, #8c939d, #f4f6f8 38%, #a9b0b9 58%, #ffffff 80%, #8c939d); --filet-metal: #dfe3e8; }
+.tb[data-niveau='5'] { --metal: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a); --filet-metal: #efca8b; }
+.tb:is([data-niveau='4'], [data-niveau='5']) .tb__impression::after { border-color: var(--filet-metal); box-shadow: inset 0 0 0 .32em transparent, inset 0 0 0 .42em var(--filet-metal); opacity: .8; }
+.tb:is([data-niveau='4'], [data-niveau='5']) .tb__valeur { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tb:is([data-niveau='4'], [data-niveau='5']) .tb__trait--second { stroke: var(--filet-metal); opacity: .7; }
+/* Hors-série : impression noire, cadre irisé, illustration propre au mot. */
+.tb[data-niveau='6'] { --trait: #fff6dc; }
+.tb[data-niveau='6'] .tb__impression::after { border: .14em solid transparent; border-image: linear-gradient(115deg, #ff5f8f, #ffd36b, #7dffb0, #6bd4ff, #b58bff, #ff5f8f) 1; }
+.tb[data-niveau='6'] .tb__disque { fill: rgba(255, 246, 220, .04); }
+.tb__illustration :is(path, circle, line, polyline, polygon, rect) { fill: none; stroke: var(--trait); stroke-width: .8; stroke-linejoin: round; stroke-linecap: round; }
+.tb__illustration :is(.vig-plein, .vig-texte) { fill: var(--trait); stroke: none; }
+.tb__illustration .vig-texte { font-family: var(--police-serif); }
+.tb__illustration .vig-fin { stroke-width: .3; opacity: .55; }
+
+/* ── La finition : doré à chaud (Brillante), holographique, prismatique (Hors-série) ── */
+
+.tb[data-finition='Brillante'] .tb__impression, .tb[data-finition='Holographique'] .tb__impression { background-color: color-mix(in srgb, var(--encre-timbre) 58%, #121a33); }
+
+.tb[data-finition='Brillante'] { --trait: #edcb8f; }
+.tb[data-finition='Brillante'] .tb__impression { box-shadow: inset 0 0 0 .2em #c8914b, inset 0 0 0 .38em rgba(0, 0, 0, .3), inset 0 0 0 .5em #efca8b; }
+.tb[data-finition='Brillante'] .tb__impression::after { border-color: rgba(240, 200, 140, .7); }
+.tb[data-finition='Brillante'] .tb__initiale { fill: #f5d9a0; }
+.tb[data-finition='Brillante'] :is(.tb__mot, .tb__valeur) {
+  background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tb[data-finition='Brillante'] .tb__vernis {
+  background: linear-gradient(115deg, transparent 36%, rgba(255, 226, 160, .6) 47%, rgba(255, 248, 222, .95) 50%, rgba(255, 226, 160, .55) 53%, transparent 64%);
+  background-size: 300% 300%; background-position: calc(var(--mx, .5) * 100%) 50%;
+  mix-blend-mode: overlay;
+}
+
+.tb:is([data-finition='Holographique'], [data-finition='Prismatique']) .tb__vernis {
+  background:
+    repeating-linear-gradient(118deg, #ff5f8f 0%, #ffd36b 6%, #7dffb0 12%, #6bd4ff 18%, #b58bff 24%, #ff5f8f 30%),
+    radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .55), transparent 55%);
+  background-size: 420% 420%, 100% 100%;
+  background-position: calc(var(--mx, .5) * 100%) calc(var(--my, .5) * 100%), 0 0;
+  mix-blend-mode: color-dodge; opacity: .6;
+}
+.tb:is([data-finition='Holographique'], [data-finition='Prismatique']) .tb__vernis::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .95) 0 .06em, transparent .11em), radial-gradient(circle, rgba(255, 255, 255, .75) 0 .045em, transparent .09em);
+  background-size: 3.1em 2.7em, 1.9em 2.3em;
+  background-position: calc(var(--mx, .5) * 3em) calc(var(--my, .5) * 2em), calc(var(--my, .5) * -2em) calc(var(--mx, .5) * 1.5em);
+  mix-blend-mode: screen; opacity: .8;
+}
+.tb[data-finition='Holographique'] .tb__mot { text-shadow: 0 0 .4em rgba(160, 220, 255, .5); }
+/* Sur le papier noir des Hors-série, le voile irisé reste discret pour que le noir reste noir. */
+.tb[data-finition='Prismatique'] .tb__vernis { opacity: .16; mix-blend-mode: screen; }
+.tb[data-finition='Prismatique'] .tb__vernis::after { opacity: 1; }
+.tb[data-niveau='6'] .tb__impression { background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, .05) 0 .09em, transparent .09em .27em), radial-gradient(120% 90% at 50% 38%, rgba(255, 255, 255, .08), rgba(0, 0, 0, .4)); }
+
+/* ── Le verso ───────────────────────────────────────────────────────────────── */
+
+.tb__verso-papier { position: absolute; inset: 0; background: radial-gradient(130% 100% at 30% 10%, #fcf7e9, #eee2c5 62%, #dfcca5); }
+.tb__filigrane { position: absolute; inset: 0; background-image: var(--filigrane); background-size: 4.6em 4.6em; opacity: .5; }
+.tb__sceau {
+  position: absolute; left: 50%; top: 45%; width: 10.5em; height: 10.5em; translate: -50% -50%;
+  display: grid !important; place-items: center; border-radius: 50%;
+  border: .18em solid rgba(140, 100, 50, .4);
+  box-shadow: inset 0 0 0 .7em rgba(140, 100, 50, .05), inset 0 0 0 .82em rgba(140, 100, 50, .28);
+  color: color-mix(in srgb, var(--teinte-dos, #805a2a) 55%, #5a3d18);
+}
+.tb__sceau > span { font-family: var(--police-serif); font-style: italic; font-weight: 700; font-size: 6.2em; line-height: 1; color: rgba(128, 90, 42, .5); }
+.tb__sceau svg { width: 62%; height: 62%; opacity: .75; }
+.tb__note { position: absolute; left: 0; right: 0; bottom: 3.4em; text-align: center; font-family: var(--police-serif); font-style: italic; font-size: 1.3em; color: rgba(110, 80, 40, .62); }
+.tb__gomme {
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .75) 46%, transparent 62%);
+  background-size: 260% 260%; background-position: calc(var(--mx, .3) * 100%) 0;
+  mix-blend-mode: soft-light;
+}
+
+/* ── Le fond vivant des Hors-série ─────────────────────────────────────────── */
+
+.tb__fond { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.tb__fond-rosace { position: absolute; left: 50%; top: 48.5%; width: 44em; height: 44em; margin: -22em 0 0 -22em; overflow: visible; animation: tb-tourner 90s linear infinite; }
+.tb__fond-rosace path { fill: none; stroke: #f0c48f; stroke-width: .3; opacity: .15; }
+.tb__fond-rosace--inverse { width: 30em; height: 30em; margin: -15em 0 0 -15em; animation-duration: 60s; animation-direction: reverse; }
+.tb__fond-rosace--inverse path { stroke: #8fdcff; opacity: .14; }
+.tb__grain {
+  position: absolute; left: var(--x); top: var(--y); width: var(--taille); height: var(--taille); border-radius: 50%;
+  background: var(--teinte); box-shadow: 0 0 .5em var(--teinte); opacity: 0;
+  animation: tb-poussiere var(--duree) ease-in-out var(--delai) infinite;
+}
+@keyframes tb-tourner { to { rotate: 360deg; } }
+@keyframes tb-poussiere {
+  0% { opacity: 0; translate: 0 1.5em; scale: .6; }
+  25% { opacity: .9; }
+  50% { opacity: .35; scale: 1; }
+  75% { opacity: .85; }
+  100% { opacity: 0; translate: .8em -5em; scale: .5; }
+}
+@media (prefers-reduced-motion: reduce) { .tb__fond-rosace, .tb__grain { animation: none; } .tb__grain { opacity: .5; } }
+:root[data-animations-reduites] :is(.tb__fond-rosace, .tb__grain) { animation: none; }
+:root[data-animations-reduites] .tb__grain { opacity: .5; }

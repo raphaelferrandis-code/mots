@@ -16,6 +16,7 @@ import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
 import { NIVEAU, anneeDuCachet, encresDe, motifDuTimbre } from './decor.ts';
 import { VIGNETTES } from './vignettes.tsx';
+import { Timbre, VersoDuTimbre } from '../timbre/Timbre.tsx';
 
 type Props = {
   carte: CarteIndex;
@@ -26,9 +27,19 @@ type Props = {
   maitriseeLe?: number | null; // date à laquelle le joueur a maîtrisé le mot : le timbre reçoit un second cachet
   onChoisir?: () => void; // la carte devient un bouton (choisir une carte du deck, jouer une carte de sa main)
   action?: string; // ce que fait ce bouton, pour les lecteurs d'écran : « ajouter au deck », « jouer »…
+  obtenuLe?: number | null; // date d'obtention : c'est elle que porte le cachet (sinon, l'année d'attestation du mot)
 };
 
-export function Carte({ carte, finition = 'Normale', specimen, cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
+// Depuis la refonte (maquette de la cérémonie), la carte du jeu est le nouveau timbre, partout.
+// Les spécimens de matière (galerie de contrôle) gardent l'ancienne gravure.
+export function Carte({ specimen, obtenuLe = null, ...props }: Props) {
+  if (specimen) return <CarteClassique specimen={specimen} {...props} />;
+  const { carte, finition = 'Normale', cliquable = true, maitriseeLe = null, onChoisir, action } = props;
+  return <Timbre carte={carte} finition={finition} oblitere obtenuLe={obtenuLe} cliquable={cliquable} maitriseeLe={maitriseeLe} onChoisir={onChoisir} action={action} />;
+}
+
+// L'ancienne carte, avant la refonte.
+export function CarteClassique({ carte, finition = 'Normale', specimen, cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
   const timbre = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -112,7 +123,14 @@ export function Carte({ carte, finition = 'Normale', specimen, cliquable = true,
 }
 
 // Le dos d'un timbre, pour les cartes encore face cachée : la gomme, et le filigrane du jeu.
-export function DosDeCarte({ onRetourner, etiquette, modele, anime = true }: { onRetourner?: () => void; etiquette: string; modele?: string; anime?: boolean }) {
+export function DosDeCarte({ onRetourner, etiquette, modele }: { onRetourner?: () => void; etiquette: string; modele?: string; anime?: boolean }) {
+  const partie = usePartie();
+  const choix = modele ?? (partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null).dos : 'gomme');
+  return <VersoDuTimbre dos={choix} etiquette={etiquette} onRetourner={onRetourner} />;
+}
+
+// L'ancien dos, avant la refonte.
+export function DosClassique({ onRetourner, etiquette, modele, anime = true }: { onRetourner?: () => void; etiquette: string; modele?: string; anime?: boolean }) {
   const partie = usePartie();
   const choix = modele ?? (partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null).dos : 'gomme');
   const decor = ornement(choix);

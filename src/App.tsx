@@ -15,6 +15,8 @@ import { Deck } from './ecrans/Deck.tsx';
 import { Duel } from './ecrans/Duel.tsx';
 import { FicheCarte } from './ecrans/FicheCarte.tsx';
 import { Galerie } from './ecrans/Galerie.tsx';
+import { EssaiTimbre } from './ecrans/EssaiTimbre.tsx';
+import { EssaiPaquets } from './ecrans/EssaiPaquets.tsx';
 import { Formules } from './ecrans/Formules.tsx';
 import { Marche } from './ecrans/Marche.tsx';
 import { OuverturePaquet } from './ecrans/OuverturePaquet.tsx';
@@ -42,6 +44,8 @@ function Ecran({ route }: { route: Route }) {
     case 'marche': return <Marche />;
     case 'formules': return <Formules />;
     case 'galerie': return import.meta.env.DEV ? <Galerie /> : <Accueil />;
+    case 'timbres': return import.meta.env.DEV ? <EssaiTimbre /> : <Accueil />;
+    case 'maquettes': return import.meta.env.DEV ? <EssaiPaquets /> : <Accueil />;
   }
 }
 
@@ -82,7 +86,7 @@ export function App() {
   return (
     <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
-      <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} />
+      <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null} pseudo={partie.etat === 'prete' ? partie.sauvegarde.profil.pseudo : ''} />
       <Ecran key={cle} route={route} />
     </div></Recompenses>
   );

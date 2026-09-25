@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerAuthentification } from './authentification.ts';
+import { creerAuthentification, jetonDeVraiCompte } from './authentification.ts';
 
 const JETONS = { access_token: 'nouveau', refresh_token: 'secret-test', expires_in: 3600 };
 function monde(options: { anonyme?: boolean; refuse?: string; google?: boolean; mauvaisCompte?: boolean; jeton?: string } = {}) {
@@ -96,4 +96,14 @@ it('la déconnexion révoque seulement la session courante', async () => {
   const { auth, appels } = monde(); await auth.deconnecter();
   assert.equal(appels[0].url.searchParams.get('scope'), 'local');
   assert.equal(appels[0].acces, 'Bearer invite');
+});
+
+it('lit dans le jeton si le compte est un vrai compte, sans jamais le croire en cas de doute', () => {
+  const jeton = (charge: object) => `entete.${Buffer.from(JSON.stringify(charge)).toString('base64url')}.signature`;
+  assert.equal(jetonDeVraiCompte(jeton({ sub: 'joueur', is_anonymous: false })), true);
+  assert.equal(jetonDeVraiCompte(jeton({ sub: 'joueur', is_anonymous: true })), false);
+  assert.equal(jetonDeVraiCompte(jeton({ sub: 'joueur' })), false);
+  assert.equal(jetonDeVraiCompte('pas-un-jeton'), false);
+  assert.equal(jetonDeVraiCompte('a.%%%.b'), false);
+  assert.equal(jetonDeVraiCompte(undefined), false);
 });

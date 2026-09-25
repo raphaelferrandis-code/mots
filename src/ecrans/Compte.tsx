@@ -3,7 +3,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { lien } from '../navigation/routes.ts';
 import { serveurUtilise } from '../services/compte.ts';
 import { demarrerLaPartie, synchroniser } from '../services/partie.ts';
-import { authentification, connexionGoogle, erreurDuRetour, installerConnexion, verifierStockageConnexion } from '../services/connexion.ts';
+import { authentification, connexionGoogle, deconnecter, erreurDuRetour, installerConnexion, verifierStockageConnexion } from '../services/connexion.ts';
 import type { ModeConnexion, Utilisateur, VerificationMail } from '../services/authentification.ts';
 import './compte.css';
 
@@ -68,10 +68,7 @@ export function Compte() {
           <h2>Ta collection te suit</h2>
           <p>Connecté avec <strong>{utilisateur.email ?? 'Google'}</strong>.</p>
           <a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a>
-          <button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(async () => {
-            verifierStockageConnexion(); await authentification.deconnecter();
-            installerConnexion(null, false); window.location.reload();
-          })}>{occupe ? 'Déconnexion…' : 'Se déconnecter'}</button>
+          <button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(deconnecter)}>{occupe ? 'Déconnexion…' : 'Se déconnecter'}</button>
         </> : <>
           <h2>{mode === 'creation' ? 'Garde tes timbres près de toi' : 'Retrouve ta collection'}</h2>
           <div className="compte__modes" role="group" aria-label="Créer un compte ou se connecter">

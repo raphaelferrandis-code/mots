@@ -1,0 +1,8 @@
+/* Page d'essai du timbre de la refonte (développement seulement). */
+.essai-timbre h2 { margin-top: 40px; }
+.essai-timbre h3 { margin: 18px 0 10px; font-size: 15px; color: var(--encre-douce); font-weight: 500; }
+.essai-timbre__timbres { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px; }
+.essai-timbre__timbres figure { margin: 0; max-width: 100%; }
+.essai-timbre__timbres .tb { filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .5)); }
+.essai-timbre__timbres figcaption { margin-top: 10px; text-align: center; font-size: 14px; color: var(--encre-douce); }
+.essai-timbre__option { display: inline-flex; align-items: center; gap: 8px; }

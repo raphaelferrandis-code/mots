@@ -21,23 +21,11 @@
 .tableau-defilant { border: 1px solid var(--filet); border-radius: 3px; }
 .tableau thead { background: #1b2e3e; }
 .tableau caption { padding: 12px; color: var(--encre-douce); }
-.navigation__nom-court { display: none; }
 @media (hover: hover) {
-  .navigation__lien:hover, .reserve-encre:hover { color: #eee5d3; }
   .bouton.outil:hover { color: #f0e7d2; border-color: #bfb69d; background: linear-gradient(110deg, #3b4b57, #2a3c4b); }
   .option:hover { background: #b9cbd306; }
 }
 @media (max-width: 767px) {
-  .navigation__liste { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .navigation__nom-long { display: none; }
-  .navigation__nom-court { display: inline; }
-  .navigation__lien { font-size: .75rem; }
-  .navigation__icone svg { width: 22px; height: 22px; }
-  .entete-application { gap: 12px; padding-inline: 16px; }
-  .reserve-encre { gap: 5px; font-size: .8rem; }
-  .reserve-encre svg { width: 24px; height: 24px; }
-  .reserve-encre strong { font-size: 1rem; }
-  .lien-reglages { min-height: 44px; display: inline-flex; align-items: center; }
   .album > .entete { grid-template-columns: minmax(0, 1fr); }
   .enchere { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; }
   .enchere .rangee-de-boutons > .bouton { width: 100%; padding-inline: 12px; }

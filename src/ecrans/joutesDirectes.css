@@ -12,11 +12,11 @@
 .direct__voie { display:grid; gap:12px; min-width:0; }
 .direct__voie h3 { text-align:center; }
 .direct__position { padding:16px; border:1px solid var(--filet); display:grid; justify-items:center; min-width:0; }
-.direct__position .tim { width:min(100%,230px); }
+.direct__position :is(.tim, .tb) { width:min(100%,230px); }
 .direct__vide { min-height:120px; display:grid; place-content:center; text-align:center; }
 .direct__main { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
 .direct__main>div { min-width:0; display:flex; flex-direction:column; gap:10px; }
-.direct__main .tim { width:100%; }
+.direct__main :is(.tim, .tb) { width:100%; }
 .direct__main .bouton { white-space:normal; font-size:.9rem; }
 .direct__propositions { display:grid; gap:12px; }
 .direct__reponse { display:grid; gap:8px; text-align:left; background:var(--papier); color:var(--encre); font:inherit; border:1px solid var(--filet-fort); padding:16px; min-height:64px; cursor:pointer; }
@@ -28,6 +28,6 @@
 .direct__inscription { display:grid; gap:16px; }
 .direct__abandon { margin-top:28px; }
 .direct .modes { flex-wrap:wrap; }
-@media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main .tim { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }
+@media(max-width:650px) { .direct__questions { grid-template-columns:1fr; } .direct__main { grid-template-columns:1fr; } .direct__main :is(.tim, .tb) { max-width:240px; margin:auto; } .direct__table { gap:10px; } .direct__position { padding:8px; } .direct__scores { gap:10px; } .direct__scores .bloc { padding:12px; } }
 /* L'adversaire de secours, sous la recherche en cours. */
 .direct__secours { display:grid; gap:12px; justify-items:start; margin-top:20px; padding-top:20px; border-top:1px solid var(--filet); }

@@ -1,6 +1,6 @@
 import { SERVEUR } from '../config/serveur.ts';
 import { CLE_IDENTITE, clientDuServeur, jetonAntiRobot, serveurUtilise } from './compte.ts';
-import { creerAuthentification } from './authentification.ts';
+import { creerAuthentification, jetonDeVraiCompte } from './authentification.ts';
 import type { RetourGoogle } from './authentification.ts';
 import type { Session } from './supabase.ts';
 
@@ -22,6 +22,19 @@ export function installerConnexion(session: Session | null, conserverCollection:
   if (session) localStorage.setItem('mots.session', JSON.stringify(session));
   else localStorage.removeItem('mots.session');
   localStorage.setItem('mots.connexion-modifiee', crypto.randomUUID());
+}
+
+// Un vrai compte (e-mail ou Google) est connecté sur cet appareil. Un invité ne se déconnecte pas : il perdrait sa collection.
+export function compteConnecte(): boolean {
+  if (!serveurUtilise) return false;
+  try { return jetonDeVraiCompte((JSON.parse(localStorage.getItem('mots.session') ?? 'null') as Session | null)?.acces); }
+  catch { return false; }
+}
+
+// La collection reste sur le serveur ; l'appareil repart avec une nouvelle identité d'invité.
+export async function deconnecter(): Promise<void> {
+  verifierStockageConnexion(); await authentification.deconnecter();
+  installerConnexion(null, false); window.location.reload();
 }
 
 export async function connexionGoogle(mode: 'creation' | 'connexion'): Promise<void> {

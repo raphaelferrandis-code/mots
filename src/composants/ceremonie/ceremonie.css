@@ -1,0 +1,154 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   LA CÉRÉMONIE D'OUVERTURE (maquette prototype-ceremonie.html)
+   Couleurs de la maquette : nuit, cuivre, papier.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --c-cuivre: #d89a5c;
+  --c-cuivre-clair: #f0c48f;
+  --c-papier: #f1e7d0;
+  --c-texte: #e4dccb;
+  --c-texte-doux: #a7b1c4;
+  --c-ligne: rgba(233, 225, 208, .12);
+}
+body.ceremonie-ouverte { overflow: hidden; }
+
+.ceremonie {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px);
+  background: radial-gradient(ellipse 70% 62% at 50% 40%, rgba(40, 74, 126, .55), rgba(6, 10, 20, .95) 72%);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  color: var(--c-texte); font-family: var(--police-douce);
+  animation: c-apparaitre .45s both;
+  transition: opacity .45s;
+}
+.ceremonie[data-phase='fermeture'] { opacity: 0; pointer-events: none; }
+@keyframes c-apparaitre { from { opacity: 0; } }
+.ceremonie :focus-visible { outline: 2px solid var(--c-cuivre-clair); outline-offset: 3px; }
+
+.ceremonie__haut { position: relative; z-index: 6; display: flex; justify-content: flex-end; gap: 6px; }
+.c-icone { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid transparent; background: none; color: var(--c-texte-doux); cursor: pointer; transition: color .2s, border-color .2s; }
+.c-icone:hover { color: var(--c-papier); border-color: var(--c-ligne); }
+.c-icone svg { width: 22px; height: 22px; }
+
+.ceremonie__scene {
+  --sw: max(150px, min(300px, 62vw, calc((100vh - 370px) * .72)));
+  position: relative; display: grid; place-items: center; min-height: 0;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+@supports (height: 100dvh) { .ceremonie__scene { --sw: max(150px, min(300px, 62vw, calc((100dvh - 370px) * .72))); } }
+.ceremonie__scene:focus-visible { outline: none; }
+.ceremonie__scene > * { grid-area: 1 / 1; }
+
+/* ── Le paquet ─────────────────────────────────────────────────────────────── */
+
+.c-emballage { --pw: calc(var(--sw) * 1.08); position: relative; z-index: 2; }
+.cp { position: relative; width: var(--pw, 100%); aspect-ratio: 320 / 470; perspective: 900px; filter: drop-shadow(0 36px 34px rgba(0, 0, 0, .55)) drop-shadow(0 6px 8px rgba(0, 0, 0, .35)); }
+/* L'ombre portée est sur .cp : un filtre ici aplatirait la 3D des tranches. */
+.cp__inclinaison { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+
+.cp__corps { position: absolute; left: 0; right: 0; bottom: 0; top: calc(48 / 470 * 100%); }
+.cp__corps svg, .cp__bande svg { display: block; width: 100%; height: 100%; }
+.cp__vernis, .cp__lueur { position: absolute; inset: 0; pointer-events: none; -webkit-mask: var(--masque-paquet) center / 100% 100% no-repeat; mask: var(--masque-paquet) center / 100% 100% no-repeat; }
+.cp__vernis { background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, .2) 47%, rgba(255, 255, 255, .05) 55%, transparent 66%); background-size: 260% 100%; background-position: calc(var(--mx, .5) * 100%) 0; mix-blend-mode: screen; }
+.cp__lueur { background: radial-gradient(circle at var(--gx, 50%) var(--gy, 30%), rgba(255, 255, 255, .25), transparent 46%); mix-blend-mode: soft-light; }
+.cp__languette { position: absolute; left: 0; right: 0; top: 0; height: calc(52 / 470 * 100%); }
+.cp__bande { position: absolute; inset: 0; }
+.cp__texte-etroit { font-family: var(--police-etroite); }
+.cp__texte-serif { font-family: var(--police-serif); }
+.cp__indice { display: none; position: absolute; top: calc(48 / 52 * 100%); left: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: radial-gradient(circle, #fff 0, #ffe2b4 30%, rgba(240, 196, 143, 0) 70%); pointer-events: none; animation: c-indice 1.9s cubic-bezier(.45, 0, .55, 1) infinite; }
+.cp--scene .cp__indice { display: block; }
+.cp__indice.cp__indice--eteint { display: none; }
+@keyframes c-indice { 0% { left: 3%; opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { left: 97%; opacity: 0; } }
+
+/* ── Les timbres ───────────────────────────────────────────────────────────── */
+
+.c-pile { position: relative; width: var(--sw); aspect-ratio: 30 / 38; z-index: 1; }
+.c-carte { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; perspective: 1100px; -webkit-tap-highlight-color: transparent; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.c-carte:focus-visible { outline: 2px solid var(--c-cuivre-clair); outline-offset: 12px; }
+.c-inclinaison { position: absolute; inset: 0; perspective: 1100px; transition: transform .14s ease-out; filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 3px rgba(0, 0, 0, 0)); }
+.c-retourne { position: absolute; inset: 0; }
+.c-retourne > .tb { position: absolute; inset: 0; }
+.c-carte--attente[data-eclat='dore'] .c-inclinaison { animation: c-attente-dore 1.5s ease-in-out infinite; }
+.c-carte--attente[data-eclat='holo'] .c-inclinaison { animation: c-attente-holo 1.6s linear infinite; }
+.c-carte--attente[data-eclat='grand'] .c-inclinaison { animation: c-attente-grand .9s linear infinite; }
+@keyframes c-attente-dore { 0%, 100% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 5px rgba(255, 200, 120, .35)); } 50% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 24px rgba(255, 200, 120, .95)); } }
+@keyframes c-attente-holo { 0%, 100% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(255, 95, 143, .9)); } 33% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(107, 212, 255, .9)); } 66% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(125, 255, 176, .9)); } }
+@keyframes c-attente-grand { 0%, 100% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 10px rgba(255, 190, 90, .6)); translate: 0 0; } 25% { translate: 1px -1px; } 50% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 32px rgba(255, 210, 120, 1)); translate: -1px 1px; } 75% { translate: 1px 1px; } }
+
+.c-apercu { position: relative; inset: auto; width: var(--sw); aspect-ratio: 30 / 38; z-index: 4; animation: c-apercu .42s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes c-apercu { from { translate: 0 30%; scale: .4; opacity: 0; } }
+.c-eventail { position: relative; width: var(--sw); aspect-ratio: 30 / 38; z-index: 2; transition: opacity .25s; }
+.c-eventail--estompe { opacity: 0; pointer-events: none; }
+.c-eventail__timbre {
+  position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  transition: transform .3s cubic-bezier(.2, .8, .2, 1), translate .25s;
+  filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .5));
+  animation: c-eventail .52s cubic-bezier(.2, 1.2, .4, 1) backwards; animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes c-eventail { from { opacity: 0; translate: 0 60%; scale: .5; } }
+.c-eventail__timbre:hover, .c-eventail__timbre:focus-visible { translate: 0 -16px; z-index: 5; outline: none; }
+.c-eventail__timbre:focus-visible .tb { filter: drop-shadow(0 0 8px var(--c-cuivre-clair)); }
+.ceremonie__eclair { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 42%, #fff, rgba(255, 240, 220, .6) 30%, rgba(255, 200, 200, 0) 70%); }
+
+/* ── Le texte sous la scène ────────────────────────────────────────────────── */
+
+.ceremonie__infos { position: relative; z-index: 6; min-height: clamp(128px, 19vh, 172px); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 7px; padding: 10px 12px 6px; }
+.c-indice { margin: 0; font-family: var(--police-serif); font-style: italic; font-size: clamp(19px, 2.4vw, 23px); color: var(--c-papier); }
+.c-sous { margin: 0; max-width: 40em; font-size: 14.5px; color: var(--c-texte-doux); }
+.c-pastilles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.c-pastille { font-size: 13px; font-weight: 500; padding: 3px 11px; border-radius: 99px; border: 1px solid currentColor; line-height: 1.5; }
+.c-pastille--courant { color: #b9c3d6; }
+.c-pastille--dore { color: var(--c-cuivre-clair); }
+.c-pastille--holo { border: 0; color: #1b1330; background: linear-gradient(90deg, #ff8fb0, #ffe38a, #9dffc8, #8fdcff, #cfaeff); }
+.c-pastille--grand { border: 0; color: #2a1605; background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a); }
+.c-pastille--nouveau { color: #9ad9b2; }
+.c-pastille--doublon { color: #b9c3d6; }
+.c-mot, .c-titre { margin: 2px 0 0; font-family: var(--police-serif); font-weight: 900; font-size: clamp(30px, 4.4vw, 44px); line-height: 1.02; color: var(--c-papier); }
+.c-mot::first-letter { text-transform: uppercase; }
+.c-definition { margin: 0; max-width: 30em; font-size: 16px; color: var(--c-texte); }
+.c-definition em { font-family: var(--police-serif); color: var(--c-cuivre-clair); margin-right: 6px; }
+.c-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.c-lien { padding: 8px; border: 0; background: none; cursor: pointer; font: inherit; font-size: 15px; color: var(--c-texte-doux); text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgba(167, 177, 196, .5); }
+.c-lien:hover { color: var(--c-papier); }
+.c-liens { display: flex; gap: 10px 22px; justify-content: center; flex-wrap: wrap; }
+
+/* Le bouton à bords dentelés de la maquette, et sa variante à filet. */
+.bouton-dentele {
+  height: 58px; padding: 0 36px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; cursor: pointer; font-family: var(--police-douce); font-weight: 600; font-size: 17px; letter-spacing: .01em; text-decoration: none;
+  color: #2a1605; background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43);
+  -webkit-mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x;
+  mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x;
+  transition: transform .2s, filter .2s;
+}
+.bouton-dentele:hover { transform: translateY(-2px); filter: brightness(1.07); }
+.bouton-dentele:active { transform: translateY(1px); }
+.bouton-dentele:focus-visible { outline: none; filter: brightness(1.15); box-shadow: inset 0 0 0 3px #2a1605; }
+.bouton-dentele:disabled { filter: grayscale(1) brightness(.6); cursor: not-allowed; transform: none; }
+.bouton-dentele--filet { background: none; color: var(--c-cuivre-clair); -webkit-mask: none; mask: none; border: 1px solid rgba(216, 154, 92, .6); }
+.bouton-dentele--filet:focus-visible { outline: 2px solid var(--c-cuivre-clair); box-shadow: none; }
+
+/* ── Le plateau : cinq cases où se rangent les timbres révélés ─────────────── */
+
+.ceremonie__plateau { position: relative; z-index: 6; display: flex; justify-content: center; gap: clamp(8px, 2vw, 16px); padding-top: 6px; }
+.ceremonie__plateau--fini { opacity: 0; pointer-events: none; transition: opacity .3s; }
+.c-case {
+  position: relative; width: clamp(40px, 10vw, 56px); aspect-ratio: 30 / 38; padding: 0; border: 0; cursor: default;
+  background: rgba(233, 225, 208, .05);
+  -webkit-mask: var(--perf) center / 100% 100% no-repeat; mask: var(--perf) center / 100% 100% no-repeat;
+  transition: width .45s cubic-bezier(.2, .8, .2, 1), translate .25s;
+}
+.c-case::before { content: ''; position: absolute; inset: 16%; border: 1px dashed rgba(233, 225, 208, .2); }
+.c-case--pleine { background: none; }
+.c-case--pleine::before { display: none; }
+.c-case .tb { position: absolute; inset: 0; }
+
+.ceremonie__particules { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 70; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp__indice, .c-carte--attente .c-inclinaison { animation: none !important; }
+  .cp__indice { display: none !important; }
+}
+:root[data-animations-reduites] :is(.cp__indice, .c-carte--attente .c-inclinaison, .c-eventail__timbre, .c-apercu, .ceremonie) { animation: none !important; }

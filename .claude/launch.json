@@ -4,14 +4,45 @@
     {
       "name": "site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173
     },
     {
       "name": "banc-secours-parrainage",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["serveur/apercu-secours-parrainage.mjs"],
+      "runtimeArgs": [
+        "serveur/apercu-secours-parrainage.mjs"
+      ],
       "port": 5190
+    },
+    {
+      "name": "site-5174",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
+      "port": 5174
+    },
+    {
+      "name": "site-portraits",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5181",
+        "--strictPort"
+      ],
+      "port": 5181
     }
   ]
 }

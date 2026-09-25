@@ -8,6 +8,15 @@
 import '@fontsource/playfair-display/latin-400.css';
 import '@fontsource/playfair-display/latin-400-italic.css';
 import '@fontsource/playfair-display/latin-700.css';
+import '@fontsource/playfair-display/latin-700-italic.css';
+import '@fontsource/playfair-display/latin-900.css';
+// Jost : le texte courant de la cérémonie et de l'accueil refondus.
+import '@fontsource/jost/latin-400.css';
+import '@fontsource/jost/latin-500.css';
+import '@fontsource/jost/latin-600.css';
+// Oswald : les capitales étroites des timbres (mot, mentions imprimées, cachet), comme sur la maquette de la cérémonie.
+import '@fontsource/oswald/latin-500.css';
+import '@fontsource/oswald/latin-600.css';
 import '@fontsource/barlow-condensed/latin-500.css';
 import '@fontsource/barlow-condensed/latin-600.css';
 import '@fontsource/barlow-condensed/latin-700.css';

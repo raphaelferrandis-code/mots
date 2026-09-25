@@ -146,9 +146,19 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     return resultat as T;
   }
 
+  // Une lecture publique (le fil d'activité de l'accueil) : sans session, donc sans jamais ouvrir de compte.
+  async function lireSansCompte<T>(fonction: string): Promise<T> {
+    let reponse: Response;
+    try {
+      reponse = await exterieur.requete(`${base}/rest/v1/rpc/${fonction}`, { method: 'POST', headers: enTetes, body: '{}', signal: AbortSignal.timeout(20_000) });
+    } catch { throw new ErreurDuServeur(PANNE, false); }
+    if (!reponse.ok) throw new ErreurDuServeur(PANNE, false, reponse.status);
+    return await reponse.json() as T;
+  }
+
   // L'authentification utilise la même session que les collections et les achats.
   const lireSession = () => session(false, true);
-  return { appeler, appelerPaiement, appelerCombat, appelerDirect, aUneSession, oublierLaSession, lireSession };
+  return { appeler, appelerPaiement, appelerCombat, appelerDirect, lireSansCompte, aUneSession, oublierLaSession, lireSession };
 }
 
 export type ClientSupabase = ReturnType<typeof creerLeClient>;

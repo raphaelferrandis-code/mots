@@ -1,8 +1,6 @@
 /* Le cabinet : gravures, vitrines sombres et couleurs propres à chaque collection. */
 .portrait { display:inline-block; width:100px; aspect-ratio:1; position:relative; flex-shrink:0; color:var(--cadre,#bacbde); isolation:isolate; }
-.portrait__fond { position:absolute; inset:16%; border-radius:50%; background:radial-gradient(ellipse at 35% 20%,color-mix(in srgb,var(--portrait) 22%,#111e30),#0a1321 80%); box-shadow:inset 0 0 18px #0007,0 0 35px color-mix(in srgb,var(--cadre) 10%,transparent); }
-.portrait__embleme { position:absolute; inset:24%; color:var(--portrait); }
-.portrait svg { display:block; width:100%; height:100%; }
+.portrait svg { display:block; width:100%; height:100%; overflow:visible; }
 .cadre-grave { position:absolute; inset:0; overflow:visible; }
 .embleme-grave { display:block; width:100%; height:100%; }
 .identite { display:flex; align-items:center; gap:14px; min-width:0; color:var(--profil-couleur,#cbd9ec); }
@@ -49,13 +47,14 @@
 .vestiaire__objet .titre-grave { font-size:.86rem; }
 .vestiaire__objet--paquet,.vestiaire__objet--dos { display:grid; place-items:center; }
 .vestiaire__objet > .paquet-scelle { width:205px; height:282px; --ombre-paquet:drop-shadow(0 22px 18px #0008); }
-.vestiaire__objet > .tim { width:185px; --ombre-timbre:0 22px 18px #0008; }
+.vestiaire__objet > :is(.tim, .tb) { width:185px; --ombre-timbre:0 22px 18px #0008; }
 .vestiaire__signature { position:absolute; bottom:14px; color:#637d99; font:500 .54rem var(--police-texte); letter-spacing:.16em; }
 .vestiaire__signature span { margin:0 12px; color:var(--selection); }
 .vestiaire__fiche { padding:24px 24px 20px; border-top:1px solid #26374c; text-align:center; }
 .vestiaire__famille { color:var(--selection); font-size:.65rem; text-transform:uppercase; letter-spacing:.19em; }
 .vestiaire__fiche h2 { font:500 1.6rem/1.2 var(--police-serif); margin-top:10px; }
 .vestiaire__obtention { font-size:.77rem; color:#9aafc7; margin:14px 0 21px; min-height:20px; }
+.vestiaire__description { font-size:.8rem; line-height:1.45; color:#b7c8db; margin:8px auto 0; max-width:34ch; text-wrap:balance; }
 .sceau-premium { color:#d4c1f3; }
 .vestiaire__ou { padding-inline:8px; color:#667f99; }
 .vestiaire__action { width:100%; gap:24px; font-size:.85rem; }
@@ -114,7 +113,7 @@
 .cosmetique__visuel .portrait { width:116px; max-width:100%; filter:drop-shadow(0 4px 2px #020a1255); }
 .cosmetique__visuel > .embleme-grave { width:80px; height:80px; filter:drop-shadow(0 3px 2px #020a1299); }
 .cosmetique__visuel .paquet-scelle { width:85px; height:117px; --ombre-paquet:drop-shadow(3px 5px 3px #020a1288); }
-.cosmetique__visuel .tim { width:72px; pointer-events:none; --ombre-timbre:2px 4px 2px #020a1288; }
+.cosmetique__visuel :is(.tim, .tb) { width:72px; pointer-events:none; --ombre-timbre:2px 4px 2px #020a1288; }
 .cosmetique__cartouche {
   position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;
   width:100%; margin-top:7px; padding:8px 5px; min-height:72px;
@@ -143,18 +142,8 @@
 .vestiaire__dialogue .choix-pseudonyme .rangee-de-boutons { display:grid; }
 .vestiaire__dialogue input { width:100%; font:inherit; padding:12px; background:#0b1729; border:1px solid #58718b; color:#e3edfa; border-radius:3px; }
 
-/* Les mouvements appartiennent aux ornements ; les vignettes non sélectionnées restent au repos. */
-.cadre-grave[data-anime=true] .cadre__orbite { transform-origin:100px 100px; animation:orbite-gravee 24s linear infinite; }
-.cadre-grave[data-anime=true] .cadre__etoiles { animation:eclat-grave 4s ease-in-out infinite alternate; }
-.cadre-grave[data-anime=true] .cadre__poussieres { transform-origin:100px 100px; animation:orbite-gravee 32s linear infinite reverse; }
-.cadre-grave[data-anime=true] .cadre__flore { transform-origin:100px 100px; animation:floraison-gravee 7s ease-in-out infinite; }
-.cadre-grave[data-anime=true] .cadre__facettes { animation:eclat-grave 3s ease-in-out infinite alternate; }
-.cadre-grave[data-anime=true] .cadre__ailes { transform-origin:100px 170px; animation:ailes-gravees 4s ease-in-out infinite; }
-.cadre-grave[data-anime=true] .cadre__voiles { transform-origin:100px 100px; animation:orbite-gravee 18s linear infinite; }
-@keyframes orbite-gravee { to { transform:rotate(360deg); } }
+/* Les cadres et avatars s'animent eux-mêmes (SMIL) ; Gravures.tsx les fige hors sélection ou en animation réduite. */
 @keyframes eclat-grave { from { opacity:.55; filter:drop-shadow(0 0 0 transparent); } to { opacity:1; filter:drop-shadow(0 0 4px currentColor); } }
-@keyframes floraison-gravee { 0%,100% { transform:rotate(-2deg) scale(.99); } 50% { transform:rotate(2deg) scale(1.02); } }
-@keyframes ailes-gravees { 0%,100% { transform:scaleX(.96); opacity:.8; } 50% { transform:scaleX(1.04); opacity:1; } }
 @keyframes apparition-cosmetique { from { opacity:0; translate:0 6px; } to { opacity:1; translate:0 0; } }
 
 /* Le verso garde sa dentelure et reçoit une composition gravée. */
@@ -162,11 +151,10 @@
 .dos-grave::before { content:''; position:absolute; inset:7px; border:1px solid currentColor; opacity:.35; }
 .dos-grave > svg { width:80%; height:80%; opacity:.8; }
 .dos-grave__nom { position:absolute; bottom:7%; font:500 .6em var(--police-mention); letter-spacing:.2em; }
-.tim--dos[data-modele=gomme] .dos-grave { color:#675136; background:repeating-linear-gradient(0deg,#e2d7bc 0 2px,#dfd3b8 2px 3px); }
+:is(.tim--dos, .tb--dos)[data-modele=gomme] .dos-grave { color:#675136; background:repeating-linear-gradient(0deg,#e2d7bc 0 2px,#dfd3b8 2px 3px); }
 .dos-grave[data-anime=true] > svg { animation:eclat-grave 5s ease-in-out infinite alternate; }
 @media(max-width:1100px) { .vestiaire__atelier { gap:24px; grid-template-columns:minmax(270px,.85fr) minmax(0,1.5fr); } .vestiaire__grille { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:767px) {
-  .entete-application { gap:12px; flex-wrap:wrap; padding-block:10px; } .lien-reglages { font-size:.85rem; }
   .ecran.vestiaire { padding:24px 16px calc(var(--hauteur-navigation) + 32px + env(safe-area-inset-bottom)); } .vestiaire__entete { align-items:start; flex-direction:column; gap:14px; margin-bottom:24px; }
   .vestiaire__compte { text-align:left; } .vestiaire__surtitre { font-size:.58rem; }
   .vestiaire__atelier { grid-template-columns:1fr; gap:20px; }
@@ -182,7 +170,7 @@
   .cosmetique__visuel > .embleme-grave { width:64px; height:64px; }
   .cosmetique__nom { font-size:.75rem; } .cosmetique__acces { font-size:.6rem; }
   .cosmetique__cartouche { min-height:72px; padding-block:7px; }
-  .cosmetique__visuel .paquet-scelle { width:66px; height:92px; } .cosmetique__visuel .tim { width:60px; }
+  .cosmetique__visuel .paquet-scelle { width:66px; height:92px; } .cosmetique__visuel :is(.tim, .tb) { width:60px; }
   .vestiaire__grille--titre { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .vestiaire__pied { gap:12px; font-size:.6rem; }
 }
@@ -215,5 +203,5 @@
   .vestiaire__obtention { font-size:.65rem; }
   .vestiaire__action { font-size:.68rem; gap:6px; min-height:44px; padding:6px; }
   .vestiaire__objet > .paquet-scelle { width:125px; height:172px; }
-  .vestiaire__objet > .tim { width:110px; }
+  .vestiaire__objet > :is(.tim, .tb) { width:110px; }
 }

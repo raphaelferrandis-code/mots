@@ -3,7 +3,7 @@
 .duel-arene__place { position:relative; min-width:0; --impact-delai:450ms; }
 .duel-arene__place[data-camp=joueur] { --impact-delai:750ms; }
 .duel-arene .duel__mot-pose { width:min(100%,200px); margin-inline:auto; }
-.duel-arene .duel__mot-pose > .tim { animation:duel-pose .38s cubic-bezier(.18,.7,.24,1) both; }
+.duel-arene .duel__mot-pose > :is(.tim, .tb) { animation:duel-pose .38s cubic-bezier(.18,.7,.24,1) both; }
 .duel-arene [data-camp=adversaire] { --pose-y:-22px; --pose-angle:-5deg; }
 .duel-arene [data-camp=joueur] { --pose-y:32px; --pose-angle:5deg; }
 @keyframes duel-pose { from { opacity:.2; transform:translateY(var(--pose-y)) rotate(var(--pose-angle)) scale(.94); } to { opacity:1; transform:none; } }
@@ -13,7 +13,7 @@
 .duel > .duel-arene[data-compact=true] { grid-column:1 / -1; width:min(100%,960px); justify-self:center; }
 .duel-arene[data-compact=true] .duel__mot-pose { width:76px; }
 .duel-arene[data-compact=true] .entete__surtitre { font-size:.65rem; white-space:nowrap; }
-.duel-arene__place[data-actif=true] .tim { filter:drop-shadow(0 0 9px #cee5e44d); }
+.duel-arene__place[data-actif=true] :is(.tim, .tb) { filter:drop-shadow(0 0 9px #cee5e44d); }
 .duel-arene__place[data-actif=true]::after { content:''; position:absolute; bottom:-7px; left:calc(50% - 18px); width:36px; height:2px; background:#d7e6e2; box-shadow:0 0 10px #cbe6e266; }
 .duel[data-phase=attaque] .epreuve { border-top-color:#cfab86; }
 .duel[data-phase=parade] .epreuve { border-top-color:#90c7c0; }
@@ -32,7 +32,7 @@
 .duel-arene__place:has(.duel-impact[data-touche=true]) .duel__mot-pose { animation:duel-choc .32s ease-out var(--impact-delai); }
 .duel-arene__place[data-camp=joueur] { --frappe-x:-14px; --frappe-delai:300ms; }
 .duel-arene__place[data-camp=adversaire] { --frappe-x:14px; --frappe-delai:600ms; }
-.duel-arene__place[data-frappe=true] .duel__mot-pose > .tim { animation:duel-frappe .3s ease-in-out var(--frappe-delai) both; }
+.duel-arene__place[data-frappe=true] .duel__mot-pose > :is(.tim, .tb) { animation:duel-frappe .3s ease-in-out var(--frappe-delai) both; }
 @keyframes duel-frappe { 0%,100% { transform:none; } 50% { transform:translateX(var(--frappe-x)) scale(1.035); } }
 @keyframes duel-choc { 0%,100% { transform:none; } 25% { transform:translateX(-5px) rotate(-1deg); } 55% { transform:translateX(3px); } }
 .duel .jauge__barre span { background:linear-gradient(90deg,#668e9b,#c4ddd8); transition:width .3s ease-out; }

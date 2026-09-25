@@ -2,7 +2,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; } /* la page ne glisse pas quand la barre de défilement apparaît */
 [hidden] { display: none !important; }
 
 body {
@@ -169,17 +169,17 @@ main:focus, main h1:focus { outline: none; }
 /* Les timbres limitent ailleurs les gestes à pan-y. Dans un paquet, un glissement
    commencé sur une carte doit aussi faire défiler la rangée, même face cachée.
    « manipulation » garde les deux axes et le zoom par pincement natifs. */
-.paquet__place > .tim { width: 100%; }
-.paquet, .paquet__place .tim, .paquet__place .revelation__ouvrir { touch-action: manipulation; }
+.paquet__place > :is(.tim, .tb) { width: 100%; }
+.paquet, .paquet__place :is(.tim, .tb), .paquet__place .revelation__ouvrir { touch-action: manipulation; }
 /* Le timbre se retourne ; plus il est rare, plus son apparition se remarque : halo argenté, doré, puis violet. */
 .paquet__place { --halo: transparent; }
 .paquet__place[data-rarete='Épique'] { --halo: #b9c2cc; }
 .paquet__place[data-rarete='Légendaire'] { --halo: #e0b02a; }
 .paquet__place[data-rarete='Hors-série'] { --halo: #b57bff; }
-.paquet__place[data-retournee='true'] > .tim { animation: apparition 0.45s ease-out; }
-.paquet__place[data-retournee='true'][data-rarete='Épique'] > .tim,
-.paquet__place[data-retournee='true'][data-rarete='Légendaire'] > .tim { animation: apparition-rare 1s ease-out; }
-.paquet__place[data-retournee='true'][data-rarete='Hors-série'] > .tim { animation: apparition-rare 1.8s ease-out; }
+.paquet__place[data-retournee='true'] > :is(.tim, .tb) { animation: apparition 0.45s ease-out; }
+.paquet__place[data-retournee='true'][data-rarete='Épique'] > :is(.tim, .tb),
+.paquet__place[data-retournee='true'][data-rarete='Légendaire'] > :is(.tim, .tb) { animation: apparition-rare 1s ease-out; }
+.paquet__place[data-retournee='true'][data-rarete='Hors-série'] > :is(.tim, .tb) { animation: apparition-rare 1.8s ease-out; }
 @keyframes apparition { from { transform: rotateY(90deg) scale(0.96); opacity: 0.4; } to { transform: none; opacity: 1; } }
 @keyframes apparition-rare {
   0% { transform: rotateY(90deg) scale(0.9); opacity: 0.3; filter: drop-shadow(0 0 0 transparent); }
@@ -254,9 +254,9 @@ main:focus, main h1:focus { outline: none; }
 /* Un petit timbre et sa légende en clair (le texte gravé devient trop fin pour être lu). */
 .carte-legendee { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .carte-legendee figcaption { display: flex; flex-direction: column; text-align: center; line-height: 1.15; min-width: 0; }
-.carte-legendee strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.carte-legendee span { font-family: var(--police-mention); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--encre-douce); white-space: nowrap; }
-.deck__vide { aspect-ratio: 5 / 7; border: 2px dashed var(--filet); border-radius: 6px; }
+.carte-legendee figcaption > strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carte-legendee figcaption > span { font-family: var(--police-mention); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--encre-douce); white-space: nowrap; }
+.deck__vide { aspect-ratio: 30 / 38; border: 2px dashed var(--filet); border-radius: 6px; }
 .regles { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .option--liste { grid-template-columns: 1fr; cursor: default; }
 /* Le code de secours, montré une seule fois : bien lisible, facile à sélectionner. */
@@ -319,7 +319,7 @@ main:focus, main h1:focus { outline: none; }
 
 .duel__table { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .duel__mot-pose { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
-.duel__mot-pose > .tim, .duel__mot-pose > .deck__vide { width: 100%; }
+.duel__mot-pose > :is(.tim, .tb), .duel__mot-pose > .deck__vide { width: 100%; }
 .duel__blocage { font-family: var(--police-mention); font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); }
 .duel__definition { font-size: 0.82rem; font-style: italic; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 /* Sur un grand écran, la définition se lit déjà sur le timbre. */
@@ -385,7 +385,7 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .marche__encheres { gap: 0; }
 .enchere { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: start; padding-block: 14px; border-top: 1px solid var(--filet); }
 .enchere:first-child { border-top: 0; padding-top: 0; }
-.enchere__timbre > .tim, .enchere__timbre > .deck__vide { width: 100%; }
+.enchere__timbre > :is(.tim, .tb), .enchere__timbre > .deck__vide { width: 100%; }
 .enchere__corps { min-width: 0; display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
 .enchere__titre { font-size: 1.05rem; }
 .enchere__prix strong { font-family: var(--police-chiffres); font-size: 1.15rem; }

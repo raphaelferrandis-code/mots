@@ -1,6 +1,7 @@
 import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
 import { CadreGrave } from '../composants/cosmetiques/Gravures.tsx';
 import { Entete } from '../composants/Entete.tsx';
+import { SousOngletsDuel } from '../composants/SousOngletsDuel.tsx';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { ligueDe } from '../jeu/joute.ts';
 import type { LigneDeClassement } from '../services/joutes.ts';
@@ -64,6 +65,7 @@ export function Classement() {
   const equipes = mode === 'duo_equipe';
   const suite = classement ? classement.lignes.filter(l => l.rang > 3) : [];
   return <main className="ecran palmares">
+    <SousOngletsDuel actif="classement" />
     <Entete titre="Les classements" actions={<>
       {pret && <button type="button" className="bouton outil" onClick={() => setTour(t=>t+1)}>Actualiser</button>}
       <a className="bouton outil" href={lien({ecran:'joutes'})}>Jouer en direct</a>

@@ -102,6 +102,12 @@ export function Confidentialite() {
           Les mots de ton deck et tes résultats sont transmis au jeu de ton adversaire le temps de la joute, pour faire
           jouer ton double ; ils ne sont pas affichés.
         </p>
+        <p>
+          <strong>Le fil d’activité de l’accueil</strong> montre à tous les visiteurs, pendant sept jours au plus, quelques
+          événements des joueurs qui ont choisi un pseudonyme : ton arrivée, tes victoires en joute classée avec ta nouvelle
+          cote, et tes trouvailles remarquables (un timbre Légendaire, Hors-série ou holographique). Il n’affiche rien d’autre
+          que ton pseudonyme et le mot concerné.
+        </p>
         <p className="texte-doux petit">Un conseil : ne mets pas ton vrai nom dans ton pseudonyme.</p>
       </section>
 
@@ -142,7 +148,7 @@ export function Confidentialite() {
         <h2>Tout effacer</h2>
         <p>
           Ton profil de joute est conservé tant que tu ne le supprimes pas. Le supprimer retire du serveur ton pseudonyme,
-          ta cote, ton deck public, tes résultats publics, tes joutes, tes relations d’amitié et tes propositions d’échange. C'est immédiat et définitif.
+          ta cote, ton deck public, tes résultats publics, tes joutes, tes événements du fil d’activité, tes relations d’amitié et tes propositions d’échange. C'est immédiat et définitif.
           Ton compte, ta collection, tes droits et tes engagements au marché sont conservés.
         </p>
         {suppression.etat === 'faite'

@@ -24,6 +24,15 @@ const ERREURS: Record<string, string> = {
   captcha_failed: 'La vérification anti-robot n’a pas abouti. Recharge la page et réessaie.',
 };
 
+// Sans requête : le jeton d'accès de Supabase dit lui-même si le compte est anonyme.
+// Sert seulement à l'affichage (le bouton de déconnexion) ; le serveur reste seul juge.
+export function jetonDeVraiCompte(acces: string | undefined): boolean {
+  const charge = acces?.split('.')[1];
+  if (!charge) return false;
+  try { return (JSON.parse(atob(charge.replace(/-/g, '+').replace(/_/g, '/'))) as { is_anonymous?: unknown }).is_anonymous === false; }
+  catch { return false; }
+}
+
 export function creerAuthentification(io: {
   adresse: string; clePublique: string; requete: typeof fetch;
   lireSession(): Promise<Session>; maintenant(): number;

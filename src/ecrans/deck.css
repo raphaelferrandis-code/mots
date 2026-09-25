@@ -4,7 +4,7 @@
 .atelier-deck__numero > span { opacity: 0; color: #eee5d4; font-size: 1rem; line-height: .8; transition: opacity .18s; }
 .atelier-deck__place:hover .atelier-deck__numero > span,
 .atelier-deck__place:focus-within .atelier-deck__numero > span { opacity: 1; }
-.atelier-deck__empreinte { aspect-ratio: 5 / 7; display: grid; place-items: center; border: 1px solid #2e4355; outline: 1px solid #172a3b; outline-offset: -6px; background: linear-gradient(135deg, #07121f88, #13233755); box-shadow: inset 2px 3px 9px #0005; color: #698093; }
+.atelier-deck__empreinte { aspect-ratio: 30 / 38; display: grid; place-items: center; border: 1px solid #2e4355; outline: 1px solid #172a3b; outline-offset: -6px; background: linear-gradient(135deg, #07121f88, #13233755); box-shadow: inset 2px 3px 9px #0005; color: #698093; }
 .atelier-deck__empreinte > span { font-size: 1.35rem; font-weight: 300; }
 .atelier-deck__place--vide { padding-bottom: 33px; }
 .atelier-deck__composition { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin: 20px 0 18px; }

@@ -21,9 +21,11 @@ export type Route =
   | { ecran: 'confidentialite' }
   | { ecran: 'marche' }
   | { ecran: 'formules' }
-  | { ecran: 'galerie' }; // contrôle visuel des timbres, pendant le développement seulement
+  | { ecran: 'galerie' } // contrôle visuel des timbres, pendant le développement seulement
+  | { ecran: 'timbres' } // essai du timbre de la refonte, pendant le développement seulement
+  | { ecran: 'maquettes' }; // maquettes de paquet, pendant le développement seulement
 
-const ECRANS_SIMPLES = ['joutes', 'equipe', 'amis', 'compte', 'classement', 'profil', 'paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'formules', 'galerie'] as const;
+const ECRANS_SIMPLES = ['joutes', 'equipe', 'amis', 'compte', 'classement', 'profil', 'paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'formules', 'galerie', 'timbres', 'maquettes'] as const;
 
 export function lireRoute(hash: string): Route {
   const [premier = '', second = ''] = hash.replace(/^#\/?/, '').split('/');
@@ -46,7 +48,7 @@ const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
   amis: 'Amis',
   compte: 'Mon compte',
   classement: 'Classement',
-  profil: 'Profil', accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Deck', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', formules: 'Version payante', galerie: 'Galerie',
+  profil: 'Profil', accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Deck', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', formules: 'Version payante', galerie: 'Galerie', timbres: 'Essai du timbre', maquettes: 'Maquettes de paquet',
 };
 export function titreDeLaRoute(route: Route): string {
   const nom = route.ecran === 'carte' ? route.id.replace(/-(?:nom|verbe|adj|adv)$/, '') : TITRES[route.ecran];

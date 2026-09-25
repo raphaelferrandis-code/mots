@@ -1,0 +1,50 @@
+/* Les maquettes de paquet, série 2 (développement seulement). */
+
+.maquettes__grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 56px 36px; margin-top: 44px; }
+.maquettes__carte { margin: 0; display: grid; justify-items: center; align-content: start; gap: 26px; }
+.maquettes__carte figcaption { display: grid; gap: 7px; max-width: 17em; text-align: center; font-family: var(--police-douce); }
+.maquettes__carte figcaption b { font-family: var(--police-serif); font-size: 21px; color: var(--c-papier, #f1e7d0); }
+.maquettes__carte figcaption span { font-size: 14px; line-height: 1.45; color: var(--c-texte-doux, #a7b1c4); }
+.maquettes__carte figcaption em { font-style: normal; font-size: 13.5px; line-height: 1.4; color: var(--c-cuivre-clair, #f0c48f); }
+
+/* Le paquet : une scène 3D, des couches à leur profondeur. */
+.mw { --rx: 0deg; --ry: 0deg; position: relative; width: min(250px, 100%); aspect-ratio: 320 / 470; perspective: 800px; cursor: grab; }
+.mw::before { content: ''; position: absolute; inset: 8% -6% -4%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, .6), transparent); transform: translate(calc(var(--ry) * -1.2), 18px); filter: blur(10px); }
+.mw__incline { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx)) rotateY(var(--ry)); }
+.mw__couche { position: absolute; inset: 0; }
+.mw__couche svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mw__serif { font-family: var(--police-serif); }
+.mw__etroit { font-family: var(--police-etroite); }
+
+/* La lumière qui glisse sur la face (masquée à la silhouette du sachet). */
+.mw__reflet {
+  position: absolute; inset: 0; pointer-events: none; transform: translateZ(1px);
+  -webkit-mask: var(--masque) center / 100% 100% no-repeat; mask: var(--masque) center / 100% 100% no-repeat;
+  background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, .2) 47%, rgba(255, 255, 255, .05) 55%, transparent 66%);
+  background-size: 260% 100%; background-position: calc(var(--mx, .5) * 100%) 0; mix-blend-mode: screen;
+}
+
+/* Étoiles et fenêtres qui scintillent ; timbres qui flottent ; plume qui se trace. */
+.mw__scintille { animation: mw-scintille 3.2s ease-in-out infinite; animation-delay: calc(var(--d, 0s) * -1); }
+@keyframes mw-scintille { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.mw__halo { animation: mw-halo 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes mw-halo { 50% { stroke-opacity: .1; transform: scale(1.25); } }
+.mw__flotte { animation: mw-flotte 6s ease-in-out infinite; transform-box: fill-box; }
+.mw__flotte--2 { animation-duration: 7.5s; animation-delay: -2s; }
+.mw__flotte--3 { animation-duration: 5.2s; animation-delay: -3.5s; }
+@keyframes mw-flotte { 50% { translate: 0 -9px; rotate: 4deg; } }
+.mw__trace path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: mw-trace 9s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes mw-trace { 0% { stroke-dashoffset: 1; } 35%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+
+/* Le Cristal : film holographique sur tout le sachet, contenu un peu voilé. */
+.mw__contenu { filter: saturate(.9) blur(.35px); }
+.mw__film::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  -webkit-mask: var(--masque) center / 100% 100% no-repeat; mask: var(--masque) center / 100% 100% no-repeat;
+  background:
+    conic-gradient(from calc(var(--mx, .5) * 360deg) at 50% 45%, #ff8fb0, #ffe38a, #9dffc8, #8fdcff, #cfaeff, #ff8fb0),
+    repeating-linear-gradient(120deg, rgba(255, 255, 255, .5) 0 1px, transparent 1px 7px);
+  background-blend-mode: overlay; mix-blend-mode: color-dodge; opacity: .32;
+}
+
+@media (prefers-reduced-motion: reduce) { .mw__scintille, .mw__halo, .mw__flotte, .mw__trace path { animation: none; } .mw__trace path { stroke-dashoffset: 0; } }
