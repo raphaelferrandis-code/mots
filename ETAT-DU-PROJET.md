@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **25 septembre 2026 — refontes des écrans Duel et des Amis/Équipe : en ligne.** Publiées avec le jeu du 25/09.
+> Duel (`BRIEF-duel.md`) : préparation réunie avec le Deck (quatre modes en onglets, deck éditable sur place), partie
+> (barres de vie graduées, main et pioche), parade plein écran avec minuteur, résolution animée, nouveaux sons, écran
+> de fin avec les gains réels. Amis et Équipe (`GUIDE-portraits-et-presence.md`) : en-tête commun, fiche de chaque ami
+> (portrait, niveau, présence, vitrine de ses quatre plus beaux timbres), blason et cote 2v2 de l'équipe.
+> **`serveur/15-portraits-et-presence.sql` : installé**, constaté par l'assistant le 25/09 en lecture seule (fonctions
+> à jour, droits corrects, premier signal de présence reçu à 18 h 06). La dernière migration est désormais la 15.
+
 > **25 septembre 2026 — mot adverse caché jusqu'à la parade (anti-triche) : en ligne.** Le serveur des combats envoyait au
 > navigateur le mot adverse et sa définition dès le début de la manche : corrigé. Avant la parade, on ne voit plus que
 > la nature, l'attaque et la défense (timbre face cachée), partout, Facile compris ; le mot se retourne à l'ouverture

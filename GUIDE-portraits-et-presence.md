@@ -1,6 +1,6 @@
 # Refonte des amis et de l’équipe — portraits, présence, vitrines
 
-Refonte du 25 septembre 2026, d’après la maquette validée par Raphaël (planche « Philamots — Amis & Équipe »). Pas encore publiée.
+Refonte du 25 septembre 2026, d’après la maquette validée par Raphaël (planche « Philamots — Amis & Équipe »). **Publiée le 25 septembre 2026 ; script 15 installé** (voir « Installé » en bas de page).
 
 ## Ce qui change pour le joueur
 
@@ -27,3 +27,14 @@ Banc local, sans Supabase : `node serveur/apercu-correspondance.mjs` (ou « banc
 - http://127.0.0.1:5192/#/amis — carnet rempli (amis, demandes, échanges, duo complet), puis `#/equipe`
 - http://127.0.0.1:5193/#/equipe — sans équipe, avec une invitation
 - http://127.0.0.1:5194/#/amis — carnet vierge
+
+## Installé le 25 septembre 2026
+
+Le script 15 était déjà en place quand l'assistant l'a contrôlé dans Supabase, en lecture seule, le 25 septembre :
+- `mes_amis` et `mon_equipe` sont les nouvelles versions ; `xp_du_profil`, `vitrine_du_profil` et `signaler_presence`
+  existent ; `profils` a les colonnes `avatar`, `cadre` et `vu_le` ;
+- `signaler_presence` est réservée aux joueurs connectés, `vitrine_du_profil` n'est appelable par personne
+  directement, la table `profils` reste fermée au public ;
+- premier signal de présence reçu à 18 h 06 (heure de Paris) : le jeu publié l'utilise.
+
+Comptes à ce moment : 66 comptes, 243 profils dont 240 joueurs maison, 733 possessions. Aucune modification faite.

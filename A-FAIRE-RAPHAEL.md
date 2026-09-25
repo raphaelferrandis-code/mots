@@ -61,6 +61,8 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Fil d'activité de l'accueil (script 14 installé par Raphaël) | En ligne ; il apparaît au premier événement |
 | Lien « Amis » retiré de la barre du haut | En ligne ; les Amis restent dans Profil → **Mes amis** |
 | Mot adverse caché jusqu'à la parade, pose alternée (anti-triche) | **En ligne** (étape 6 faite) |
+| Refonte des écrans Duel (préparation, partie, parade, combat animé, fin) | En ligne |
+| Refonte des Amis et de l'Équipe (portraits, présence, vitrines, blason) | **En ligne** (étape 7 faite) |
 
 ---
 
@@ -131,6 +133,15 @@ Détails : [GUIDE-combats-serveur.md](GUIDE-combats-serveur.md) et [GUIDE-joutes
       le premier » ; à la manche 2, le timbre de l'ordinateur arrive face cachée et ne se retourne qu'à la parade.
       Les duels déjà commencés se terminent normalement. Un joueur qui avait le jeu ouvert pendant le
       redéploiement doit recharger la page.
+
+### Étape 7 — Installer le script 15 (portraits et présence des amis) — FAIT le 25 septembre
+
+Détails : [GUIDE-portraits-et-presence.md](GUIDE-portraits-et-presence.md).
+
+- [x] Script `serveur/15-portraits-et-presence.sql` en place dans Supabase, contrôlé par l'assistant en lecture seule
+      (fonctions à jour, droits corrects, premier signal de présence reçu).
+- [ ] Vérifier sur philamots.fr : Profil → **Mes amis** → la fiche d'un ami montre son portrait, son niveau, « En
+      ligne » ou « Passage il y a… » et ses plus beaux timbres.
 
 ---
 
