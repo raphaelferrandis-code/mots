@@ -33,7 +33,7 @@ export function EssaiTimbre() {
   const parMot = (mot: string): CarteIndex => trouver((c) => c.mot === mot);
   const aspects: { nom: string; carte: CarteIndex; finition: Finition }[] = [
     { nom: 'Courant', carte: trouver((c) => c.rarete === 'Commune' && c.type === 'Nom', 40), finition: 'Normale' },
-    { nom: 'Doré à chaud', carte: trouver((c) => c.rarete === 'Rare' && c.type === 'Adjectif', 12), finition: 'Brillante' },
+    { nom: 'Brillant', carte: trouver((c) => c.rarete === 'Rare' && c.type === 'Adjectif', 12), finition: 'Brillante' },
     { nom: 'Holographique', carte: trouver((c) => c.rarete === 'Épique' && c.type === 'Nom', 7), finition: 'Holographique' },
     { nom: 'Hors-série', carte: parMot('amour'), finition: 'Normale' },
   ];

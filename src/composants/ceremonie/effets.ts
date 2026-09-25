@@ -91,7 +91,7 @@ if (typeof window !== 'undefined') {
 // ── Les particules ──────────────────────────────────────────────────────────
 // La boucle s'arrête d'elle-même quand il n'y a plus rien à dessiner.
 
-type Genre = 'poussiere' | 'etincelle' | 'confetti' | 'fibre';
+type Genre = 'poussiere' | 'etincelle' | 'confetti' | 'fibre' | 'encre'; // « encre » : les éclats du choc, en duel
 type Particule = { x: number; y: number; vx: number; vy: number; g: number; frein: number; vie: number; duree: number; taille: number; couleur: string; genre: Genre; rot: number; vr: number };
 export type Jaillissement = { n?: number; genre?: Genre; couleurs?: string[]; vitesse?: [number, number]; taille?: [number, number]; g?: number; duree?: [number, number]; frein?: number; ouverture?: number; angle?: number };
 
@@ -149,6 +149,11 @@ export class Particules {
       if (p.genre === 'poussiere') {
         c.globalCompositeOperation = 'lighter'; c.fillStyle = p.couleur;
         c.beginPath(); c.arc(p.x, p.y, p.taille * (.4 + .6 * p.vie), 0, 6.283); c.fill();
+      } else if (p.genre === 'encre') {
+        // Une goutte d'encre : pleine, et qui s'étire dans le sens de sa course.
+        c.globalCompositeOperation = 'source-over'; c.fillStyle = p.couleur;
+        c.save(); c.translate(p.x, p.y); c.rotate(Math.atan2(p.vy, p.vx));
+        c.beginPath(); c.ellipse(0, 0, p.taille * (1 + Math.min(1.4, Math.hypot(p.vx, p.vy) / 500)), p.taille * (.55 + .45 * p.vie), 0, 0, 6.283); c.fill(); c.restore();
       } else if (p.genre === 'etincelle') {
         c.globalCompositeOperation = 'lighter'; c.strokeStyle = p.couleur; c.lineWidth = p.taille; c.lineCap = 'round';
         c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.vx * .035, p.y - p.vy * .035); c.stroke();

@@ -31,7 +31,8 @@ describe('sons du duel', () => {
     assert.equal(t.sons.length, 0, 'pas de sortie audio avant un geste du joueur');
 
     t.duel.preparer();
-    for (const jouer of [() => t.duel.poser(), () => t.duel.juste(), () => t.duel.faux(), () => t.duel.tic(), () => t.duel.cachet(), () => t.duel.victoire(), () => t.duel.defaite()]) {
+    for (const jouer of [() => t.duel.poser(), () => t.duel.juste(), () => t.duel.faux(), () => t.duel.tic(), () => t.duel.cachet(), () => t.duel.victoire(), () => t.duel.defaite(),
+      () => t.duel.selection(), () => t.duel.piocher(), () => t.duel.souffle(), () => t.duel.bouclier(), () => t.duel.fissure(), () => t.duel.choc(4), () => t.duel.frappe()]) {
       const avant = t.sons.length;
       jouer();
       assert.ok(t.sons.length > avant, 'chaque son programme au moins une source');
@@ -47,6 +48,18 @@ describe('sons du duel', () => {
     t.duel.coup(6, 0.45);
     const coup = t.sons.slice(-2);
     assert.ok(coup.every((s) => s.genre === 'souffle' && s.debut === 10.45), 'le coup part après la réponse');
+  });
+
+  it('compte les cinq dernières secondes par un bip doux (une note), un peu plus aigu à chaque seconde', () => {
+    const t = sortieDeTest();
+    t.duel.preparer();
+    const frequences = [5, 4, 3, 2, 1].map((restantes) => {
+      t.duel.tic(restantes);
+      const bip = t.sons.at(-1)!;
+      assert.equal(bip.genre, 'note');
+      return (bip as unknown as { frequency: { value: number } }).frequency.value;
+    });
+    assert.ok(frequences.every((f, i) => i === 0 || f > frequences[i - 1]), `les bips montent : ${frequences.join(', ')}`);
   });
 
   it('ne fait aucun bruit pour une attaque sans dégât, ni quand le son est coupé', () => {

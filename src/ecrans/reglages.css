@@ -34,19 +34,6 @@
 .profil-compte .bouton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .profil-compte .joute__saisie { min-width: 0; }
 
-.commande-duel .duel-temps {
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 240px);
-  gap: 4px 24px;
-  align-items: center;
-  max-width: 620px;
-  margin-block: 4px 12px;
-  border-bottom: 0;
-}
-.duel-temps > small { grid-column: 1; }
-.commande-duel .duel-temps > select { grid-column: 2; grid-row: 1 / 3; }
-
 @media (max-width: 600px) {
-  .commande-duel .duel-temps { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .commande-duel .duel-temps > select { grid-column: 1; grid-row: auto; }
   .profil-compte__contenu > .bouton { justify-self: stretch; }
 }

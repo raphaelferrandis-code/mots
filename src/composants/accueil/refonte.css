@@ -23,7 +23,6 @@
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 .fil__piste { display: flex; width: max-content; animation: fil-defile 80s linear infinite; }
-.fil:hover .fil__piste { animation-play-state: paused; }
 .fil__evenement { display: flex; align-items: center; }
 .fil__evenement > span { padding: 0 24px; white-space: nowrap; font-family: var(--police-serif); font-style: italic; font-size: 16px; color: var(--c-texte-doux); }
 .fil__evenement b { font-weight: 700; font-style: normal; color: var(--c-papier); }

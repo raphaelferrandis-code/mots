@@ -1,7 +1,6 @@
 import { BadgeJoueurSimule } from '../composants/BadgeJoueurSimule.tsx';
 import { CadreGrave } from '../composants/cosmetiques/Gravures.tsx';
 import { Entete } from '../composants/Entete.tsx';
-import { SousOngletsDuel } from '../composants/SousOngletsDuel.tsx';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { ligueDe } from '../jeu/joute.ts';
 import type { LigneDeClassement } from '../services/joutes.ts';
@@ -65,16 +64,16 @@ export function Classement() {
   const equipes = mode === 'duo_equipe';
   const suite = classement ? classement.lignes.filter(l => l.rang > 3) : [];
   return <main className="ecran palmares">
-    <SousOngletsDuel actif="classement" />
+    <a className="btn-tertiary palmares__retour" href={lien({ ecran: 'duel' })}>← Retour aux duels</a>
     <Entete titre="Les classements" actions={<>
-      {pret && <button type="button" className="bouton outil" onClick={() => setTour(t=>t+1)}>Actualiser</button>}
-      <a className="bouton outil" href={lien({ecran:'joutes'})}>Jouer en direct</a>
+      {pret && <button type="button" className="btn-secondary sm" onClick={() => setTour(t=>t+1)}>Actualiser</button>}
+      <a className="btn-primary sm" href={lien({ecran:'joutes'})}>Jouer en direct</a>
     </>} />
     <div className="modes" role="tablist" aria-label="Classement" onKeyDown={choisirAuxFleches([...MODES_DIRECTS],mode,setMode)}>{MODES_DIRECTS.map(m => <button type="button" key={m} role="tab" id={`classement-${m}`} aria-controls="classement-contenu" aria-selected={mode===m} tabIndex={mode===m ? 0 : -1} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
     <section className="palmares__contenu" role="tabpanel" id="classement-contenu" aria-labelledby={`classement-${mode}`}>
       <p className="texte-doux">{DESCRIPTIONS[mode]}</p>
       {!serveurUtilise ? <p>Connecte-toi au serveur pour consulter les classements.</p> : resultat.etat==='en cours' ? <p role="status">Chargement…</p> : null}
-      {resultat.etat==='erreur' && <div className="palmares__erreur" role="alert"><p>{resultat.message}</p><button className="bouton" onClick={() => setTour(t=>t+1)}>Réessayer</button></div>}
+      {resultat.etat==='erreur' && <div className="palmares__erreur" role="alert"><p>{resultat.message}</p><button type="button" className="btn-primary sm" onClick={() => setTour(t=>t+1)}>Réessayer</button></div>}
       {classement && (classement.lignes.length===0 ? <section className="etat-vide">
         <h2>{equipes ? 'Aucune équipe classée' : 'Personne n’est encore classé'}</h2>
         <p>Aucune partie terminée pour l’instant. Prends la première place !</p>

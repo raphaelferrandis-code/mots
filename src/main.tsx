@@ -8,6 +8,8 @@ import './theme/theme.css';
 import './theme/styles.css';
 import './theme/responsive.css';
 import './theme/coherence.css';
+import './theme/boutons.css';
+import './theme/pastilles.css';
 
 async function demarrer() {
   // Avant le retour de Google, qui réécrit l'adresse.

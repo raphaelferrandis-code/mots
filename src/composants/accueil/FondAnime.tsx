@@ -34,7 +34,8 @@ export function FondAnime() {
         const taille = Math.round(base * o.s), image = document.createElement('canvas');
         image.width = image.height = Math.round(taille * dpr);
         const g = image.getContext('2d');
-        if (g) {
+        // Une fenêtre de taille nulle (onglet caché, cadre pas encore mesuré) : rien à dessiner, et « arc » refuserait un rayon négatif.
+        if (g && taille > 12) {
           g.scale(dpr, dpr); g.strokeStyle = o.couleur; g.lineWidth = .7;
           g.stroke(new Path2D(rosace(taille / 2 - 6, o.R, o.r, o.d, taille / 2, taille / 2)));
           g.beginPath(); g.arc(taille / 2, taille / 2, taille / 2 - 2, 0, 6.283); g.stroke();

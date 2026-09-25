@@ -37,6 +37,7 @@ type Props = {
   obtenuLe?: number | null; // date portée par le cachet ; aujourd'hui si elle est inconnue
   verso?: boolean; // ajoute le verso gommé, pour les timbres qui se retournent
   montrerVerso?: boolean; // avec « verso » : quelle face est visible
+  dosRenseigne?: boolean; // avec « verso » : le verso porte la nature, l'attaque et la défense (timbre adverse face cachée en duel)
   dos?: string; // modèle de dos choisi par le joueur (personnalisation)
   maitriseeLe?: number | null; // le mot est maîtrisé en duel : second cachet
   reagir?: boolean; // les reflets suivent le pointeur (par défaut : dès qu'il y a un reflet à faire jouer)
@@ -48,7 +49,7 @@ type Props = {
   style?: CSSProperties;
 };
 
-export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dos = 'gomme', maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
+export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
   const racine = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -71,7 +72,7 @@ export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe
   // La couche « cadre » porte le conteneur des mesures : un <button> ne peut pas le porter lui-même (Chrome).
   const contenu: ReactNode = (
     <span className="tb__cadre"><span className="tb__echelle">
-      {verso && <DosDuTimbre dos={dos} />}
+      {verso && <DosDuTimbre dos={dos} renseignements={dosRenseigne ? { nature: carte.type, attaque, defense } : undefined} />}
       <span className="tb__face tb__recto">
         <span className="tb__papier" />
         <span className="tb__impression">
@@ -108,7 +109,7 @@ export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe
 
   if (onChoisir) return <button type="button" {...commun} ref={racine as Ref<HTMLButtonElement>} onClick={onChoisir} aria-label={`${description} — ${action ?? 'choisir'}`}>{contenu}</button>;
   if (cliquable) return <a {...commun} ref={racine as Ref<HTMLAnchorElement>} href={lien({ ecran: 'carte', id: carte.id })} aria-label={`${description} — voir la fiche`}>{contenu}</a>;
-  return <div {...commun} ref={racine as Ref<HTMLDivElement>} role="img" aria-label={montrerVerso ? 'Timbre face cachée' : description}>{contenu}</div>;
+  return <div {...commun} ref={racine as Ref<HTMLDivElement>} role="img" aria-label={montrerVerso ? (dosRenseigne ? `Timbre face cachée : ${carte.type}, attaque ${attaque}, défense ${defense}` : 'Timbre face cachée') : description}>{contenu}</div>;
 }
 
 // La rosace guillochée, unique à chaque mot, avec l'initiale au centre. Les Hors-série ont leur dessin à eux.
@@ -190,7 +191,8 @@ export function VersoDuTimbre({ dos = 'gomme', etiquette, onRetourner }: { dos?:
 }
 
 // Le verso : papier gommé, filigrane, sceau et reflet mobile. Le sceau porte le dos choisi par le joueur.
-export function DosDuTimbre({ dos = 'gomme' }: { dos?: string }) {
+// « renseignements » : en duel, le timbre adverse face cachée laisse lire sa nature, son attaque et sa défense.
+export function DosDuTimbre({ dos = 'gomme', renseignements }: { dos?: string; renseignements?: { nature: Nature; attaque: number; defense: number } }) {
   const decor = ornement(dos);
   const personnalise = dos !== 'gomme' && decor;
   return <span className="tb__face tb__verso" data-modele={dos}>
@@ -201,7 +203,13 @@ export function DosDuTimbre({ dos = 'gomme' }: { dos?: string }) {
         ? <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true"><Motif nom={decor.valeur} /></svg>
         : <span>P</span>}
     </span>
-    <span className="tb__note">Philamots, verso gommé</span>
+    {renseignements ? <>
+      <span className="tb__haut tb__haut--verso">
+        <span className="tb__valeur">{renseignements.attaque}<small>Att.</small></span>
+        <span className="tb__valeur">{renseignements.defense}<small>Déf.</small></span>
+      </span>
+      <span className="tb__note tb__note--nature" style={{ '--encre-nature': ENCRES_DU_TIMBRE[renseignements.nature] } as CSSProperties}>{renseignements.nature}</span>
+    </> : <span className="tb__note">Philamots, verso gommé</span>}
     <span className="tb__gomme" />
   </span>;
 }

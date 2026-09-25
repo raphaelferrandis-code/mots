@@ -438,14 +438,13 @@ export function Ceremonie({ premier, tirer, continuer, reserve, depuis, modelePa
   const auResume = phase === 'resume' || (phase === 'fermeture' && rangees.length > 0 && rangees.every(Boolean));
 
   const fiche = (obtenue: CarteObtenue, sous: string) => {
-    const eclat = eclatDe(obtenue);
     return <>
       <div className="c-pastilles">
-        <span className={`c-pastille c-pastille--${eclat}`}>{obtenue.carte.rarete}</span>
-        {obtenue.finition !== 'Normale' && <span className={`c-pastille c-pastille--${obtenue.finition === 'Brillante' ? 'dore' : 'holo'}`}>{NOM_DE_LA_FINITION[obtenue.finition]}</span>}
-        {obtenue.nouvelle ? <span className="c-pastille c-pastille--nouveau">Nouveau</span>
-          : obtenue.nouvelleFinition ? <span className="c-pastille c-pastille--nouveau">Nouvelle finition</span>
-            : <span className="c-pastille c-pastille--doublon">Doublon{obtenue.encre > 0 ? `, +${obtenue.encre} Encre` : ''}</span>}
+        <span className="c-pastille c-vignette" data-rarete={obtenue.carte.rarete}>{obtenue.carte.rarete}</span>
+        {obtenue.finition !== 'Normale' && <span className="c-pastille c-dorure" data-finition={obtenue.finition}><span>{NOM_DE_LA_FINITION[obtenue.finition]}</span></span>}
+        {obtenue.nouvelle ? <span className="c-pastille c-tampon">Nouveau</span>
+          : obtenue.nouvelleFinition ? <span className="c-pastille c-tampon">Nouvelle finition</span>
+            : <span className="c-pastille c-tampon c-tampon--doublon">Doublon{obtenue.encre > 0 ? ` · +${obtenue.encre} Encre` : ''}</span>}
       </div>
       <h2 className="c-mot">{obtenue.carte.mot}</h2>
       <p className="c-definition"><em>{ABREGE_DE_LA_NATURE[obtenue.carte.type]}</em>{obtenue.carte.definition}</p>

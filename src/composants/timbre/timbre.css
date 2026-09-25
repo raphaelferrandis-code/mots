@@ -126,7 +126,7 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 .tb__illustration .vig-texte { font-family: var(--police-serif); }
 .tb__illustration .vig-fin { stroke-width: .3; opacity: .55; }
 
-/* ── La finition : doré à chaud (Brillante), holographique, prismatique (Hors-série) ── */
+/* ── La finition : brillant, doré à chaud (Brillante), holographique, prismatique (Hors-série) ── */
 
 .tb[data-finition='Brillante'] .tb__impression, .tb[data-finition='Holographique'] .tb__impression { background-color: color-mix(in srgb, var(--encre-timbre) 58%, #121a33); }
 
@@ -209,3 +209,10 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 @media (prefers-reduced-motion: reduce) { .tb__fond-rosace, .tb__grain { animation: none; } .tb__grain { opacity: .5; } }
 :root[data-animations-reduites] :is(.tb__fond-rosace, .tb__grain) { animation: none; }
 :root[data-animations-reduites] .tb__grain { opacity: .5; }
+
+/* Le verso renseigné (duel) : la nature, l'attaque et la défense du timbre face cachée, à l'encre de sa nature. */
+.tb__haut--verso .tb__valeur { color: rgba(110, 80, 40, .78); }
+.tb__note--nature {
+  bottom: 2.6em; font-style: normal; font-family: var(--police-etroite); font-weight: 600; font-size: 1.9em;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--encre-nature);
+}

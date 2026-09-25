@@ -57,7 +57,7 @@ export type Duel = {
 export type Savoirs = { joueurPare: boolean; adversairePare: boolean };
 
 // Triangle des types : chaque type bat le suivant. Les adverbes sont neutres.
-const BAT: Partial<Record<Nature, Nature>> = { Nom: 'Adjectif', Adjectif: 'Verbe', Verbe: 'Nom' };
+export const BAT: Partial<Record<Nature, Nature>> = { Nom: 'Adjectif', Adjectif: 'Verbe', Verbe: 'Nom' };
 
 export function melanger<T>(liste: readonly T[], hasard: Hasard): T[] {
   const copie = [...liste];

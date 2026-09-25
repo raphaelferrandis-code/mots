@@ -16,7 +16,7 @@ export function eclatDe({ carte, finition }: Pick<CarteObtenue, 'carte' | 'finit
   return 'courant';
 }
 
-export const NOM_DE_LA_FINITION = { Normale: 'Courant', Brillante: 'Doré à chaud', Holographique: 'Holographique' } as const;
+export const NOM_DE_LA_FINITION = { Normale: 'Courant', Brillante: 'Brillant', Holographique: 'Holographique' } as const;
 export const ABREGE_DE_LA_NATURE: Record<Nature, string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adj.', Adverbe: 'adv.' };
 
 // Les nombres en toutes lettres, pour les titres (« Dix paquets t'attendent »).
@@ -48,9 +48,9 @@ function liste(parties: string[]): string {
   return parties.length > 1 ? `${parties.slice(0, -1).join(', ')} et ${parties[parties.length - 1]}` : parties[0] ?? '';
 }
 
-// « 2 courants, 1 doré à chaud et 1 holographique, dont 1 Légendaire »
+// « 2 courants, 1 brillant et 1 holographique, dont 1 Légendaire »
 export function bilanDuPaquet(cartes: readonly CarteObtenue[]): string {
-  const noms: Record<string, [string, string]> = { Normale: ['courant', 'courants'], Brillante: ['doré à chaud', 'dorés à chaud'], Holographique: ['holographique', 'holographiques'], 'Hors-série': ['Hors-série', 'Hors-série'] };
+  const noms: Record<string, [string, string]> = { Normale: ['courant', 'courants'], Brillante: ['brillant', 'brillants'], Holographique: ['holographique', 'holographiques'], 'Hors-série': ['Hors-série', 'Hors-série'] };
   const compte = new Map<string, number>();
   for (const { carte, finition } of cartes) {
     const cle = carte.rarete === 'Hors-série' ? 'Hors-série' : finition;

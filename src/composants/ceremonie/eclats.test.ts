@@ -33,7 +33,7 @@ describe('les phrases de la cérémonie', () => {
   it('résume un paquet', () => {
     const paquet = [obtenue('Commune'), obtenue('Commune'), obtenue('Rare', 'Brillante'), obtenue('Épique', 'Holographique'), obtenue('Légendaire')];
     assert.equal(titreDuResume(paquet), 'Cinq timbres de plus.');
-    assert.equal(bilanDuPaquet(paquet), '3 courants, 1 doré à chaud et 1 holographique, dont 1 Épique et 1 Légendaire');
+    assert.equal(bilanDuPaquet(paquet), '3 courants, 1 brillant et 1 holographique, dont 1 Épique et 1 Légendaire');
     assert.equal(titreDuResume([obtenue('Hors-série')]), 'Ta Hors-série.');
   });
   it('compte les paquets jusqu’à la Légendaire garantie', () => {

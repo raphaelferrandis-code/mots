@@ -222,8 +222,7 @@ main:focus, main h1:focus { outline: none; }
 .reglages__preferences, .reglages__gestion { display: grid; gap: 20px; min-width: 0; }
 /* Le filet de l'en-tête suffit au-dessus de la première rubrique. Celles de la
    seconde colonne le perdent aussi, sur grand écran seulement (responsive.css). */
-.reglages__preferences > .rubrique:first-child,
-.duel-salon__panneau > .rubrique:first-child, .duel-salon__panneau > .panneaux > .rubrique:first-child { border-top: 0; padding-top: 0; }
+.reglages__preferences > .rubrique:first-child { border-top: 0; padding-top: 0; }
 .tableau-defilant { overflow-x: auto; }
 .tableau { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
 .tableau th, .tableau td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--filet); white-space: nowrap; }
@@ -249,7 +248,6 @@ main:focus, main h1:focus { outline: none; }
 
 /* Le nombre de colonnes suit la place disponible, y compris dans un encart. */
 .deck { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 100px), 1fr)); gap: 14px; }
-.atelier-deck__selection .rangee-de-boutons { border-top: 1px solid var(--filet); padding-top: 14px; }
 
 /* Un petit timbre et sa légende en clair (le texte gravé devient trop fin pour être lu). */
 .carte-legendee { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -266,10 +264,8 @@ main:focus, main h1:focus { outline: none; }
 
 /* ── Duel ───────────────────────────────────────────────────────────────── */
 
-/* Les deux modes de duel : entraînement, joutes classées. */
+/* Des onglets de modes, soulignés (classements). */
 .modes { display: flex; gap: 16px; }
-.duel-salon__panneau { display: flex; flex-direction: column; gap: var(--marge); min-width: 0; }
-.epreuve__mot:focus { outline: none; } /* reçoit la main par programme, pour les lecteurs d'écran */
 .modes button { min-height: 44px; padding: 8px 2px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 0.9rem; color: var(--encre-douce); cursor: pointer; }
 .modes button[aria-selected='true'] { border-bottom-color: var(--accent); color: var(--encre); }
 
@@ -285,7 +281,6 @@ main:focus, main h1:focus { outline: none; }
 .joute__saisie label { display: grid; gap: 2px; }
 .joute__saisie input { font: inherit; font-size: 1.15rem; font-weight: 700; color: inherit; padding: 10px 12px; border: 1px solid var(--filet-fort); border-radius: 4px; background: var(--carte-fond); width: 100%; }
 .joute__saisie input[aria-invalid='true'] { border-color: var(--accent); }
-.niveau:disabled { opacity: 0.6; cursor: default; }
 .classement { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .classement li { display: grid; grid-template-columns: 2.4em 1fr auto 3.2em; gap: 8px; align-items: baseline; padding: 5px 6px; border-radius: 6px; }
 .classement li[data-moi='true'] { background: var(--papier-fonce); font-weight: 700; }
@@ -295,69 +290,10 @@ main:focus, main h1:focus { outline: none; }
 .classement__pseudo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .classement__identite { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
 .classement__identite .classement__pseudo { max-width: 100%; }
-.jauge > .joueur-simule { grid-column: 1 / -1; }
 .joueur-simule { display: inline-block; width: fit-content; font-family: var(--police-mention); font-size: 0.8rem; font-weight: 500; line-height: 1.4; color: var(--encre); border: 1px solid currentColor; border-radius: 3px; padding: 0.05rem 0.3rem; white-space: normal; }
-
-.niveaux { display: grid; gap: 8px; }
-.niveau {
-  display: grid; gap: 2px; text-align: left; font: inherit; color: inherit; cursor: pointer;
-  padding: 10px 12px; border: 1px solid var(--filet); border-radius: var(--rayon); background: transparent;
-}
-.niveau[aria-checked='true'] { border-color: var(--accent); background: var(--papier-fonce); box-shadow: inset 3px 0 0 var(--accent); }
-.niveau__gain { font-family: var(--police-mention); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
-
-.duel { gap: 12px; }
-.duel__camps { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; padding-top: 4px; }
-.duel__manche { font-family: var(--police-mention); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--encre-douce); white-space: nowrap; padding-bottom: 2px; }
-.duel__manche { display: flex; flex-direction: column; align-items: center; line-height: 1.25; }
-.duel__manche small { font-size: 0.85em; }
-.jauge { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
-.jauge__nom { grid-column: 1 / -1; font-weight: 700; font-size: 0.95rem; }
-.jauge__barre { height: 10px; border-radius: 5px; background: var(--papier-fonce); border: 1px solid var(--filet); overflow: hidden; }
-.jauge__barre span { display: block; height: 100%; background: var(--accent); transition: width 0.5s ease-out; }
-.jauge__pv { font-family: var(--police-chiffres); font-weight: 700; font-size: 1.3rem; line-height: 1; min-width: 1.4em; text-align: right; }
-
-.duel__table { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.duel__mot-pose { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
-.duel__mot-pose > :is(.tim, .tb), .duel__mot-pose > .deck__vide { width: 100%; }
-.duel__blocage { font-family: var(--police-mention); font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--encre-douce); }
-.duel__definition { font-size: 0.82rem; font-style: italic; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
-/* Sur un grand écran, la définition se lit déjà sur le timbre. */
-@media (min-width: 420px) { .duel__definition { display: none; } }
-
-.duel__tour { gap: 10px; }
-.duel__main { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; } /* la carte choisie se soulève */
-.duel__carte { border-radius: 8px; transition: transform 0.15s ease-out; }
-.duel__carte[data-choisie='true'] { transform: translateY(-8px); outline: 3px solid var(--accent); outline-offset: 3px; }
-.duel__engagement { margin: 0; line-height: 1.25; }
-.duel__engagement span { display: block; margin-top: 2px; }
-.duel__engagement span::first-letter { text-transform: uppercase; }
-.duel__action {
-  position: sticky; bottom: calc(var(--hauteur-navigation) + env(safe-area-inset-bottom) + 8px); z-index: 5;
-  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
-  margin: 0 -8px; padding: 10px 12px;
-  background: var(--carte-fond); border: 1px solid var(--filet); border-radius: var(--rayon); box-shadow: var(--ombre);
-}
-@media (min-width: 768px) { .duel__action { position: static; margin: 0; padding: 0; border: 0; box-shadow: none; } }
-/* Le bouton qui fait avancer le duel reste lui aussi sous le pouce, en bas de l'écran du téléphone. */
-.duel__suite { position: sticky; bottom: calc(var(--hauteur-navigation) + env(safe-area-inset-bottom) + 8px); z-index: 5; display: flex; }
-.duel__suite .bouton { flex: 1; }
-@media (min-width: 768px) { .duel__suite { position: static; } .duel__suite .bouton { flex: 0 0 auto; } }
-.duel__verdict { margin: 0; font-size: 1.05rem; }
-.duel__verdict .entete__surtitre { display: block; }
+/* La leçon « À retenir » après une parade manquée, et les définitions proposées. */
 .duel__lecon { display: grid; gap: 6px; }
 .duel__lecon .entete__surtitre { margin: 0; }
-.epreuve__rappel { margin: 0; text-align: center; font-size: 0.9rem; font-weight: 700; }
-.epreuve__rappel[data-reussi='true'] { color: var(--rarete-peu-commune); }
-.epreuve__rappel[data-reussi='false'] { color: var(--accent); }
-.duel__verdict[data-reussi='true'] strong { color: var(--rarete-peu-commune); }
-.duel__verdict[data-reussi='false'] strong { color: var(--accent); }
-.duel__abandon { align-self: center; font-size: 0.88rem; opacity: 0.8; }
-.duel__fin h2 { font-size: 2rem; }
-
-.epreuve { gap: 10px; }
-.epreuve__mot { font-size: clamp(1.7rem, 8vw, 2.4rem); letter-spacing: 0.04em; text-transform: uppercase; text-align: center; overflow-wrap: anywhere; line-height: 1.1; }
-.epreuve > .texte-doux, .epreuve > .entete__surtitre { text-align: center; margin: 0; }
 .epreuve__propositions { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .proposition {
   display: block; width: 100%; text-align: left; font: inherit; font-style: italic; color: inherit; line-height: 1.35;
@@ -372,12 +308,6 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .proposition[data-etat='fausse'] { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
 .proposition[data-etat='fausse']::before { content: '✘ '; font-style: normal; color: var(--accent); }
 .proposition[data-etat='autre'] { opacity: 0.55; }
-
-.sablier { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
-.sablier__barre { height: 8px; border-radius: 4px; background: var(--papier-fonce); overflow: hidden; }
-.sablier__barre span { display: block; height: 100%; background: var(--encre); transition: width 0.2s linear; }
-.sablier[data-presse='true'] .sablier__barre span { background: var(--accent); }
-.sablier__secondes { font-family: var(--police-chiffres); font-weight: 700; min-width: 2.6em; text-align: right; }
 
 /* ── Marché : les enchères entre joueurs ─────────────────────────────────── */
 

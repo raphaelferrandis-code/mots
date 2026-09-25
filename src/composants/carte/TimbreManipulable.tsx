@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { Carte, DosDeCarte } from './Carte.tsx';
@@ -8,7 +8,22 @@ export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = nul
   const [angle, setAngle] = useState({ x: 0, y: 0 });
   const [saisie, setSaisie] = useState(false);
   const geste = useRef<{ id: number; x: number; y: number; angle: typeof angle; largeur: number } | null>(null);
+  const pointeur = useRef({ x: .5, y: .5 });
+  const scene = useRef<HTMLDivElement>(null);
   const verso = Math.cos(angle.y * Math.PI / 180) < 0;
+  // Le timbre ne reçoit pas le pointeur (la scène le capte pour tourner) : c'est la scène qui place ses reflets,
+  // d'après la position du pointeur et l'inclinaison de la carte, pour que le brillant glisse quand on la tourne.
+  const eclairer = (a: typeof angle): void => {
+    const timbre = scene.current?.querySelector<HTMLElement>('.timbre-objet__face:not(.timbre-objet__face--dos) .tb');
+    if (!timbre) return;
+    const borne = (v: number): number => Math.max(0, Math.min(1, v));
+    const x = borne(pointeur.current.x - Math.sin(a.y * Math.PI / 180) * .6);
+    const y = borne(pointeur.current.y + a.x / 24 * .35);
+    timbre.style.setProperty('--mx', x.toFixed(3)); timbre.style.setProperty('--my', y.toFixed(3));
+    timbre.style.setProperty('--gx', `${(x * 100).toFixed(1)}%`); timbre.style.setProperty('--gy', `${(y * 100).toFixed(1)}%`);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => eclairer(angle), [angle]);
   const debut = (e: PointerEvent<HTMLDivElement>): void => {
     if (!e.isPrimary || e.button !== 0) return;
     geste.current = { id: e.pointerId, x: e.clientX, y: e.clientY, angle, largeur: e.currentTarget.clientWidth };
@@ -17,12 +32,10 @@ export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = nul
   };
   const bouger = (e: PointerEvent<HTMLDivElement>): void => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const recto = e.currentTarget.querySelector<HTMLElement>('.tim');
     // La zone de saisie reste fixe, même lorsque la carte passe sur la tranche.
-    recto?.style.setProperty('--rx', `${Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100))}%`);
-    recto?.style.setProperty('--ry', `${Math.max(0, Math.min(100, (e.clientY - rect.top) / rect.height * 100))}%`);
+    pointeur.current = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
     const g = geste.current;
-    if (!g || g.id !== e.pointerId) return;
+    if (!g || g.id !== e.pointerId) { eclairer(angle); return; }
     setAngle({
       y: g.angle.y + (e.clientX - g.x) / g.largeur * 240,
       // Sur téléphone, le geste vertical reste disponible pour faire défiler la fiche.
@@ -39,7 +52,7 @@ export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = nul
   };
 
   return <div className="timbre-objet">
-    <div className="timbre-objet__scene" role="group" tabIndex={0}
+    <div ref={scene} className="timbre-objet__scene" role="group" tabIndex={0}
       aria-label={`${carte.mot}, timbre manipulable. Glisser ou utiliser les flèches pour tourner ; touche Début pour revenir au recto.`}
       onPointerDown={debut} onPointerMove={bouger} onPointerUp={fin} onPointerCancel={fin} onLostPointerCapture={fin} onKeyDown={clavier}
       data-saisie={saisie}>
