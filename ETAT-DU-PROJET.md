@@ -13,8 +13,9 @@
 > Nouveau timbre partout (aspect de la maquette, avec attaque, défense et origine), cérémonie d'ouverture de paquet
 > (déchirure au geste, révélation une par une, « Tout révéler », rangement animé dans l'album), nouvel accueil (comptoir,
 > album en aperçu, duels, fond animé, fil d'activité de tous les joueurs). Détails et décisions : `GUIDE-refonte-ceremonie.md`.
-> **À faire par Raphaël :** installer `serveur/14-fil-d-activite.sql` (sans lui, le fil reste caché). La dernière migration
-> est désormais la 14.
+> **`serveur/14-fil-d-activite.sql` installé par Raphaël le 25/09**, vérifié (la fonction publique `fil_d_activite`
+> répond). Le fil reste caché tant qu'il est vide : il apparaît au premier événement (nouveau pseudonyme, victoire en
+> joute classée, Légendaire ou Hors-série trouvée, finition holographique). La dernière migration est désormais la 14.
 
 > **25 septembre 2026 — faire connaître le jeu.** Raphaël a demandé comment promouvoir le site (déjà public sur
 > philamots.fr) et a choisi quatre chantiers :
