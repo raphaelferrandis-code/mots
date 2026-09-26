@@ -68,8 +68,8 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Tenue du serveur et match à accepter (« J'y vais ! », 20 s, sans défaite) | **En ligne** (étape 9 faite) |
 | Classement contre la triche (3 rencontres classées par jour, 5 parties pour être classé, cote retrouvée, gagnant récompensé d'un abandon) | **En ligne** (étape 10 faite) |
 | Paiements : suppression par le joueur, mois et année de naissance, reprises après une panne de Stripe | **En ligne** (étape 11 faite), achats toujours fermés |
-| Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | Jeu en ligne ; **étape 12 à faire** pour les duels joués sur le serveur |
-| Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | Jeu en ligne ; **étape 12 à faire** (script 20 et les deux mêmes fonctions) |
+| Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | **En ligne** (étape 12 faite) |
+| Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | **En ligne** (étape 12 faite) |
 
 ---
 
@@ -226,7 +226,7 @@ Détails : [docs/GUIDE-paiements-production.md](docs/GUIDE-paiements-production.
 - [ ] Six requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE : elles
       peuvent être supprimées.
 
-### Étape 12 — Coller le script 20, puis redéployer les deux fonctions du combat (points secondaires, définitions vides)
+### Étape 12 — Coller le script 20, puis redéployer les deux fonctions du combat (points secondaires, définitions vides) — FAIT le 26 septembre
 
 Pourquoi, le script 20 (les points secondaires de l'audit) : un paquet, un cadeau ou une mise en vente redemandés
 après une coupure de réseau ne sont plus servis deux fois ; le fil d'activité ne montre plus que les trouvailles des
@@ -242,17 +242,20 @@ encore sortir. Aucune carte ne change (ni rareté, ni attaque, ni défense). Ce 
 réseau (une réponse partie à temps compte encore si elle arrive jusqu'à 1,5 s en retard) et, en direct, l'attaque
 annoncée d'un mot face cachée avec son bonus d'enchaînement.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/20-points-secondaires.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/20-points-secondaires.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected » s'il apparaît).
-- [ ] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
+- [x] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
       `serveur/deploiement-combats/combats.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
-- [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+- [x] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
       `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
-- [ ] Dire à l'assistant que c'est fait : il vérifie, en lecture seule, le script et que le code déployé est identique
-      aux fichiers. Un joueur qui avait le jeu ouvert pendant le redéploiement doit recharger la page.
-- [ ] Une requête « Untitled query » de vérification (lecture seule) est dans l'éditeur SQL, rubrique PRIVATE : elle
-      peut être supprimée.
+- [x] Vérifié par l'assistant en lecture seule le 26 septembre : les 106 fonctions de la base sont exactement celles du
+      dépôt (l'éditeur de Supabase ajoute des fins de ligne Windows au collage, sans effet) ; table des demandes
+      protégée, fonctions ouvertes aux joueurs et aides internes fermées, index unique du code de secours, vente gardée
+      sans son vendeur, déclencheurs en place ; le serveur reconnaît les nouvelles fonctions ; `combats` et
+      `joutes-direct` déployées identiques aux fichiers, octet pour octet ; « Verify JWT » désactivé sur les deux.
+- [ ] Trois requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE :
+      elles peuvent être supprimées.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

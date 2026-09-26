@@ -17,7 +17,9 @@
 > (`mouvement.ts`) ; recherche du marché après 300 ms ; album qui se souvient ; écran d'attente dans `index.html` ;
 > fichiers de l'édition versionnés (`?v=`) ; CSP dans le site construit ; actions GitHub figées par empreinte ; code
 > mort retiré (dont les anciens appels du duel local au serveur) ; tris et messages d'erreur partagés. **Script 20 et
-> fonctions `combats` et `joutes-direct` à installer** (étape 12). La dernière migration est désormais la 20.
+> fonctions `combats` et `joutes-direct` installés par Raphaël le 26/09 et vérifiés en lecture seule** (étape 12 :
+> les 106 fonctions de la base identiques au dépôt, droits, index, contrainte, code des deux fonctions identique octet
+> pour octet). La dernière migration est désormais la 20.
 
 > **25 septembre 2026 — plus de définition vide dans la parade.** En duel, la parade proposait parfois « Définition
 > manquante ou à compléter. (Ajouter) » : un sens que le Wiktionnaire n'a pas encore rédigé, resté dans 8 cartes
@@ -26,9 +28,9 @@
 > la richesse du mot, si bien qu'aucune note ne bouge. **L'édition est désormais figée** (`figee: true` dans
 > `pipeline/config.ts`) : le pipeline garde exactement les 3 016 cartes publiées, avec leur rareté et leurs badges,
 > et ne recalcule que leurs textes et leurs notes ; recomposée, l'édition aurait échangé 4 cartes (le rapport le dit au
-> §4). Résultat : seules les définitions des 8 cartes changent ; aucun script SQL à recoller. Le jeu est en ligne ;
-> **côté serveur, il reste à redéployer `combats` et `joutes-direct`** (étape 12 d'A-FAIRE-RAPHAEL), qui composent les
-> questions avec leur propre copie des définitions — un test vérifie maintenant que cette copie suit celle du jeu.
+> §4). Résultat : seules les définitions des 8 cartes changent ; aucun script SQL à recoller. **`combats` et
+> `joutes-direct`, qui composent les questions avec leur propre copie des définitions, sont redéployées (étape 12,
+> vérifiée le 26/09)** — un test vérifie maintenant que cette copie suit celle du jeu.
 
 > **25 septembre 2026 — la rareté se voit au cadre du timbre : une teinte de papier et un filet.** Raphaël ne voyait
 > pas de différence entre les raretés (Commune, Peu commune et Rare étaient presque identiques, et une Commune
