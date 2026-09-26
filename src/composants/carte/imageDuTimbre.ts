@@ -23,7 +23,7 @@ import {
 } from './pinceaux.ts';
 import type { Couche, Degrade, Rvba } from './pinceaux.ts';
 
-export type Habillage = { finition: Finition; maitriseeLe: number | null; obtenuLe?: number | null };
+export type Habillage = { finition: Finition; maitriseeLe: number | null; obtenuLe?: number | null; premierJour?: boolean };
 
 type Contexte = CanvasRenderingContext2D;
 type Boite = { x: number; y: number; l: number; h: number };
@@ -758,7 +758,7 @@ export async function dessinerLeTimbre(carte: CarteIndex, habillage: Habillage, 
   try {
     flushSync(() => racine.render(createElement(Timbre, {
       carte, finition: habillage.finition, oblitere: true, obtenuLe: habillage.obtenuLe ?? null,
-      maitriseeLe: habillage.maitriseeLe, cliquable: false, reagir: false,
+      maitriseeLe: habillage.maitriseeLe, premierJour: habillage.premierJour ?? false, cliquable: false, reagir: false,
     })));
     const timbre = support.querySelector<HTMLElement>('.tb');
     if (!timbre) throw new Error("Le timbre n'a pas pu être préparé.");

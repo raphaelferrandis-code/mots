@@ -27,14 +27,15 @@ type Props = {
   onChoisir?: () => void; // la carte devient un bouton (choisir une carte du deck, jouer une carte de sa main)
   action?: string; // ce que fait ce bouton, pour les lecteurs d'écran : « ajouter au deck », « jouer »…
   obtenuLe?: number | null; // date d'obtention : c'est elle que porte le cachet (sinon, l'année d'attestation du mot)
+  premierJour?: boolean; // le premier timbre de sa rareté dans l'album : oblitération « Premier jour » (jeu/premierJour.ts)
 };
 
 // Depuis la refonte (maquette de la cérémonie), la carte du jeu est le nouveau timbre, partout.
 // Les spécimens de matière (galerie de contrôle) gardent l'ancienne gravure.
-export function Carte({ specimen, obtenuLe = null, ...props }: Props) {
+export function Carte({ specimen, obtenuLe = null, premierJour = false, ...props }: Props) {
   if (specimen) return <CarteClassique specimen={specimen} {...props} />;
   const { carte, finition = 'Normale', cliquable = true, maitriseeLe = null, onChoisir, action } = props;
-  return <Timbre carte={carte} finition={finition} oblitere obtenuLe={obtenuLe} cliquable={cliquable} maitriseeLe={maitriseeLe} onChoisir={onChoisir} action={action} />;
+  return <Timbre carte={carte} finition={finition} oblitere obtenuLe={obtenuLe} cliquable={cliquable} maitriseeLe={maitriseeLe} premierJour={premierJour} onChoisir={onChoisir} action={action} />;
 }
 
 // L'ancienne carte, avant la refonte.

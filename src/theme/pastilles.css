@@ -44,6 +44,8 @@
   animation: c-coup-de-tampon .38s cubic-bezier(.2, 1.4, .4, 1) .12s backwards;
 }
 .c-tampon--doublon { color: var(--c-texte-doux, #a7b1c4); rotate: 3deg; opacity: .75; }
+/* Le premier timbre d'une grande rareté : le tampon du premier jour, à l'encre vermillon (celle de son cachet). */
+.c-tampon--premier-jour { color: #ff9a82; rotate: -6deg; opacity: 1; }
 @keyframes c-coup-de-tampon { from { scale: 1.8; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .c-vignette, .c-dorure > span, .c-dorure::after, .c-tampon { animation: none; } }
 

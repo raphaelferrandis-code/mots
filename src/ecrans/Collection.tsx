@@ -5,6 +5,7 @@ import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { registresMasques } from '../jeu/partie.ts';
+import { premiersJours, rareteDansLEdition } from '../jeu/premierJour.ts';
 import { COMPARAISONS, correspond, trierLesCartes } from '../jeu/rangement.ts';
 import type { Comparaison } from '../jeu/rangement.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
@@ -61,6 +62,9 @@ export function Collection() {
   }, [sauvegarde, cartes]);
 
   const possedees = useMemo(() => (sauvegarde ? visibles.filter((c) => c.id in sauvegarde.cartes) : []), [visibles, sauvegarde]);
+  // Le cachet « Premier jour » : la première Épique, la première Légendaire et la première Hors-série de l'album.
+  const rareteDe = useMemo(() => (cartes ? rareteDansLEdition(cartes) : null), [cartes]);
+  const premiers = useMemo(() => (sauvegarde && rareteDe ? premiersJours(sauvegarde.cartes, rareteDe) : new Set<string>()), [sauvegarde, rareteDe]);
 
   // Les cartes Hors-série sont comptées à part ; les finitions brillantes et holographiques aussi.
   const bilan = useMemo(() => {
@@ -168,7 +172,7 @@ export function Collection() {
           )}
           {affichees.length === 0 && <div className="etat-vide"><h2>Aucun timbre ne correspond</h2><p>Modifie ta recherche ou efface les filtres.</p></div>}
           <div className="rangee-de-cartes">
-            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} obtenuLe={sauvegarde!.cartes[carte.id].obtenueLe} />)}
+            {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} maitriseeLe={sauvegarde!.cartes[carte.id].maitriseeLe} obtenuLe={sauvegarde!.cartes[carte.id].obtenueLe} premierJour={premiers.has(carte.id)} />)}
           </div>
           {affichees.length > pages * PAR_PAGE && (
             <button type="button" className="bouton bouton--discret" onClick={() => setPages((p) => p + 1)}>Afficher plus de timbres</button>

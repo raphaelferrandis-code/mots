@@ -4,7 +4,7 @@ import type { CarteIndex, Finition } from '../../partage/types.ts';
 import { Carte, DosDeCarte } from './Carte.tsx';
 import './timbreManipulable.css';
 
-export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = null }: { carte: CarteIndex; finition: Finition; maitriseeLe: number | null; obtenuLe?: number | null }) {
+export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = null, premierJour = false }: { carte: CarteIndex; finition: Finition; maitriseeLe: number | null; obtenuLe?: number | null; premierJour?: boolean }) {
   const [angle, setAngle] = useState({ x: 0, y: 0 });
   const [saisie, setSaisie] = useState(false);
   const geste = useRef<{ id: number; x: number; y: number; angle: typeof angle; largeur: number } | null>(null);
@@ -57,7 +57,7 @@ export function TimbreManipulable({ carte, finition, maitriseeLe, obtenuLe = nul
       onPointerDown={debut} onPointerMove={bouger} onPointerUp={fin} onPointerCancel={fin} onLostPointerCapture={fin} onKeyDown={clavier}
       data-saisie={saisie}>
       <div className="timbre-objet__rotation" style={{ '--rotation-x': `${angle.x}deg`, '--rotation-y': `${angle.y}deg` } as CSSProperties}>
-        <div className="timbre-objet__face" aria-hidden={verso}><Carte carte={carte} finition={finition} maitriseeLe={maitriseeLe} obtenuLe={obtenuLe} cliquable={false} /></div>
+        <div className="timbre-objet__face" aria-hidden={verso}><Carte carte={carte} finition={finition} maitriseeLe={maitriseeLe} obtenuLe={obtenuLe} premierJour={premierJour} cliquable={false} /></div>
         <div className="timbre-objet__face timbre-objet__face--dos" aria-hidden={!verso}><DosDeCarte etiquette={`Dos de ${carte.mot}`} /></div>
       </div>
     </div>

@@ -3,14 +3,21 @@
 // Les gains affichés sont ceux que le serveur (ou la sauvegarde locale) a réellement accordés.
 
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
+import { Carte } from '../../composants/carte/Carte.tsx';
 import { MomentsDeProgres, useRecompensesDuMoment } from '../../composants/Recompenses.tsx';
 import { SceauDuel } from '../../composants/SceauDuel.tsx';
 import { useRacineInerte } from '../../composants/useRacineInerte.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
+import { ID_FACE_CACHEE } from '../../jeu/duel.ts';
 import type { Duel } from '../../jeu/duel.ts';
 import { ligueDe } from '../../jeu/joute.ts';
 import type { Resultat } from '../../jeu/progression.ts';
+import { meilleureFinition } from '../../jeu/sauvegarde.ts';
+import type { CartePossedee } from '../../jeu/sauvegarde.ts';
+import type { CarteIndex } from '../../partage/types.ts';
+import { usePartie } from '../../composants/usePartie.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { Jaillissement } from '../../composants/ceremonie/effets.ts';
 
@@ -37,6 +44,11 @@ export function FinDuDuel(p: Props) {
   useRacineInerte(); // les onglets derrière le voile ne quittent pas le duel par erreur
   // Le niveau et les succès gagnés pendant ce duel s’affichent sur la carte (et non plus dans un bandeau par-dessus).
   const progres = useRecompensesDuMoment(true);
+  // Les mots maîtrisés pendant ce duel, en miniature avec leur cachet (retrouvés parmi les mots adverses joués).
+  const partie = usePartie();
+  const [maintenant] = useState(() => Date.now());
+  const jouees = p.duel.manches.map((m) => m.adversaire.carte).filter((c) => c.id !== ID_FACE_CACHEE);
+  const maitrisees = p.bilan.maitrises.map((mot) => ({ mot, carte: jouees.find((c) => c.mot === mot) ?? null }));
   const { duel, resultat } = p;
   const moi = duel.camps.joueur.pv;
   const lui = duel.camps.adversaire.pv;
@@ -94,7 +106,15 @@ export function FinDuDuel(p: Props) {
           <div><dt>Meilleur coup</dt><dd>{meilleure && meilleure.joueur.infliges > 0 ? <><span lang="fr">{meilleure.joueur.carte.mot}</span> · {meilleure.joueur.infliges}</> : '—'}</dd></div>
         </dl>
         <MomentsDeProgres recompenses={progres} />
-        {p.bilan.maitrises.length > 0 && <p className="fin-duel__note">Cachet « Maîtrisé » : {p.bilan.maitrises.join(', ')}.</p>}
+        {maitrisees.length > 0 && (
+          <section className="fin-duel__maitrises" aria-label="Mots maîtrisés pendant ce duel">
+            <p className="fin-duel__rubrique">Cachet « Maîtrisé »</p>
+            <ul>{maitrisees.map(({ mot, carte }, i) => <li key={mot} style={{ '--i': i } as CSSProperties}>
+              {carte && <Miniature carte={carte} possedee={partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined} maintenant={maintenant} />}
+              <span lang="fr">{mot}</span>
+            </li>)}</ul>
+          </section>
+        )}
 
         <div className="fin-duel__actions">
           {p.rejouer
@@ -107,6 +127,12 @@ export function FinDuDuel(p: Props) {
     </div>,
     document.body,
   );
+}
+
+function Miniature({ carte, possedee, maintenant }: { carte: CarteIndex; possedee: CartePossedee | undefined; maintenant: number }) {
+  return <span className="fin-duel__miniature" aria-hidden="true">
+    <Carte carte={carte} finition={possedee ? meilleureFinition(possedee) : 'Normale'} maitriseeLe={possedee?.maitriseeLe ?? maintenant} obtenuLe={possedee?.obtenueLe ?? null} cliquable={false} />
+  </span>;
 }
 
 // Un gain qui défile de 0 à sa valeur, une fois l'écran posé.

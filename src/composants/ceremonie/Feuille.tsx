@@ -27,6 +27,7 @@ type Props = {
   reduire?: boolean; // réglage « Réduire les animations »
   lueur?: Lueur | null; // un paquet d'exception : la feuille a une tranche dorée ou irisée
   onCase?: (i: number, parClavier: boolean) => void; // parClavier : Entrée ou Espace, pas un geste
+  premiersJours?: ReadonlySet<string>; // cachet « Premier jour » (le premier timbre d'une rareté de l'album)
 };
 
 // La disposition suit la largeur de l'écran, et le téléphone qu'on tourne.
@@ -46,7 +47,7 @@ const placer = (r: Rectangle, d: Disposition): CSSProperties => ({ left: pourcen
 const chiffres = (n: number, longueur: number): string => String(Math.max(0, n)).padStart(longueur, '0');
 
 // Mémorisée : la feuille ne se redessine que si elle change (face, timbre détaché ou révélé), pas à chaque envol.
-export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, lueur, onCase }: Props) {
+export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, lueur, onCase, premiersJours }: Props) {
   const d = useMemo(() => disposition(cartes.length, etroite), [cartes.length, etroite]);
   const verso = face === 'verso';
   const perforations = useMemo(() => trous(d, verso).map((t) => `M${t.x - 7} ${t.y}a7 7 0 1 0 14 0a7 7 0 1 0 -14 0`).join(''), [d, verso]);
@@ -68,7 +69,7 @@ export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, ed
         if (!verso) {
           return <button key={i} type="button" className="fe__case" data-i={i} style={placer(r, d)} onClick={(e) => onCase?.(i, e.detail === 0)}
             aria-label={`${obtenue.carte.mot}, ${obtenue.carte.rarete.toLowerCase()}`}>
-            <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere={revele} dentele={false} cliquable={false} reagir={false} />
+            <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere={revele} premierJour={premiersJours?.has(obtenue.carte.id)} dentele={false} cliquable={false} reagir={false} />
           </button>;
         }
         const eclat = eclatDe(obtenue);
@@ -114,7 +115,7 @@ function MargesDuRecto({ d, numero, edition }: { d: Disposition; numero: number;
     <text className="fe__etroit" x={W / 2} y={large ? 104 : 100} textAnchor="middle" fontSize={tailleMention} letterSpacing="4" fill={SEPIA} {...ajuste(mention, tailleMention, 4, W - 40)}>{mention}</text>
     <rect x={W - L - 150} y={H - 66} width="150" height="48" fill="none" stroke={SEPIA} strokeWidth="1.4" />
     <text className="fe__etroit" x={W - L - 75} y={H - 38} textAnchor="middle" fontWeight="600" fontSize="20" fill={MARINE}>{`${chiffres(date.getDate(), 2)}·${chiffres(date.getMonth() + 1, 2)}·${String(date.getFullYear()).slice(2)}`}</text>
-    <text className="fe__etroit" x={W - L - 75} y={H - 24} textAnchor="middle" fontSize="9" letterSpacing="2" fill={SEPIA}>COIN DATÉ</text>
+    <text className="fe__etroit" x={W - L - 75} y={H - 24} textAnchor="middle" fontSize="9" letterSpacing="2" fill={SEPIA}>{numero === 1 ? 'PREMIER JOUR' : 'COIN DATÉ'}</text>
     {d.colonnes > 1 && <text className="fe__etroit" x={L} y={H - 34} fontSize="13" letterSpacing="3" fill={SEPIA}>IMPRIMERIE DES MOTS · TAILLE-DOUCE</text>}
   </svg>;
 }

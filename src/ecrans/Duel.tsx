@@ -293,10 +293,11 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
             <p className="entete__surtitre">À retenir — {etape.adverse.mot}</p>
             <Propositions epreuve={etape.parade.epreuve} reponse={etape.parade} seulementLUtile />
           </div>}
-        {connue && <p className="texte-doux petit">
-          {etape.parade.maitrise
-            ? `Cachet « Maîtrisé » obtenu : ${etape.adverse.mot}.`
-            : connue.maitriseeLe !== null ? `« ${etape.adverse.mot} » : maîtrisé.` : `Maîtrise · ${etape.adverse.mot} : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise}`}
+        {connue && etape.parade.maitrise && <p className="partie__maitrise">
+          <b>Cachet « Maîtrisé »</b> : tu as trouvé {REGLES.reussitesPourLaMaitrise} fois la définition de « <span lang="fr">{etape.adverse.mot}</span> ». Ton timbre le porte maintenant dans l’album.
+        </p>}
+        {connue && !etape.parade.maitrise && <p className="texte-doux petit">
+          {connue.maitriseeLe !== null ? `« ${etape.adverse.mot} » : maîtrisé.` : `Maîtrise · ${etape.adverse.mot} : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise}`}
         </p>}
       </section>
     );

@@ -5,7 +5,7 @@
 //
 // Ce qui vient du jeu : l'attaque et la défense (les deux valeurs du haut), l'origine, la nature (couleur de
 // l'encre), la rareté (teinte du papier, filet, rang et mention imprimée), la finition (reflets), la date
-// d'obtention (cachet) et le cachet « Maîtrisé ». La définition n'est plus imprimée sur le timbre : elle se lit
+// d'obtention (cachet), le cachet « Maîtrisé » et celui du « Premier jour ». La définition n'est plus imprimée sur le timbre : elle se lit
 // à côté (fiche, cérémonie).
 
 import { memo, useId, useRef } from 'react';
@@ -13,7 +13,7 @@ import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { ornement } from '../../jeu/personnalisation.ts';
 import { lien } from '../../navigation/routes.ts';
-import type { CarteIndex, Finition, Nature } from '../../partage/types.ts';
+import type { CarteIndex, Finition, Nature, Rarete } from '../../partage/types.ts';
 import { CachetDeMaitrise } from '../carte/Tampon.tsx';
 import { NIVEAU, NOM_COURT, anneeDuCachet } from '../carte/decor.ts';
 import { VIGNETTES } from '../carte/vignettes.tsx';
@@ -42,6 +42,7 @@ type Props = {
   dos?: string; // modèle de dos choisi par le joueur (personnalisation)
   dentele?: boolean; // false : sans découpe dentelée (timbre encore dans sa feuille : les perforations dessinent ses bords)
   maitriseeLe?: number | null; // le mot est maîtrisé en duel : second cachet
+  premierJour?: boolean; // le premier timbre de sa rareté dans l'album (Épique et au-dessus) : oblitération « Premier jour »
   reagir?: boolean; // les reflets suivent le pointeur (par défaut : dès qu'il y a un reflet à faire jouer)
   cliquable?: boolean; // ouvre la fiche de la carte
   sansDefinition?: boolean; // compatibilité avec la carte précédente : la définition n'est plus sur le timbre
@@ -52,7 +53,7 @@ type Props = {
 };
 
 // Mémorisé : un timbre ne se redessine que si ce qu'il montre change (la cérémonie en anime plusieurs à la fois).
-export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
+export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, maitriseeLe = null, premierJour = false, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
   const racine = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -91,19 +92,20 @@ export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblite
         <span className="tb__mention">{carte.rarete} · {carte.type} · {anneeDuCachet(carte.attestation)}</span>
         <span className="tb__vernis" />
         <span className="tb__lueur" />
-        <CachetDuTimbre faction={carte.faction} le={obtenuLe} attestation={anneeDuCachet(carte.attestation)} />
+        <CachetDuTimbre faction={carte.faction} le={obtenuLe} attestation={anneeDuCachet(carte.attestation)} premierJour={premierJour ? carte.rarete : null} />
         {maitriseeLe !== null && <CachetDeMaitrise idCarte={carte.id} le={maitriseeLe} />}
       </span>
     </span></span>
   );
 
-  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' || horsSerie ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaque}, défense ${defense}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
+  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${finition === 'Normale' || horsSerie ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaque}, défense ${defense}${maitriseeLe !== null ? ', mot maîtrisé' : ''}${premierJour ? ', cachet Premier jour' : ''}`;
   const commun = {
     className: ['tb', className].filter(Boolean).join(' '),
     'data-nature': carte.type,
     'data-niveau': niveau,
     'data-finition': effet,
     'data-oblitere': oblitere || undefined,
+    'data-premier-jour': premierJour || undefined,
     'data-face': verso ? (montrerVerso ? 'verso' : 'recto') : undefined,
     'data-dentele': dentele ? undefined : 'non',
     style: { '--encre-timbre': horsSerie ? '#17161c' : ENCRES_DU_TIMBRE[carte.type], ...style } as CSSProperties,
@@ -163,11 +165,13 @@ function FondDesHorsSerie({ idCarte }: { idCarte: string }) {
 
 // Le cachet d'oblitération : l'origine du mot sur le tour, la date d'obtention au centre, un grain d'encre irrégulier.
 // Sans date d'obtention connue (timbre d'un autre joueur, main du duel), le cachet porte l'année d'attestation du mot.
-function CachetDuTimbre({ faction, le, attestation }: { faction: string; le: number | null; attestation: string }) {
+// « Premier jour » : « PREMIER JOUR » et la rareté sur le tour, et toujours une date (aujourd'hui, à l'ouverture).
+function CachetDuTimbre({ faction, le, attestation, premierJour }: { faction: string; le: number | null; attestation: string; premierJour: Rarete | null }) {
   const id = useId();
   const date = new Date(le ?? Date.now());
-  const jour = le === null ? 'ATTESTÉ' : jourDuCachet(date);
-  const annee = le === null ? attestation : String(date.getFullYear());
+  const dateConnue = le !== null || premierJour !== null;
+  const jour = dateConnue ? jourDuCachet(date) : 'ATTESTÉ';
+  const annee = dateConnue ? String(date.getFullYear()) : attestation;
   const vagues = [0, 1, 2, 3, 4].map((i) => <path key={i} d={`M110 ${36 + i * 12}q12 -7 24 0t24 0t24 0t24 0t24 0`} />);
   return <span className="tb__cachet" aria-hidden="true"><svg viewBox="0 0 232 120">
     <defs>
@@ -180,9 +184,9 @@ function CachetDuTimbre({ faction, le, attestation }: { faction: string; le: num
     </defs>
     <g filter={`url(#${id}e)`}>
       <g fill="none" stroke="currentColor"><circle cx="60" cy="60" r="47" strokeWidth="3" /><circle cx="60" cy="60" r="29" strokeWidth="1.5" /><g strokeWidth="2.6">{vagues}</g></g>
-      <text className="tb__cachet-tour"><textPath href={`#${id}c`}>{`${NOM_COURT[faction] ?? faction.toUpperCase()} · BUREAU DES MOTS ·`}</textPath></text>
-      <text x="60" y="58" textAnchor="middle" className={le === null ? 'tb__cachet-annee' : 'tb__cachet-jour'}>{jour}</text>
-      <text x="60" y="75" textAnchor="middle" className={le === null ? 'tb__cachet-jour' : 'tb__cachet-annee'}>{annee}</text>
+      <text className="tb__cachet-tour"><textPath href={`#${id}c`}>{premierJour ? `PREMIER JOUR · ${premierJour.toUpperCase()} ·` : `${NOM_COURT[faction] ?? faction.toUpperCase()} · BUREAU DES MOTS ·`}</textPath></text>
+      <text x="60" y="58" textAnchor="middle" className={dateConnue ? 'tb__cachet-jour' : 'tb__cachet-annee'}>{jour}</text>
+      <text x="60" y="75" textAnchor="middle" className={dateConnue ? 'tb__cachet-annee' : 'tb__cachet-jour'}>{annee}</text>
     </g>
   </svg></span>;
 }

@@ -111,6 +111,9 @@ export function Partie(p: Props) {
   const debutDeLaParade = useRef(0);
   if (etape.nom === 'parade') debutDeLaParade.current = etape.debut;
   const paradeOuverte = !p.incident && (etape.nom === 'parade' || (etape.nom === 'bilan' && enCorrection));
+  // Le mot adverse maîtrisé à cette manche : au récapitulatif, son cachet tombe sur le timbre, au coup de tampon qu'on
+  // entend (audit de finition du 26/09/2026 : ce n'était qu'un son et une ligne grise).
+  const maitriseLe = recap && etape.nom === 'bilan' && etape.parade.maitrise ? debutDeLaParade.current : null;
 
   // La souris posée une seconde sur un timbre le montre en grand ; l'aperçu se ferme à chaque changement d'étape.
   const { survoler, fermer: fermerLApercu, apercu } = useApercuAuSurvol();
@@ -237,7 +240,7 @@ export function Partie(p: Props) {
         <figure className="ring__place" data-camp="adversaire">
           <figcaption>Son mot</figcaption>
           <div className="ring__timbre" {...(adverse && revele ? survoler({ carte: adverse, finition: 'Normale', maitriseeLe: null }, etape.nom !== 'bilan') : {})}>
-            {adverse && !intro ? <Timbre key={`${adverse.id}-${duel.manche}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} /> : <span className="ring__vide" />}
+            {adverse && !intro ? <Timbre key={`${adverse.id}-${duel.manche}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} maitriseeLe={maitriseLe} /> : <span className="ring__vide" />}
             {etape.nom === 'bilan' && manche && (temps === 'bouclier' || temps === 'elan' || temps === 'choc') && <Garde paree={manche.joueur.paree} />}
             {etape.nom === 'bilan' && manche && apresLeChoc && <DegatsVolants key={`lui-${manche.numero}`} attaque={manche.joueur} />}
           </div>

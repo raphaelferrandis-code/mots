@@ -129,6 +129,13 @@
 .partie__retenir p { margin: 0; }
 .partie__definition { font-size: 15px; line-height: 1.45; color: var(--p-texte-doux); }
 .partie__definition b { color: var(--p-papier); font-family: var(--police-serif); }
+/* Un mot maîtrisé à cette manche : la phrase prend l'encre violette du cachet, qui tombe sur le timbre adverse au coup
+   de tampon qu'on entend (0,2 s après l'arrivée du récapitulatif, sonsDuDuel.cachet). */
+.partie__maitrise { font-size: 14.5px; line-height: 1.45; color: #d5c4ff; }
+.partie__maitrise b { color: #ece3ff; }
+.ring__timbre .tim__maitrise { animation: c-coup-de-tampon .38s cubic-bezier(.2, 1.4, .4, 1) .05s backwards; }
+@media (prefers-reduced-motion: reduce) { .ring__timbre .tim__maitrise { animation: none; } }
+:root[data-animations-reduites] .ring__timbre .tim__maitrise { animation: none; }
 
 /* ── Téléphone ── */
 @media (max-width: 600px) {
@@ -339,6 +346,15 @@
 .fin-duel__stats dt { font: 600 11px var(--police-etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--p-texte-doux); }
 .fin-duel__stats dd { margin: 0; font: 700 15px var(--police-douce); overflow-wrap: anywhere; }
 .fin-duel__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-top: 6px; }
+/* Les mots maîtrisés pendant le duel : leurs timbres en miniature, dont le cachet tombe l'un après l'autre. */
+.fin-duel__maitrises { display: grid; justify-items: center; gap: 8px; }
+.fin-duel__rubrique { margin: 0; font: 600 11px var(--police-etroite); letter-spacing: .16em; text-transform: uppercase; color: #d5c4ff; }
+.fin-duel__maitrises ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; margin: 0; padding: 0; list-style: none; }
+.fin-duel__maitrises li { display: grid; justify-items: center; gap: 4px; font: 600 13px var(--police-douce); color: var(--p-papier); }
+.fin-duel__miniature { display: block; width: 62px; }
+.fin-duel__miniature .tim__maitrise { animation: c-coup-de-tampon .38s cubic-bezier(.2, 1.4, .4, 1) calc(.7s + var(--i, 0) * .18s) backwards; }
+@media (prefers-reduced-motion: reduce) { .fin-duel__miniature .tim__maitrise { animation: none; } }
+:root[data-animations-reduites] .fin-duel__miniature .tim__maitrise { animation: none; }
 @keyframes fin-sceau { from { opacity: 0; transform: scale(2.4) rotate(-20deg); } }
 @media (max-width: 480px) {
   .fin-duel__actions { flex-direction: column; align-items: stretch; }

@@ -2,7 +2,9 @@
 // dernières trouvailles dans leurs cases dentelées, les Hors-série et le lien vers l'album complet.
 // Pendant l'envol d'un paquet, les cases qui attendent leur timbre restent vides et le compte monte à chaque arrivée.
 
+import { useMemo } from 'react';
 import type { Ref } from 'react';
+import { premiersJours, rareteDansLEdition } from '../../jeu/premierJour.ts';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
 import { lien } from '../../navigation/routes.ts';
@@ -32,6 +34,8 @@ export function ApercuDeLAlbum({ sauvegarde, cartes, cachees, compte = null, ref
   const collection = cartes ? preparerAccueil(sauvegarde, cartes).collection : null;
   const affiche = useNombreAnime(compte ?? collection?.possedees ?? null, 250);
   const trouvailles = cartes ? dernieresTrouvailles(sauvegarde, cartes) : [];
+  const rareteDe = useMemo(() => (cartes ? rareteDansLEdition(cartes) : null), [cartes]);
+  const premiers = useMemo(() => (rareteDe ? premiersJours(sauvegarde.cartes, rareteDe) : null), [sauvegarde, rareteDe]);
 
   return (
     <section className="album-apercu" id="album-apercu" ref={refAlbum} aria-labelledby="titre-album-apercu">
@@ -45,7 +49,7 @@ export function ApercuDeLAlbum({ sauvegarde, cartes, cachees, compte = null, ref
           const possedee = carte ? sauvegarde.cartes[carte.id] : null;
           return <li key={carte?.id ?? `vide-${i}`} className={`album-apercu__case${carte ? ' album-apercu__case--pleine' : ''}`} data-id={carte?.id}>
             {carte && possedee && <Timbre carte={carte} finition={meilleureFinition(possedee)} oblitere obtenuLe={possedee.obtenueLe} maitriseeLe={possedee.maitriseeLe}
-              style={cachees?.has(carte.id) ? { opacity: 0 } : undefined} />}
+              premierJour={premiers?.has(carte.id)} style={cachees?.has(carte.id) ? { opacity: 0 } : undefined} />}
           </li>;
         })}
       </ul>

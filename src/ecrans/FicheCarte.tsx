@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TimbreManipulable } from '../composants/carte/TimbreManipulable.tsx';
 import { ChoixFinition } from '../composants/carte/ChoixFinition.tsx';
 import { CoteDuTimbre } from '../composants/CoteDuTimbre.tsx';
@@ -6,6 +6,7 @@ import { MiseEnVente } from '../composants/MiseEnVente.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { histoireDesPrix } from '../jeu/formule.ts';
+import { premiersJours, rareteDansLEdition } from '../jeu/premierJour.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import type { Finition } from '../partage/types.ts';
@@ -13,7 +14,7 @@ import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
-import { chargerCarte, chargerDetails, pageDuTimbre } from '../services/cartes.ts';
+import { chargerCarte, chargerDetails, chargerEdition, pageDuTimbre } from '../services/cartes.ts';
 import { partagerLeTimbre } from '../services/partage.ts';
 import { lireLesCotes } from '../services/partie.ts';
 import { messageDe } from '../partage/messages.ts';
@@ -39,6 +40,12 @@ export function FicheCarte({ id }: { id: string }) {
   const payant = partie.etat === 'prete' && partie.compte !== null && histoireDesPrix(partie.compte.formule);
   // La cote du timbre (décision n° 38), dès que le marché est ouvert et la fiche connue.
   const cotes = useChargement(async () => (marcheOuvert && fiche.etat === 'pret' && fiche.donnees ? lireLesCotes(id) : null), `cotes:${id}:${marcheOuvert}:${fiche.etat}`);
+  // Le cachet « Premier jour » : ce timbre est-il le premier de sa rareté dans l'album ? (L'édition le dit.)
+  const edition = useChargement(chargerEdition, 'edition');
+  const cartesDeLEdition = edition.etat === 'pret' ? edition.donnees.cartes : null;
+  const sauvegarde = partie.etat === 'prete' ? partie.sauvegarde : null;
+  const rareteDe = useMemo(() => (cartesDeLEdition ? rareteDansLEdition(cartesDeLEdition) : null), [cartesDeLEdition]);
+  const premiers = useMemo(() => (sauvegarde && rareteDe ? premiersJours(sauvegarde.cartes, rareteDe) : null), [sauvegarde, rareteDe]);
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><h1 className="visuellement-cache">Fiche du timbre</h1><ErreurDeChargement quoi="La fiche de ce timbre" feminin reessayer={fiche.relancer} /></main>;
@@ -56,12 +63,13 @@ export function FicheCarte({ id }: { id: string }) {
   const finition = possedee && exemplaire?.id === carte.id && (possedee.finitions[exemplaire.finition] ?? 0) > 0
     ? exemplaire.finition : possedee ? meilleureFinition(possedee) : 'Normale';
   const dansLeDeck = partie.etat === 'prete' && partie.sauvegarde.deck.includes(carte.id);
+  const premierJour = !!possedee && !!premiers?.has(carte.id);
 
   // L'image du timbre, telle qu'on la voit ici, part vers la feuille de partage du téléphone, ou se télécharge.
   const partager = async (): Promise<void> => {
     setPartage({ etat: 'en cours' });
     try {
-      const issue = await partagerLeTimbre(carte, page, { finition, maitriseeLe: possedee?.maitriseeLe ?? null, obtenuLe: possedee?.obtenueLe ?? null });
+      const issue = await partagerLeTimbre(carte, page, { finition, maitriseeLe: possedee?.maitriseeLe ?? null, obtenuLe: possedee?.obtenueLe ?? null, premierJour });
       setPartage(issue === 'telecharge' ? { etat: 'fait', message: "L'image du timbre est enregistrée sur cet appareil." } : { etat: 'repos' });
     } catch (erreur) {
       setPartage({ etat: 'erreur', message: messageDe(erreur) });
@@ -73,7 +81,7 @@ export function FicheCarte({ id }: { id: string }) {
       <article className="fiche">
         <Entete surtitre={`${carte.type} · ${carte.faction}`} titre={carte.mot} />
         <div className="fiche__visuel">
-          <div className="fiche__carte"><TimbreManipulable key={carte.id} carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} obtenuLe={possedee?.obtenueLe ?? null} /></div>
+          <div className="fiche__carte"><TimbreManipulable key={carte.id} carte={carte} finition={finition} maitriseeLe={possedee?.maitriseeLe ?? null} obtenuLe={possedee?.obtenueLe ?? null} premierJour={premierJour} /></div>
           {possedee && carte.rarete !== 'Hors-série' && <ChoixFinition finitions={possedee.finitions} choisie={finition} indisponible={partage.etat === 'en cours'} onChoisir={(f) => { setExemplaire({ id: carte.id, finition: f }); setPartage({ etat: 'repos' }); }} />}
           {carte.record && <p className="fiche__record"><strong>Hors-série.</strong> {carte.record}.</p>}
           {possedee && (
@@ -96,6 +104,7 @@ export function FicheCarte({ id }: { id: string }) {
                 {carte.rarete === 'Hors-série' && 'Hors-série : finition unique.'}
               </p>
             ) : <p className="texte-doux">{vente ? 'Ton exemplaire est en vente sur le marché.' : 'Tu ne possèdes pas encore ce timbre.'}</p>}
+            {premierJour && <p><strong>Cachet « Premier jour »</strong> : ton premier timbre {carte.rarete}.</p>}
             {possedee && (
               <p>
                 {possedee.maitriseeLe !== null
