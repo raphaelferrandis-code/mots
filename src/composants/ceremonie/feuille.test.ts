@@ -75,6 +75,18 @@ describe('la feuille de timbres', () => {
     parts[1] = parts[2] = true; // de 1/8 à 3/8 du tour : passe le coin haut droit
     assert.equal(traceDesParts(r, parts), 'M170.0 0.0L300.0 0.0L300.0 210.0');
     assert.equal(traceDesParts(r, Array<boolean>(8).fill(false)), '');
+    // Presque tout le tour, en partant du bas : les coins dans l'ordre, jamais de diagonale (retour de Raphaël, 26/09).
+    const hasard = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+    for (let essai = 0; essai < 300; essai++) {
+      const tirees = Array.from({ length: 48 }, () => hasard() < .8);
+      for (const trace of traceDesParts(r, tirees).split('M').filter(Boolean)) {
+        const points = trace.split('L').map((p) => p.split(' ').map(Number));
+        for (let k = 1; k < points.length; k++) {
+          const [[x0, y0], [x1, y1]] = [points[k - 1], points[k]];
+          assert.ok(Math.abs(x0 - x1) < .2 || Math.abs(y0 - y1) < .2, `segment en diagonale : ${trace}`);
+        }
+      }
+    }
     assert.match(traceDesParts(r, Array<boolean>(8).fill(true)), /Z$/);
   });
 });

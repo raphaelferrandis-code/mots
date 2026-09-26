@@ -52,3 +52,8 @@
   --hauteur-navigation: 64px;
   --ombre: 0 12px 30px rgb(0 0 0 / 22%);
 }
+
+/* Le jeu n'a qu'un thème, sombre. Cette règle le dit aussi aux navigateurs qui repèrent un site sombre par
+   « prefers-color-scheme » (le mode sombre de Samsung Internet) : sinon ils l'assombrissent encore, et le papier
+   crème des timbres et de la feuille devient brun, leurs trous gris clair (retour de Raphaël, 26/09/2026). */
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }

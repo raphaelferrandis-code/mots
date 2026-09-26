@@ -126,7 +126,8 @@ export function traceDesParts(r: Rectangle, parts: readonly boolean[]): string {
     let fin = k;
     while (parts[(fin + 1) % n] && (fin + 1) % n !== k) fin = (fin + 1) % n;
     const de = k / n, longueur = (((fin + 1) / n - de) % 1 + 1) % 1 || 1;
-    const etapes = [de, ...coins.map((c) => (c < de ? c + 1 : c)).filter((c) => c > de && c < de + longueur), de + longueur];
+    // Les coins traversés, dans l'ordre du tour (un coin « avant » le départ se retrouve après, un tour plus loin).
+    const etapes = [de, ...coins.map((c) => (c < de ? c + 1 : c)).filter((c) => c > de && c < de + longueur).sort((a, b) => a - b), de + longueur];
     chemin += etapes.map((t, i) => `${i ? 'L' : 'M'}${pointDuTour(r, t).map((v) => v.toFixed(1)).join(' ')}`).join('');
   }
   return chemin;
