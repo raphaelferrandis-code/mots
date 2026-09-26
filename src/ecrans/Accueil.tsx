@@ -4,10 +4,14 @@ import { DuelsDuBureau } from '../composants/accueil/DuelsDuBureau.tsx';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
 import { FondAnime } from '../composants/accueil/FondAnime.tsx';
 import { NouvellesDuParrainage } from '../composants/accueil/NouvellesDuParrainage.tsx';
+import { PremiersPas } from '../composants/accueil/PremiersPas.tsx';
 import { Comptoir } from '../composants/ceremonie/Comptoir.tsx';
+import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { lien } from '../navigation/routes.ts';
+import type { Rarete } from '../partage/types.ts';
+import { chargerEdition } from '../services/cartes.ts';
 import { compteConnecte } from '../services/connexion.ts';
 import '../composants/accueil/accueil.css';
 import '../composants/accueil/refonte.css';
@@ -16,6 +20,7 @@ import '../composants/accueil/refonte.css';
 // (Une commodité propre à cet appareil : si le navigateur l'oublie, le rappel revient simplement plus tôt.)
 const CLE_DU_RAPPEL = 'mots.rappel-protection';
 const PAQUETS_AVANT_LE_RAPPEL = 20;
+const RARES: readonly Rarete[] = ['Épique', 'Légendaire', 'Hors-série'];
 function lireLeReport(): number | null {
   try { const lu = Number(localStorage.getItem(CLE_DU_RAPPEL)); return Number.isFinite(lu) && lu > 0 ? lu : null; } catch { return null; }
 }
@@ -26,6 +31,7 @@ export function Accueil() {
   const partie = usePartie();
   const [reporteA, setReporteA] = useState(lireLeReport);
   const [connecte] = useState(compteConnecte);
+  const edition = useChargement(chargerEdition, 'edition');
 
   if (partie.etat === 'erreur') return <main className="ecran"><h1>Accueil</h1><p role="alert">Le jeu n’a pas pu s’ouvrir. Recharge la page.</p></main>;
   if (partie.etat !== 'prete') return <main className="ecran"><h1 className="visuellement-cache">Accueil</h1><p role="status">Chargement…</p></main>;
@@ -38,8 +44,12 @@ export function Accueil() {
     && (depuisLExport >= EQUILIBRAGE.paquetsEntreDeuxRappelsDExport || (sauvegarde.dernierExport === null && ouverts >= PAQUETS_AVANT_LE_RAPPEL));
   // En ligne, le serveur garde la collection, mais celle d'un invité n'est liée qu'à ce navigateur : un compte ou un
   // code de secours la protège (audit de finition du 26/09/2026 : l'ancien rappel d'export disait le contraire).
+  // Il arrive au bon moment : dès que le joueur a quelque chose à perdre (sa première Épique ou mieux, après ses
+  // paquets de départ), et au plus tard au 20e paquet.
+  const beauTimbre = edition.etat === 'pret' && edition.donnees.cartes.some((c) => c.id in sauvegarde.cartes && RARES.includes(c.rarete));
+  const moment = ouverts >= PAQUETS_AVANT_LE_RAPPEL || (beauTimbre && ouverts >= EQUILIBRAGE.paquets.paquetsDeDepart);
   const rappelerLaProtection = partie.serveur.etat !== 'appareil' && partie.compte !== null && partie.compte.codeDeSecoursLe === null && !connecte
-    && ouverts >= PAQUETS_AVANT_LE_RAPPEL && (reporteA === null || ouverts - reporteA >= EQUILIBRAGE.paquetsEntreDeuxRappelsDExport);
+    && moment && (reporteA === null || ouverts - reporteA >= EQUILIBRAGE.paquetsEntreDeuxRappelsDExport);
   const plusTard = (): void => {
     try { localStorage.setItem(CLE_DU_RAPPEL, String(ouverts)); } catch { /* le rappel reviendra à la prochaine visite */ }
     setReporteA(ouverts);
@@ -56,7 +66,7 @@ export function Accueil() {
     <main className="ecran ecran--large accueil-refonte">
       <FondAnime />
       <NouvellesDuParrainage />
-      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} />
+      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} suite={<PremiersPas sauvegarde={sauvegarde} carnet={deck} />} />
       <DevinetteDuJour />
       <FilDActivite />
       {rappelerLExport && (

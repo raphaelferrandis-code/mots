@@ -129,6 +129,17 @@ export function Partie(p: Props) {
     return () => window.removeEventListener('keydown', touche);
   }, [etape.nom, main, arrive, p.onChoisir]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Le tout premier duel (contre l'ordinateur) : trois conseils, chacun à son moment, qu'un « Compris » écarte
+  // (audit de finition du 26/09/2026 : le débutant comprenait le geste, pas le sens des chiffres).
+  const premierDuel = sauvegarde.duels.joues === 0 && p.adversaire.type === 'entrainement';
+  const [conseilsLus, setConseilsLus] = useState<string[]>([]);
+  const conseil = !premierDuel || intro ? null
+    : etape.nom === 'choix' && arrive && adverse && !choisie ? { id: 'face', texte: 'Son mot est posé face cachée : tu vois sa nature (nom, verbe, adjectif ou adverbe) et ses deux chiffres, l’attaque et la défense.' }
+    : etape.nom === 'choix' && choisie ? { id: 'chiffres', texte: `Ton attaque frappe, sa défense amortit : tu infliges ton attaque moins la moitié de sa défense, plus d’éventuels bonus.${aides ? ' En Facile, le jeu te les annonce avant de jouer.' : ''}` }
+    : recap && duel.manche === 1 ? { id: 'rarete', texte: 'Plus un timbre est rare, plus il frappe fort, et plus sa définition est dure à retrouver pour l’adversaire. Ta main se complète à chaque manche.' }
+    : null;
+  const conseilAffiche = conseil && !conseilsLus.includes(conseil.id) ? conseil : null;
+
   const habiller = (carte: CarteIndex) => {
     const possedee = sauvegarde.cartes[carte.id];
     return { carte, finition: possedee ? meilleureFinition(possedee) : 'Normale' as const, maitriseeLe: possedee?.maitriseeLe ?? null };
@@ -243,6 +254,13 @@ export function Partie(p: Props) {
         </figure>
       </section>
       {indice}
+      {conseilAffiche && (
+        <aside className="conseil-duel" aria-label="Conseil du premier duel">
+          <span className="conseil-duel__tampon" aria-hidden="true">Premier duel</span>
+          <p>{conseilAffiche.texte}</p>
+          <button type="button" className="btn-tertiary" onClick={() => setConseilsLus((lus) => [...lus, conseilAffiche.id])}>Compris</button>
+        </aside>
+      )}
 
       <div className="partie__action" data-etape={etape.nom}>
         <div className="partie__etat" aria-live="polite">

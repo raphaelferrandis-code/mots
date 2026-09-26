@@ -61,9 +61,10 @@ const ENCRE_PAR_VICTOIRE = Math.max(...Object.values(EQUILIBRAGE.duel.encreParVi
 // L'anneau d'XP autour de l'avatar : il se remplit vers le niveau suivant.
 const TOUR = 2 * Math.PI * 21;
 
-// `portrait` : l'avatar et le cadre que le joueur a équipés (ceux qu'il voit sur son profil).
-export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseudo = '', portrait = null }: {
-  ecran: Route['ecran']; encre: number | null; xp?: number | null; pseudo?: string; portrait?: { avatar: string; cadre: string } | null;
+// `portrait` : l'avatar et le cadre que le joueur a équipés (ceux qu'il voit sur son profil). `protegee` : la collection a
+// un code de secours (ou l'on ne sait pas encore) ; sinon, un invité lit sous son nom qu'il peut la protéger.
+export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseudo = '', portrait = null, protegee = true }: {
+  ecran: Route['ecran']; encre: number | null; xp?: number | null; pseudo?: string; portrait?: { avatar: string; cadre: string } | null; protegee?: boolean;
 }) {
   // Pendant une cérémonie, l'Encre et l'XP restent figées, puis montent au rangement des timbres.
   const encre = useCompteur('encre', encreReelle);
@@ -165,6 +166,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
                 </span>
                 <div className="menu-profil__identite">
                   <strong>{nom || 'Sans pseudonyme'}</strong>
+                  {!connecte && !protegee && <a className="menu-profil__invite" href={lien({ ecran: 'compte' })}>Invité · protège ta collection</a>}
                   {progression && <>
                     <span className="menu-profil__niveau">Niveau {progression.niveau}</span>
                     <span className="menu-profil__jauge" role="progressbar" aria-label="Expérience vers le niveau suivant" aria-valuemin={0} aria-valuemax={progression.requis} aria-valuenow={progression.acquis}><span style={{ width: `${Math.min(100, (100 * progression.acquis) / progression.requis)}%` }} /></span>

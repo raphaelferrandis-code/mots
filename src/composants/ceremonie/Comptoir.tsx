@@ -37,8 +37,8 @@ type Vol = Envol & { cachees: Set<string>; compte: number };
 const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, mouvementReduit() ? Math.min(ms, 40) : ms));
 
 // « aCote » : ce qui se range à droite de l'album (les duels, sur l'accueil). « accroche » : quelques mots sous le
-// titre (sur l'accueil, ce qu'est le jeu, tant que le joueur débute).
-export function Comptoir({ aCote, accroche }: { aCote?: ReactNode; accroche?: ReactNode } = {}) {
+// titre (sur l'accueil, ce qu'est le jeu, tant que le joueur débute). « suite » : sous le bouton (les premiers pas).
+export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroche?: ReactNode; suite?: ReactNode } = {}) {
   const partie = usePartie();
   const paquets = useStockDePaquets(partie);
   const edition = useChargement(chargerEdition, 'edition');
@@ -169,6 +169,7 @@ export function Comptoir({ aCote, accroche }: { aCote?: ReactNode; accroche?: Re
           <button type="button" className="bouton-dentele" disabled={stock <= 0 || ouverture !== null} onClick={() => ouvrir(ouvrirUnPaquet, true)}>Ouvrir un paquet</button>
           <a className="comptoir__lien" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a>
         </div>
+        {suite}
         {(hebdomadaires > 0 || cadeau) && <div className="comptoir__actions comptoir__actions--offres">
           {hebdomadaires > 0 && <button type="button" className="bouton-dentele bouton-dentele--filet" disabled={ouverture !== null} onClick={() => ouvrir(() => ouvrirRecompense('hebdomadaire'), false)}>Paquet hebdomadaire · {hebdomadaires}</button>}
           {cadeau && <button type="button" className="bouton-dentele bouton-dentele--filet" disabled={ouverture !== null} onClick={() => ouvrir(() => ouvrirRecompense('achat'), false)}>Découvrir ma Hors-série</button>}

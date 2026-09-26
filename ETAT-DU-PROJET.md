@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **27 septembre 2026 — finitions, étape 2, lot A : les premiers pas guidés.** Sous le bouton de l'accueil, « Tes
+> premiers pas » : trois étapes qui se cochent seules (paquets de départ, carnet, première victoire), puis « Bravo, tu
+> connais le jeu ! » avec deux suites (joutes classées : `#/duel/joutes` ouvre l'onglet ; inviter un ami), à fermer
+> (`src/composants/accueil/PremiersPas.tsx` ; rien pour qui a joué plus de 5 duels). Au tout premier duel contre
+> l'ordinateur, trois conseils au bon moment, chacun écarté par « Compris » (mot face cachée, attaque et défense, rareté ;
+> `Partie.tsx`). Protection de l'invité : le rappel « Protège ta collection » arrive dès la première Épique (ou mieux)
+> après les paquets de départ, au plus tard au 20e paquet ; dans le menu du joueur, « Invité · protège ta collection ».
+
 > **26 septembre 2026 (nuit) — finitions, fin de l'étape 1 : les premiers pas.** Décisions de Raphaël : la formule
 > « Mon album » s'appelle **« Écrin »** (l'onglet est « Album » ; le paiement ne dépend que des identifiants Stripe :
 > renommer aussi le produit Stripe avant d'ouvrir les achats, voir docs/GUIDE-paiements-production.md) ; documents

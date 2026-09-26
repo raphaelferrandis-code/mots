@@ -51,6 +51,20 @@
 .accueil__rappel p, .accueil__rappel a { font-size: 0.85rem; }
 .accueil__rappel p { margin-top: 6px; color: var(--encre-douce); }
 .accueil__rappel a { flex-shrink: 0; min-height: 44px; }
+/* Les premiers pas (PremiersPas.tsx), sous le bouton du comptoir : trois cases qui se cochent. */
+.premiers-pas { margin-top: 26px; max-width: 30em; }
+.premiers-pas h2 { margin: 0 0 10px; font: 600 12.5px var(--police-douce); letter-spacing: .12em; text-transform: uppercase; color: var(--c-cuivre); }
+.premiers-pas ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.premiers-pas li { display: flex; align-items: center; gap: 12px; color: var(--c-texte); font-size: 15.5px; }
+.premiers-pas li[data-fait="true"] { color: var(--c-texte-doux); }
+.premiers-pas li[data-fait="true"] > span:not(.premiers-pas__case) { text-decoration: line-through; text-decoration-color: rgba(216, 154, 92, .55); }
+.premiers-pas li a { color: var(--c-papier); text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 4px; }
+.premiers-pas__case { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border: 1px dashed rgba(216, 154, 92, .7); border-radius: 50%; font: 600 13px var(--police-douce); color: var(--c-cuivre-clair); }
+.premiers-pas li[data-fait="true"] .premiers-pas__case { border-style: solid; background: var(--c-cuivre); color: #172235; }
+.premiers-pas--fin h2 { font: 700 20px var(--police-serif); letter-spacing: 0; text-transform: none; color: var(--c-papier); }
+.premiers-pas--fin p { margin: 0 0 10px; color: var(--c-texte-doux); font-size: 15px; line-height: 1.5; }
+.premiers-pas__liens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; }
+.premiers-pas__fermer { min-height: 44px; padding: 0; border: 0; background: none; color: var(--c-texte-doux); font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .accueil__rappel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; flex-shrink: 0; }
 .accueil__plus-tard { min-height: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 0.85rem; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; cursor: pointer; }
 .accueil-trouvailles { display: grid; gap: 16px; }

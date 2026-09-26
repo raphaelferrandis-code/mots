@@ -67,6 +67,22 @@
 .ring__puces :is(.c-vignette, .c-dorure), .partie__calcul :is(.c-vignette, .c-dorure) { padding: 6px 9px 5px 8px; gap: 5px; }
 .ring__puces .c-tampon { padding: 4px 7px 3px; font-size: 10.5px; letter-spacing: .08em; text-transform: none; }
 .ring__indice { margin: 0 auto; max-width: 34em; text-align: center; font-size: 14px; line-height: 1.4; color: var(--p-texte-doux); }
+/* Les conseils du tout premier duel (Partie.tsx) : une fiche de papier, un tampon « Premier duel », « Compris ». */
+.conseil-duel {
+  position: relative; display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; box-sizing: border-box;
+  width: min(100%, 640px); margin: 0 auto; padding: 14px 16px 12px; border-radius: 4px;
+  background: var(--p-papier); color: #1c2a44; box-shadow: 0 6px 18px rgb(0 0 0 / 30%);
+  animation: conseil-arrive .25s ease-out both;
+}
+.conseil-duel p { flex: 1 1 280px; margin: 0; font-size: 14.5px; line-height: 1.45; }
+.conseil-duel__tampon {
+  flex: none; padding: 3px 8px; border: 1.5px solid #b5652b; border-radius: 3px; transform: rotate(-4deg);
+  color: #b5652b; font: 700 11px var(--police-douce); letter-spacing: .12em; text-transform: uppercase;
+}
+.conseil-duel .btn-tertiary { color: #8a4b1f; }
+@keyframes conseil-arrive { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .conseil-duel { animation: none; } }
+:root[data-animations-reduites] .conseil-duel { animation: none; }
 .ring__indice b { color: var(--p-papier); }
 .ring__indice[data-ton='bon'] b { color: var(--p-bon); }
 .ring__indice[data-ton='mauvais'] b { color: var(--p-mauvais); }

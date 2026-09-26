@@ -70,7 +70,8 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
   const edition = useChargement(chargerEdition, 'edition');
 
   const xpAuDebut = useRef(0);
-  const [mode, setMode] = useState<ModeDuSalon>('entrainement');
+  // #/duel/joutes ouvre directement l'onglet des joutes classées (lien des premiers pas, sur l'accueil).
+  const [mode, setMode] = useState<ModeDuSalon>(() => (typeof window !== 'undefined' && window.location.hash.endsWith('/joutes') ? 'joutes' : 'entrainement'));
   // Jusqu'à sa première victoire, le joueur commence en Facile : l'ordinateur y joue au hasard, et le jeu montre les
   // dégâts prévus (décision de Raphaël du 26/09/2026 ; Normal, sans ces aides, décourageait les débutants).
   const [niveau, setNiveau] = useState<Niveau>(() => (sauvegarde && sauvegarde.duels.gagnes === 0 ? 'Facile' : 'Normal'));
