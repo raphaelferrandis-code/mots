@@ -84,6 +84,12 @@ describe('le service des collections', () => {
     assert.deepEqual(appels, [{ fonction: 'changer_de_deck', parametres: { p_deck: ['a-nom', 'inconnue-nom'] } }]);
   });
 
+  it('enregistre un choix d’apparence et relit toute l’apparence gardée', async () => {
+    const { service, appels } = doublure({ changer_d_apparence: { avatar: 'renard', cadre: 'sceau-cire', inconnu: 3, titre: 7 } });
+    assert.deepEqual(await service.changerDApparence({ cadre: 'sceau-cire' }), { avatar: 'renard', cadre: 'sceau-cire' });
+    assert.deepEqual(appels, [{ fonction: 'changer_d_apparence', parametres: { p_apparence: { cadre: 'sceau-cire' } } }]);
+  });
+
   it('définit un code de secours et retrouve une collection avec', async () => {
     const { service, appels } = doublure({ definir_un_code_de_secours: { ...ETAT, codeDeSecoursLe: 777 }, recuperer_par_code: { ...ETAT, profil: { pseudo: 'Zeugma 12', cote: 1016, jouees: 3, gagnees: 2 } } });
     assert.equal((await service.definirUnCode('ABCDEFGHJKMNPQRSTUVW')).codeDeSecoursLe, 777);

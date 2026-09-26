@@ -77,6 +77,7 @@ export function Confidentialite() {
             <li>tes timbres, avec leurs finitions, leurs doublons et la date où tu les as obtenus ;</li>
             <li>ton Encre, ta réserve de paquets et le nombre de paquets ouverts ;</li>
             <li>ton deck ;</li>
+            <li>ton apparence : l'avatar, le cadre, le titre, le dos des cartes, la couleur et le paquet que tu as choisis, pour la retrouver sur tous tes appareils ;</li>
             <li>ton expérience, tes réponses réussies, tes parades et ta maîtrise des mots, même après la vente d'un timbre ;</li>
             <li>le déroulement de tes duels : cartes, questions, réponses, horaires, résultat et gains, pour les vérifier et les reprendre. Au lancement d'un nouveau duel, les parties archivées depuis plus de 30 jours sont supprimées ; les totaux de progression restent dans ton compte ;</li>
             <li>l'empreinte de ton code de secours, si tu en as créé un — jamais le code lui-même.</li>

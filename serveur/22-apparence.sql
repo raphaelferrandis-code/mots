@@ -1,27 +1,7 @@
--- Migration des cosmétiques : générée par npm run serveur:script.
--- Relançable ; conserve les collections, les soldes et les achats existants.
+-- Ton apparence suit ton compte : avatar, cadre, titre, dos, couleur et paquet. Après 21-adversaire-de-secours.sql.
+-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.
 begin;
-alter table public.comptes add column if not exists personnalisations text[] not null default '{}';
-
-alter table public.comptes
-  add column if not exists cadeau_achat_reclame boolean not null default false,
-  add column if not exists reserve_hebdo integer not null default 0,
-  add column if not exists prochain_hebdo timestamptz;
-
--- Calcule aussi les droits gagnés hors connexion, sans créditer après l'expiration.
-create or replace function public.actualiser_offres(c public.comptes) returns public.comptes
-language plpgsql set search_path = '' as $$
-declare limite timestamptz; nombre integer;
-begin
-  if c.abonnement = 'aucun' or c.abonnement_jusqu_au is null or c.prochain_hebdo is null then return c; end if;
-  limite := least(now(), c.abonnement_jusqu_au - interval '1 microsecond');
-  if c.prochain_hebdo <= limite then
-    nombre := floor(extract(epoch from (limite - c.prochain_hebdo)) / (7 * 86400))::integer + 1;
-    c.reserve_hebdo := c.reserve_hebdo + nombre;
-    c.prochain_hebdo := c.prochain_hebdo + nombre * interval '7 days';
-  end if;
-  return c;
-end $$;
+alter table public.comptes add column if not exists apparence jsonb;
 
 create or replace function public.etat_du_compte(p_utilisateur uuid) returns jsonb
 language sql security definer set search_path = ''
@@ -54,13 +34,32 @@ as $$
   )
   from public.comptes c where c.utilisateur = p_utilisateur
 $$;
-create or replace function public.acheter_personnalisation(p_id text) returns jsonb
+
+create or replace function public.changer_d_apparence(p_apparence jsonb) returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
+declare
+  choix jsonb := '{}'::jsonb;
+  cle text;
+  gardee jsonb;
 begin
-  raise exception 'L’Encre est réservée aux enchères.';
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if jsonb_typeof(p_apparence) is distinct from 'object' then raise exception 'Apparence invalide.'; end if;
+  foreach cle in array array['avatar', 'cadre', 'titre', 'dos', 'couleur', 'paquet'] loop
+    continue when not p_apparence ? cle;
+    if jsonb_typeof(p_apparence -> cle) is distinct from 'string'
+      or (p_apparence ->> cle) !~ (case when cle = 'titre' then '^[a-z0-9-]{0,40}$' else '^[a-z0-9-]{1,40}$' end)
+    then raise exception 'Apparence invalide.'; end if;
+    choix := choix || jsonb_build_object(cle, p_apparence ->> cle);
+  end loop;
+  if choix = '{}'::jsonb then raise exception 'Apparence invalide.'; end if;
+  update public.comptes set apparence = coalesce(apparence, '{}'::jsonb) || choix, maj_le = now()
+    where utilisateur = auth.uid() returning apparence into gardee;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return gardee;
 end $$;
-revoke execute on function public.actualiser_offres(public.comptes) from public, anon, authenticated;
-revoke execute on function public.acheter_personnalisation(text) from public, anon;
-grant execute on function public.acheter_personnalisation(text) to authenticated;
+
+revoke execute on function public.changer_d_apparence(jsonb) from public, anon;
+grant execute on function public.changer_d_apparence(jsonb) to authenticated;
+
 commit;

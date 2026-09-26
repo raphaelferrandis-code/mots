@@ -1,6 +1,6 @@
 import { preparerOffres, fonctionsOffres } from './offres.ts';
 import { schemaProgression, INTERNES_PROGRESSION } from './progression-serveur.ts';
-import { XP } from '../src/jeu/personnalisation.ts';
+import { CATEGORIES_D_APPARENCE, XP } from '../src/jeu/personnalisation.ts';
 // La partie du script du serveur qui tient les collections (décision du 22/09/2026, docs/BRIEF-marche.md §5a) :
 // le compte du joueur (Encre, réserve de paquets, deck), ses timbres, le tirage des paquets par le serveur,
 // les récompenses des duels et l'importation, une seule fois, de la collection qui vivait sur l'appareil.
@@ -71,6 +71,10 @@ begin
 end $$;
 revoke execute on function public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb) from public, anon, authenticated;`;
 
+// L'apparence choisie (décision de Raphaël du 26/09/2026) : avatar, cadre, titre, dos, couleur et paquet suivent le
+// joueur d'un appareil à l'autre. Vide tant qu'aucun appareil n'en a envoyé.
+export const APPARENCE_SQL = 'alter table public.comptes add column if not exists apparence jsonb;';
+
 export function collections(): string {
   const chanceHolo = F.chances.Holographique ?? 0;
   const chanceBrillante = F.chances.Brillante ?? 0;
@@ -132,6 +136,7 @@ alter table public.comptes add column if not exists personnalisations text[] not
 -- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
+${APPARENCE_SQL}
 ${INDEX_DU_CODE_SQL}
 ${DEMANDES_TRAITEES_SQL}
 
@@ -235,6 +240,7 @@ as $$
     'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'apparence', c.apparence,
     'progression', public.progression_du_compte(p_utilisateur),
     'plafondDuJour', jsonb_build_object('jour', coalesce(c.jour::text, ''), 'victoires', c.victoires_du_jour),
     'classementPersonnel', (select jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) from public.profils p where p.utilisateur = c.utilisateur),
@@ -630,6 +636,33 @@ begin
   return propre;
 end $$;
 
+-- L'apparence : les choix envoyés remplacent les mêmes choix, les autres restent (un appareil n'envoie que ce qui a
+-- changé). Seul le format est contrôlé, comme pour le portrait des amis : le jeu écarte un identifiant qu'il ne
+-- connaît pas (src/jeu/personnalisation.ts). Le titre peut être vide (aucun titre). Rend toute l'apparence gardée.
+create or replace function public.changer_d_apparence(p_apparence jsonb) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  choix jsonb := '{}'::jsonb;
+  cle text;
+  gardee jsonb;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if jsonb_typeof(p_apparence) is distinct from 'object' then raise exception 'Apparence invalide.'; end if;
+  foreach cle in array array[${liste(CATEGORIES_D_APPARENCE)}] loop
+    continue when not p_apparence ? cle;
+    if jsonb_typeof(p_apparence -> cle) is distinct from 'string'
+      or (p_apparence ->> cle) !~ (case when cle = 'titre' then '^[a-z0-9-]{0,40}$' else '^[a-z0-9-]{1,40}$' end)
+    then raise exception 'Apparence invalide.'; end if;
+    choix := choix || jsonb_build_object(cle, p_apparence ->> cle);
+  end loop;
+  if choix = '{}'::jsonb then raise exception 'Apparence invalide.'; end if;
+  update public.comptes set apparence = coalesce(apparence, '{}'::jsonb) || choix, maj_le = now()
+    where utilisateur = auth.uid() returning apparence into gardee;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return gardee;
+end $$;
+
 -- Un duel d'entraînement commence : un ticket, comme pour les joutes (au plus ${DUELS_PAR_HEURE} par heure).
 create or replace function public.commencer_un_duel(p_niveau text) returns bigint
 language plpgsql security definer set search_path = ''
@@ -711,7 +744,7 @@ commit;
 // Les droits : les fonctions que le jeu appelle, et celles qui restent internes.
 export const FONCTIONS_DES_COLLECTIONS = [
   'public.reclamer_recompense(text, text[], uuid)', 'public.acheter_personnalisation(text)', 'public.mon_compte()', 'public.ouvrir_mon_compte()', 'public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb)',
-  'public.ouvrir_un_paquet(text[], uuid)', 'public.changer_de_deck(jsonb)',
+  'public.ouvrir_un_paquet(text[], uuid)', 'public.changer_de_deck(jsonb)', 'public.changer_d_apparence(jsonb)',
   'public.commencer_un_duel(text)', 'public.terminer_un_duel(bigint, text)', 'public.declarer_mon_age(integer)', 'public.declarer_ma_naissance(integer, integer)',
 ];
 export const FONCTIONS_INTERNES = [

@@ -14,7 +14,7 @@ import { PSEUDOS_INTERDITS } from '../src/config/pseudos-interdits.ts';
 import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
-import { DEMANDES_TRAITEES_SQL, FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, INDEX_DU_CODE_SQL, cartes, collections, migrationPersonnalisation } from './collections.ts';
+import { APPARENCE_SQL, DEMANDES_TRAITEES_SQL, FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, INDEX_DU_CODE_SQL, cartes, collections, migrationPersonnalisation } from './collections.ts';
 import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, VENDEUR_FACULTATIF_SQL, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 import { combats } from './combats.ts';
@@ -542,6 +542,19 @@ export function migrationAdversaireDeSecours(): string {
     + secours() + '\n' + reprise(combats(), 'combat_creer') + '\n\ncommit;\n';
 }
 
+// L'apparence suit le compte (décision de Raphaël du 26/09/2026) : avatar, cadre, titre, dos, couleur et paquet choisis
+// sont gardés par le serveur, choix par choix. Après 21-adversaire-de-secours.sql. Seule etat_du_compte change parmi
+// les fonctions déjà installées : elle est reprise telle quelle. Aucune fonction Edge à redéployer.
+export function migrationApparence(): string {
+  return '-- Ton apparence suit ton compte : avatar, cadre, titre, dos, couleur et paquet. Après 21-adversaire-de-secours.sql.\n'
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\nbegin;\n'
+    + APPARENCE_SQL + '\n\n'
+    + ['etat_du_compte', 'changer_d_apparence'].map((nom) => reprise(structure(), nom)).join('\n\n') + '\n\n'
+    + 'revoke execute on function public.changer_d_apparence(jsonb) from public, anon;\n'
+    + 'grant execute on function public.changer_d_apparence(jsonb) to authenticated;\n'
+    + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -580,5 +593,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '19-paiements.sql'), migrationPaiements());
   writeFileSync(path.join(RACINE, 'serveur', '20-points-secondaires.sql'), migrationPointsSecondaires());
   writeFileSync(path.join(RACINE, 'serveur', '21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
+  writeFileSync(path.join(RACINE, 'serveur', '22-apparence.sql'), migrationApparence());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

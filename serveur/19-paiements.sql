@@ -11,6 +11,7 @@ as $$
     'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'apparence', c.apparence,
     'progression', public.progression_du_compte(p_utilisateur),
     'plafondDuJour', jsonb_build_object('jour', coalesce(c.jour::text, ''), 'victoires', c.victoires_du_jour),
     'classementPersonnel', (select jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) from public.profils p where p.utilisateur = c.utilisateur),

@@ -141,6 +141,40 @@ export function relireProfil(brut: unknown): ProfilPersonnel {
   p.paquet = PAQUETS.find((o) => o.id === lu.paquet)?.id ?? p.paquet;
   return p;
 }
+
+// ── L'apparence (décision de Raphaël du 26/09/2026) ─────────────────────────
+// Ce que le joueur a équipé le suit d'un appareil à l'autre : le serveur le garde, choix par choix
+// (changer_d_apparence, serveur/collections.ts). Un choix que le serveur n'a pas encore reste celui de l'appareil.
+export const CATEGORIES_D_APPARENCE = ['avatar', 'cadre', 'titre', 'dos', 'couleur', 'paquet'] as const;
+export type Apparence = Pick<ProfilPersonnel, typeof CATEGORIES_D_APPARENCE[number]>;
+
+// Ce que le serveur rend, relu sans rien supposer : les seuls choix lisibles, ou null s'il n'en garde aucun.
+export function lireApparence(brut: unknown): Partial<Apparence> | null {
+  if (!brut || typeof brut !== 'object' || Array.isArray(brut)) return null;
+  const lu = brut as Record<string, unknown>;
+  return Object.fromEntries(CATEGORIES_D_APPARENCE.flatMap((c) => (typeof lu[c] === 'string' ? [[c, lu[c]]] : []))) as Partial<Apparence>;
+}
+
+// Les choix du serveur remplacent ceux de l'appareil ; un identifiant que cette version du jeu ne connaît pas laisse
+// celui de l'appareil. La disponibilité n'est pas revérifiée : elle l'a été au moment du choix, et sur un nouvel
+// appareil un titre peut attendre le calcul de son succès (relireProfil la revérifie au chargement suivant).
+export function appliquerLApparence(profil: ProfilPersonnel, apparence: Partial<Apparence>): ProfilPersonnel {
+  const suivi = { ...profil };
+  for (const c of CATEGORIES_D_APPARENCE) {
+    const id = apparence[c];
+    if (id !== undefined && (c === 'paquet' ? PAQUETS.some((p) => p.id === id) : (c === 'titre' && id === '') || ornement(id)?.categorie === c)) suivi[c] = id;
+  }
+  return suivi;
+}
+
+// Ce que l'appareil apprend au serveur : ses propres choix (ce qui n'est plus l'apparence de départ) que le serveur ne
+// garde pas encore — la première fois, ceux faits avant que l'apparence suive le compte. `duServeur` absent : un
+// serveur sans le script 22, à qui rien n'est envoyé.
+export function apparenceAApprendre(profil: ProfilPersonnel, duServeur: Partial<Apparence> | null | undefined): Partial<Apparence> {
+  if (duServeur === undefined) return {};
+  const depart = nouveauProfil();
+  return Object.fromEntries(CATEGORIES_D_APPARENCE.flatMap((c) => (duServeur?.[c] === undefined && profil[c] !== depart[c] ? [[c, profil[c]]] : []))) as Partial<Apparence>;
+}
 export function acheterOrnement(_profil: ProfilPersonnel, _encre: number, id: string): { profil: ProfilPersonnel; encre: number } {
   const o = ornement(id);
   if (!o) throw new Error('Personnalisation inconnue.');

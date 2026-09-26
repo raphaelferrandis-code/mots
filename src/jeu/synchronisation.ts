@@ -5,6 +5,8 @@
 
 import { lireFormule } from './formule.ts';
 import type { Formule } from './formule.ts';
+import { appliquerLApparence, lireApparence } from './personnalisation.ts';
+import type { Apparence } from './personnalisation.ts';
 import type { Finition } from '../partage/types.ts';
 import { relireApprentissages } from './sauvegarde.ts';
 import type { Apprentissage, CartePossedee, Sauvegarde } from './sauvegarde.ts';
@@ -22,6 +24,9 @@ export type EtatDuCompte = {
   plafondDuJour?: { jour: string; victoires: number };
   classementPersonnel?: ProfilRetrouve;
   achatsPersonnalisation?: string[];
+  // L'apparence choisie (avatar, cadre, titre…), choix par choix. Absente : un serveur d'avant le script 22 ;
+  // null : aucun appareil ne l'a encore envoyée.
+  apparence?: Partial<Apparence> | null;
   encre: number;
   paquets: { stock: number; reference: number; ouverts: number; sansLegendaire: number };
   deck: string[];
@@ -78,6 +83,7 @@ export function lireEtat(brut: unknown): EtatDuCompte {
     ...(estUnObjet(brut.plafondDuJour) && typeof brut.plafondDuJour.jour === 'string' ? { plafondDuJour: { jour: brut.plafondDuJour.jour, victoires: nombre(brut.plafondDuJour.victoires) } } : {}),
     ...(estUnObjet(brut.classementPersonnel) && typeof brut.classementPersonnel.pseudo === 'string' ? { classementPersonnel: { pseudo: brut.classementPersonnel.pseudo, cote: nombre(brut.classementPersonnel.cote), jouees: nombre(brut.classementPersonnel.jouees), gagnees: nombre(brut.classementPersonnel.gagnees) } } : {}),
     ...(Array.isArray(brut.achatsPersonnalisation) ? { achatsPersonnalisation: brut.achatsPersonnalisation.filter((id): id is string => typeof id === 'string') } : {}),
+    ...('apparence' in brut ? { apparence: lireApparence(brut.apparence) } : {}),
     ...(brut.progression == null ? {} : {progression: lireProgression(brut.progression)}),
     encre: nombre(brut.encre),
     paquets: { stock: nombre(paquets.stock), reference: nombre(paquets.reference), ouverts: nombre(paquets.ouverts), sansLegendaire: nombre(paquets.sansLegendaire) },
@@ -118,7 +124,8 @@ export function fusionner(locale: Sauvegarde, etat: EtatDuCompte): Sauvegarde {
     duels: { ...locale.duels, ...(p?.duels ?? {}), ...(etat.plafondDuJour ? { jour: etat.plafondDuJour.jour, victoiresDuJour: etat.plafondDuJour.victoires } : {}) },
     joutes: etat.classementPersonnel ? { ...locale.joutes, ...etat.classementPersonnel }
       : p ? {pseudo:'',cote:null,jouees:0,gagnees:0,recents:[]} : locale.joutes,
-    profil: { ...locale.profil, ...(p ? {xp:p.xp,bonusXpReste:p.bonusXpReste} : {}), achats: etat.achatsPersonnalisation ?? locale.profil.achats }, encre: etat.encre, paquets: { ...etat.paquets }, cartes, deck: etat.deck.filter((id) => id in cartes) };
+    profil: appliquerLApparence({ ...locale.profil, ...(p ? {xp:p.xp,bonusXpReste:p.bonusXpReste} : {}), achats: etat.achatsPersonnalisation ?? locale.profil.achats }, etat.apparence ?? {}),
+    encre: etat.encre, paquets: { ...etat.paquets }, cartes, deck: etat.deck.filter((id) => id in cartes) };
 }
 
 // Une partie qui a déjà vécu sur l'appareil vaut la peine d'être importée sur le serveur (sinon : un compte neuf).

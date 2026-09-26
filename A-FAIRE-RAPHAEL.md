@@ -275,6 +275,18 @@ d'attente imposée, les défis entre amis restent tels quels. **Aucune fonction 
 - [ ] Deux requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE :
       elles peuvent être supprimées.
 
+### Étape 14 — Coller le script 22 (ton apparence suit ton compte)
+
+Ta décision du 26 septembre : l'avatar, le cadre, le titre, le dos, la couleur et le paquet choisis suivent le compte
+d'un appareil à l'autre. **Aucune fonction à redéployer.** Le jeu est déjà publié et attend ce script.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/22-apparence.sql → **Copy raw file** →
+      Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
+      attendue : **Success. No rows returned**.
+- [ ] Ensuite, ouvrir le jeu **d'abord sur l'appareil qui a l'apparence à garder** : ses choix partent au serveur, puis
+      les autres appareils les reprennent. Un choix fait ensuite, n'importe où, vaut partout.
+- [ ] Demander à l'assistant de vérifier en lecture seule.
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de

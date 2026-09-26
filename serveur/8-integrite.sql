@@ -405,6 +405,7 @@ alter table public.comptes add column if not exists personnalisations text[] not
 -- Le quota survit au retrait du profil classé ; il disparaît avec le compte complet.
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
+alter table public.comptes add column if not exists apparence jsonb;
 drop index if exists public.comptes_par_code;
 create unique index if not exists comptes_code_unique on public.comptes (code_hache) where code_hache is not null;
 create table if not exists public.demandes_traitees (
@@ -665,6 +666,7 @@ as $$
     'achatsPersonnalisation', to_jsonb(c.personnalisations),
     'paquets', jsonb_build_object('stock', c.stock, 'reference', public.en_millisecondes(c.reference), 'ouverts', c.ouverts, 'sansLegendaire', c.sans_legendaire),
     'deck', c.deck,
+    'apparence', c.apparence,
     'progression', public.progression_du_compte(p_utilisateur),
     'plafondDuJour', jsonb_build_object('jour', coalesce(c.jour::text, ''), 'victoires', c.victoires_du_jour),
     'classementPersonnel', (select jsonb_build_object('pseudo', p.pseudo, 'cote', p.cote, 'jouees', p.jouees, 'gagnees', p.gagnees) from public.profils p where p.utilisateur = c.utilisateur),
@@ -1058,6 +1060,33 @@ begin
   propre := public.deck_propre(auth.uid(), p_deck);
   update public.comptes set deck = propre, maj_le = now() where utilisateur = auth.uid();
   return propre;
+end $$;
+
+-- L'apparence : les choix envoyés remplacent les mêmes choix, les autres restent (un appareil n'envoie que ce qui a
+-- changé). Seul le format est contrôlé, comme pour le portrait des amis : le jeu écarte un identifiant qu'il ne
+-- connaît pas (src/jeu/personnalisation.ts). Le titre peut être vide (aucun titre). Rend toute l'apparence gardée.
+create or replace function public.changer_d_apparence(p_apparence jsonb) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  choix jsonb := '{}'::jsonb;
+  cle text;
+  gardee jsonb;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if jsonb_typeof(p_apparence) is distinct from 'object' then raise exception 'Apparence invalide.'; end if;
+  foreach cle in array array['avatar', 'cadre', 'titre', 'dos', 'couleur', 'paquet'] loop
+    continue when not p_apparence ? cle;
+    if jsonb_typeof(p_apparence -> cle) is distinct from 'string'
+      or (p_apparence ->> cle) !~ (case when cle = 'titre' then '^[a-z0-9-]{0,40}$' else '^[a-z0-9-]{1,40}$' end)
+    then raise exception 'Apparence invalide.'; end if;
+    choix := choix || jsonb_build_object(cle, p_apparence ->> cle);
+  end loop;
+  if choix = '{}'::jsonb then raise exception 'Apparence invalide.'; end if;
+  update public.comptes set apparence = coalesce(apparence, '{}'::jsonb) || choix, maj_le = now()
+    where utilisateur = auth.uid() returning apparence into gardee;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  return gardee;
 end $$;
 
 -- Un duel d'entraînement commence : un ticket, comme pour les joutes (au plus 40 par heure).
@@ -2191,9 +2220,9 @@ grant execute on function public.fil_d_activite() to anon, authenticated;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
-revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
+revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.changer_d_apparence(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;
 revoke execute on function public.pseudo_refuse(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
-grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
+grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.changer_d_apparence(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
 
 
 commit;

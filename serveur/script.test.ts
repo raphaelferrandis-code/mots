@@ -11,7 +11,7 @@ import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts'
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { CarteDetails, Definition, IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours, migrationApparence } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -47,6 +47,7 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('19-paiements.sql'), migrationPaiements());
     assert.equal(lire('20-points-secondaires.sql'), migrationPointsSecondaires());
     assert.equal(lire('21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
+    assert.equal(lire('22-apparence.sql'), migrationApparence());
   });
 
   it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {

@@ -3,8 +3,8 @@ import { serveurDesAmis } from './amis.ts';
 import type { ActionAmitie, ActionEchange, TimbreEchange } from './amis.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { calculerGainXp, cosmetiquesPremium } from '../jeu/formule.ts';
-import { XP, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
-import type { Categorie } from '../jeu/personnalisation.ts';
+import { XP, apparenceAApprendre, appliquerLApparence, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
+import type { Apparence, Categorie } from '../jeu/personnalisation.ts';
 import { appliquerIdentite, pseudoDuJoueur, verifierIdentite } from './identite.ts';
 // La partie du joueur : sa sauvegarde en mémoire, les actions qui la modifient, et son enregistrement.
 // Les écrans ne touchent jamais au stockage : ils passent par ici.
@@ -152,7 +152,9 @@ function appliquer(etat: EtatDuCompte): void {
   dernierEtat = Math.max(dernierEtat, etat.maintenant);
   decalage = etat.maintenant - Date.now();
   publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, formule: etat.formule } });
-  enregistrer(fusionner(partie.sauvegarde, etat));
+  // Un choix d'apparence que le serveur n'a pas encore enregistré n'est pas défait par ce qu'il disait avant de le recevoir.
+  enregistrer(fusionner(partie.sauvegarde, { ...etat, apparence: etat.apparence && horsDesChoixEnAttente(etat.apparence) }));
+  apprendreLApparence(etat.apparence);
 }
 
 export async function commanderCombat(commande: RequeteCombat): Promise<ReponseServeurCombat> {
@@ -176,6 +178,7 @@ export async function recupererAvecUnCode(saisie: string): Promise<{ timbres: nu
   const code = normaliserUnCode(saisie);
   if (!estUnCodeValable(code)) throw new Error('Ce code est incomplet : il compte vingt lettres et chiffres, en quatre groupes de cinq.');
   generationIdentite++;
+  choixEnAttente = {}; // l'apparence du compte retrouvé l'emporte
   // Une session perdue ne doit pas empêcher la récupération explicite : aucun import local préalable.
   const retrouvee = await serveurDesCollections.recupererParCode(code);
   if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
@@ -326,10 +329,45 @@ function gagnerExperience(xp: number, combat = false): void {
 export function personnaliser(categorie: Categorie | 'paquet', id: string): void {
   if (partie.etat !== 'prete') return;
   const profil = partie.sauvegarde.profil;
-  if (categorie === 'titre' && id === '') { enregistrer({ ...partie.sauvegarde, profil: { ...profil, titre: '' } }); return; }
+  if (categorie === 'titre' && id === '') { enregistrer({ ...partie.sauvegarde, profil: { ...profil, titre: '' } }); envoyerLApparence({ titre: '' }); return; }
   const choix = ornement(id);
   if (categorie === 'paquet' ? !PAQUETS.some((p) => p.id === id) : !choix || choix.categorie !== categorie || !estDisponible(profil, choix, partie.compte !== null && cosmetiquesPremium(partie.compte.formule, maintenant()))) return;
   enregistrer({ ...partie.sauvegarde, profil: { ...profil, [categorie]: id } });
+  envoyerLApparence({ [categorie]: id });
+}
+
+// ── L'apparence suit le compte (décision de Raphaël du 26/09/2026) ──────────
+// Le serveur garde chaque choix (script 22). Un choix fait ici reste « en attente » jusqu'à ce que le serveur l'ait
+// enregistré : un état lu avant ne le défait pas à l'écran, et s'il n'a pas pu partir (hors ligne), il repart à la
+// réponse suivante du serveur.
+let apparenceSurLeServeur = false;
+let choixEnAttente: Partial<Apparence> = {};
+let envoiDApparence = false;
+const horsDesChoixEnAttente = (apparence: Partial<Apparence>): Partial<Apparence> =>
+  Object.fromEntries(Object.entries(apparence).filter(([c]) => !(c in choixEnAttente)));
+
+function envoyerLApparence(choix: Partial<Apparence> = {}): void {
+  choixEnAttente = { ...choixEnAttente, ...choix };
+  if (envoiDApparence || partie.etat !== 'prete' || !apparenceSurLeServeur || partie.serveur.etat !== 'en ligne' || Object.keys(choixEnAttente).length === 0) return;
+  const envoi = choixEnAttente;
+  const generation = generationIdentite;
+  envoiDApparence = true;
+  void serveurDesCollections.changerDApparence(envoi).then((gardee) => {
+    if (generation !== generationIdentite) return;
+    // Ce qui a encore changé pendant l'envoi reste en attente ; pour le reste, le serveur a le dernier mot.
+    choixEnAttente = Object.fromEntries(Object.entries(choixEnAttente).filter(([c, id]) => envoi[c as keyof Apparence] !== id));
+    if (partie.etat === 'prete' && gardee) enregistrer({ ...partie.sauvegarde, profil: appliquerLApparence(partie.sauvegarde.profil, horsDesChoixEnAttente(gardee)) });
+  }).catch((erreur: unknown) => {
+    // Un refus motivé ne passerait pas mieux plus tard : le choix n'est pas redemandé.
+    if (erreur instanceof ErreurDuServeur && erreur.refus) choixEnAttente = {};
+    else signalerLaPanne(erreur);
+  }).finally(() => { envoiDApparence = false; envoyerLApparence(); });
+}
+
+// À chaque état du serveur : garde-t-il l'apparence (script 22) ? L'appareil lui apprend alors ses choix qu'il n'a pas.
+function apprendreLApparence(duServeur: Partial<Apparence> | null | undefined): void {
+  apparenceSurLeServeur = duServeur !== undefined;
+  if (partie.etat === 'prete') envoyerLApparence(apparenceAApprendre(partie.sauvegarde.profil, duServeur));
 }
 // Renommage et publication partagent la même file : une publication de l'ancien
 // écran ne peut repasser après un renommage et rétablir un ancien pseudonyme.
@@ -506,6 +544,7 @@ export function importerUneSauvegarde(texte: string): void {
 export async function toutEffacer(): Promise<void> {
   if (partie.etat !== 'prete') return;
   generationIdentite++;
+  choixEnAttente = {};
   await ecritures;
   await effacerLaSauvegarde();
   dernierEtat = 0;

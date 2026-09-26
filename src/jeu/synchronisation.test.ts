@@ -84,6 +84,18 @@ describe('la collection tenue par le serveur', () => {
     assert.equal(fusion.joutes.pseudo, 'Zeugma 12');
   });
 
+  it('l’apparence suit le compte : celle du serveur remplace celle de l’appareil, choix par choix', () => {
+    assert.equal('apparence' in lireEtat(etatDuServeur), false, 'un serveur d’avant le script 22 ne dit rien');
+    assert.equal(lireEtat({ ...etatDuServeur, apparence: null }).apparence, null);
+    assert.deepEqual(lireEtat({ ...etatDuServeur, apparence: { avatar: 'renard', cadre: 4 } }).apparence, { avatar: 'renard' });
+    const locale = partieLocale();
+    Object.assign(locale.profil, { avatar: 'colombe', cadre: 'dentelure' });
+    const suivie = fusionner(locale, lireEtat({ ...etatDuServeur, apparence: { avatar: 'renard', titre: '' } }));
+    assert.deepEqual([suivie.profil.avatar, suivie.profil.cadre, suivie.profil.titre], ['renard', 'dentelure', '']);
+    assert.equal(fusionner(locale, lireEtat({ ...etatDuServeur, apparence: null })).profil.avatar, 'colombe', 'rien de gardé : l’appareil garde ses choix');
+    assert.equal(fusionner(locale, etatDuServeur).profil.avatar, 'colombe');
+  });
+
   it('écarte un état plus ancien que le dernier appliqué (une lecture doublée par un achat)', () => {
     assert.equal(estPerime({ maintenant: 1000 }, 2000), true);
     assert.equal(estPerime({ maintenant: 2000 }, 2000), false, 'le même instant est pris');

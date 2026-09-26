@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
-import { acheterOrnement, nouveauProfil, progressionDuNiveau, relireProfil, estDisponible, ornement, PAQUETS, ORNEMENTS, profilVisible } from './personnalisation.ts';
+import { acheterOrnement, apparenceAApprendre, appliquerLApparence, lireApparence, nouveauProfil, progressionDuNiveau, relireProfil, estDisponible, ornement, PAQUETS, ORNEMENTS, profilVisible } from './personnalisation.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import { fusionner } from './synchronisation.ts';
 import { FORMULE_GRATUITE, cosmetiquesPremium } from './formule.ts';
@@ -93,4 +93,28 @@ it('conserve XP et équipement pendant une synchronisation, et récupère les ac
   assert.equal(apres.profil.xp, 250);
   assert.equal(apres.profil.paquet, 'celeste');
   assert.deepEqual(apres.profil.achats, ['lune']);
+});
+
+it('relit l’apparence gardée par le serveur sans rien supposer de sa forme', () => {
+  assert.equal(lireApparence(null), null);
+  assert.equal(lireApparence('renard'), null);
+  assert.equal(lireApparence(['renard']), null);
+  assert.deepEqual(lireApparence({}), {});
+  assert.deepEqual(lireApparence({ avatar: 'renard', cadre: 3, titre: '', inconnu: 'x' }), { avatar: 'renard', titre: '' });
+});
+it('applique l’apparence du serveur choix par choix, sans identifiant inconnu ni d’une autre catégorie', () => {
+  const profil = { ...nouveauProfil(), avatar: 'colombe', cadre: 'dentelure', titre: 'titre-premier-mot', couleur: 'jade' };
+  const suivi = appliquerLApparence(profil, { avatar: 'renard', cadre: 'renard', titre: '', dos: 'constellation', paquet: 'celeste' });
+  assert.deepEqual([suivi.avatar, suivi.cadre, suivi.titre, suivi.dos, suivi.couleur, suivi.paquet], ['renard', 'dentelure', '', 'constellation', 'jade', 'celeste'],
+    'un cadre qui est un avatar est écarté ; un dos pas encore débloqué ici est pris (vérifié au moment du choix) ; ce que le serveur n’a pas reste');
+  assert.equal(appliquerLApparence(profil, { avatar: 'licorne-de-demain', paquet: 'inconnu' }).avatar, 'colombe');
+  assert.equal(appliquerLApparence(profil, { paquet: 'inconnu' }).paquet, 'original');
+  assert.equal(profil.avatar, 'colombe', 'le profil de départ n’est pas modifié');
+});
+it('n’apprend au serveur que ses propres choix qu’il n’a pas encore, et rien à un serveur d’avant le script 22', () => {
+  const profil = { ...nouveauProfil(), avatar: 'renard', titre: 'titre-premier-mot', couleur: 'cuivre' };
+  assert.deepEqual(apparenceAApprendre(profil, null), { avatar: 'renard', titre: 'titre-premier-mot' }, 'l’apparence de départ ne s’envoie pas');
+  assert.deepEqual(apparenceAApprendre(profil, { avatar: 'colombe' }), { titre: 'titre-premier-mot' }, 'ce que le serveur a déjà l’emporte');
+  assert.deepEqual(apparenceAApprendre(profil, undefined), {});
+  assert.deepEqual(apparenceAApprendre(nouveauProfil(), null), {});
 });

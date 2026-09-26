@@ -3,6 +3,8 @@
 // passe par ses fonctions (serveur/collections.ts). Sinon, le jeu vit sur l'appareil comme avant, et ce service est inactif.
 
 import { SERVEUR } from '../config/serveur.ts';
+import { lireApparence } from '../jeu/personnalisation.ts';
+import type { Apparence } from '../jeu/personnalisation.ts';
 import type { Sauvegarde } from '../jeu/sauvegarde.ts';
 import { aImporter, lireEtat, lireRecuperation } from '../jeu/synchronisation.ts';
 import type { EtatDuCompte, Recuperation } from '../jeu/synchronisation.ts';
@@ -27,6 +29,8 @@ export type ServeurDesCollections = {
   ouvrirUnPaquet(masques: readonly Registre[]): Promise<{ cartes: CarteTireeParLeServeur[]; etat: EtatDuCompte }>;
   // Rend le deck tel que le serveur l'a enregistré (cartes possédées seulement).
   changerDeDeck(deck: readonly string[]): Promise<string[]>;
+  // Enregistre des choix d'apparence (les autres restent) ; rend toute l'apparence que le serveur garde.
+  changerDApparence(choix: Partial<Apparence>): Promise<Partial<Apparence> | null>;
   // Le code de secours (décision n° 36) : le définir, ou retrouver une collection avec.
   definirUnCode(code: string): Promise<EtatDuCompte>;
   declarerMaNaissance(annee: number, mois: number): Promise<EtatDuCompte>;
@@ -69,6 +73,7 @@ export function serveurDesCollectionsAvec(client: ClientSupabase, demandes: Avec
       const brut = await client.appeler<unknown>('changer_de_deck', { p_deck: [...deck] });
       return Array.isArray(brut) ? brut.filter((id): id is string => typeof id === 'string') : [];
     }),
+    changerDApparence: (choix) => chacunSonTour(async () => lireApparence(await client.appeler<unknown>('changer_d_apparence', { p_apparence: { ...choix } }))),
     definirUnCode: (code) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('definir_un_code_de_secours', { p_code: code }))),
     declarerMaNaissance: (annee, mois) => chacunSonTour(async () => lireEtat(await client.appeler<unknown>('declarer_ma_naissance', { p_annee: annee, p_mois: mois }))),
     recupererParCode: (code) => chacunSonTour(async () => {
@@ -89,6 +94,7 @@ const inactif: ServeurDesCollections = {
   ouvrirUnPaquet: async () => jamais(),
   reclamerRecompense: async () => jamais(),
   changerDeDeck: async () => jamais(),
+  changerDApparence: async () => jamais(),
   definirUnCode: async () => jamais(),
   declarerMaNaissance: async () => jamais(),
   recupererParCode: async () => jamais(),
