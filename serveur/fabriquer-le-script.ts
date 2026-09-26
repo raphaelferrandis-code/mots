@@ -408,7 +408,7 @@ ${activite()}
 revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
 revoke execute on function ${['public.pseudo_refuse(text)', ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
 grant execute on function ${[...FONCTIONS_DES_JOUTES, ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE].join(', ')} to authenticated;
-${options.combats ? combats().trimEnd() : ''}
+${options.combats ? (secours() + combats()).trimEnd() : ''}
 `;
 }
 
@@ -534,6 +534,14 @@ export function migrationPointsSecondaires(): string {
     + '\ncommit;\n';
 }
 
+// Le défi contre un joueur simulé (décision de Raphaël du 26/09/2026) : le serveur n'accepte que l'un des joueurs
+// maison que le jeu peut proposer au joueur. Après 20-points-secondaires.sql. Aucune fonction Edge à redéployer.
+export function migrationAdversaireDeSecours(): string {
+  return '-- Le défi contre un joueur simulé : seulement l’un de ceux que le jeu propose. Après 20-points-secondaires.sql.\n'
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu ne change pas.\nbegin;\n'
+    + secours() + '\n' + reprise(combats(), 'combat_creer') + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -571,5 +579,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '18-classement.sql'), migrationClassement());
   writeFileSync(path.join(RACINE, 'serveur', '19-paiements.sql'), migrationPaiements());
   writeFileSync(path.join(RACINE, 'serveur', '20-points-secondaires.sql'), migrationPointsSecondaires());
+  writeFileSync(path.join(RACINE, 'serveur', '21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

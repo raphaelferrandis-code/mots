@@ -257,6 +257,8 @@ it('ferme les tables et les fonctions internes aux joueurs', async () => {
     await assert.rejects(l.db.query('select public.valider_le_parrainage($1)', [l.ids[0]]), /permission denied/);
     await assert.rejects(l.db.query('select public.verser_les_paquets_de_parrainage($1)', [l.ids[0]]), /permission denied/);
     await assert.rejects(l.db.query('update public.comptes set code_parrain=$1', ['AAAAAAAA']), /permission denied/);
+    await assert.rejects(l.db.query("select * from public.joueurs_simules_admissibles('{}')"), /permission denied/);
+    await assert.rejects(l.db.query("select public.secours_admissible(1000, gen_random_uuid(), '{}')"), /permission denied/);
     await l.admin(); await l.db.exec('set role anon;');
     await assert.rejects(l.db.query('select public.mon_parrainage()'), /permission denied/);
     await assert.rejects(l.db.query("select public.declarer_mon_parrain('X')"), /permission denied/);

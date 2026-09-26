@@ -68,6 +68,53 @@ it('l’adversaire de secours : un défi sans amitié contre un joueur maison, s
   } finally { await l.db.close(); }
 });
 
+it('l’adversaire de secours est l’un de ceux que le jeu propose : jamais le plus faible, choisi exprès', async () => {
+  const l = await laboratoire();
+  try {
+    await l.admin();
+    // Neuf joueurs maison autour du joueur (cote 1000) ; le plus faible est loin en dessous.
+    const maisons = new Map<number, string>();
+    for (const cote of [300, 900, 960, 1000, 1030, 1080, 1200, 1500, 2100]) {
+      maisons.set(cote, (await l.db.query<{ id: string }>('insert into public.profils(maison,pseudo,pseudo_cle,cote,deck) values(true,$1,$1,$2,$3) returning id',
+        [`maison${cote}`, cote, JSON.stringify(deck)])).rows[0].id);
+    }
+    // Les 5 plus proches sont à 100 au plus : la limite est 100 + 150. Au-delà, jamais proposé.
+    const acceptes: number[] = [];
+    for (const [cote, id] of maisons) {
+      if ((await l.db.query<{ r: boolean }>("select public.secours_admissible(1000,$1,'{}') r", [id])).rows[0].r) acceptes.push(cote);
+    }
+    assert.deepEqual(acceptes, [900, 960, 1000, 1030, 1080, 1200]);
+    // Tout ce que le jeu propose est accepté, quel que soit l'aléa.
+    await l.joueur(0);
+    for (let i = 0; i < 40; i++) {
+      const proposes = (await l.db.query<{ r: { id: string; cote: number }[] }>("select public.adversaires_de_secours('{}') r")).rows[0].r;
+      assert.equal(proposes.length, 5);
+      for (const p of proposes) assert.ok(acceptes.includes(p.cote), `proposé : ${p.cote}`);
+    }
+    // Un jeu trafiqué qui vise le plus faible (ou le plus fort) est refusé ; un joueur proposé est accepté.
+    const defier = (id: string, masques: string[] = []) => l.appel(lireRequeteCombat({ type: 'commencer', requete: crypto.randomUUID(), choix: { mode: 'amical', adversaire: id, masques, temps: 'illimite' } }));
+    await assert.rejects(defier(maisons.get(300)!), /proposés à ton niveau/);
+    await assert.rejects(defier(maisons.get(2100)!), /proposés à ton niveau/);
+    let r = await defier(maisons.get(1200)!);
+    assert.ok(r.combat!.vue.adversaire.type === 'joute' && r.combat!.vue.adversaire.profil.maison);
+    r = await l.agir(r, { type: 'abandonner' });
+    // Les filtres comptent : avec un mot masqué dans son deck, un joueur maison sort de la liste et ne compte plus dans la limite.
+    await l.admin();
+    await l.db.exec(`insert into public.cartes values ('juron-nom','Commune','{Injurieux}') on conflict (id) do nothing;`);
+    for (const cote of [900, 960]) await l.db.query('update public.profils set deck=$2 where id=$1', [maisons.get(cote), JSON.stringify(Array.from({ length: 10 }, () => 'juron-nom'))]);
+    const avecFiltre: number[] = [];
+    for (const [cote, id] of maisons) {
+      if ((await l.db.query<{ r: boolean }>("select public.secours_admissible(1000,$1,'{Injurieux}') r", [id])).rows[0].r) avecFiltre.push(cote);
+    }
+    // Restent 300, 1 000, 1 030, 1 080, 1 200, 1 500 et 2 100 : les cinq plus proches vont jusqu'à 500 d'écart, limite 650.
+    assert.deepEqual(avecFiltre, [1000, 1030, 1080, 1200, 1500]);
+    // Le serveur des combats tient compte des filtres du joueur : 1 500 lui est proposé, donc accepté.
+    r = await defier(maisons.get(1500)!, ['Injurieux']);
+    assert.ok(r.combat!.vue.adversaire.type === 'joute' && r.combat!.vue.adversaire.profil.cote === 1500);
+    await l.agir(r, { type: 'abandonner' });
+  } finally { await l.db.close(); }
+});
+
 async function laboratoire() {
   const b = await baseDeTest(true);
   await b.db.exec(cartes({ cartes:brut.cartes, meta:{edition:1,version:'test'} } as IndexEdition));

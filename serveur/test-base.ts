@@ -8,7 +8,10 @@ export async function baseDeTest(combats = false) {
     create schema auth; create schema extensions;
     create table auth.users(id uuid primary key, is_anonymous boolean not null default false);
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-    grant usage on schema auth to authenticated, anon;`);
+    grant usage on schema auth to authenticated, anon;
+    -- Comme Supabase : toute nouvelle fonction est ouverte d'office aux visiteurs et aux joueurs connectés. Les scripts
+    -- doivent donc fermer eux-mêmes leurs aides internes (revoke … from public, anon, authenticated).
+    alter default privileges in schema public grant execute on functions to anon, authenticated;`);
   if (combats) await db.exec('create role service_role;');
   await db.exec(structure({ combats }));
   const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333'];

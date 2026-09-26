@@ -2192,6 +2192,45 @@ revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb),
 revoke execute on function public.pseudo_refuse(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from authenticated; -- le contrôle des pseudonymes ne sert qu'à publier_mon_profil
 grant execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text) to authenticated;
 
+-- ── L'adversaire de secours ──────────────────────────────────────────────────
+-- Les joueurs maison qui peuvent servir d'adversaire avec ces filtres : un deck complet, sans aucun mot masqué.
+create or replace function public.joueurs_simules_admissibles(p_masques text[]) returns table(id uuid, pseudo text, cote integer)
+language sql stable security definer set search_path = '' as $$
+  select p.id, p.pseudo, p.cote from public.profils p
+  where p.maison and jsonb_typeof(p.deck) = 'array' and jsonb_array_length(p.deck) = 10
+    and (select count(*) from jsonb_array_elements_text(p.deck) d join public.cartes c on c.id = d.value
+      where not (c.registre && coalesce(p_masques, '{}'::text[]))) = 10
+$$;
+
+-- Quelques joueurs maison proches de la cote du joueur (5, l'écart de cote plus un aléa). Le jeu essaie
+-- le premier, puis les suivants si le serveur des combats en refuse un.
+create or replace function public.adversaires_de_secours(p_masques text[]) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare moi public.profils%rowtype;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  select * into moi from public.profils where utilisateur = auth.uid() and not maison;
+  if not found then raise exception 'Choisis ton pseudonyme pour rejoindre les joutes.'; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('id', x.id, 'pseudo', x.pseudo, 'cote', x.cote) order by x.rang) from (
+    select a.id, a.pseudo, a.cote, abs(a.cote - moi.cote) + random() * 150 as rang
+    from public.joueurs_simules_admissibles(p_masques) a
+    order by rang limit 5) x), '[]'::jsonb);
+end $$;
+
+-- Ce joueur maison fait-il partie de ceux que le jeu peut proposer à une cote donnée ? Un joueur proposé a un rang
+-- (écart + aléa) parmi les 5 plus petits ; or les 5 plus proches ont tous un rang d'au plus « le
+-- 5e écart + l'aléa ». Tout joueur proposé a donc un écart d'au plus cette limite, et le plus faible, loin de
+-- la cote du joueur, ne l'est jamais. Avec moins de 5 joueurs admissibles, tous sont proposés.
+create or replace function public.secours_admissible(p_cote integer, p_adversaire uuid, p_masques text[]) returns boolean
+language sql stable security definer set search_path = '' as $$
+  with admissibles as (select a.id, abs(a.cote - p_cote) as ecart from public.joueurs_simules_admissibles(p_masques) a)
+  select exists (select 1 from admissibles c where c.id = p_adversaire
+    and c.ecart <= coalesce((select e.ecart from admissibles e order by e.ecart offset 4 limit 1), c.ecart) + 150)
+$$;
+revoke execute on function public.joueurs_simules_admissibles(text[]), public.secours_admissible(integer, uuid, text[]) from public, anon, authenticated;
+revoke execute on function public.adversaires_de_secours(text[]) from public, anon;
+grant execute on function public.adversaires_de_secours(text[]) to authenticated;
+
 -- Les RPC privées ci-dessous ne sont appelées que par la fonction serveur authentifiée.
 create table if not exists public.combats (
   id uuid primary key,
@@ -2261,11 +2300,16 @@ begin
     if not exists(select 1 from public.profils where utilisateur=p_utilisateur) then raise exception 'Publie d''abord ton profil.'; end if;
     if not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and utilisateur is distinct from p_utilisateur)
       then raise exception 'Cet adversaire n''est plus disponible.'; end if;
-    -- Un défi sans classement vise un ami, ou un joueur maison : l'adversaire de secours des joutes (serveur/secours.ts).
-    if coalesce((p_etat->'adversaire'->>'amical')::boolean,false) and not public.sont_amis(
-      (select id from public.profils where utilisateur=p_utilisateur),(p_etat->'adversaire'->'profil'->>'id')::uuid)
-      and not exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and maison)
-      then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
+    -- Un défi sans classement vise un ami, ou un joueur maison : l'adversaire de secours des joutes (serveur/secours.ts),
+    -- l'un de ceux que le jeu peut proposer à ce joueur — jamais le plus faible, choisi exprès.
+    if coalesce((p_etat->'adversaire'->>'amical')::boolean,false) then
+      if exists(select 1 from public.profils where id=(p_etat->'adversaire'->'profil'->>'id')::uuid and maison) then
+        if not public.secours_admissible((select cote from public.profils where utilisateur=p_utilisateur),
+          (p_etat->'adversaire'->'profil'->>'id')::uuid, array(select jsonb_array_elements_text(coalesce(p_etat->'masques','[]'::jsonb))))
+          then raise exception 'Ce joueur simulé ne fait pas partie de ceux proposés à ton niveau. Relance la recherche.'; end if;
+      elsif not public.sont_amis((select id from public.profils where utilisateur=p_utilisateur),(p_etat->'adversaire'->'profil'->>'id')::uuid)
+        then raise exception 'Ajoute d''abord ce joueur à tes amis.'; end if;
+    end if;
   end if;
   perform public.autoriser_joute(p_utilisateur); -- quota commun, conservé après retrait du profil
   update public.combats set archive=true where utilisateur=p_utilisateur and not archive and termine;
