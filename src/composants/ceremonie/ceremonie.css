@@ -84,6 +84,35 @@ body.ceremonie-ouverte { overflow: hidden; }
 }
 .c-feuille__volet > .fe { position: absolute; left: 0; right: 0; bottom: 0; box-shadow: none; }
 
+/* Détacher un timbre en suivant ses pointillés : les pointillés arrachés deviennent une fente sombre entre les trous ;
+   un timbre touché sans geste montre le chemin à suivre (un point lumineux qui fait le tour). */
+.c-arrachage { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.c-arrachage__trait { fill: none; stroke: #0a1322; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.c-arrachage__indice { fill: #fff6e2; filter: drop-shadow(0 0 6px rgba(255, 214, 150, .95)); }
+.c-arrachage__chemin { fill: none; stroke: var(--c-cuivre-clair); stroke-width: 4; stroke-dasharray: 10 8; }
+.c-feuille__pivot > .fe .fe__case { transition: transform .12s ease-out; }
+
+/* Le timbre détaché, au premier plan : un fond assombri, le timbre, puis sa fiche. Consignes et plateau s'effacent. */
+.c-voile {
+  position: absolute; inset: 0; z-index: 7; opacity: 0; pointer-events: none; transition: opacity .4s;
+  background: radial-gradient(ellipse at 50% 42%, rgba(14, 26, 50, .86), rgba(4, 7, 15, .97));
+}
+.ceremonie[data-gros-plan] .c-voile { opacity: 1; pointer-events: auto; }
+.ceremonie[data-phase='gros-plan'] :is(.ceremonie__infos, .ceremonie__plateau) { visibility: hidden; }
+.c-gros-plan {
+  --gp: max(160px, min(300px, 64vw, calc((100vh - 390px) * .79)));
+  position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 64px 16px calc(env(safe-area-inset-bottom, 0px) + 20px); pointer-events: none;
+}
+@supports (height: 100dvh) { .c-gros-plan { --gp: max(160px, min(300px, 64vw, calc((100dvh - 390px) * .79))); } }
+.c-gros-plan__timbre {
+  position: relative; flex: none; width: var(--gp); aspect-ratio: 30 / 38; padding: 0; border: 0; background: none;
+  cursor: pointer; pointer-events: auto; perspective: 1100px; -webkit-tap-highlight-color: transparent;
+}
+.c-gros-plan__timbre:focus-visible { outline: 2px solid var(--c-cuivre-clair); outline-offset: 12px; }
+.c-gros-plan__fiche { min-height: 150px; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.c-gros-plan__fiche--visible { opacity: 1; pointer-events: auto; }
+
 /* ── Les timbres ───────────────────────────────────────────────────────────── */
 
 .c-carte { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; perspective: 1100px; -webkit-tap-highlight-color: transparent; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
@@ -111,7 +140,7 @@ body.ceremonie-ouverte { overflow: hidden; }
 @keyframes c-eventail { from { opacity: 0; translate: 0 60%; scale: .5; } }
 .c-eventail__timbre:hover, .c-eventail__timbre:focus-visible { translate: 0 -16px; z-index: 5; outline: none; }
 .c-eventail__timbre:focus-visible .tb { filter: drop-shadow(0 0 8px var(--c-cuivre-clair)); }
-.ceremonie__eclair { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 42%, #fff, rgba(255, 240, 220, .6) 30%, rgba(255, 200, 200, 0) 70%); }
+.ceremonie__eclair { position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 42%, #fff, rgba(255, 240, 220, .6) 30%, rgba(255, 200, 200, 0) 70%); }
 
 /* ── Le texte sous la scène ────────────────────────────────────────────────── */
 

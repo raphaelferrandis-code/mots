@@ -24,7 +24,7 @@ type Props = {
   detaches?: readonly boolean[];
   reveles?: readonly boolean[]; // au recto : cachet posé ; au verso : plus de halo
   reduire?: boolean; // réglage « Réduire les animations »
-  onCase?: (i: number) => void;
+  onCase?: (i: number, parClavier: boolean) => void; // parClavier : Entrée ou Espace, pas un geste
 };
 
 // La disposition suit la largeur de l'écran, et le téléphone qu'on tourne.
@@ -63,13 +63,13 @@ export function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme',
         if (detaches?.[i]) return <span key={i} className="fe__trou" style={placer(r, d)} />;
         const revele = reveles?.[i] ?? !verso;
         if (!verso) {
-          return <button key={i} type="button" className="fe__case" style={placer(r, d)} onClick={() => onCase?.(i)}
+          return <button key={i} type="button" className="fe__case" data-i={i} style={placer(r, d)} onClick={(e) => onCase?.(i, e.detail === 0)}
             aria-label={`${obtenue.carte.mot}, ${obtenue.carte.rarete.toLowerCase()}`}>
             <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere={revele} dentele={false} cliquable={false} reagir={false} />
           </button>;
         }
         const eclat = eclatDe(obtenue);
-        return <button key={i} type="button" className="fe__case fe__case--dos" style={placer(r, d)} onClick={() => onCase?.(i)}
+        return <button key={i} type="button" className="fe__case fe__case--dos" data-i={i} style={placer(r, d)} onClick={(e) => onCase?.(i, e.detail === 0)}
           data-halo={!revele && eclat !== 'courant' ? eclat : undefined}
           aria-label={revele ? `${obtenue.carte.mot}, ${obtenue.carte.rarete.toLowerCase()}, vu de dos` : `Timbre ${i + 1}, face cachée. Détacher pour le découvrir`}>
           <VersoDuTimbre dos={dos} dentele={false} />

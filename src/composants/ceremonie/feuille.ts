@@ -62,3 +62,72 @@ export function melanger<T>(liste: readonly T[], cle: string): T[] {
   }
   return copie;
 }
+
+// ── Détacher un timbre en suivant ses pointillés ──
+// Le tour d'une case est découpé en parts ; le doigt (ou la souris) en marque une dès qu'il passe assez près du bord,
+// dans n'importe quel ordre. Le timbre se détache quand presque tout le tour est parcouru.
+export const PARTS_DU_TOUR = 48;
+export const SEUIL_DU_DETACHEMENT = 0.85;
+type Cadre = { left: number; top: number; width: number; height: number };
+
+// La position d'un point sur le tour d'un cadre (de 0 à 1, dans le sens des aiguilles d'une montre depuis le coin
+// haut gauche) et sa distance au bord le plus proche, que le point soit dedans ou dehors.
+export function surLeTour(x: number, y: number, c: Cadre): { t: number; distance: number } {
+  const px = Math.min(c.width, Math.max(0, x - c.left)), py = Math.min(c.height, Math.max(0, y - c.top));
+  const dedans = x >= c.left && x <= c.left + c.width && y >= c.top && y <= c.top + c.height;
+  const bords = [py, c.width - px, c.height - py, px]; // haut, droite, bas, gauche
+  const bord = bords.indexOf(Math.min(...bords));
+  const tour = 2 * (c.width + c.height);
+  const s = [px, c.width + py, c.width + c.height + (c.width - px), 2 * c.width + c.height + (c.height - py)][bord];
+  const distance = dedans ? bords[bord] : Math.hypot(x - (c.left + px), y - (c.top + py));
+  return { t: (s / tour) % 1, distance };
+}
+
+// Marque les parts parcourues entre deux positions sur le tour, par le plus court chemin. Rend le nombre de parts
+// nouvellement marquées.
+export function parcourir(parts: boolean[], de: number | null, a: number): number {
+  const n = parts.length, fin = Math.floor(a * n) % n;
+  let debut = de === null ? fin : Math.floor(de * n) % n;
+  let pas = (fin - debut + n) % n;
+  let sens = 1;
+  if (pas > n / 2) { pas = n - pas; sens = -1; }
+  let nouvelles = 0;
+  for (let k = 0; k <= pas; k++) {
+    if (!parts[debut]) { parts[debut] = true; nouvelles++; }
+    debut = (debut + sens + n) % n;
+  }
+  return nouvelles;
+}
+
+export const avancement = (parts: readonly boolean[]): number => parts.filter(Boolean).length / Math.max(1, parts.length);
+
+// Le point du tour d'une case à la position t (de 0 à 1, même sens que surLeTour), en unités de la feuille.
+export function pointDuTour(r: Rectangle, t: number): [number, number] {
+  let s = (((t % 1) + 1) % 1) * 2 * (r.l + r.h);
+  if (s <= r.l) return [r.x + s, r.y];
+  s -= r.l;
+  if (s <= r.h) return [r.x + r.l, r.y + s];
+  s -= r.h;
+  if (s <= r.l) return [r.x + r.l - s, r.y + r.h];
+  s -= r.l;
+  return [r.x, r.y + r.h - s];
+}
+
+// Le tracé des pointillés déjà arrachés : une ligne par suite de parts parcourues, qui suit les coins.
+export function traceDesParts(r: Rectangle, parts: readonly boolean[]): string {
+  const n = parts.length, tour = 2 * (r.l + r.h);
+  const coins = [0, r.l / tour, (r.l + r.h) / tour, (2 * r.l + r.h) / tour];
+  if (parts.every(Boolean)) return `M${r.x} ${r.y}h${r.l}v${r.h}h${-r.l}Z`;
+  let chemin = '';
+  let k = parts.findIndex((p, i) => p && !parts[(i - 1 + n) % n]);
+  if (k < 0) return '';
+  for (let vus = 0; vus < n; vus++, k = (k + 1) % n) {
+    if (!parts[k] || parts[(k - 1 + n) % n]) continue;
+    let fin = k;
+    while (parts[(fin + 1) % n] && (fin + 1) % n !== k) fin = (fin + 1) % n;
+    const de = k / n, longueur = (((fin + 1) / n - de) % 1 + 1) % 1 || 1;
+    const etapes = [de, ...coins.map((c) => (c < de ? c + 1 : c)).filter((c) => c > de && c < de + longueur), de + longueur];
+    chemin += etapes.map((t, i) => `${i ? 'L' : 'M'}${pointDuTour(r, t).map((v) => v.toFixed(1)).join(' ')}`).join('');
+  }
+  return chemin;
+}

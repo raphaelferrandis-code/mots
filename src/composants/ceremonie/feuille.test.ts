@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { CASE, caseDuTimbre, disposition, melanger, trous } from './feuille.ts';
+import { CASE, PARTS_DU_TOUR, SEUIL_DU_DETACHEMENT, avancement, caseDuTimbre, disposition, melanger, parcourir, pointDuTour, surLeTour, traceDesParts, trous } from './feuille.ts';
 import { dentelure } from '../timbre/dessins.ts';
 
 describe('la feuille de timbres', () => {
@@ -44,5 +44,37 @@ describe('la feuille de timbres', () => {
     assert.deepEqual([...melanger(ids, 'paquet-1')].sort(), ids);
     const places = new Set(Array.from({ length: 40 }, (_, k) => melanger(ids, `paquet-${k}`).indexOf('f')));
     assert.ok(places.size >= 5, 'le dernier timbre du serveur ne tombe pas toujours dans la même case');
+  });
+
+  it('situe le doigt sur le tour du timbre, dedans comme dehors', () => {
+    const c = { left: 100, top: 100, width: 100, height: 200 }; // tour de 600
+    assert.deepEqual(surLeTour(150, 102, c), { t: 50 / 600, distance: 2 }, 'bord du haut');
+    assert.deepEqual(surLeTour(203, 200, c), { t: 200 / 600, distance: 3 }, 'bord de droite, dehors');
+    assert.deepEqual(surLeTour(150, 290, c), { t: 350 / 600, distance: 10 }, 'bord du bas');
+    assert.deepEqual(surLeTour(90, 250, c), { t: 450 / 600, distance: 10 }, 'bord de gauche, dehors');
+    assert.equal(surLeTour(150, 200, c).distance, 50, 'au milieu, loin des pointillés');
+  });
+  it('compte les pointillés parcourus dans n’importe quel ordre, par le plus court chemin', () => {
+    const parts = Array<boolean>(PARTS_DU_TOUR).fill(false);
+    assert.equal(parcourir(parts, null, 0), 1);
+    assert.equal(parcourir(parts, 0.99, 0.02), 1, 'le passage par le coin de départ ne fait pas le tour complet');
+    assert.ok(avancement(parts) < 0.1);
+    let t = 0.02;
+    for (let k = 0; k < 60; k++) { const suivant = (t + 0.015) % 1; parcourir(parts, t, suivant); t = suivant; }
+    assert.ok(avancement(parts) >= SEUIL_DU_DETACHEMENT, 'un tour complet détache le timbre');
+    assert.equal(parcourir(parts, 0.2, 0.3), 0, 'repasser au même endroit ne compte pas deux fois');
+  });
+
+  it('trace les pointillés arrachés le long du tour, coins compris', () => {
+    const r = { x: 0, y: 0, l: 300, h: 380 };
+    const arrondi = (t: number) => pointDuTour(r, t).map((v) => Math.round(v));
+    assert.deepEqual(arrondi(0), [0, 0]);
+    assert.deepEqual(arrondi(300 / 1360), [300, 0]);
+    assert.deepEqual(arrondi(1000 / 1360), [0, 360]);
+    const parts = Array<boolean>(8).fill(false);
+    parts[1] = parts[2] = true; // de 1/8 à 3/8 du tour : passe le coin haut droit
+    assert.equal(traceDesParts(r, parts), 'M170.0 0.0L300.0 0.0L300.0 210.0');
+    assert.equal(traceDesParts(r, Array<boolean>(8).fill(false)), '');
+    assert.match(traceDesParts(r, Array<boolean>(8).fill(true)), /Z$/);
   });
 });
