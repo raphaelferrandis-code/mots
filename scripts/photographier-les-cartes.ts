@@ -5,15 +5,14 @@
 //   node scripts/photographier-les-cartes.ts --site https://philamots.fr/ --sortie images zakouski callipyge
 //   node scripts/photographier-les-cartes.ts --premiers 12      (les 12 premiers mots du calendrier, sur le site local)
 //
-// Le navigateur est le Chrome installé sur la machine (celui du poste de Raphaël, ou celui des serveurs de GitHub) :
-// rien à télécharger.
+// Le navigateur est le Chrome installé sur la machine (scripts/publication/photographe.ts) : rien à télécharger.
 
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
 import { lireCalendrier } from '../pipeline/etapes/motDuJour.ts';
 import { adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
+import { photographier } from './publication/photographe.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -32,18 +31,6 @@ if (voulues.length === 0) {
 }
 
 mkdirSync(sortie, { recursive: true });
-const navigateur = await chromium.launch({ channel: 'chrome' });
-try {
-  const page = await navigateur.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
-  for (const adresse of voulues) {
-    for (const genre of ['question', 'reponse']) {
-      const reponse = await page.goto(`${site}partage/${genre}/${adresse}/`, { waitUntil: 'networkidle' });
-      if (!reponse?.ok()) { console.warn(`    ⚠️ ${adresse} (${genre}) : pas d'image (${reponse?.status() ?? 'sans réponse'})`); continue; }
-      await page.evaluate(() => document.fonts.ready);
-      await page.locator('.carte-partage').screenshot({ path: path.join(sortie, `${adresse}-${genre}.jpg`), type: 'jpeg', quality: 90 });
-      console.log(`    ${adresse}-${genre}.jpg`);
-    }
-  }
-} finally {
-  await navigateur.close();
-}
+const photos = await photographier(site, voulues.flatMap((adresse) => (['question', 'reponse'] as const).map((genre) => ({ adresse, genre }))),
+  (adresse, genre) => path.join(sortie, `${adresse}-${genre}.jpg`));
+for (const p of photos) console.log(`    ${path.basename(p.chemin)}`);

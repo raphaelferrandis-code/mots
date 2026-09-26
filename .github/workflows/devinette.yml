@@ -1,0 +1,54 @@
+# La devinette du jour sur Bluesky (scripts/publier-la-devinette.ts).
+#
+# Chaque matin, GitHub lance le programme. Il ne publie que si la variable du dépôt PUBLICATION_ACTIVE vaut « oui »
+# (Settings → Secrets and variables → Actions → onglet Variables) : c'est l'interrupteur. Sinon, il fait tout à blanc.
+# Rien n'est publié non plus tant que le calendrier n'a pas de premier jour (npm run motdujour:dater).
+#
+# À la main (onglet Actions → « Devinette du jour » → Run workflow) : « a-blanc » fabrique textes et images sans se
+# connecter ; « connexion » vérifie le mot de passe sans rien publier ; « publier » publie la devinette du jour.
+# Le champ « jour » (à blanc et connexion seulement) essaie la devinette d'un jour donné (0 = le premier).
+#
+# Le mot de passe d'application Bluesky est le secret MDPAPPLICATION. Les actions sont figées par leur empreinte,
+# comme dans mise-en-ligne.yml.
+
+name: Devinette du jour
+
+on:
+  schedule:
+    - cron: '30 6 * * *' # 8 h 30 à Paris en été, 7 h 30 en hiver (GitHub peut prendre quelques minutes de retard)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'a-blanc, connexion ou publier'
+        type: choice
+        options: [a-blanc, connexion, publier]
+        default: a-blanc
+      jour:
+        description: 'Jour à essayer (0 = le premier), à blanc ou connexion seulement'
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devinette
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Publier (ou essayer)
+        env:
+          MODE: ${{ github.event_name == 'schedule' && (vars.PUBLICATION_ACTIVE == 'oui' && 'publier' || 'a-blanc') || inputs.mode }}
+          JOUR: ${{ inputs.jour }}
+          BLUESKY_MOT_DE_PASSE: ${{ secrets.MDPAPPLICATION }}
+        run: node scripts/publier-la-devinette.ts --mode "$MODE" ${JOUR:+--jour "$JOUR"}
