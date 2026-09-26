@@ -84,12 +84,10 @@ body.ceremonie-ouverte { overflow: hidden; }
 }
 .c-feuille__volet > .fe { position: absolute; left: 0; right: 0; bottom: 0; box-shadow: none; }
 
-/* Détacher un timbre en suivant ses pointillés : les pointillés arrachés deviennent une fente sombre entre les trous ;
-   un timbre touché sans geste montre le chemin à suivre (un point lumineux qui fait le tour). */
+/* Détacher un timbre en suivant ses pointillés : les pointillés arrachés deviennent une fente sombre entre les trous
+   (un simple clic arrache tout le tour d'un coup). */
 .c-arrachage { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .c-arrachage__trait { fill: none; stroke: #0a1322; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
-.c-arrachage__indice { fill: #fff6e2; filter: drop-shadow(0 0 6px rgba(255, 214, 150, .95)); }
-.c-arrachage__chemin { fill: none; stroke: var(--c-cuivre-clair); stroke-width: 4; stroke-dasharray: 10 8; }
 .c-feuille__pivot > .fe .fe__case { transition: transform .12s ease-out; }
 
 /* Le timbre détaché, au premier plan : un fond assombri, le timbre, puis sa fiche. Consignes et plateau s'effacent. */

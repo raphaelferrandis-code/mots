@@ -73,7 +73,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const [reveles, setRevelesEtat] = useState<boolean[]>([]);
   const [rangement, setRangementEtat] = useState<number[]>([]); // les timbres du plateau, dans l'ordre où ils y sont arrivés
   const [grosPlan, setGrosPlanEtat] = useState<GrosPlan | null>(null);
-  const [indice, setIndice] = useState<number | null>(null); // le timbre touché sans geste : on montre le chemin des pointillés
   const [apercu, setApercu] = useState<number | null>(null);
   const [tentative, setTentative] = useState(0);
   const [aplati, setAplati] = useState(false);
@@ -103,6 +102,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const gesteCase = useRef<{ i: number; t: number | null; trajet: number; x: number; y: number; fibres: number } | null>(null);
   const arrachages = useRef(new Map<number, boolean[]>()); // les pointillés déjà arrachés, case par case
   const retourALaFeuille = useRef<'principal' | 'case'>('principal');
+  const cascadeFaite = useRef(false); // la cascade de tampons n'a lieu qu'au premier passage au recto
   const pointeur = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 3 });
   const penche = useRef({ rx: 0, ry: 0 });
 
@@ -215,10 +215,11 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     geste.current = { p: 0, actif: false, x: 0, cumul: 0 };
     gesteCase.current = null;
     arrachages.current.clear();
+    cascadeFaite.current = false;
     cartesRef.current = [];
     flushSync(() => {
       setCartes(null); setFace('verso'); setEtatFeuille('cachee'); setPli(false);
-      setDetaches([]); setReveles([]); setRangement([]); setGrosPlan(null); setIndice(null); setApercu(null); setAplati(false);
+      setDetaches([]); setReveles([]); setRangement([]); setGrosPlan(null); setApercu(null); setAplati(false);
       setTentative((t) => t + 1); aller('ouverture');
     });
     const paquet = dans<HTMLElement>(emballage.current, '.cp');
@@ -360,11 +361,59 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     // Les pointillés à moitié arrachés ne suivent pas la feuille retournée : elle repart intacte.
     arrachages.current.clear();
     pivot.querySelectorAll<HTMLElement>(':scope > .fe .fe__case').forEach((el) => { el.style.transform = ''; });
-    flushSync(() => { setFace(etat.current.face === 'verso' ? 'recto' : 'verso'); setIndice(null); });
+    flushSync(() => setFace(etat.current.face === 'verso' ? 'recto' : 'verso'));
     await pivot.animate([{ transform: 'perspective(1800px) rotateY(-90deg) scale(1.03)' }, { transform: 'perspective(1800px) rotateY(0deg)' }], { duration: D(460), easing: 'cubic-bezier(.2,1.3,.4,1)' }).finished;
     if (j !== jeton.current) return;
     SONS.coup();
+    if (etat.current.face === 'recto' && !cascadeFaite.current) {
+      cascadeFaite.current = true;
+      await cascade();
+      if (j !== jeton.current) return;
+    }
     aller('feuille');
+  }
+
+  // ── La cascade de tampons : au premier passage au recto, chaque timbre encore vierge reçoit son cachet, du plus
+  // courant au plus rare ; la Légendaire ou la Hors-série arrive en dernier, après un temps de suspense et un éclair ──
+  async function cascade(): Promise<void> {
+    const j = jeton.current;
+    const ordre = cartesRef.current.map((o, i) => ({ i, rang: RANG_DE_L_ECLAT[eclatDe(o)] }))
+      .filter(({ i }) => !etat.current.detaches[i] && !etat.current.reveles[i])
+      .sort((a, b) => a.rang - b.rang);
+    await attendre(160);
+    for (const { i, rang } of ordre) {
+      if (j !== jeton.current) return;
+      const cellule = caseDom(i), timbre = dans<HTMLElement>(cellule, '.tb');
+      if (!cellule || !timbre) continue;
+      if (rang === 3) {
+        await attendre(260);
+        if (j !== jeton.current) return;
+        SONS.montee(1);
+        await timbre.animate(Array.from({ length: 12 }, (_, k) => ({ transform: `translate(${(entre(-1, 1) * k * .5).toFixed(1)}px,${(entre(-1, 1) * k * .5).toFixed(1)}px)` })), { duration: D(900), easing: 'ease-in' }).finished;
+        if (j !== jeton.current) return;
+        eclairer();
+      }
+      const r = cellule.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      tamponner(dans(timbre, '.tb__recto .tb__cachet'));
+      SONS.coup();
+      timbre.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)' }, { transform: 'scale(1)' }], { duration: D(220) });
+      if (rang === 1) {
+        SONS.carillon(1);
+        jaillir(cx, cy, { n: 28, genre: 'poussiere', couleurs: ['#ffe1a8', '#f0c48f', '#fff4d6'], vitesse: [50, 240], duree: [.6, 1.2] });
+        dans<HTMLElement>(timbre, '.tb__recto .tb__vernis')?.animate([{ backgroundPosition: '100% 50%' }, { backgroundPosition: '0% 50%' }], { duration: D(900), easing: 'ease-in-out' });
+      } else if (rang === 2) {
+        SONS.scintillement(); SONS.carillon(2);
+        jaillir(cx, cy, { n: 50, genre: 'etincelle', couleurs: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], vitesse: [120, 460], duree: [.5, 1.1], taille: [1.2, 2.4] });
+      } else if (rang === 3) {
+        SONS.eclat();
+        jaillir(cx, cy, { n: 110, genre: 'confetti', couleurs: ['#f0c48f', '#d7263f', '#f6ecd6', '#3557a8'], vitesse: [200, 700], g: 700, duree: [1.3, 2.4], taille: [5, 10], frein: .97 });
+        await attendre(380);
+        if (j !== jeton.current) return;
+        SONS.carillon(3);
+      }
+      setReveles(avec(etat.current.reveles, i));
+      await attendre(rang ? 520 : 330);
+    }
   }
 
   // ── Détacher un timbre en suivant ses pointillés ──
@@ -420,13 +469,12 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       void detacher(g.i);
     }
   }
-  // Au clavier (ou avec « Détacher d'un coup ») : les pointillés s'arrachent tout seuls, en faisant le tour.
+  // Un clic, un toucher ou Entrée : les pointillés s'arrachent tout seuls, en faisant le tour, et le timbre se détache.
   async function detacherDUnCoup(i: number): Promise<void> {
     if (phaseRef.current !== 'feuille' || etat.current.detaches[i]) return;
     const j = jeton.current, el = caseDom(i);
     if (!el) return;
     aller('detachement');
-    setIndice(null);
     const parts = arrachages.current.get(i) ?? Array<boolean>(PARTS_DU_TOUR).fill(false);
     arrachages.current.set(i, parts);
     const t0 = performance.now(), duree = D(650);
@@ -464,7 +512,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     el.style.transform = '';
     flushSync(() => {
       setDetaches(avec(etat.current.detaches, i));
-      setIndice(null);
       setGrosPlan({ i, face: depuisLeVerso && !dejaRevele ? 'verso' : 'recto', dejaRevele, fiche: false });
     });
     dessinerLesArrachages();
@@ -574,7 +621,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     aller('feuille');
   }
 
-  // Un timbre de la feuille touché : au clavier, il se détache d'un coup ; au doigt, le geste est suivi par la scène.
+  // Un timbre de la feuille actionné au clavier se détache d'un coup ; au doigt et à la souris, la scène suit le geste.
   const caseTouchee = (i: number, parClavier: boolean): void => { if (parClavier) void detacherDUnCoup(i); };
 
   // ── « Tout révéler » : tous les timbres rejoignent le plateau d'un coup, et l'on passe au résumé ──
@@ -588,7 +635,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     flushSync(() => {
       setReveles(obtenues.map(() => true));
       setRangement([...etat.current.rangement, ...obtenues.map((_, i) => i).filter((i) => !etat.current.rangement.includes(i))]);
-      setPli(false); setIndice(null);
+      setPli(false);
       aller('resume');
     });
     SONS.souffle();
@@ -670,8 +717,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     geste.current.actif = false;
     const g = gesteCase.current;
     gesteCase.current = null;
-    // Un simple toucher, sans geste : on montre le chemin des pointillés de ce timbre.
-    if (g && g.trajet < 10 && phaseRef.current === 'feuille') { setIndice(g.i); SONS.bulle(); }
+    // Un simple clic ou toucher, sans geste le long des pointillés : le timbre se détache d'un coup (décision de Raphaël).
+    if (g && g.trajet < 10 && phaseRef.current === 'feuille') void detacherDUnCoup(g.i);
   };
   // Le timbre agrandi (gros plan, aperçu) s'incline vers le pointeur et fait jouer ses reflets.
   function incliner(el: HTMLElement | null, e: PointeurReact<HTMLElement>): void {
@@ -702,7 +749,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const auResume = phase === 'resume' || (phase === 'fermeture' && n > 0 && rangement.length >= n);
   const feuille = (face: FaceDeLaFeuille, principale: boolean) => cartes && <Feuille cartes={cartes} face={face} etroite={feuilleEtroite} numero={numero} edition={EDITION} dos={dos}
     detaches={detaches} reveles={reveles} reduire={reduit()} onCase={principale ? caseTouchee : undefined} />;
-  const contour = (i: number): string => { const r = caseDuTimbre(i, d, face === 'verso'); return `M${r.x} ${r.y}h${r.l}v${r.h}h${-r.l}Z`; };
   const detail = grosPlan && cartes ? cartes[grosPlan.i] : null;
 
   const fiche = (obtenue: CarteObtenue, sous: string | null) => {
@@ -721,22 +767,17 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     </>;
   };
 
-  const detacherDUnCoupLien = indice !== null && <div className="c-liens"><button type="button" className="c-lien" onClick={() => void detacherDUnCoup(indice)}>Détacher d’un coup</button></div>;
   let info = null;
   if (phase === 'ouverture') info = <p className="c-sous">Préparation du paquet…</p>;
   else if (phase === 'dechirure') info = <><p className="c-indice">Déchire le paquet en suivant les pointillés</p><div className="c-liens"><button type="button" className="c-lien" onClick={() => void dechirerDUnCoup()}>Déchirer d’un coup</button><button type="button" className="c-lien" onClick={toutReveler}>Tout révéler</button></div></>;
   else if ((phase === 'feuille' || phase === 'detachement') && face === 'verso') info = <>
-    <p className="c-indice">Suis les pointillés d’un timbre pour le détacher</p>
-    {detacherDUnCoupLien}
+    <p className="c-indice">Touche un timbre ou suis ses pointillés pour le détacher</p>
     <div className="c-actions"><button type="button" className="bouton-dentele" data-action="principal" onClick={() => void retourner()}>Retourner la feuille</button></div>
   </>;
-  else if (phase === 'feuille' || phase === 'detachement') info = <>
-    {detacherDUnCoupLien}
-    <div className="c-actions">
-      <button type="button" className="bouton-dentele" data-action="principal" onClick={toutReveler}>Tout détacher</button>
-      <button type="button" className="bouton-dentele bouton-dentele--filet" onClick={() => void retourner()}>Retourner la feuille</button>
-    </div>
-  </>;
+  else if (phase === 'feuille' || phase === 'detachement') info = <div className="c-actions">
+    <button type="button" className="bouton-dentele" data-action="principal" onClick={toutReveler}>Tout détacher</button>
+    <button type="button" className="bouton-dentele bouton-dentele--filet" onClick={() => void retourner()}>Retourner la feuille</button>
+  </div>;
   else if (phase === 'resume' && cartes) {
     info = apercu !== null && courante ? fiche(courante, 'Touche le timbre pour revenir au résumé.') : <>
       <h2 className="c-titre">{titreDuResume(cartes)}</h2>
@@ -769,9 +810,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
               {feuille(face, true)}
               <svg className="c-arrachage" viewBox={`0 0 ${d.largeur} ${d.hauteur}`} aria-hidden="true">
                 <path ref={traitDom} className="c-arrachage__trait" />
-                {indice !== null && phase === 'feuille' && !detaches[indice] && (reduit()
-                  ? <path className="c-arrachage__chemin" d={contour(indice)} />
-                  : <circle className="c-arrachage__indice" r="11"><animateMotion dur="2.6s" repeatCount="indefinite" path={contour(indice)} /></circle>)}
               </svg>
               {pli && <div className="c-feuille__volet" ref={voletDom} inert aria-hidden="true">{feuille('verso', false)}</div>}
             </div>
