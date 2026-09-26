@@ -5,6 +5,7 @@ import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import type { Route } from '../navigation/routes.ts';
 import { Icone } from './Icone.tsx';
+import { Portrait } from './Identite.tsx';
 import { useCompteur } from './ceremonie/compteurs.ts';
 import { progressionDuNiveau } from '../jeu/personnalisation.ts';
 import { compteConnecte, deconnecter } from '../services/connexion.ts';
@@ -59,7 +60,10 @@ const ENCRE_PAR_VICTOIRE = Math.max(...Object.values(EQUILIBRAGE.duel.encreParVi
 // L'anneau d'XP autour de l'avatar : il se remplit vers le niveau suivant.
 const TOUR = 2 * Math.PI * 21;
 
-export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseudo = '' }: { ecran: Route['ecran']; encre: number | null; xp?: number | null; pseudo?: string }) {
+// `portrait` : l'avatar et le cadre que le joueur a équipés (ceux qu'il voit sur son profil).
+export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseudo = '', portrait = null }: {
+  ecran: Route['ecran']; encre: number | null; xp?: number | null; pseudo?: string; portrait?: { avatar: string; cadre: string } | null;
+}) {
   // Pendant une cérémonie, l'Encre et l'XP restent figées, puis montent au rangement des timbres.
   const encre = useCompteur('encre', encreReelle);
   const xp = useCompteur('xp', xpReel);
@@ -147,7 +151,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
             aria-current={ESPACE_DU_JOUEUR.some((e) => e.actifPour.includes(ecran)) || ecran === 'formules' ? 'page' : undefined}>
             <span className="avatar" aria-hidden="true">
               {progression && <svg className="avatar__anneau" viewBox="0 0 46 46"><circle className="avatar__anneau-fond" cx="23" cy="23" r="21" /><circle className="avatar__anneau-plein" cx="23" cy="23" r="21" strokeDasharray={TOUR.toFixed(2)} strokeDashoffset={(TOUR * (1 - progression.acquis / progression.requis)).toFixed(2)} /></svg>}
-              <span className="avatar__visage">{nom ? nom.charAt(0).toUpperCase() : DESSINS.profil}</span>
+              {portrait ? <Portrait avatar={portrait.avatar} cadre={portrait.cadre} anime={false} /> : <span className="avatar__visage">{DESSINS.profil}</span>}
               {progression && <b className="avatar__niveau">{progression.niveau}</b>}
             </span>
             <span className="bouton-joueur__chevron" aria-hidden="true">{DESSINS.chevron}</span>
@@ -157,7 +161,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
             <div id="menu-profil" className="menu-flottant menu-profil" onClick={fermerSurLien}>
               <div className="menu-profil__tete">
                 <span className="timbre-joueur" aria-hidden="true">
-                  <span className="timbre-joueur__papier">{nom ? nom.charAt(0).toUpperCase() : DESSINS.profil}</span>
+                  <span className="timbre-joueur__papier">{portrait ? <Portrait avatar={portrait.avatar} cadre={portrait.cadre} /> : DESSINS.profil}</span>
                   {progression && <span className="timbre-joueur__cachet"><small>Niv.</small>{progression.niveau}</span>}
                 </span>
                 <div className="menu-profil__identite">

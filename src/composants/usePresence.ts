@@ -5,6 +5,7 @@
 import { useEffect, useRef } from 'react';
 import { profilVisible } from '../jeu/personnalisation.ts';
 import { amisDisponibles } from '../services/amis.ts';
+import { pseudoDuJoueur } from '../services/identite.ts';
 import { signalerPresence } from '../services/partie.ts';
 import { usePartie } from './usePartie.ts';
 
@@ -13,7 +14,8 @@ const INTERVALLE = 3 * 60_000;
 export function usePresence(): void {
   const partie = usePartie();
   const visible = partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null) : null;
-  const actif = amisDisponibles && !!visible?.pseudo;
+  // Le pseudonyme peut n'être connu que par les joutes (compte retrouvé sur un autre appareil) : c'est bien le même.
+  const actif = amisDisponibles && partie.etat === 'prete' && pseudoDuJoueur(partie.sauvegarde) !== '';
   const avatar = visible?.avatar ?? '';
   const cadre = visible?.cadre ?? '';
   const dernier = useRef(0);

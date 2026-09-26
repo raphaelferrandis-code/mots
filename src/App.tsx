@@ -8,9 +8,11 @@ import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
 import { usePresence } from './composants/usePresence.ts';
 import { Accueil } from './ecrans/Accueil.tsx';
+import { profilVisible } from './jeu/personnalisation.ts';
 import { useRoute } from './navigation/useRoute.ts';
 import { titreDeLaRoute } from './navigation/routes.ts';
 import type { Route } from './navigation/routes.ts';
+import { pseudoDuJoueur } from './services/identite.ts';
 
 // Une nouvelle version du site remplace les fichiers de l'ancienne : un écran pas encore chargé ne se trouve plus.
 // La page se recharge alors, une seule fois par minute (pas de boucle si c'est le réseau qui manque) ; sinon le filet
@@ -154,7 +156,8 @@ export function App() {
   return (
     <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
-      <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null} pseudo={partie.etat === 'prete' ? partie.sauvegarde.profil.pseudo : ''} />
+      <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null}
+        pseudo={partie.etat === 'prete' ? pseudoDuJoueur(partie.sauvegarde) : ''} portrait={partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null) : null} />
       {partie.etat === 'erreur' ? <PartieIllisible message={partie.message} /> : <FiletDErreur key={cle}><Suspense fallback={<EcranEnChargement />}><Ecran route={route} /></Suspense></FiletDErreur>}
       <HoteDesConfirmations />
     </div></Recompenses>

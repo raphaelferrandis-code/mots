@@ -62,10 +62,9 @@
 .avatar__anneau circle { fill: none; stroke-width: 2.4; }
 .avatar__anneau-fond { stroke: rgb(233 225 208 / 14%); }
 .avatar__anneau-plein { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.3, .8, .3, 1); }
-.avatar__visage {
-  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #f3e6cc; color: #1a3d64;
-  font: italic 900 19px/1 var(--police-serif);
-}
+/* Le portrait équipé (avatar et cadre) ; le petit disque et sa silhouette ne servent que pendant le chargement. */
+.avatar .portrait { width: 40px; }
+.avatar__visage { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #f3e6cc; color: #1a3d64; }
 .avatar__visage svg { width: 20px; height: 20px; }
 .avatar__niveau {
   position: absolute; right: -4px; bottom: -3px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 4px; border-radius: 9px;
@@ -110,17 +109,20 @@
   display: flex; align-items: center; gap: 28px; padding: 22px 22px 20px;
   background: var(--papier-fonce) linear-gradient(90deg, var(--filet) 55%, transparent 0) bottom / 8px 1px repeat-x;
 }
-/* L'initiale du joueur sur un petit timbre dentelé, avec le cachet de son niveau. */
+/* Le portrait du joueur sur un petit timbre dentelé, avec le cachet de son niveau. La vignette imprimée est sombre,
+   comme le cabinet du profil : sur le papier crème, la moitié des cadres (givre, rosée, filigrane…) s'effaçaient. */
 .timbre-joueur {
   position: relative; flex-shrink: 0; width: 64px; height: 76px; rotate: -4deg;
   background: radial-gradient(circle at 3.5px 3.5px, var(--papier-fonce) 2.4px, #f3e6cc 2.9px) -3.5px -3.5px / 8px 8px;
   filter: drop-shadow(0 6px 10px rgb(0 0 0 / 35%));
 }
 .timbre-joueur__papier {
-  position: absolute; inset: 4px; display: grid; place-items: center; background: #f3e6cc; box-shadow: inset 0 0 0 1px rgb(26 61 100 / 25%);
-  color: #1a3d64; font: italic 900 38px/1 var(--police-serif);
+  position: absolute; inset: 5px; display: grid; place-items: center; color: #f3e6cc;
+  background: radial-gradient(circle at 50% 42%, #243650, #101c2e 70%, #08111e);
+  box-shadow: inset 0 0 0 1px rgb(26 61 100 / 45%), inset 0 0 0 3px #f3e6cc, inset 0 0 0 4px rgb(26 61 100 / 35%);
 }
-.timbre-joueur__papier svg { width: 30px; height: 30px; }
+.timbre-joueur__papier > svg { width: 30px; height: 30px; }
+.timbre-joueur__papier .portrait { width: 50px; }
 .timbre-joueur__cachet {
   position: absolute; right: -18px; bottom: -10px; width: 38px; height: 38px; box-sizing: border-box; border: 1.5px solid rgb(241 138 75 / 90%); border-radius: 50%;
   display: flex; flex-direction: column; align-items: center; justify-content: center; rotate: -14deg;
