@@ -7,7 +7,7 @@
 .identite { display:flex; align-items:center; gap:14px; min-width:0; color:var(--profil-couleur,var(--texte-fort)); }
 .identite__texte { display:grid; gap:5px; min-width:0; }
 .identite__texte strong { font:700 1.35rem/1.25 var(--police-serif); overflow-wrap:anywhere; }
-.identite__texte small { color:var(--texte-doux); font:500 .74rem var(--police-texte); letter-spacing:.12em; text-transform:uppercase; }
+.identite__texte small { color:var(--texte-doux); font:500 .75rem var(--police-texte); letter-spacing:.12em; text-transform:uppercase; }
 .titre-grave { color:var(--texte); font-size:.82rem; }
 .titre-grave--premium { color:var(--profil-couleur); text-shadow:0 0 16px currentColor; }
 [data-titre=arpenteur],[data-titre=cartographe] { font-variant:small-caps; letter-spacing:.08em; }
@@ -22,7 +22,7 @@
 .vestiaire button,.vestiaire a { -webkit-tap-highlight-color:transparent; }
 .vestiaire__liens { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
 .vestiaire__entete { display:flex; justify-content:space-between; align-items:center; gap:28px; margin-bottom:32px; }
-.vestiaire__surtitre { display:block; color:var(--texte-doux); font:500 .7rem var(--police-texte); letter-spacing:.21em; margin-bottom:9px; }
+.vestiaire__surtitre { display:block; color:var(--texte-doux); font:500 .75rem var(--police-texte); letter-spacing:.21em; margin-bottom:9px; }
 .vestiaire h1 { font:500 clamp(26px,3vw,38px)/1.2 var(--police-serif); letter-spacing:-.035em; }
 .vestiaire__compte { min-width:250px; text-align:right; }
 .vestiaire__compte strong { font:500 1rem var(--police-serif); }
@@ -38,7 +38,7 @@
 .vestiaire__essayage { position:sticky; top:96px; min-width:0; background:linear-gradient(180deg,#15203755,#0c162600); border-top:1px solid color-mix(in srgb,var(--selection) 45%,#203046); }
 .vestiaire__scene { position:relative; min-height:428px; isolation:isolate; display:grid; place-items:center; perspective:800px; overflow:hidden; background:radial-gradient(ellipse at 50% 47%,color-mix(in srgb,var(--selection) 10%,transparent),transparent 67%); }
 .vestiaire__scene::after { content:''; position:absolute; width:190px; height:30px; bottom:30px; left:50%; transform:translateX(-50%); border-radius:50%; background:var(--selection); filter:blur(30px); opacity:.14; pointer-events:none; }
-.vestiaire__etat { position:absolute; top:21px; left:24px; font-size:.62rem; letter-spacing:.2em; color:var(--texte-doux); }
+.vestiaire__etat { position:absolute; top:21px; left:24px; font-size:.75rem; letter-spacing:.2em; color:var(--texte-doux); }
 .vestiaire__astrolabe { position:absolute; inset:5% 0 auto; width:100%; height:95%; color:var(--selection); opacity:.12; stroke-width:.7; pointer-events:none; }
 .vestiaire__objet { position:relative; width:100%; padding:32px 18px 28px; transform:rotateX(var(--inclinaison-x,0deg)) rotateY(var(--inclinaison-y,0deg)); transition:transform .25s ease-out; animation:apparition-cosmetique .4s ease both; }
 .vestiaire__objet .identite { flex-direction:column; text-align:center; gap:15px; }
@@ -53,7 +53,7 @@
 .vestiaire__signature { position:absolute; bottom:14px; color:var(--texte-discret); font:500 .54rem var(--police-texte); letter-spacing:.16em; }
 .vestiaire__signature span { margin:0 12px; color:var(--selection); }
 .vestiaire__fiche { padding:24px 24px 20px; border-top:1px solid var(--filet); text-align:center; }
-.vestiaire__famille { color:var(--selection); font-size:.65rem; text-transform:uppercase; letter-spacing:.19em; }
+.vestiaire__famille { color:var(--selection); font-size:.75rem; text-transform:uppercase; letter-spacing:.19em; }
 .vestiaire__fiche h2 { font:500 1.6rem/1.2 var(--police-serif); margin-top:10px; }
 .vestiaire__obtention { font-size:.8rem; color:var(--texte-doux); margin:14px 0 21px; min-height:20px; }
 .vestiaire__description { font-size:.85rem; line-height:1.45; color:var(--texte); margin:8px auto 0; max-width:34ch; text-wrap:balance; }
@@ -76,7 +76,7 @@
 @media (hover: hover) { .vestiaire__categories button:hover { color:var(--texte-fort); } }
 .vestiaire__outils { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:24px 0 20px; }
 .vestiaire__outils h2 { font:500 1.15rem var(--police-serif); }
-.vestiaire__outils h2 small { margin-left:8px; color:var(--texte-doux); font:.67rem var(--police-texte); }
+.vestiaire__outils h2 small { margin-left:8px; color:var(--texte-doux); font:.75rem var(--police-texte); }
 .vestiaire__outils [role=group] { display:flex; gap:4px; }
 .vestiaire__outils button { min-height:40px; padding:6px 12px; border:1px solid transparent; background:transparent; color:var(--texte-doux); font-size:.8rem; border-radius:3px; }
 .vestiaire__outils button[aria-pressed=true] { color:var(--texte-fort); border-color:var(--cuivre); background:rgb(216 154 92 / 15%); }
@@ -124,7 +124,7 @@
 }
 .cosmetique[data-equipe=true] .cosmetique__cartouche { border-left:3px solid var(--succes); padding-left:3px; }
 .cosmetique__nom { display:block; font:500 .8rem/1.35 var(--police-serif); min-height:2.7em; align-content:center; color:var(--texte-fort); overflow-wrap:anywhere; }
-.cosmetique__acces { display:flex; gap:4px; align-items:center; justify-content:center; font-size:.7rem; color:var(--texte-doux); margin-top:5px; }
+.cosmetique__acces { display:flex; gap:4px; align-items:center; justify-content:center; font-size:.75rem; color:var(--texte-doux); margin-top:5px; }
 .cosmetique__acces svg { width:11px; height:11px; }
 .cosmetique[data-premium=true] .cosmetique__acces { color:#c9bddb; }
 .cosmetique[data-equipe=true] .cosmetique__acces { color:var(--succes); }
@@ -158,23 +158,23 @@
 @media(max-width:1100px) { .vestiaire__atelier { gap:24px; grid-template-columns:minmax(270px,.85fr) minmax(0,1.5fr); } .vestiaire__grille { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:767px) {
   .ecran.vestiaire { padding:24px 16px calc(var(--hauteur-navigation) + 32px + env(safe-area-inset-bottom)); } .vestiaire__entete { align-items:start; flex-direction:column; gap:14px; margin-bottom:24px; }
-  .vestiaire__compte { text-align:left; } .vestiaire__surtitre { font-size:.58rem; }
+  .vestiaire__compte { text-align:left; } .vestiaire__surtitre { font-size:.75rem; }
   .vestiaire__atelier { grid-template-columns:1fr; gap:20px; }
   .vestiaire__essayage { position:static; display:grid; grid-template-columns:1fr; }
   .vestiaire__scene { min-height:315px; } .vestiaire__objet .portrait { width:205px; }
   .vestiaire__objet .identite__texte strong { font-size:23px; } .vestiaire__objet { padding:30px 16px; }
   .vestiaire__astrolabe { inset:0; height:100%; } .vestiaire__signature { font-size:.48rem; bottom:6px; }
   .vestiaire__fiche { padding:18px 20px; } .vestiaire__fiche h2 { font-size:1.35rem; } .vestiaire__obtention { margin:10px 0 15px; }
-  .vestiaire__categories { gap:1px; } .vestiaire__categories button { font-size:.65rem; }
+  .vestiaire__categories { gap:1px; } .vestiaire__categories button { font-size:.75rem; }
   .vestiaire__outils { padding:18px 0 14px; } .vestiaire__outils button { padding:6px 8px; }
   .vestiaire__grille { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .cosmetique { padding:6px; }
   .cosmetique__visuel { height:118px; } .cosmetique__visuel .portrait { width:104px; }
   .cosmetique__visuel > .embleme-grave { width:64px; height:64px; }
-  .cosmetique__nom { font-size:.75rem; } .cosmetique__acces { font-size:.6rem; }
+  .cosmetique__nom { font-size:.8rem; } .cosmetique__acces { font-size:.75rem; }
   .cosmetique__cartouche { min-height:72px; padding-block:7px; }
   .cosmetique__visuel .paquet-scelle { width:66px; height:92px; } .cosmetique__visuel :is(.tim, .tb) { width:60px; }
   .vestiaire__grille--titre { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .vestiaire__pied { gap:12px; font-size:.6rem; }
+  .vestiaire__pied { gap:12px; font-size:.75rem; }
 }
 @media(prefers-reduced-motion:reduce) { .cadre-grave *, .dos-grave > svg, .vestiaire__objet { animation:none !important; transition:none !important; } .cosmetique { transition:none; } }
 [data-animations-reduites] .cadre-grave *,[data-animations-reduites] .dos-grave > svg,[data-animations-reduites] .vestiaire__objet { animation:none !important; transition:none !important; }
@@ -196,14 +196,14 @@
   .vestiaire__objet--titre .portrait,.vestiaire__objet--couleur .portrait { width:95px; }
   .vestiaire__objet--titre .identite,.vestiaire__objet--couleur .identite { gap:6px; }
   .vestiaire__objet--titre .identite__texte strong,.vestiaire__objet--couleur .identite__texte strong { font-size:15px; }
-  .vestiaire__objet--titre .titre-grave,.vestiaire__objet--couleur .titre-grave { font-size:.69rem; }
-  .vestiaire__etat { top:12px; left:12px; font-size:.51rem; }
+  .vestiaire__objet--titre .titre-grave,.vestiaire__objet--couleur .titre-grave { font-size:.75rem; }
+  .vestiaire__etat { top:12px; left:12px; font-size:.7rem; }
   .vestiaire__signature { display:none; }
   .vestiaire__fiche { padding:20px 12px 16px 4px; border-top:0; }
   .vestiaire__fiche h2 { font-size:1.16rem; }
-  .vestiaire__famille { font-size:.53rem; letter-spacing:.1em; }
-  .vestiaire__obtention { font-size:.65rem; }
-  .vestiaire__action { font-size:.68rem; gap:6px; min-height:44px; padding:6px; }
+  .vestiaire__famille { font-size:.7rem; letter-spacing:.1em; }
+  .vestiaire__obtention { font-size:.75rem; }
+  .vestiaire__action { font-size:.75rem; gap:6px; min-height:44px; padding:6px; }
   .vestiaire__objet > .paquet-scelle { width:125px; height:172px; }
   .vestiaire__objet > :is(.tim, .tb) { width:110px; }
 }

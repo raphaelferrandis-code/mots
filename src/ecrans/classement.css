@@ -23,7 +23,7 @@
 .podium__socle { position: relative; margin-top: 12px; padding: 20px 10px 22px; background: radial-gradient(ellipse at 50% 0, color-mix(in srgb, var(--metal) 9%, transparent), transparent 70%); border-radius: 50%; }
 .podium__joueur[data-rang='1'] .podium__socle { padding-bottom: 46px; }
 .podium__cote { display: block; font: 500 clamp(2rem, 4vw, 3.3rem)/1 var(--police-mention); font-variant-numeric: tabular-nums; }
-.podium__unite { display: block; margin-top: 7px; font-size: .65rem; text-transform: uppercase; letter-spacing: .22em; color: var(--encre-douce); }
+.podium__unite { display: block; margin-top: 7px; font-size: .75rem; text-transform: uppercase; letter-spacing: .22em; color: var(--encre-douce); }
 .podium__signature { display: flex; justify-content: center; align-items: center; gap: 16px; color: var(--classement-or); opacity: .6; }
 .podium__signature span { height: 1px; width: min(25%, 120px); background: linear-gradient(90deg, transparent, currentColor); }
 .podium__signature span:last-child { transform: rotate(180deg); }

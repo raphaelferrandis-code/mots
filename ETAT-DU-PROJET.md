@@ -2,6 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (soir) — finitions, étape 3, lot D : typographie et sobriété (fin de l'étape 3).** Un plancher de
+> 12 px pour les textes qui informent (Profil sur téléphone surtout ; les dessins et les pastilles du duel, calées au
+> pixel, gardent leur taille) ; chiffres alignés partout (`font-variant-numeric: lining-nums` sur `body`, chiffres de
+> même largeur pour les compteurs, scores, gains et rangs) ; titres équilibrés, sélection au cuivre, « + » et « − »
+> ordinaires. Arrondis des cartes, menus et fenêtres ramenés à 8 px (pastilles, badges et bouton du joueur restent
+> ronds). Survols réservés à la souris. Plus de halos dans l'en-tête ni les menus, plus d'étincelle qui scintille ; la
+> dorure des pastilles brille une fois puis au survol. Laissé à la décision de Raphaël : les effets permanents de
+> l'Accueil (fond animé, paquet qui flotte, halo qui respire, fil qui défile).
+
 > **26 septembre 2026 (soir) — finitions, étape 3, lot C : les écrans à part rejoignent le jeu.** Le Profil (le
 > « cabinet ») perd ses vitrines de métal et son violet : cartes du duel, crème, cuivre (barre d'XP, onglets,
 > sélection), « Équipé » en couleur de réussite ; seules les pièces gardent leurs couleurs (`--objet`, titres,

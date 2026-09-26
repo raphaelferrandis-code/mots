@@ -9,7 +9,7 @@
 /* Le blason : l'emblème sur son timbre, le nom, le duo et la cote. */
 .blason {
   position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 48px; align-items: center;
-  padding: 40px 44px; border-radius: 18px; border: 1px solid var(--filet);
+  padding: 40px 44px; border-radius: var(--rayon); border: 1px solid var(--filet);
   background: linear-gradient(115deg, #17324f 0%, var(--carte-fond) 52%, #0d1c31 100%); box-shadow: 0 18px 40px rgb(0 0 0 / 28%);
 }
 .blason > * { position: relative; }
@@ -19,7 +19,7 @@
 .blason__centre { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .correspondance .blason__nom { margin: 0 0 10px; font: 700 clamp(2.2rem, 4.5vw, 3.6rem)/1 var(--police-serif); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .blason__actions { display: flex; flex-direction: column; align-items: stretch; gap: 12px; min-width: 210px; }
-.blason__cote { display: grid; justify-items: center; gap: 4px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--filet); background: rgb(11 23 41 / 60%); }
+.blason__cote { display: grid; justify-items: center; gap: 4px; padding: 14px 16px; border-radius: var(--rayon); border: 1px solid var(--filet); background: rgb(11 23 41 / 60%); }
 .blason__cote strong { font: 700 2.2rem/1.1 var(--police-serif); color: var(--papier-timbre); }
 .blason--apercu { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 22px; padding: 32px 28px; text-align: center; }
 .blason--apercu .blason__filigrane { top: auto; bottom: -110px; right: -40px; font-size: 320px; }
@@ -48,7 +48,7 @@
 .panneau-equipe > p { margin: 0; }
 .panneau-equipe .bouton--accent { align-self: stretch; }
 .sieges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.siege { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--filet); min-width: 0; }
+.siege { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--rayon); border: 1px solid var(--filet); min-width: 0; }
 .siege > div { display: grid; gap: 4px; min-width: 0; }
 .siege strong { overflow-wrap: anywhere; }
 .panneau-equipe__regles { border-top: 1px solid var(--filet); padding-top: 12px; font-size: 0.9rem; color: var(--encre-douce); }
@@ -61,7 +61,7 @@
 .equipe__nom input { width: 100%; min-height: 52px; font: 700 1.25rem var(--police-serif); }
 .equipe .equipe__emblemes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .equipe__emblemes legend { margin-bottom: 12px; }
-.equipe__choix-embleme { position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; box-sizing: border-box; border: 1.5px solid var(--filet); border-radius: 10px; cursor: pointer; }
+.equipe__choix-embleme { position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; box-sizing: border-box; border: 1.5px solid var(--filet); border-radius: var(--rayon); cursor: pointer; }
 .equipe__choix-embleme:has(:checked) { border-color: var(--accent); background: var(--papier-fonce); }
 .equipe__choix-embleme:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
 .equipe__choix-embleme input { position: absolute; opacity: 0; pointer-events: none; }
@@ -90,7 +90,7 @@
 .invitation-equipe__actions { display: grid; gap: 8px; }
 
 /* Partir ou dissoudre, à l'écart. */
-.equipe__depart { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; padding: 18px 22px; border-radius: 12px; border: 1px dashed var(--filet); }
+.equipe__depart { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; padding: 18px 22px; border-radius: var(--rayon); border: 1px dashed var(--filet); }
 .equipe__depart > p { margin: 0; }
 .equipe__confirmation { flex-basis: 100%; }
 .equipe__confirmation p { margin: 0 0 12px; }

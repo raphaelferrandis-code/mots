@@ -26,19 +26,19 @@
 .succes__medaille > svg { display:block; width:66px; height:76px; }
 .succes__carte[data-acquis="true"] .succes__medaille { opacity:1; filter:drop-shadow(0 0 8px color-mix(in srgb,var(--famille-succes) 18%,transparent)); }
 .succes__medaille > span { position:absolute; right:1px; bottom:5px; color:var(--nuit); background:var(--succes); border:1px solid var(--succes); border-radius:50%; width:20px; height:20px; display:grid; place-items:center; font-size:.7rem; }
-.succes__famille { display:block; font-size:.63rem; letter-spacing:.09em; text-transform:uppercase; color:var(--famille-succes); margin-bottom:.4rem; }
+.succes__famille { display:block; font-size:.75rem; letter-spacing:.09em; text-transform:uppercase; color:var(--famille-succes); margin-bottom:.4rem; }
 .succes__contenu h3 { color:var(--texte-fort); font-size:1rem; margin:0 0 .45rem; line-height:1.4; }
 .succes__contenu p { margin:0; color:var(--texte-doux); font-size:.85rem; line-height:1.5; min-height:2.35rem; }
 .succes__progression { display:flex; align-items:center; gap:.8rem; margin-top:.9rem; }
 .succes__progression span { flex-shrink:0; font-size:.75rem; color:var(--texte-doux); font-variant-numeric:tabular-nums; }
 .succes__recompense { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; gap:.6rem; padding:.8rem 0; border-top:1px solid var(--filet); min-height:64px; }
-.succes__recompense > div > span { display:block; font-size:.7rem; color:var(--texte-doux); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.18rem; }
+.succes__recompense > div > span { display:block; font-size:.75rem; color:var(--texte-doux); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.18rem; }
 .succes__recompense strong { display:block; color:var(--famille-succes); font-family:var(--police-titre,Georgia,serif); font-weight:400; font-size:.9rem; }
-.succes__recompense button { padding:.5rem .75rem; min-height:44px; align-self:center; font-size:.72rem; flex-shrink:0; }
+.succes__recompense button { padding:.5rem .75rem; min-height:44px; align-self:center; font-size:.8rem; flex-shrink:0; }
 .succes__verrou svg { width:15px; height:15px; color:var(--texte-doux); }
 @media(max-width:1100px) { .succes__grille { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:650px) {
-  .vestiaire__vues { gap:1rem; } .vestiaire__vues small { font-size:.65rem; }
+  .vestiaire__vues { gap:1rem; } .vestiaire__vues small { font-size:.75rem; }
   .succes__grille { grid-template-columns:1fr; } .succes__outils { flex-wrap:wrap; }
   .succes__outils [role="group"] { width:100%; } .succes__outils button { flex:1; padding:.55rem; }
   .succes__entete h2 { font-size:1.5rem; } .succes__total { display:none; }

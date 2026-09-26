@@ -16,7 +16,7 @@
 .comptoir__actions { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
 .comptoir__actions--offres { gap: 14px; margin-top: 18px; }
 .comptoir__lien { color: var(--texte-fort); text-decoration: underline; text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 6px; text-decoration-thickness: 1px; font-size: 16px; }
-.comptoir__lien:hover { text-decoration-color: var(--cuivre-clair); }
+@media (hover: hover) { .comptoir__lien:hover { text-decoration-color: var(--cuivre-clair); } }
 .comptoir__infos { margin-top: 24px; display: grid; gap: 6px; font-size: 15px; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
 .comptoir__infos p { margin: 0; }
 .comptoir__garantie { color: var(--cuivre-clair); }
@@ -74,7 +74,7 @@
 .album-apercu__case--pleine { background: none; -webkit-mask: none; mask: none; }
 .album-apercu__case--pleine::before { display: none; }
 .album-apercu__case .tb { position: absolute; inset: 0; transition: translate .25s, opacity .2s; }
-.album-apercu__case--pleine:hover .tb { translate: 0 -4px; }
+@media (hover: hover) { .album-apercu__case--pleine:hover .tb { translate: 0 -4px; } }
 .album-apercu__pied { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin: 22px 0 0; color: var(--texte-doux); font-size: 15px; }
 
 /* L'envol : des copies des timbres, au-dessus de tout, le temps de rejoindre leur case. */

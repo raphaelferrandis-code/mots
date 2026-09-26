@@ -48,7 +48,7 @@
 .page-mot__vignette { display: block; width: 100%; }
 .page-mot__vignette .tb { width: 100%; }
 .page-mot__legende { font-size: 15px; }
-.page-mot__voisins a:hover .page-mot__legende { text-decoration: underline; }
+@media (hover: hover) { .page-mot__voisins a:hover .page-mot__legende { text-decoration: underline; } }
 
 .page-mot__pied { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--filet); font-size: 13px; color: var(--encre-douce); }
 .page-mot__pied a { color: inherit; }
@@ -57,7 +57,7 @@
 .page-mots__titre { margin: 40px 0 20px; font-family: var(--police-serif); font-size: clamp(36px, 6vw, 56px); color: var(--texte-fort); }
 .page-mots__lettres { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; border-bottom: 1px solid var(--filet); }
 .page-mots__lettres a { min-width: 36px; min-height: 36px; display: inline-grid; place-items: center; font-family: var(--police-etroite); font-size: 16px; text-decoration: none; }
-.page-mots__lettres a:hover { color: var(--cuivre); }
+@media (hover: hover) { .page-mots__lettres a:hover { color: var(--cuivre); } }
 .page-mots__section h2 { margin: 32px 0 12px; font-family: var(--police-serif); font-size: 32px; color: var(--cuivre); }
 .page-mots__section ul { list-style: none; margin: 0; padding: 0; columns: 4 170px; column-gap: 24px; }
 .page-mots__section li { padding: 3px 0; break-inside: avoid; }

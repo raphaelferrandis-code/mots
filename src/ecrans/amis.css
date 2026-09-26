@@ -15,7 +15,7 @@
 
 /* Les demandes : une lettre reçue, ou une demande envoyée en pointillés. */
 .amis .demandes { gap: 10px; }
-.demande { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 16px; padding: 14px 16px 14px 18px; border-radius: 12px; border: 1px dashed var(--filet); }
+.demande { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 16px; padding: 14px 16px 14px 18px; border-radius: var(--rayon); border: 1px dashed var(--filet); }
 .demande--recue { border-style: solid; background: var(--carte-fond); }
 .demande__texte { flex: 1; min-width: 180px; margin: 0; display: grid; gap: 4px; }
 .demande__texte strong { font: 700 1.05rem var(--police-serif); color: var(--encre); overflow-wrap: anywhere; }
@@ -34,7 +34,7 @@
 .fiche-ami__nom > span { font-size: 0.82rem; }
 .fiche-ami__menu { position: relative; align-self: flex-start; }
 .fiche-ami__menu svg { width: 18px; height: 18px; fill: currentColor; }
-.fiche-ami__options { position: absolute; right: 0; top: calc(100% + 6px); z-index: 2; padding: 6px; border-radius: 10px; border: 1px solid var(--filet-fort); background: var(--papier-fonce); box-shadow: var(--ombre); white-space: nowrap; }
+.fiche-ami__options { position: absolute; right: 0; top: calc(100% + 6px); z-index: 2; padding: 6px; border-radius: var(--rayon); border: 1px solid var(--filet-fort); background: var(--papier-fonce); box-shadow: var(--ombre); white-space: nowrap; }
 .fiche-ami__actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px; }
 .fiche-ami__actions .bouton { flex: 1 1 auto; padding-inline: 12px; white-space: nowrap; }
 .fiche-ami__confirmation { padding: 14px; border: 1px solid var(--accent); border-radius: var(--rayon); }
@@ -117,7 +117,7 @@
 .premier-pas__voies { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: stretch; }
 .voie-pseudo { display: flex; flex-direction: column; gap: 18px; padding: 35px; border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond); }
 .voie-pseudo > p { margin: 0; line-height: 1.55; }
-.voie-pseudo__le-tien { margin-top: auto; display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: 12px; border: 1px dashed var(--filet-fort); background: var(--papier); }
+.voie-pseudo__le-tien { margin-top: auto; display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: var(--rayon); border: 1px dashed var(--filet-fort); background: var(--papier); }
 .voie-pseudo__le-tien > div { flex: 1; display: grid; gap: 6px; min-width: 0; }
 .voie-pseudo__le-tien strong { font: 700 1.6rem/1 var(--police-serif); overflow-wrap: anywhere; }
 .timbre-papier--initiale { width: 60px; height: 74px; transform: rotate(-4deg); font: italic 700 1.6rem/1 var(--police-serif); }

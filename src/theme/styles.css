@@ -12,10 +12,14 @@ body {
   font-family: var(--police-texte);
   font-size: 17px;
   line-height: 1.5;
+  /* Des chiffres alignés partout : Playfair dessine par défaut des chiffres « à l'ancienne », qui montent et descendent
+     dans « 1 234 » alors que les valeurs du timbre voisin sont alignées (audit de finition, V09). */
+  font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { font-family: var(--police-titre); line-height: 1.2; margin: 0; }
+h1, h2, h3 { font-family: var(--police-titre); line-height: 1.2; margin: 0; text-wrap: balance; }
+::selection { background: var(--cuivre); color: var(--cuivre-encre); }
 h1 { font-size: 1.7rem; }
 h2 { font-size: 1.2rem; }
 p { margin: 0; }
@@ -51,6 +55,10 @@ main:focus, main h1:focus { outline: none; }
 :where(input, select, textarea):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-color: var(--cuivre); border-radius: 3px; }
 :where(input)[aria-invalid='true'] { border-color: var(--erreur); }
 :where(input[type='checkbox'], input[type='radio']) { accent-color: var(--cuivre); }
+
+/* Les nombres qui bougent ou se comparent (compteurs, scores, gains, rangs) : des chiffres de même largeur. */
+.vie__pv, .fin-duel__gains, .degats-volants, .menu-encre, .adversaire__gain, .blason__cote, .podium, .palmares, .recompense__niveau, .progres__niveau,
+.triangle-types, .compteur, .vestiaire__niveau, .succes__entete, .boutique__reserve { font-variant-numeric: lining-nums tabular-nums; }
 
 .visuellement-cache {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -246,8 +254,9 @@ main:focus, main h1:focus { outline: none; }
 /* Bloc que l'on déplie d'un toucher (progression par faction) */
 .repliable > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
 .repliable > summary::-webkit-details-marker { display: none; }
-.repliable > summary::after { content: '＋'; color: var(--encre-douce); }
-.repliable[open] > summary::after { content: '－'; }
+/* Un plus et un moins ordinaires (les signes pleine chasse venaient d'une police asiatique de secours). */
+.repliable > summary::after { content: '+'; color: var(--encre-douce); font: 400 1.2rem/1 var(--police-texte); }
+.repliable[open] > summary::after { content: '−'; }
 
 /* Galerie de contrôle (développement) */
 .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; margin-bottom: 24px; }
@@ -261,7 +270,7 @@ main:focus, main h1:focus { outline: none; }
 .carte-legendee { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .carte-legendee figcaption { display: flex; flex-direction: column; text-align: center; line-height: 1.15; min-width: 0; }
 .carte-legendee figcaption > strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.carte-legendee figcaption > span { font-family: var(--police-mention); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--encre-douce); white-space: nowrap; }
+.carte-legendee figcaption > span { font-family: var(--police-mention); font-size: 0.75rem; letter-spacing: 0.04em; color: var(--encre-douce); white-space: nowrap; }
 .deck__vide { aspect-ratio: 30 / 38; border: 2px dashed var(--filet); border-radius: 6px; }
 .regles { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
 .option--liste { grid-template-columns: 1fr; cursor: default; }

@@ -58,7 +58,7 @@
 .correspondant .portrait { width: 100%; }
 .correspondant__niveau {
   position: absolute; right: -6px; bottom: -4px; min-width: 24px; height: 19px; padding: 0 5px; box-sizing: border-box; border-radius: 10px;
-  background: var(--accent); color: var(--accent-texte); font: 700 0.7rem/19px var(--police-texte); text-align: center; box-shadow: 0 0 0 2px var(--papier);
+  background: var(--accent); color: var(--accent-texte); font: 700 0.75rem/19px var(--police-texte); text-align: center; box-shadow: 0 0 0 2px var(--papier);
 }
 
 .presence { display: inline-flex; align-items: center; gap: 7px; }
@@ -69,7 +69,7 @@
 .cachet {
   position: relative; display: grid; place-items: center; flex-shrink: 0; width: 76px; height: 76px; box-sizing: border-box;
   border: 2px solid currentColor; border-radius: 50%; transform: rotate(var(--inclinaison, -10deg));
-  font: 600 0.7rem/1.05 var(--police-mention); letter-spacing: 0.12em; text-transform: uppercase; text-align: center; color: var(--accent);
+  font: 600 0.75rem/1.05 var(--police-mention); letter-spacing: 0.12em; text-transform: uppercase; text-align: center; color: var(--accent);
 }
 .cachet::before { content: ''; position: absolute; inset: 4px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.7; }
 .cachet > span { display: grid; gap: 2px; padding: 0 8px; }
@@ -109,7 +109,7 @@
 .vitrine__nombre strong { display: block; font-size: 0.95rem; color: var(--encre); }
 
 /* ── L'enveloppe par avion du parrainage ── */
-.par-avion { padding: 7px; border-radius: 10px; background: repeating-linear-gradient(135deg, var(--accent) 0 14px, var(--papier) 14px 19px, #315d89 19px 33px, var(--papier) 33px 38px); }
+.par-avion { padding: 7px; border-radius: var(--rayon); background: repeating-linear-gradient(135deg, var(--accent) 0 14px, var(--papier) 14px 19px, #315d89 19px 33px, var(--papier) 33px 38px); }
 .par-avion__lettre { display: flex; flex-direction: column; gap: 16px; height: 100%; box-sizing: border-box; padding: 22px; border-radius: 5px; background: var(--carte-fond); }
 .par-avion__lettre > p { margin: 0; }
 .par-avion__tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }

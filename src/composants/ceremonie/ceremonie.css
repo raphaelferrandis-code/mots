@@ -21,7 +21,7 @@ body.ceremonie-ouverte { overflow: hidden; }
 
 .ceremonie__haut { position: relative; z-index: 6; display: flex; justify-content: flex-end; gap: 6px; }
 .c-icone { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid transparent; background: none; color: var(--texte-doux); cursor: pointer; transition: color .2s, border-color .2s; }
-.c-icone:hover { color: var(--texte-fort); border-color: var(--filet); }
+@media (hover: hover) { .c-icone:hover { color: var(--texte-fort); border-color: var(--filet); } }
 .c-icone svg { width: 22px; height: 22px; }
 
 .ceremonie__scene {
@@ -161,7 +161,7 @@ body.ceremonie-ouverte { overflow: hidden; }
 .c-definition em { font-family: var(--police-serif); color: var(--cuivre-clair); margin-right: 6px; }
 .c-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
 .c-lien { padding: 8px; border: 0; background: none; cursor: pointer; font: inherit; font-size: 15px; color: var(--texte-doux); text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgba(167, 177, 196, .5); }
-.c-lien:hover { color: var(--texte-fort); }
+@media (hover: hover) { .c-lien:hover { color: var(--texte-fort); } }
 .c-liens { display: flex; gap: 10px 22px; justify-content: center; flex-wrap: wrap; }
 
 /* Le bouton à bords dentelés de la maquette (le même que .btn-primary, boutons.css), et sa variante à filet. */

@@ -9,7 +9,7 @@
 /* Les pastilles parlent la langue du timbre : la rareté est une petite vignette dentelée,
    la finition est dorée à chaud sur fond de nuit, et « Nouveau » ou « Doublon » est un coup de tampon. */
 .c-pastilles { display: flex; gap: 10px 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 2px; }
-.c-pastille { position: relative; font-family: var(--police-etroite); font-weight: 600; font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase; line-height: 1; white-space: nowrap; }
+.c-pastille { position: relative; font-family: var(--police-etroite); font-weight: 600; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; line-height: 1; white-space: nowrap; }
 
 .c-vignette, .c-dorure {
   --dent: 2px; --pas: 6px;
@@ -27,15 +27,18 @@
 .c-vignette[data-rarete='Peu commune'] { --losange: #5f9a7c; }
 .c-vignette[data-rarete='Rare'] { --losange: var(--cuivre, #d89a5c); --filet-vignette: rgba(176, 106, 48, .5); }
 .c-vignette[data-rarete='Épique'] { --losange: #7a5bc4; --filet-vignette: rgba(122, 91, 196, .45); }
-.c-vignette[data-rarete='Légendaire'] { --losange: #2a1605; --filet-vignette: rgba(42, 22, 5, .45); color: #2a1605; background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }
-.c-vignette[data-rarete='Hors-série'] { --losange: #2b1447; --filet-vignette: rgba(43, 20, 71, .4); color: #2b1447; background: linear-gradient(100deg, #cfaeff, #ffd9ec 30%, #b57bff 55%, #bfe9ff 80%, #e4ccff) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }
+.c-vignette[data-rarete='Légendaire'] { --losange: #2a1605; --filet-vignette: rgba(42, 22, 5, .45); color: #2a1605; background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a) 0 0 / 220% 100%; animation: c-reflet 1.6s ease-in-out 1 both; }
+.c-vignette[data-rarete='Hors-série'] { --losange: #2b1447; --filet-vignette: rgba(43, 20, 71, .4); color: #2b1447; background: linear-gradient(100deg, #cfaeff, #ffd9ec 30%, #b57bff 55%, #bfe9ff 80%, #e4ccff) 0 0 / 220% 100%; animation: c-reflet 1.6s ease-in-out 1 both; }
 
 /* La dorure : les lettres et le filet sont frappés à chaud sur un fond de nuit. */
 .c-dorure { --feuille: linear-gradient(100deg, #b07634, #fbe2ad 30%, #c88a44 50%, #fde9bd 70%, #b87d3a); --filet-vignette: transparent; background: #121a2e; }
 .c-dorure[data-finition='Holographique'] { --feuille: linear-gradient(100deg, #ff8fb0, #ffe38a 25%, #9dffc8 50%, #8fdcff 75%, #cfaeff); }
-.c-dorure::after { border: 0; padding: 1px; background: var(--feuille) 0 0 / 220% 100%; -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: c-reflet 3.2s ease-in-out infinite alternate; }
-.c-dorure > span { color: transparent; background: var(--feuille) 0 0 / 220% 100%; -webkit-background-clip: text; background-clip: text; animation: c-reflet 3.2s ease-in-out infinite alternate; }
-@keyframes c-reflet { to { background-position: 100% 0; } }
+.c-dorure::after { border: 0; padding: 1px; background: var(--feuille) 0 0 / 220% 100%; -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: c-reflet 1.6s ease-in-out 1 both; }
+.c-dorure > span { color: transparent; background: var(--feuille) 0 0 / 220% 100%; -webkit-background-clip: text; background-clip: text; animation: c-reflet 1.6s ease-in-out 1 both; }
+/* Le reflet passe une fois à l'apparition, puis au survol (un nom à part pour qu'il reparte). */
+@keyframes c-reflet { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes c-reflet-survol { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (hover: hover) { :is(.c-vignette, .c-dorure):hover, :is(.c-vignette, .c-dorure):hover > span, .c-dorure:hover::after { animation: c-reflet-survol 1.2s ease-in-out 1 both; } }
 
 /* Le tampon : double filet, encre un peu passée, posé de travers. */
 .c-tampon {

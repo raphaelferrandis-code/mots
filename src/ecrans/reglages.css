@@ -25,4 +25,4 @@
   color: var(--encre-douce);
   text-decoration: none;
 }
-.reglages__confidentialite:hover { color: var(--encre); text-decoration: underline; }
+@media (hover: hover) { .reglages__confidentialite:hover { color: var(--encre); text-decoration: underline; } }

@@ -150,7 +150,7 @@
 .parade__carte {
   --encre: #3557a8;
   width: min(560px, 100%); display: grid; gap: 14px; padding: clamp(18px, 3dvh, 28px) clamp(16px, 4vw, 30px);
-  border: 1px solid rgb(216 154 92 / 40%); border-top: 4px solid var(--encre); border-radius: 10px;
+  border: 1px solid rgb(216 154 92 / 40%); border-top: 4px solid var(--encre); border-radius: var(--rayon);
   background: linear-gradient(170deg, #16243d, #0d1729); box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
   animation: parade-carte .32s cubic-bezier(.2, .9, .3, 1);
 }
@@ -204,7 +204,7 @@
 /* ── L'aperçu d'un timbre au survol ── */
 .apercu-timbre {
   position: fixed; z-index: 70; pointer-events: none; width: min(300px, calc(100vw - 28px)); display: grid; gap: 12px; padding: 16px;
-  border: 1px solid rgb(216 154 92 / 45%); border-radius: 10px; background: linear-gradient(170deg, #16243d, #0d1729);
+  border: 1px solid rgb(216 154 92 / 45%); border-radius: var(--rayon); background: linear-gradient(170deg, #16243d, #0d1729);
   box-shadow: 0 24px 60px rgb(0 0 0 / 55%); color: #f1e7d0; animation: apercu-entree .18s ease-out;
 }
 .apercu-timbre__timbre { width: 62%; margin: 0 auto; }
@@ -308,7 +308,7 @@
 }
 .fin-duel__carte {
   width: min(520px, 100%); display: grid; justify-items: center; gap: 12px; padding: clamp(22px, 4dvh, 34px) clamp(18px, 5vw, 34px); text-align: center;
-  border: 1px solid rgb(216 154 92 / 40%); border-radius: 12px; background: linear-gradient(170deg, #16243d, #0d1729); box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
+  border: 1px solid rgb(216 154 92 / 40%); border-radius: var(--rayon); background: linear-gradient(170deg, #16243d, #0d1729); box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
   color: var(--texte-fort); animation: parade-carte .38s cubic-bezier(.2, .9, .3, 1);
 }
 .fin-duel__sceau { width: 76px; height: 76px; color: var(--cuivre-clair); animation: fin-sceau .32s cubic-bezier(.6, 0, .9, .5) .26s both; }
@@ -326,7 +326,7 @@
 .fin-duel__note b { color: var(--texte-fort); }
 .fin-duel__stats { width: 100%; margin: 6px 0 4px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .fin-duel__stats > div { display: grid; gap: 4px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 8px; background: rgb(255 255 255 / 3%); }
-.fin-duel__stats dt { font: 600 11px var(--police-etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--texte-doux); }
+.fin-duel__stats dt { font: 600 12px var(--police-etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--texte-doux); }
 .fin-duel__stats dd { margin: 0; font: 700 15px var(--police-douce); overflow-wrap: anywhere; }
 .fin-duel__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-top: 6px; }
 @keyframes fin-sceau { from { opacity: 0; transform: scale(2.4) rotate(-20deg); } }
