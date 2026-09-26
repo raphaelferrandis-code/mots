@@ -288,6 +288,7 @@ d'un appareil à l'autre. **Aucune fonction à redéployer.** Le jeu est déjà 
 - [x] Vérifié par l'assistant le 26 septembre, de l'extérieur (sans ouvrir le tableau de bord) : la fonction
       `changer_d_apparence` existe avec son réglage `p_apparence` et refuse les visiteurs sans compte ; le script
       s'installe d'un bloc, donc la colonne `apparence` et la nouvelle lecture du compte sont en place aussi.
+- [x] Essayé par Raphaël le 26 septembre : l'apparence choisie sur un appareil apparaît sur un autre.
 
 ### Étape 15 — Coller le script 23 (six timbres par paquet)
 
