@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Philamots · Ouverture en feuille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500;1,700&family=Jost:wght@400;500;600&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nuit:#0a1322;--desk:#0a1322;--cuivre:#d89a5c;--cuivre-clair:#f0c48f;--papier:#f1e7d0;--texte:#e4dccb;--texte-doux:#a7b1c4;--ligne:rgba(233,225,208,.12);--ok:#6fd49a;
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --sans:"Jost","Futura","Century Gothic","Trebuchet MS",sans-serif;
+  --cond:"Oswald","Arial Narrow","Roboto Condensed",Impact,sans-serif;
+  color-scheme:dark;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--nuit:#0a1322}}
+:root[data-theme="dark"]{--nuit:#0a1322}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:#060b16}
+body{margin:0;min-height:100vh;color:var(--texte);font-family:var(--sans);font-size:16.5px;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased;background:radial-gradient(ellipse 75% 65% at 50% 45%,#15274c 0%,#0b1628 50%,#04070f 100%) fixed}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cuivre-clair);outline-offset:3px}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;background-image:var(--noise);opacity:.12;mix-blend-mode:overlay}
+
+.app{position:relative;z-index:2;min-height:100vh;min-height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto}
+.top{display:flex;align-items:center;gap:12px;padding:12px clamp(16px,3vw,40px)}
+.logo{font-family:var(--serif);font-style:italic;font-weight:500;font-size:27px;line-height:1;color:var(--papier)}
+.top .tag{font-family:var(--serif);font-style:italic;color:var(--texte-doux);font-size:15px}
+.top-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.icon-btn{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid transparent;background:none;color:var(--texte-doux);cursor:pointer}
+.icon-btn:hover{color:var(--papier);border-color:var(--ligne)}.icon-btn svg{width:21px;height:21px}
+.snd[aria-pressed="true"] .w{display:none}.snd[aria-pressed="false"] .x{display:none}
+.btn-primary{height:56px;padding:0 34px;display:inline-flex;align-items:center;justify-content:center;border:0;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:17px;color:#2a1605;background:linear-gradient(180deg,#f6d3a2,#df9f63 52%,#c47d43);
+  -webkit-mask:radial-gradient(circle 4.5px at 50% 0,#0000 96%,#000) 50% 0/15px 51% repeat-x,radial-gradient(circle 4.5px at 50% 100%,#0000 96%,#000) 50% 100%/15px 51% repeat-x;
+  mask:radial-gradient(circle 4.5px at 50% 0,#0000 96%,#000) 50% 0/15px 51% repeat-x,radial-gradient(circle 4.5px at 50% 100%,#0000 96%,#000) 50% 100%/15px 51% repeat-x;transition:transform .2s,filter .2s}
+.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.07)}
+.btn-primary:focus-visible{outline:none;filter:brightness(1.15);box-shadow:inset 0 0 0 3px #2a1605}
+.btn-secondary{height:46px;padding:0 20px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(216,154,92,.55);background:rgba(216,154,92,.06);color:var(--papier);border-radius:3px;font-weight:500;font-size:15.5px;cursor:pointer;transition:background .2s,border-color .2s}
+.btn-secondary:hover{background:rgba(216,154,92,.14);border-color:var(--cuivre)}
+.btn-secondary svg{width:18px;height:18px}
+.link-btn{background:none;border:0;padding:8px;cursor:pointer;color:var(--texte-doux);text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(167,177,196,.5);font-size:15px}
+.link-btn:hover{color:var(--papier)}
+
+.stage{position:relative;display:grid;place-items:center;min-height:0;padding:6px 12px;touch-action:none;user-select:none;-webkit-user-select:none;
+  --pw:max(170px,min(300px,60vw,calc((100vh - 330px)*.66)))}
+@supports (height:100dvh){.stage{--pw:max(170px,min(300px,60vw,calc((100dvh - 330px)*.66)))}}
+.stage>*{grid-area:1/1}
+.c-pack-wrap{position:relative;z-index:3}
+
+/* the sheet */
+.sheet-wrap{position:relative;z-index:2;perspective:2000px}
+.tilt{transform-style:flat;will-change:transform}
+.sheet{position:relative;will-change:transform}
+.sface{position:relative;width:100%;aspect-ratio:var(--ar);box-shadow:0 30px 60px rgba(0,0,0,.55),0 4px 8px rgba(0,0,0,.35)}
+.sface>.paper{position:absolute;inset:0;background:radial-gradient(130% 110% at 25% 12%,#fcf6e6 0%,#f1e5ca 60%,#e4d3ae 100%)}
+.sface>.paper::after{content:"";position:absolute;inset:0;background-image:var(--noise);opacity:.45;mix-blend-mode:multiply}
+.sface.sback>.paper{background:radial-gradient(130% 110% at 30% 12%,#fbf6e8,#eee2c4 62%,#e0cfa8)}
+.sface.sback>.paper::before{content:"";position:absolute;inset:0;background-image:var(--wm);background-size:calc(var(--u) * 46) calc(var(--u) * 46);opacity:.6}
+.gum{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 46%,transparent 62%);background-size:260% 260%;background-position:calc(var(--mx,.3)*100%) 0;mix-blend-mode:soft-light}
+.marg,.perfs{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.perfs{z-index:4}
+.cell{position:absolute;z-index:2;padding:0;border:0;background:none;display:block}
+.cell.stampcell{cursor:pointer}
+.cell .stamp{position:absolute;inset:0;transition:transform .25s cubic-bezier(.2,.8,.2,1),filter .25s}
+.insheet .face{-webkit-mask:none!important;mask:none!important}
+@media (hover:hover){.sface.sfront .stampcell:hover .stamp{transform:translateY(-5px);filter:drop-shadow(0 12px 14px rgba(0,0,0,.4))}}
+.bcell{position:absolute;z-index:3;padding:0;border:0;background:none;cursor:pointer;transition:box-shadow .25s,background .25s}
+.bcell:hover{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 2px rgba(216,154,92,.55)}
+.bcell:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--cuivre-clair)}
+.bcell .num{position:absolute;left:50%;bottom:9%;translate:-50% 0;font-family:var(--cond);font-size:calc(var(--u) * 13);letter-spacing:.2em;color:rgba(110,80,40,.5)}
+.bcell .ghost{position:absolute;inset:18%;border-radius:50%;pointer-events:none;opacity:0}
+.bcell.g-dore .ghost{opacity:1;background:radial-gradient(circle,rgba(255,200,120,.5),rgba(255,200,120,0) 70%);animation:gp 2.2s ease-in-out infinite}
+.bcell.g-holo .ghost{opacity:1;background:radial-gradient(circle,rgba(160,210,255,.55),rgba(255,120,190,.25) 45%,rgba(255,255,255,0) 72%);animation:gh 2.6s linear infinite}
+.bcell.g-faute .ghost{opacity:1;background:radial-gradient(circle,rgba(230,40,70,.45),rgba(230,40,70,0) 70%);animation:gf 1s steps(2) infinite}
+@keyframes gp{50%{opacity:.35;transform:scale(.9)}}
+@keyframes gh{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+@keyframes gf{0%{opacity:1;translate:0 0}50%{opacity:.5;translate:1px -1px}}
+.hole{position:absolute;z-index:3;background:var(--desk);box-shadow:inset 0 10px 20px rgba(0,0,0,.6)}
+.labelcell{position:absolute;z-index:2;display:grid;place-items:center;text-align:center;overflow:hidden}
+.labelcell svg{width:100%;height:100%;display:block}
+.flap{position:absolute;left:0;right:0;bottom:0;height:50%;overflow:hidden;transform-origin:50% 0;backface-visibility:hidden;-webkit-backface-visibility:hidden;z-index:6}
+.flap>.sface{position:absolute;left:0;right:0;bottom:0;box-shadow:none}
+
+/* ---------- pack ---------- */
+.pack{position:relative;width:var(--pw);aspect-ratio:320/470;perspective:1200px}
+.pack-tilt{position:absolute;inset:0;filter:drop-shadow(0 36px 34px rgba(0,0,0,.55)) drop-shadow(0 6px 8px rgba(0,0,0,.35));will-change:transform}
+.p-body{position:absolute;left:0;right:0;bottom:0;top:calc(48/470*100%)}
+.p-body svg,.p-strip svg{display:block;width:100%;height:100%}
+.p-foil,.p-glare{position:absolute;inset:0;pointer-events:none;-webkit-mask:var(--packmask) center/100% 100% no-repeat;mask:var(--packmask) center/100% 100% no-repeat}
+.p-foil{background:linear-gradient(115deg,transparent 30%,rgba(255,214,160,.26) 44%,rgba(170,205,255,.2) 52%,transparent 64%);background-size:260% 260%;background-position:calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%);mix-blend-mode:screen}
+.p-glare{background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.25),transparent 46%);mix-blend-mode:soft-light}
+.p-strip{position:absolute;left:0;right:0;top:0;height:calc(52/470*100%)}
+.p-strip .s{position:absolute;inset:0}
+.tear-hint{display:none;position:absolute;top:calc(48/52*100%);left:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffe2b4 30%,rgba(240,196,143,0) 70%);pointer-events:none;animation:hint 1.9s cubic-bezier(.45,0,.55,1) infinite}
+.c-pack .tear-hint{display:block}
+.tear-hint.off{display:none}
+@keyframes hint{0%{left:3%;opacity:0}15%{opacity:1}80%{opacity:1}100%{left:97%;opacity:0}}
+
+
+/* ---------- stamps ---------- */
+.stamp{position:relative;width:100%;aspect-ratio:30/38;container-type:inline-size}
+.stamp .scale{position:absolute;inset:0;font-size:calc(100cqw / 30)}
+.face{position:absolute;inset:0;overflow:hidden;-webkit-mask:var(--perf) center/100% 100% no-repeat;mask:var(--perf) center/100% 100% no-repeat}
+.paper{position:absolute;inset:0;background:radial-gradient(130% 100% at 25% 12%,#fcf6e6 0%,#f0e4c8 58%,#e1cfa8 100%)}
+.paper::after{content:"";position:absolute;inset:0;background-image:var(--noise);opacity:.5;mix-blend-mode:multiply}
+.print{position:absolute;inset:2.15em;overflow:hidden;background-color:var(--ink);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 .09em,transparent .09em .27em),radial-gradient(120% 90% at 50% 38%,rgba(255,255,255,.14),rgba(0,0,0,.3));box-shadow:inset 0 0 0 .14em rgba(0,0,0,.3)}
+.print::after{content:"";position:absolute;inset:.6em;border:.08em solid rgba(246,236,214,.45);pointer-events:none}
+.print-top{position:absolute;top:1.05em;left:1.25em;right:1.1em;display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--cond);font-weight:500;font-size:1em;line-height:1.18;letter-spacing:.2em;text-transform:uppercase;color:rgba(246,236,214,.88)}
+.val{font-family:var(--serif);font-weight:900;font-size:2.7em;line-height:.85;letter-spacing:0;color:#f7eed9}
+.val small{font-family:var(--cond);font-weight:500;font-size:.34em;letter-spacing:.12em;margin-left:.12em}
+.vignette{position:absolute;left:50%;top:48.5%;width:21.5em;height:21.5em;translate:-50% -50%}
+.vignette svg{display:block;width:100%;height:100%;overflow:visible}
+.vignette .ln{stroke:#f6ecd6;fill:none}
+.vignette .vg-disc{fill:var(--ink)}
+.vignette .ini{font-family:var(--serif);font-style:italic;font-weight:700;font-size:66px;fill:#f7eed9}
+.print-word{position:absolute;left:.4em;right:.4em;bottom:1.15em;text-align:center;white-space:nowrap;font-family:var(--cond);font-weight:600;font-size:var(--wsize,2em);letter-spacing:.13em;text-transform:uppercase;color:#f7eed9;line-height:1}
+.imprint{position:absolute;left:0;right:0;bottom:.82em;text-align:center;font-family:var(--cond);font-size:.72em;letter-spacing:.22em;text-transform:uppercase;color:rgba(78,54,26,.62)}
+.foil,.glare{position:absolute;inset:0;pointer-events:none}
+.glare{background:radial-gradient(circle at var(--gx,32%) var(--gy,22%),rgba(255,255,255,.5),rgba(255,255,255,0) 52%);mix-blend-mode:soft-light}
+.postmark{position:absolute;right:-6.6em;top:4.6em;width:23.5em;rotate:-14deg;opacity:0;color:#141a2c;mix-blend-mode:multiply;pointer-events:none}
+.postmark svg{display:block;width:100%;height:auto;overflow:visible}
+.faute-mark{position:absolute;left:.95em;bottom:2.05em;rotate:-16deg;padding:.12em .55em .18em;border:.12em solid #d7263f;outline:.05em solid #d7263f;outline-offset:.18em;font-family:var(--cond);font-weight:600;font-size:2.7em;letter-spacing:.16em;line-height:1.1;text-transform:uppercase;color:#e0293f;background:rgba(255,245,240,.1);opacity:0;pointer-events:none}
+.stamped .postmark{opacity:.82}
+.stamped .faute-mark{opacity:.94}
+
+/* dorés à chaud */
+.r-dore .print{box-shadow:inset 0 0 0 .2em #c8914b,inset 0 0 0 .38em rgba(0,0,0,.3),inset 0 0 0 .5em #efca8b}
+.r-dore .print::after{border-color:rgba(240,200,140,.7)}
+.r-dore .vignette .ln{stroke:#edcb8f}
+.r-dore .vignette .ini{fill:#f5d9a0}
+.r-dore .print-word,.r-dore .val{background:linear-gradient(100deg,#b07634,#fbe2ad 38%,#c88a44 58%,#fde9bd 80%,#b87d3a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.r-dore .foil{background:linear-gradient(115deg,transparent 36%,rgba(255,226,160,.6) 47%,rgba(255,248,222,.95) 50%,rgba(255,226,160,.55) 53%,transparent 64%);background-size:300% 300%;background-position:calc(var(--mx,.5)*100%) 50%;mix-blend-mode:overlay}
+/* holographique */
+.r-holo .foil{background:repeating-linear-gradient(118deg,#ff5f8f 0%,#ffd36b 6%,#7dffb0 12%,#6bd4ff 18%,#b58bff 24%,#ff5f8f 30%),radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.55),transparent 55%);background-size:420% 420%,100% 100%;background-position:calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%),0 0;mix-blend-mode:color-dodge;opacity:.6}
+.r-holo .foil::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 .06em,transparent .11em),radial-gradient(circle,rgba(255,255,255,.75) 0 .045em,transparent .09em);background-size:3.1em 2.7em,1.9em 2.3em;background-position:calc(var(--mx,.5)*3em) calc(var(--my,.5)*2em),calc(var(--my,.5)*-2em) calc(var(--mx,.5)*1.5em);mix-blend-mode:screen;opacity:.8}
+.r-holo .print-word{text-shadow:0 0 .4em rgba(160,220,255,.5)}
+/* fautés */
+.r-faute .vignette{rotate:180deg}
+.r-faute .vghost{mix-blend-mode:screen;opacity:.75}
+.r-faute .vghost svg{transform:translate(1.4%,-1.1%);animation:jit 3.2s steps(1) infinite}
+.r-faute .vghost .ln{stroke:#ff3d6e}
+.r-faute .vghost .ini{fill:#ff3d6e}
+.r-faute .vghost .vg-disc{fill:none}
+.r-faute .print-word{text-shadow:.09em 0 rgba(255,60,100,.8),-.09em 0 rgba(70,220,255,.65)}
+.r-faute .paper{background:radial-gradient(130% 100% at 25% 12%,#f7eed8 0%,#eadbb8 58%,#d6c091 100%)}
+@keyframes jit{0%,84%,100%{transform:translate(1.4%,-1.1%)}86%{transform:translate(-1.8%,.9%)}90%{transform:translate(2.6%,.4%)}94%{transform:translate(.6%,-2.2%)}}
+
+/* verso */
+.back .bpaper{position:absolute;inset:0;background:radial-gradient(130% 100% at 30% 10%,#fcf7e9,#eee2c5 62%,#dfcca5)}
+.back .wm{position:absolute;inset:0;background-image:var(--wm);background-size:4.6em 4.6em;opacity:.5}
+.back .seal{position:absolute;left:50%;top:45%;width:10.5em;height:10.5em;translate:-50% -50%;border-radius:50%;border:.18em solid rgba(140,100,50,.4);box-shadow:inset 0 0 0 .7em rgba(140,100,50,.05),inset 0 0 0 .82em rgba(140,100,50,.28);display:grid;place-items:center}
+.back .seal span{font-family:var(--serif);font-style:italic;font-weight:700;font-size:6.2em;line-height:1;color:rgba(128,90,42,.5)}
+.back .bnote{position:absolute;left:0;right:0;bottom:3.4em;text-align:center;font-family:var(--serif);font-style:italic;font-size:1.3em;color:rgba(110,80,40,.62)}
+.back .gum{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 46%,transparent 62%);background-size:260% 260%;background-position:calc(var(--mx,.3)*100%) 0;mix-blend-mode:soft-light}
+
+
+.cell .stamp,.fly>.stamp,.focus-slot .stamp,.tslot .stamp{width:100%}
+.stamp.facedown .front{visibility:hidden}
+.stamp:not(.facedown) .back{visibility:hidden}
+
+/* focus */
+.veil{position:fixed;inset:0;z-index:20;background:radial-gradient(ellipse at 50% 42%,rgba(14,26,50,.86),rgba(4,7,15,.97));opacity:0;pointer-events:none;transition:opacity .4s}
+.veil.on{opacity:1;pointer-events:auto}
+.focus{position:fixed;inset:0;z-index:21;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:70px 16px 24px;pointer-events:none;
+  --fw:max(160px,min(300px,64vw,calc((100vh - 360px)*.79)))}
+@supports (height:100dvh){.focus{--fw:max(160px,min(300px,64vw,calc((100dvh - 360px)*.79)))}}
+.focus.on{pointer-events:auto}
+.focus-slot{position:relative;width:var(--fw);aspect-ratio:30/38;perspective:1100px;cursor:pointer}
+.focus-slot .tiltf{position:absolute;inset:0;transition:transform .14s ease-out;filter:drop-shadow(0 24px 26px rgba(0,0,0,.55))}
+.focus-slot .flipf{position:absolute;inset:0}
+.focus-slot .stamp{position:absolute;inset:0}
+.focus-info{min-height:150px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;opacity:0;transition:opacity .3s}
+.focus.show-info .focus-info{opacity:1}
+.fly{position:fixed;z-index:25;left:0;top:0;transform-origin:0 0;pointer-events:none;filter:drop-shadow(0 20px 26px rgba(0,0,0,.5))}
+.fly>.stamp{position:absolute;inset:0}
+
+body.focusing .info,body.focusing .tray{visibility:hidden}
+.info{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:6px 16px 4px;min-height:118px}
+.hint-t{margin:0;font-family:var(--serif);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--papier);max-width:36em}
+.sub-t{margin:0;font-size:14.5px;color:var(--texte-doux)}
+.acts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:4px}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:500;padding:3px 11px;border-radius:99px;border:1px solid currentColor;line-height:1.5}
+.chip.courant{color:#b9c3d6}.chip.dore{color:var(--cuivre-clair)}
+.chip.holo{border:0;color:#1b1330;background:linear-gradient(90deg,#ff8fb0,#ffe38a,#9dffc8,#8fdcff,#cfaeff)}
+.chip.faute{border:0;color:#fff;background:#c81f38}
+.chip.new{color:#9ad9b2}.chip.dup{color:#b9c3d6}
+.w-word{margin:2px 0 0;font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.4vw,44px);line-height:1.02;color:var(--papier)}
+.w-def{margin:0;max-width:30em;font-size:16px;color:var(--texte)}
+.w-def em{font-family:var(--serif);color:var(--cuivre-clair);margin-right:6px}
+.sum-title{margin:0;font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.4vw,44px);line-height:1.02;color:var(--papier)}
+
+.tray{position:relative;z-index:5;display:flex;justify-content:center;gap:clamp(8px,2vw,16px);padding:6px 0 calc(18px + env(safe-area-inset-bottom,0px))}
+.tslot{position:relative;width:clamp(42px,10vw,58px);aspect-ratio:30/38;background:rgba(233,225,208,.05);-webkit-mask:var(--perf) center/100% 100% no-repeat;mask:var(--perf) center/100% 100% no-repeat;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.tslot::before{content:"";position:absolute;inset:16%;border:1px dashed rgba(233,225,208,.2)}
+.tslot.filled{background:none}.tslot.filled::before{display:none}
+.tslot .stamp{position:absolute;inset:0}
+.tray.big .tslot{width:clamp(56px,14vw,92px)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:80;translate:-50% 0;max-width:calc(100% - 32px);padding:12px 18px;border-radius:6px;background:#1b2d4d;border:1px solid rgba(216,154,92,.4);color:var(--papier);font-size:15px;box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.flash{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,#fff,rgba(255,240,220,.6) 30%,rgba(255,200,200,0) 70%)}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:40;pointer-events:none}
+@media (max-width:700px){.top .tag{display:none}}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="app" id="app">
+  <header class="top"><span class="logo">philamots</span><span class="tag">Ouverture d’un paquet</span>
+    <div class="top-r"><button class="icon-btn snd" type="button" aria-label="Couper le son" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="w" d="M15.5 9a4.5 4.5 0 0 1 0 6"/><path class="w" d="M18 6.5a8 8 0 0 1 0 11"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button></div>
+  </header>
+  <main class="stage" id="stage"></main>
+  <section class="info" id="info" aria-live="polite"></section>
+  <div class="tray" id="tray" aria-label="Tes timbres"></div>
+</div>
+<div class="veil" id="veil"></div>
+<div class="focus" id="focus" aria-live="polite"><div class="focus-slot" id="focus-slot"></div><div class="focus-info" id="focus-info"></div></div>
+<div class="flash" id="flash"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const D = ms => reduced ? 1 : ms;
+const wait = ms => new Promise(r => setTimeout(r, reduced ? Math.min(ms, 40) : ms));
+const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), rand = (a, b) => a + Math.random() * (b - a);
+let uid = 0;
+/* ---------------- procedural helpers ---------------- */
+function hash(str){ let h = 2166136261 >>> 0; for (const ch of str){ h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; }
+function rng(seed){ let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function gcd(a, b){ while (b){ [a, b] = [b, a % b]; } return a; }
+function rosettePath(radius, R, r, d, cx = 0, cy = 0, rot = 0){
+  const loops = r / gcd(R, r);
+  const steps = Math.min(2400, Math.max(360, loops * 90));
+  const T = Math.PI * 2 * loops, k = (R - r) / r, s = radius / ((R - r) + d);
+  const cr = Math.cos(rot), sr = Math.sin(rot);
+  let out = '';
+  for (let i = 0; i <= steps; i++){
+    const t = T * i / steps;
+    const x = (R - r) * Math.cos(t) + d * Math.cos(k * t);
+    const y = (R - r) * Math.sin(t) - d * Math.sin(k * t);
+    out += (i ? 'L' : 'M') + (cx + (x * cr - y * sr) * s).toFixed(2) + ' ' + (cy + (x * sr + y * cr) * s).toFixed(2);
+  }
+  return out + 'Z';
+}
+function perfPath(W, H, r, pitch){
+  const nx = Math.round(W / pitch), ny = Math.round(H / pitch), px = W / nx, py = H / ny;
+  let d = 'M0 0';
+  for (let i = 0; i < nx; i++){ const x = (i + .5) * px; d += `L${x - r} 0A${r} ${r} 0 0 0 ${x + r} 0`; }
+  d += `L${W} 0`;
+  for (let i = 0; i < ny; i++){ const y = (i + .5) * py; d += `L${W} ${y - r}A${r} ${r} 0 0 0 ${W} ${y + r}`; }
+  d += `L${W} ${H}`;
+  for (let i = nx - 1; i >= 0; i--){ const x = (i + .5) * px; d += `L${x + r} ${H}A${r} ${r} 0 0 0 ${x - r} ${H}`; }
+  d += `L0 ${H}`;
+  for (let i = ny - 1; i >= 0; i--){ const y = (i + .5) * py; d += `L0 ${y + r}A${r} ${r} 0 0 0 0 ${y - r}`; }
+  return d + 'Z';
+}
+function packBodyPath(){
+  let d = 'M0 0H320V406'; const n = 32, w = 320 / n;
+  for (let i = 1; i <= n; i++){ const x = 320 - i * w; d += `L${(x + w / 2).toFixed(1)} 422L${x.toFixed(1)} 406`; }
+  return d + 'Z';
+}
+function stripPath(){
+  let d = 'M0 9'; const n = 32, w = 320 / n;
+  for (let i = 0; i < n; i++){ const x = i * w; d += `L${(x + w / 2).toFixed(1)} 0L${(x + w).toFixed(1)} 9`; }
+  return d + 'V52H0Z';
+}
+const svgUrl = s => `url("data:image/svg+xml,${encodeURIComponent(s)}")`;
+const PACK_BODY = packBodyPath(), STRIP = stripPath();
+const PACK_ROS = rosettePath(80, 96, 35, 44, 160, 238), PACK_ROS2 = rosettePath(54, 60, 23, 30, 160, 238, .3);
+const rootStyle = document.documentElement.style;
+rootStyle.setProperty('--perf', svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 380' preserveAspectRatio='none'><path d='${perfPath(300, 380, 7, 20)}'/></svg>`));
+rootStyle.setProperty('--packmask', svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 422' preserveAspectRatio='none'><path d='${PACK_BODY}'/></svg>`));
+rootStyle.setProperty('--noise', svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .3 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`));
+rootStyle.setProperty('--wm', svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'><text x='10' y='20' font-family='Georgia,serif' font-style='italic' font-size='15' fill='rgba(150,110,60,.22)'>P</text><text x='32' y='41' font-family='Georgia,serif' font-style='italic' font-size='15' fill='rgba(150,110,60,.22)'>P</text></svg>`));
+
+/* ---------------- content ---------------- */
+const WORDS = [
+  ['Sérendipité','n. f.','Le don de trouver ce qu’on ne cherchait pas.'],
+  ['Crépuscule','n. m.','La lumière qui hésite entre le jour et la nuit.'],
+  ['Nitescence','n. f.','Lueur douce qui semble venir de l’intérieur des choses.'],
+  ['Flâner','v.','Marcher sans but, pour le seul plaisir de regarder.'],
+  ['Embrun','n. m.','Poussière d’eau que le vent arrache aux vagues.'],
+  ['Solastalgie','n. f.','Le mal du pays qu’on ressent sans avoir quitté chez soi.'],
+  ['Palimpseste','n. m.','Parchemin gratté puis réécrit, où l’ancien texte affleure encore.'],
+  ['Luciole','n. f.','Insecte qui écrit dans la nuit avec sa propre lumière.'],
+  ['Épiphanie','n. f.','Compréhension soudaine, comme un rideau qu’on tire.'],
+  ['Zéphyr','n. m.','Vent doux et tiède venu de l’ouest.'],
+  ['Galimatias','n. m.','Discours si embrouillé que personne n’en trouve le fil.'],
+  ['Évanescent','adj.','Qui s’efface peu à peu, comme la buée sur une vitre.'],
+  ['Brouillamini','n. m.','Désordre où tout finit par s’emmêler.'],
+  ['Opaline','n. f.','Verre laiteux aux reflets irisés.'],
+  ['Accalmie','n. f.','Le calme bref qui s’installe au cœur d’une tempête.'],
+  ['Rêverie','n. f.','Pensée qui vagabonde sans chercher à arriver.'],
+  ['Pérégrin','adj.','Qui voyage de pays en pays.'],
+  ['Chatoyant','adj.','Qui change de couleur selon la lumière.'],
+  ['Mirifique','adj.','Merveilleux au point d’en devenir un peu comique.'],
+  ['Firmament','n. m.','La voûte du ciel, là où l’on accroche les étoiles.'],
+  ['Désuet','adj.','Passé de mode, avec le charme de ce qui a vécu.'],
+  ['Ineffable','adj.','Qu’aucun mot ne parvient à dire.'],
+  ['Sillage','n. m.','La trace qu’on laisse derrière soi en avançant.'],
+  ['Onirique','adj.','Qui appartient au rêve ou qui l’évoque.'],
+  ['Tohu-bohu','n. m.','Grand désordre bruyant.'],
+  ['Émerveiller','v.','Remplir quelqu’un d’admiration et de surprise.'],
+  ['Farfadet','n. m.','Petit lutin espiègle des contes populaires.'],
+  ['Nonchalance','n. f.','L’art de faire les choses sans se presser ni s’en soucier.']
+];
+const RAR = {
+  courant:{label:'Courant', rank:0, xp:10},
+  dore:{label:'Doré à chaud', rank:1, xp:20},
+  holo:{label:'Holographique', rank:2, xp:35},
+  faute:{label:'Fauté', rank:3, xp:80}
+};
+const INKS = ['#b0404b','#3557a8','#3c7a66','#75519a','#93643a','#c26634'];
+const INK_R = {dore:'#24365e', holo:'#2a2f63', faute:'#2f4f9e'};
+const NUMS = ['Plus aucun','Un','Deux','Trois','Quatre','Cinq','Six','Sept','Huit','Neuf','Dix'];
+const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+
+function stampData(w, rarity){
+  const [word, nature, def] = w; const h = hash(word);
+  return {word, nature, def, rarity, ink: rarity === 'courant' ? INKS[h % INKS.length] : INK_R[rarity], value: 3 + (h % 38), num: String(1 + (h % 2999)).padStart(4, '0')};
+}
+const vigCache = new Map();
+function vignetteSVG(d){
+  if (vigCache.has(d.word)) return vigCache.get(d.word);
+  const r = rng(hash(d.word) ^ 0x9e3779b9);
+  const R = 60 + Math.floor(r() * 40), rr = 11 + Math.floor(r() * 18), dd = rr * (.7 + r() * .8);
+  const R2 = 48 + Math.floor(r() * 30), rr2 = 7 + Math.floor(r() * 14), dd2 = rr2 * (.6 + r() * .9);
+  const p1 = rosettePath(100, R, rr, dd), p2 = rosettePath(70, R2, rr2, dd2, 0, 0, r() * 3);
+  const ini = d.word.charAt(0).toUpperCase();
+  const svg = `<svg viewBox="-110 -110 220 220" aria-hidden="true">
+    <circle class="ln" r="106" stroke-width=".7" opacity=".45"/>
+    <circle class="ln" r="101" stroke-width=".45" stroke-dasharray="1 2.4" opacity=".55"/>
+    <path class="ln" d="${p1}" stroke-width=".42" opacity=".62"/>
+    <path class="ln" d="${p2}" stroke-width=".38" opacity=".45"/>
+    <circle class="ln vg-disc" r="44" stroke-width=".8"/>
+    <circle class="ln" r="39" stroke-width=".4" opacity=".6"/>
+    <text class="ini" y="3" text-anchor="middle" dominant-baseline="middle">${ini}</text>
+  </svg>`;
+  vigCache.set(d.word, svg); return svg;
+}
+function postmarkSVG(){
+  const n = ++uid, dt = new Date();
+  let waves = '';
+  for (let i = 0; i < 5; i++){ const y = 36 + i * 12; waves += `<path d="M110 ${y}q12 -7 24 0t24 0t24 0t24 0t24 0"/>`; }
+  return `<svg viewBox="0 0 232 120" aria-hidden="true"><defs>
+    <filter id="ink${n}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="${n}" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.5 1.45" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in"/></filter>
+    <path id="pmc${n}" d="M60 60m-37 0a37 37 0 1 1 74 0a37 37 0 1 1 -74 0"/></defs>
+    <g filter="url(#ink${n})"><g fill="none" stroke="currentColor"><circle cx="60" cy="60" r="47" stroke-width="3"/><circle cx="60" cy="60" r="29" stroke-width="1.5"/><g stroke-width="2.6">${waves}</g></g>
+    <text fill="currentColor" font-family="Oswald, Arial Narrow, sans-serif" font-size="10" letter-spacing="1.8"><textPath href="#pmc${n}">PARIS · BUREAU DES MOTS ·</textPath></text>
+    <text x="60" y="58" text-anchor="middle" fill="currentColor" font-family="Oswald, Arial Narrow, sans-serif" font-size="15" font-weight="600">${dt.getDate()}·${ROMAN[dt.getMonth()]}</text>
+    <text x="60" y="75" text-anchor="middle" fill="currentColor" font-family="Oswald, Arial Narrow, sans-serif" font-size="12">${dt.getFullYear()}</text></g></svg>`;
+}
+function buildStamp(d, {stamped = false, withBack = false} = {}){
+  const el = document.createElement('div');
+  el.className = `stamp r-${d.rarity}${stamped ? ' stamped' : ''}`;
+  el.style.setProperty('--ink', d.ink);
+  const vig = vignetteSVG(d);
+  const wsize = Math.min(2.5, 24 / d.word.length).toFixed(2);
+  el.innerHTML = `<div class="scale">
+    ${withBack ? `<div class="face back"><div class="bpaper"></div><div class="wm"></div><div class="seal"><span>P</span></div><div class="bnote">Philamots, verso gommé</div><div class="gum"></div></div>` : ''}
+    <div class="face front">
+      <div class="paper"></div>
+      <div class="print">
+        <div class="vignette">${vig}</div>
+        ${d.rarity === 'faute' ? `<div class="vignette vghost">${vig}</div>` : ''}
+        <div class="print-top"><span>République<br>des mots</span><span class="val">${d.value}<small>E</small></span></div>
+        <div class="print-word" style="--wsize:${wsize}em">${d.word}</div>
+      </div>
+      <div class="imprint">N° ${d.num} · Philamots ${new Date().getFullYear()}</div>
+      <div class="foil"></div><div class="glare"></div>
+      <div class="postmark">${postmarkSVG()}</div>
+      ${d.rarity === 'faute' ? '<div class="faute-mark">Fauté</div>' : ''}
+    </div></div>`;
+  return el;
+}
+function packBodySVG(id){
+  return `<svg viewBox="0 0 320 422" aria-hidden="true"><defs>
+    <linearGradient id="pb${id}" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#2a5189"/><stop offset=".55" stop-color="#1a3762"/><stop offset="1" stop-color="#10243f"/></linearGradient>
+    <pattern id="pg${id}" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M9 0H0V9" fill="none" stroke="rgba(255,255,255,.055)" stroke-width=".6"/></pattern>
+    <radialGradient id="pv${id}" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+    <radialGradient id="ps${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffe2b4"/><stop offset=".5" stop-color="#d89a5c"/><stop offset="1" stop-color="#8d5424"/></radialGradient></defs>
+    <path d="${PACK_BODY}" fill="url(#pb${id})"/><path d="${PACK_BODY}" fill="url(#pg${id})"/><path d="${PACK_BODY}" fill="url(#pv${id})"/>
+    <rect x="16" y="16" width="288" height="372" fill="none" stroke="rgba(216,154,92,.5)"/>
+    <rect x="21" y="21" width="278" height="362" fill="none" stroke="rgba(233,225,208,.14)"/>
+    <text x="160" y="58" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="12" font-weight="500" letter-spacing="2.6" fill="#d8c6a0">LE BUREAU DU COLLECTIONNEUR</text>
+    <text x="160" y="114" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-size="49" font-weight="900" letter-spacing="1" fill="#f2e7cf">PHILAMOTS</text>
+    <line x1="46" y1="132" x2="274" y2="132" stroke="rgba(233,225,208,.35)"/>
+    <path d="${PACK_ROS2}" fill="none" stroke="rgba(216,154,92,.5)" stroke-width=".5"/>
+    <path d="${PACK_ROS}" fill="none" stroke="rgba(233,225,208,.5)" stroke-width=".5"/>
+    <circle cx="160" cy="238" r="86" fill="none" stroke="rgba(233,225,208,.3)"/>
+    <circle cx="160" cy="238" r="91" fill="none" stroke="rgba(216,154,92,.4)" stroke-dasharray="1 3"/>
+    <rect x="86" y="223" width="148" height="32" rx="16" fill="rgba(16,36,63,.88)"/>
+    <text x="160" y="246" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="23" fill="#f0c48f">À découvrir</text>
+    <line x1="46" y1="342" x2="274" y2="342" stroke="rgba(233,225,208,.35)"/>
+    <text x="160" y="366" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="21" font-weight="600" letter-spacing="4" fill="#f2e7cf">5 TIMBRES</text>
+    <text x="160" y="382" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="10" letter-spacing="3" fill="#b9c3d6">DES MOTS À COLLECTIONNER</text>
+    <g transform="translate(284 30)"><circle r="16" fill="url(#ps${id})" stroke="#6b3d16" stroke-width="1.2"/><circle r="12" fill="none" stroke="rgba(60,30,8,.5)" stroke-dasharray="1.5 1.5"/><text y="6" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="900" font-size="17" fill="#4a2a0c">P</text></g>
+  </svg>`;
+}
+function stripSVG(id){
+  return `<svg viewBox="0 0 320 52" aria-hidden="true"><defs>
+    <linearGradient id="sg${id}" x1="0" x2="1"><stop offset="0" stop-color="#c7884c"/><stop offset=".3" stop-color="#f0c48f"/><stop offset=".55" stop-color="#d3955a"/><stop offset=".8" stop-color="#f3cf9d"/><stop offset="1" stop-color="#bf7f45"/></linearGradient>
+    <pattern id="st${id}" width="3" height="52" patternUnits="userSpaceOnUse"><rect width="1" height="52" fill="rgba(80,45,15,.09)"/></pattern></defs>
+    <path d="${STRIP}" fill="url(#sg${id})"/><path d="${STRIP}" fill="url(#st${id})"/>
+    <text x="150" y="33" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="12" font-weight="600" letter-spacing="2.6" fill="#4a2a0c">PHILAMOTS · ÉDITION ORIGINALE</text>
+    <line x1="4" y1="48" x2="316" y2="48" stroke="#5c3714" stroke-width="1.3" stroke-dasharray="3 3"/>
+    <path d="M296 22l6 6-6 6" fill="none" stroke="#4a2a0c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function buildPack(kind){
+  const a = ++uid, b = ++uid, c = ++uid;
+  const el = document.createElement('div');
+  el.className = 'pack ' + kind;
+  el.innerHTML = `<div class="pack-tilt"><div class="p-body">${packBodySVG(a)}<div class="p-foil"></div><div class="p-glare"></div></div>
+    <div class="p-strip"><div class="s attached">${stripSVG(b)}</div><div class="s torn" style="clip-path:inset(0 100% 0 0)">${stripSVG(c)}</div><span class="tear-hint"></span></div></div>`;
+  return el;
+}
+
+/* ---------------- sound (synthesised, no files) ---------------- */
+const Sfx = (() => {
+  let ctx = null, master = null, noise = null, muted = false;
+  function init(){
+    if (ctx){ if (ctx.state === 'suspended') ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try {
+      ctx = new AC(); master = ctx.createGain(); master.gain.value = muted ? 0 : .55;
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+      master.connect(comp); comp.connect(ctx.destination);
+      const len = Math.floor(ctx.sampleRate * 1.6); noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const ch = noise.getChannelData(0); for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    } catch (e){ ctx = null; }
+  }
+  const ok = () => ctx && !muted && ctx.state === 'running';
+  function env(g, t, a, peak, dec){ g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dec); }
+  function burst({t = 0, dur = .05, type = 'bandpass', f = 2500, f2 = null, q = 1, peak = .3, a = .002}){
+    if (!ok()) return; const now = ctx.currentTime + t;
+    const s = ctx.createBufferSource(); s.buffer = noise;
+    const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, now); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, now + a + dur); fl.Q.value = q;
+    const g = ctx.createGain(); env(g, now, a, peak, dur);
+    s.connect(fl); fl.connect(g); g.connect(master); s.start(now, Math.random() * 1.2); s.stop(now + a + dur + .05);
+  }
+  function tone({t = 0, f = 440, f2 = null, type = 'sine', peak = .2, a = .005, dec = .6}){
+    if (!ok()) return; const now = ctx.currentTime + t;
+    const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, now); if (f2) o.frequency.exponentialRampToValueAtTime(f2, now + a + dec);
+    const g = ctx.createGain(); env(g, now, a, peak, dec); o.connect(g); g.connect(master); o.start(now); o.stop(now + a + dec + .05);
+  }
+  return {
+    init,
+    get muted(){ return muted; },
+    setMuted(m){ muted = m; if (master) master.gain.setTargetAtTime(m ? 0 : .55, ctx.currentTime, .02); },
+    grain(v = 1){ burst({dur: .025 + Math.random() * .04, f: 1600 + Math.random() * 3200, q: .7 + Math.random() * 2, peak: .1 + .22 * v * Math.random()}); },
+    tear(){ for (let i = 0; i < 16; i++) burst({t: i * .022 + Math.random() * .01, dur: .04 + Math.random() * .05, f: 1400 + Math.random() * 3000, peak: .22 + Math.random() * .2}); burst({dur: .35, type: 'lowpass', f: 3000, f2: 600, q: .5, peak: .16}); },
+    whoosh(){ burst({dur: .3, f: 500, f2: 2600, q: .8, peak: .2, a: .07}); },
+    thud(){ tone({f: 150, f2: 42, peak: .9, dec: .22}); burst({dur: .03, type: 'highpass', f: 2500, peak: .22}); burst({dur: .12, type: 'lowpass', f: 500, peak: .3}); },
+    chime(level = 1){ const base = [659.25, 830.61, 987.77, 1318.5, 1661.2]; for (let i = 0; i < 2 + level; i++){ tone({t: i * .075, f: base[i], peak: .13, dec: 1.3}); tone({t: i * .075, f: base[i] * 2.01, peak: .035, dec: .7}); } },
+    shimmer(){ for (let i = 0; i < 14; i++) tone({t: i * .045, f: 1800 + Math.random() * 3400, peak: .045, dec: .5}); },
+    swell(d = .9){ burst({dur: .08, f: 300, f2: 3500, q: 1.2, peak: .22, a: d}); tone({f: 110, f2: 240, type: 'sawtooth', peak: .07, a: d * .9, dec: .12}); },
+    boom(){ tone({f: 90, f2: 28, peak: 1, dec: 1.1}); burst({dur: .9, type: 'lowpass', f: 900, f2: 120, peak: .45}); [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => tone({t: .14 + i * .07, f, type: 'triangle', peak: .11, dec: 1.6})); },
+    pop(){ tone({f: 520, f2: 880, type: 'triangle', peak: .1, dec: .09}); },
+    tick(){ tone({f: 1500, type: 'triangle', peak: .06, dec: .05}); }
+  };
+})();
+addEventListener('pointerdown', () => Sfx.init(), {passive: true});
+addEventListener('keydown', () => Sfx.init());
+$$('.snd').forEach(b => b.addEventListener('click', () => {
+  Sfx.setMuted(!Sfx.muted);
+  $$('.snd').forEach(x => { x.setAttribute('aria-pressed', String(Sfx.muted)); x.setAttribute('aria-label', Sfx.muted ? 'Remettre le son' : 'Couper le son'); });
+}));
+
+/* ---------------- particles ---------------- */
+const FX = (() => {
+  const cv = $('#fx'), c = cv.getContext('2d'); let parts = [], running = false, last = 0, dpr = 1;
+  function resize(){ dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); }
+  resize(); addEventListener('resize', resize);
+  function loop(now){
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, innerWidth, innerHeight);
+    for (let i = parts.length - 1; i >= 0; i--){
+      const p = parts[i]; p.life -= dt / p.dur; if (p.life <= 0){ parts.splice(i, 1); continue; }
+      const dr = Math.pow(p.drag, dt * 60); p.vx *= dr; p.vy = p.vy * dr + p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      const a = Math.min(1, p.life * 1.6);
+      c.globalAlpha = a;
+      if (p.type === 'dust'){ c.globalCompositeOperation = 'lighter'; c.fillStyle = p.color; c.beginPath(); c.arc(p.x, p.y, p.size * (.4 + .6 * p.life), 0, 6.283); c.fill(); }
+      else if (p.type === 'spark'){ c.globalCompositeOperation = 'lighter'; c.strokeStyle = p.color; c.lineWidth = p.size; c.lineCap = 'round'; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.vx * .035, p.y - p.vy * .035); c.stroke(); }
+      else { c.globalCompositeOperation = 'source-over'; c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, Math.cos(p.rot * 1.7)); c.fillStyle = p.color; c.fillRect(-p.size / 2, -p.size * .3, p.size, p.size * (p.type === 'fiber' ? .35 : .6)); c.restore(); }
+    }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    if (parts.length) requestAnimationFrame(loop); else { running = false; c.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  function burst(x, y, {n = 30, type = 'dust', colors = ['#f0c48f'], speed = [80, 380], size = [1.5, 4], g = 0, dur = [.6, 1.4], drag = .96, spread = Math.PI * 2, angle = -Math.PI / 2} = {}){
+    if (reduced) n = Math.ceil(n / 5);
+    for (let i = 0; i < n; i++){
+      const a = angle + (Math.random() - .5) * spread, s = rand(speed[0], speed[1]);
+      parts.push({x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g, drag, life: 1, dur: rand(dur[0], dur[1]), size: rand(size[0], size[1]), color: colors[i % colors.length], type, rot: Math.random() * 6, vr: (Math.random() - .5) * 12});
+    }
+    if (!running){ running = true; last = performance.now(); requestAnimationFrame(loop); }
+  }
+  return {burst};
+})();
+
+
+/* ================= FEUILLE ================= */
+const CW = 300, CH = 380, PITCH = 20, HR = 7;
+const S = {phase: 'pack', side: 'back', cells: [], busy: false, focus: null, cascaded: false, first: true, owned: new Set(), tok: 0, packNo: 142, taken: 0};
+function LY(){ const narrow = matchMedia('(max-width: 700px)').matches, c = narrow ? 2 : 3, r = narrow ? 3 : 2, L = 64, T = narrow ? 146 : 124, B = 84; return {c, r, L, T, B, W: L * 2 + CW * c, H: T + B + CH * r}; }
+let L0 = LY();
+function cellRect(i, mirrored){ let col = i % L0.c; const row = Math.floor(i / L0.c); if (mirrored) col = L0.c - 1 - col; return {x: L0.L + col * CW, y: L0.T + row * CH, w: CW, h: CH}; }
+const pc = (v, t) => (v / t * 100).toFixed(4) + '%';
+function place(el, r){ el.style.left = pc(r.x, L0.W); el.style.top = pc(r.y, L0.H); el.style.width = pc(r.w, L0.W); el.style.height = pc(r.h, L0.H); }
+function perfSVG(){
+  let s = ''; const {c, r, L, T, W, H} = L0;
+  for (let k = 0; k <= c; k++){ const x = L + k * CW; for (let row = 0; row < r; row++) for (let i = 0; i < CH / PITCH; i++) s += `<circle cx="${x}" cy="${T + row * CH + (i + .5) * PITCH}" r="${HR}"/>`; }
+  for (let k = 0; k <= r; k++){ const y = T + k * CH; for (let col = 0; col < c; col++) for (let i = 0; i < CW / PITCH; i++) s += `<circle cx="${L + col * CW + (i + .5) * PITCH}" cy="${y}" r="${HR}"/>`; }
+  return `<svg class="perfs" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><g fill="#0a1322">${s}</g></svg>`;
+}
+function marginsSVG(back){
+  const {W, H, L, T, c, r} = L0, wide = c > 2, d = new Date();
+  const SEP = '#6b5236', NAVY = '#16284a';
+  if (back) return `<svg class="marg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><text x="${W / 2}" y="${T - 46}" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="15" letter-spacing="6" fill="${SEP}" opacity=".45">VERSO GOMMÉ · HUMECTER POUR COLLER</text><text x="${W - L}" y="${H - 34}" text-anchor="end" font-family="Oswald, sans-serif" font-size="13" letter-spacing="3" fill="${SEP}" opacity=".45">N° ${String(S.packNo).padStart(6, '0')}</text></svg>`;
+  let band = ''; for (let k = 0; k < 12; k++){ let p = ''; for (let x = 30; x <= W - 30; x += 8){ const y = 58 + Math.sin(x / 40 + k * .5) * 22 + Math.sin(x / 12 + k) * 2; p += (x === 30 ? 'M' : 'L') + x + ' ' + y.toFixed(1); } band += `<path d="${p}" fill="none" stroke="#c8914b" stroke-width=".6" opacity=".4"/>`; }
+  const INK = ['#16284a', '#a93b45', '#2f4f9e', '#2f6f5a', '#5e3f86', '#7a5230', '#c8914b'];
+  const regs = INK.map((col, i) => wide ? `<circle cx="${L / 2}" cy="${T + 40 + i * 38}" r="9" fill="${col}"/>` : `<circle cx="${L + 14 + i * 30}" cy="${T - 22}" r="7" fill="${col}"/>`).join('');
+  return `<svg class="marg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${band}
+    <text x="${W / 2}" y="${wide ? 72 : 70}" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="900" font-size="${wide ? 50 : 44}" letter-spacing="10" fill="${NAVY}" stroke="#f5ecd6" stroke-width="10" paint-order="stroke" stroke-linejoin="round">PHILAMOTS</text>
+    <text x="${W / 2}" y="${wide ? 104 : 100}" text-anchor="middle" font-family="Oswald, Arial Narrow, sans-serif" font-size="${wide ? 14 : 13}" letter-spacing="4" fill="${SEP}">PAQUET N° ${String(S.packNo).padStart(4, '0')} · ÉDITION ORIGINALE · 5 TIMBRES</text>
+    ${regs}
+    <rect x="${W - L - 150}" y="${H - 66}" width="150" height="48" fill="none" stroke="${SEP}" stroke-width="1.4"/><text x="${W - L - 75}" y="${H - 38}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="20" fill="${NAVY}">${String(d.getDate()).padStart(2, '0')}·${String(d.getMonth() + 1).padStart(2, '0')}·${String(d.getFullYear()).slice(2)}</text><text x="${W - L - 75}" y="${H - 24}" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="2" fill="${SEP}">COIN DATÉ</text>
+    <text x="${L}" y="${H - 34}" font-family="Oswald, sans-serif" font-size="13" letter-spacing="3" fill="${SEP}">IMPRIMERIE DES MOTS · TAILLE-DOUCE</text></svg>`;
+}
+function labelSVG(){
+  return `<svg viewBox="0 0 300 380" aria-hidden="true"><rect x="22" y="22" width="256" height="336" fill="none" stroke="#c8914b" stroke-width="2"/><rect x="30" y="30" width="240" height="320" fill="none" stroke="#c8914b" stroke-width=".7"/>
+    <path d="${rosettePath(92, 96, 35, 56, 150, 170)}" fill="none" stroke="#c8914b" stroke-width=".5" opacity=".7"/>
+    <circle cx="150" cy="170" r="44" fill="#16284a"/><text x="150" y="190" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-weight="900" font-size="56" fill="#f0c48f">P</text>
+    <text x="150" y="70" text-anchor="middle" font-family="Oswald, sans-serif" font-size="13" letter-spacing="4" fill="#6b5236">VIGNETTE</text>
+    <text x="150" y="292" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="22" fill="#16284a">Édition originale</text>
+    <text x="150" y="318" text-anchor="middle" font-family="Oswald, sans-serif" font-size="12" letter-spacing="3" fill="#6b5236">PAQUET N° ${String(S.packNo).padStart(4, '0')}</text></svg>`;
+}
+function renderSheet(){
+  const front = $('#face-front'), back = $('#face-back'); if (!front) return;
+  [front, back].forEach(f => { f.style.setProperty('--ar', `${L0.W} / ${L0.H}`); });
+  front.innerHTML = `<div class="paper"></div>${marginsSVG(false)}`;
+  back.innerHTML = `<div class="paper"></div><div class="gum"></div>${marginsSVG(true)}`;
+  S.cells.forEach((d, i) => {
+    const rf = cellRect(i, false), rb = cellRect(i, true);
+    if (d.label){ const lc = document.createElement('div'); lc.className = 'labelcell'; lc.innerHTML = labelSVG(); place(lc, rf); front.appendChild(lc); return; }
+    if (d.taken){ const h1 = document.createElement('div'); h1.className = 'hole'; place(h1, rf); front.appendChild(h1); const h2 = document.createElement('div'); h2.className = 'hole'; place(h2, rb); back.appendChild(h2); return; }
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'cell stampcell'; c.dataset.i = i; place(c, rf);
+    c.setAttribute('aria-label', `${d.word}, ${RAR[d.rarity].label.toLowerCase()}. Détacher ce timbre`);
+    const st = buildStamp(d, {stamped: d.revealed}); st.classList.add('insheet'); c.appendChild(st); front.appendChild(c);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'bcell' + (!d.revealed && d.rarity !== 'courant' ? ` g-${d.rarity}` : ''); b.dataset.i = i; place(b, rb);
+    b.setAttribute('aria-label', `Timbre ${i + 1}, face cachée. Détacher pour le découvrir`);
+    b.innerHTML = `<span class="ghost"></span><span class="num">${String(i + 1).padStart(2, '0')}</span>`; back.appendChild(b);
+  });
+  front.insertAdjacentHTML('beforeend', perfSVG()); back.insertAdjacentHTML('beforeend', perfSVG());
+  front.hidden = S.side !== 'front'; back.hidden = S.side !== 'back';
+  sizeSheet();
+}
+function sizeSheet(){
+  const wrap = $('#sheet-wrap'); if (!wrap) return;
+  const vh = window.visualViewport ? visualViewport.height : innerHeight, ar = L0.W / L0.H;
+  const w = Math.max(240, Math.min(760, innerWidth * .9, (vh - 300) * ar));
+  wrap.style.width = w + 'px'; $$('.sface', wrap).forEach(f => f.style.setProperty('--u', (w / L0.W) + 'px'));
+}
+addEventListener('resize', () => { const n = LY(); if (n.c !== L0.c && S.phase === 'sheet' && !S.busy){ L0 = n; renderSheet(); } else sizeSheet(); });
+
+/* ---------- info & tray ---------- */
+const info = $('#info'), tray = $('#tray');
+function setInfo(html){ info.innerHTML = html; }
+function renderTray(){ tray.innerHTML = ''; for (let i = 0; i < 5; i++){ const s = document.createElement('div'); s.className = 'tslot'; tray.appendChild(s); } }
+function nextTraySlot(){ return $$('.tslot', tray).find(s => !s.classList.contains('filled')); }
+function sheetInfo(){
+  const left = S.cells.filter(d => !d.label && !d.taken).length;
+  if (S.side === 'back') setInfo(`<p class="hint-t">Ta feuille de timbres, côté gomme.</p><p class="sub-t">Détache un timbre pour le découvrir, ou retourne la feuille pour tout voir d’un coup. ${left} timbre${left > 1 ? 's' : ''} à détacher.</p><div class="acts"><button class="btn-primary" type="button" data-act="flip">Retourner la feuille</button></div>`);
+  else setInfo(`<p class="hint-t">${left ? 'Détache tes timbres pour les ranger.' : ''}</p><p class="sub-t">Touche un timbre pour l’admirer de près.</p><div class="acts"><button class="btn-primary" type="button" data-act="collect">Tout détacher</button><button class="btn-secondary" type="button" data-act="flip">Retourner la feuille</button></div>`);
+}
+function toast(msg){ const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.animate([{opacity: 1}, {opacity: 0}], {duration: 260}).finished.then(() => t.remove()), 2800); }
+
+/* ---------- pack phase ---------- */
+let refs = {}, tearP = 0, tearing = false, lastX = 0, acc = 0;
+function makeCells(){
+  let rar;
+  if (S.first){ rar = ['courant', 'courant', 'dore', 'holo', 'faute']; S.first = false; }
+  else rar = Array.from({length: 5}, () => { const x = Math.random(); return x < .03 ? 'faute' : x < .13 ? 'holo' : x < .33 ? 'dore' : 'courant'; });
+  const pool = WORDS.slice().sort(() => Math.random() - .5);
+  const stamps = rar.map((r, i) => { const d = stampData(pool[i], r); d.isNew = !S.owned.has(d.word); d.taken = false; d.revealed = false; return d; }).sort(() => Math.random() - .5);
+  S.cells = [...stamps, {label: true}];
+}
+function startPack(){
+  const tok = ++S.tok; S.phase = 'pack'; S.side = 'back'; S.cascaded = false; S.busy = false; S.focus = null; S.taken = 0; S.packNo++;
+  L0 = LY(); makeCells(); renderTray(); tray.classList.remove('big');
+  const stage = $('#stage'); stage.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className = 'c-pack-wrap'; const pk = buildPack('c-pack'); wrap.appendChild(pk);
+  const sw = document.createElement('div'); sw.className = 'sheet-wrap'; sw.id = 'sheet-wrap'; sw.innerHTML = `<div class="tilt" id="tilt"><div class="sheet" id="sheet"><div class="sface sfront" id="face-front" hidden></div><div class="sface sback" id="face-back"></div></div></div>`;
+  stage.append(sw, wrap);
+  renderSheet();
+  sw.style.opacity = 0;
+  refs = {wrap, pack: pk, tilt: $('.pack-tilt', pk), attached: $('.s.attached', pk), torn: $('.s.torn', pk), hint: $('.tear-hint', pk), sw};
+  tearP = 0; tearing = false;
+  setInfo(`<p class="hint-t">Déchire le paquet en suivant les pointillés</p><button class="link-btn" type="button" data-act="auto-tear">Déchirer d’un coup</button>`);
+  pk.animate([{opacity: 0, transform: 'translateY(40px) scale(.9)'}, {opacity: 1, transform: 'none'}], {duration: D(600), easing: 'cubic-bezier(.2,.9,.3,1)'});
+  S.phase = 'tear';
+  return tok;
+}
+function setTear(p){
+  tearP = clamp(p, 0, 1); const pct = (tearP * 100).toFixed(2);
+  refs.attached.style.clipPath = `inset(0 0 0 ${pct}%)`; refs.torn.style.clipPath = `inset(0 ${(100 - tearP * 100).toFixed(2)}% 0 0)`;
+  refs.torn.style.transformOrigin = `${pct}% 100%`; refs.torn.style.transform = `translate(${(-tearP * 4).toFixed(1)}px, ${(-tearP * 16).toFixed(1)}px) rotate(${(-tearP * 10).toFixed(2)}deg)`;
+}
+function fiberAt(){ const r = refs.attached.getBoundingClientRect(); FX.burst(r.left + tearP * r.width, r.bottom - 3, {n: 2, type: 'fiber', colors: ['#f6ead2', '#e8bb83'], speed: [40, 150], g: 650, size: [2, 4], dur: [.5, 1], spread: 2.2}); }
+async function autoTear(){ if (S.phase !== 'tear') return; refs.hint.classList.add('off'); const start = tearP, t0 = performance.now(), dur = D(600); await new Promise(res => { (function step(now){ const k = Math.min(1, (now - t0) / dur), e = k * k * (3 - 2 * k); setTear(start + (1 - start) * e); if (Math.random() < .6){ Sfx.grain(.8); fiberAt(); } if (k < 1) requestAnimationFrame(step); else res(); })(t0); }); completeTear(); }
+async function completeTear(){
+  if (S.phase !== 'tear') return; const tok = S.tok; S.phase = 'emerging'; tearing = false;
+  setTear(1); Sfx.tear(); setInfo('');
+  const tr = refs.torn.getBoundingClientRect(); FX.burst(tr.right - 10, tr.bottom, {n: 26, type: 'fiber', colors: ['#f6ead2', '#e8bb83', '#fff6e6'], speed: [80, 320], g: 900, dur: [.8, 1.6], size: [2, 5]});
+  refs.attached.style.visibility = 'hidden';
+  refs.torn.animate([{transform: refs.torn.style.transform, opacity: 1}, {transform: 'translate(110px,-260px) rotate(-38deg)', opacity: 0}], {duration: D(820), easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards'});
+  await wait(260); if (tok !== S.tok) return;
+  const sw = refs.sw, pr = refs.pack.getBoundingClientRect(), sr = sw.getBoundingClientRect();
+  const k = (pr.width * .88) / sr.width;
+  sw.style.opacity = 1; sw.style.transformOrigin = '50% 0'; $('#face-back').style.clipPath = 'inset(0 0 50% 0)';
+  const y0 = pr.top + pr.height * .18 - sr.top, y1 = pr.top - sr.top - sr.height * k * .45;
+  FX.burst(pr.left + pr.width / 2, pr.top + pr.height * .12, {n: 40, type: 'dust', colors: ['#ffe3b0', '#f0c48f', '#fff8e8'], speed: [40, 220], dur: [.8, 1.6], drag: .94, size: [1.2, 3]});
+  Sfx.whoosh();
+  await sw.animate([{transform: `translateY(${y0}px) scale(${k})`}, {transform: `translateY(${y1}px) scale(${k})`}], {duration: D(700), easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'forwards'}).finished;
+  if (tok !== S.tok) return;
+  refs.wrap.animate([{transform: 'none', opacity: 1}, {transform: 'translateY(75vh) rotate(7deg)', opacity: 0}], {duration: D(650), easing: 'cubic-bezier(.5,0,.8,.4)', fill: 'forwards'});
+  sw.style.zIndex = 4;
+  await sw.animate([{transform: `translateY(${y1}px) scale(${k})`}, {transform: 'none'}], {duration: D(700), easing: 'cubic-bezier(.3,1.1,.4,1)', fill: 'forwards'}).finished;
+  if (tok !== S.tok) return;
+  refs.wrap.remove();
+  await unfold(); if (tok !== S.tok) return;
+  sw.getAnimations().forEach(a => a.cancel()); sw.style.transform = '';
+  S.phase = 'sheet'; sheetInfo();
+}
+async function unfold(){
+  const back = $('#face-back'), sheet = $('#sheet');
+  const flap = document.createElement('div'); flap.className = 'flap'; const clone = back.cloneNode(true); clone.removeAttribute('id'); clone.style.clipPath = ''; $$('[id]', clone).forEach(e => e.removeAttribute('id')); $$('button', clone).forEach(b => { b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); });
+  clone.style.height = back.getBoundingClientRect().height + 'px'; flap.appendChild(clone); sheet.appendChild(flap);
+  Sfx.whoosh();
+  await flap.animate([{transform: 'perspective(1400px) rotateX(-178deg)'}, {transform: 'perspective(1400px) rotateX(12deg)', offset: .75}, {transform: 'perspective(1400px) rotateX(0deg)'}], {duration: D(900), easing: 'cubic-bezier(.35,.1,.3,1)'}).finished;
+  back.style.clipPath = ''; flap.remove(); Sfx.thud();
+  const r = sheet.getBoundingClientRect(); FX.burst(r.left + r.width / 2, r.bottom, {n: 24, type: 'dust', colors: ['#f0c48f', '#fff4d6'], speed: [60, 260], dur: [.5, 1], size: [1.2, 3]});
+}
+
+/* ---------- flip whole sheet ---------- */
+async function flipSheet(){
+  if (S.busy || S.phase !== 'sheet' || S.focus) return;
+  S.busy = true; const sh = $('#sheet'); Sfx.whoosh(); setInfo('');
+  await sh.animate([{transform: 'perspective(1800px) rotateY(0deg)'}, {transform: 'perspective(1800px) rotateY(90deg) scale(1.03)'}], {duration: D(260), easing: 'cubic-bezier(.5,0,1,1)'}).finished;
+  S.side = S.side === 'back' ? 'front' : 'back'; $('#face-front').hidden = S.side !== 'front'; $('#face-back').hidden = S.side !== 'back';
+  await sh.animate([{transform: 'perspective(1800px) rotateY(-90deg) scale(1.03)'}, {transform: 'perspective(1800px) rotateY(0deg)'}], {duration: D(460), easing: 'cubic-bezier(.2,1.3,.4,1)'}).finished;
+  Sfx.thud();
+  if (S.side === 'front' && !S.cascaded){ S.cascaded = true; await cascade(); }
+  S.busy = false; sheetInfo();
+}
+async function cascade(){
+  const order = S.cells.map((d, i) => ({d, i})).filter(o => !o.d.label && !o.d.taken && !o.d.revealed).sort((a, b) => RAR[a.d.rarity].rank - RAR[b.d.rarity].rank);
+  for (const {d, i} of order){
+    const cell = $(`#face-front .cell[data-i="${i}"]`); if (!cell) continue;
+    const st = $('.stamp', cell), rank = RAR[d.rarity].rank, r = cell.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (rank === 3){ Sfx.swell(1); await st.animate(Array.from({length: 12}, (_, k) => ({transform: `translate(${rand(-1, 1) * k * .5}px,${rand(-1, 1) * k * .5}px)`})), {duration: D(900), easing: 'ease-in'}).finished; flashIt(); }
+    const pm = $('.postmark', st); pm && pm.animate([{opacity: 0, transform: 'scale(1.9)', filter: 'blur(3px)'}, {opacity: .82, transform: 'scale(1)', filter: 'blur(0)'}], {duration: D(180), easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards'});
+    Sfx.thud(); st.classList.add('stamped');
+    st.animate([{transform: 'scale(1)'}, {transform: 'scale(.95)'}, {transform: 'scale(1)'}], {duration: D(220)});
+    if (rank === 1){ Sfx.chime(1); FX.burst(cx, cy, {n: 28, type: 'dust', colors: ['#ffe1a8', '#f0c48f', '#fff4d6'], speed: [50, 240], dur: [.6, 1.2]}); const f = $('.front .foil', st); f && f.animate([{backgroundPosition: '100% 50%'}, {backgroundPosition: '0% 50%'}], {duration: D(900)}); }
+    if (rank === 2){ Sfx.shimmer(); Sfx.chime(2); FX.burst(cx, cy, {n: 50, type: 'spark', colors: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], speed: [120, 460], dur: [.5, 1.1], size: [1.2, 2.4]}); }
+    if (rank === 3){ Sfx.boom(); FX.burst(cx, cy, {n: 110, type: 'confetti', colors: ['#f0c48f', '#d0243e', '#f6ecd6', '#3557a8'], speed: [200, 700], g: 700, dur: [1.3, 2.4], size: [5, 10], drag: .97}); await wait(380); const fm = $('.faute-mark', st); fm && fm.animate([{opacity: 0, transform: 'scale(1.9)'}, {opacity: .94, transform: 'scale(1)'}], {duration: D(180), easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards'}); Sfx.thud(); }
+    d.revealed = true;
+    await wait(rank ? 520 : 330);
+  }
+}
+function flashIt(){ $('#flash').animate([{opacity: 0}, {opacity: .85, offset: .15}, {opacity: 0}], {duration: D(700), easing: 'ease-out'}); }
+
+/* ---------- detach one stamp ---------- */
+const veil = $('#veil'), focus = $('#focus'), fslot = $('#focus-slot'), finfo = $('#focus-info');
+function tearFX(r){ for (let i = 0; i < 20; i++){ const t = i / 20, side = Math.floor(t * 4), u = (t * 4) % 1; const x = side === 0 ? r.left + u * r.width : side === 1 ? r.right : side === 2 ? r.right - u * r.width : r.left; const y = side === 0 ? r.top : side === 1 ? r.top + u * r.height : side === 2 ? r.bottom : r.bottom - u * r.height; FX.burst(x, y, {n: 2, type: 'fiber', colors: ['#f6ead2', '#e8dcc0'], speed: [30, 140], size: [2, 4.5], g: 500, dur: [.4, .9]}); } Sfx.tear(); }
+async function detach(i){
+  if (S.busy || S.focus || S.phase !== 'sheet') return;
+  const d = S.cells[i]; if (!d || d.label || d.taken) return;
+  S.busy = true; Sfx.init();
+  const fromBack = S.side === 'back';
+  const el = $(`#face-${S.side} [data-i="${i}"]`), r = el.getBoundingClientRect();
+  tearFX(r);
+  const st = buildStamp(d, {withBack: true, stamped: d.revealed}); if (fromBack && !d.revealed) st.classList.add('facedown');
+  const fly = document.createElement('div'); fly.className = 'fly'; fly.style.left = r.left + 'px'; fly.style.top = r.top + 'px'; fly.style.width = r.width + 'px'; fly.style.height = r.height + 'px'; fly.appendChild(st); document.body.appendChild(fly);
+  d.taken = true; S.taken++; renderSheet();
+  veil.classList.add('on'); focus.classList.add('on'); document.body.classList.add('focusing'); focus.classList.remove('show-info'); finfo.innerHTML = '';
+  await new Promise(res => requestAnimationFrame(res));
+  const to = fslot.getBoundingClientRect(), s = to.width / r.width;
+  await fly.animate([{transform: 'none'}, {transform: `translate(${-r.width * .02}px,${-12}px) rotate(-4deg) scale(1.05)`}], {duration: D(200), easing: 'ease-out', fill: 'forwards'}).finished;
+  Sfx.whoosh();
+  await fly.animate([{transform: `translate(${-r.width * .02}px,-12px) rotate(-4deg) scale(1.05)`}, {transform: `translate(${to.left - r.left}px,${to.top - r.top}px) rotate(3deg) scale(${s * 1.04})`, offset: .8}, {transform: `translate(${to.left - r.left}px,${to.top - r.top}px) scale(${s})`}], {duration: D(720), easing: 'cubic-bezier(.3,.8,.25,1)', fill: 'forwards'}).finished;
+  fslot.innerHTML = '<div class="tiltf"><div class="flipf"></div></div>'; $('.flipf', fslot).appendChild(st); fly.remove();
+  S.focus = d;
+  if (!d.revealed) await revealFocused(d, st); else { if (d.rarity === 'holo') Sfx.shimmer(); }
+  d.revealed = true;
+  finfo.innerHTML = `<div class="chips"><span class="chip ${d.rarity}">${RAR[d.rarity].label}</span>${d.isNew ? '<span class="chip new">Nouveau</span>' : '<span class="chip dup">Doublon</span>'}</div><h2 class="w-word">${d.word}</h2><p class="w-def"><em>${d.nature}</em>${d.def}</p><div class="acts"><button class="btn-primary" type="button" data-act="stow">Ranger ce timbre</button></div>`;
+  focus.classList.add('show-info');
+  S.busy = false; setTimeout(() => { const b = $('[data-act="stow"]', finfo); b && b.focus({preventScroll: true}); }, 60);
+}
+async function revealFocused(d, st){
+  const flip = $('.flipf', fslot), rank = RAR[d.rarity].rank, r = fslot.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  if (rank >= 2){ Sfx.swell(rank === 3 ? 1.1 : .7); await flip.animate(Array.from({length: 14}, (_, k) => { const a = (rank === 3 ? 7 : 4) * k / 13 * (k === 13 ? 0 : 1); return {transform: `translate(${rand(-a, a).toFixed(1)}px,${rand(-a, a).toFixed(1)}px) rotate(${rand(-a * .4, a * .4).toFixed(2)}deg)`}; }), {duration: D(rank === 3 ? 1000 : 650), easing: 'ease-in'}).finished; }
+  Sfx.whoosh();
+  await flip.animate([{transform: 'rotateY(0deg) scale(1)'}, {transform: 'rotateY(90deg) scale(1.1)'}], {duration: D(170), easing: 'cubic-bezier(.5,0,1,1)'}).finished;
+  st.classList.remove('facedown'); if (rank === 3) flashIt();
+  await flip.animate([{transform: 'rotateY(-90deg) scale(1.1)'}, {transform: 'rotateY(0deg) scale(1)'}], {duration: D(rank ? 420 : 300), easing: 'cubic-bezier(.2,1.4,.4,1)'}).finished;
+  await wait(90);
+  const pm = $('.postmark', st); pm.animate([{opacity: 0, transform: 'scale(1.9)', filter: 'blur(3px)'}, {opacity: .82, transform: 'scale(1)', filter: 'blur(0)'}], {duration: D(190), easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards'}); st.classList.add('stamped'); Sfx.thud();
+  if (rank === 1){ Sfx.chime(1); FX.burst(cx, cy, {n: 44, type: 'dust', colors: ['#ffe1a8', '#f0c48f', '#fff4d6'], speed: [60, 340], dur: [.7, 1.5]}); const f = $('.front .foil', st); f && f.animate([{backgroundPosition: '100% 50%'}, {backgroundPosition: '0% 50%'}], {duration: D(1000)}); }
+  if (rank === 2){ Sfx.shimmer(); Sfx.chime(2); FX.burst(cx, cy, {n: 80, type: 'spark', colors: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], speed: [140, 560], dur: [.6, 1.3], size: [1.2, 2.6]}); }
+  if (rank === 3){ Sfx.boom(); FX.burst(cx, cy, {n: 130, type: 'confetti', colors: ['#f0c48f', '#d0243e', '#f6ecd6', '#3557a8'], speed: [220, 760], g: 720, dur: [1.4, 2.6], size: [5, 10], drag: .97}); await wait(420); const fm = $('.faute-mark', st); fm.animate([{opacity: 0, transform: 'scale(1.9)'}, {opacity: .94, transform: 'scale(1)'}], {duration: D(180), easing: 'cubic-bezier(.6,0,.9,.5)', fill: 'forwards'}); Sfx.thud(); }
+}
+async function stow(){
+  if (!S.focus || S.busy) return; S.busy = true;
+  const d = S.focus, st = $('.stamp', fslot), from = st.getBoundingClientRect();
+  focus.classList.remove('show-info'); st.style.visibility = 'hidden';
+  veil.classList.remove('on'); document.body.classList.remove('focusing');
+  const thumbFrom = {left: from.left, top: from.top, width: from.width};
+  const slot = nextTraySlot(); const thumb = buildStamp(d, {stamped: true}); slot.appendChild(thumb);
+  const to = thumb.getBoundingClientRect(); thumb.style.transformOrigin = '0 0'; Sfx.pop();
+  await thumb.animate([{transform: `translate(${thumbFrom.left - to.left}px,${thumbFrom.top - to.top}px) scale(${thumbFrom.width / to.width})`}, {transform: 'none'}], {duration: D(560), easing: 'cubic-bezier(.3,.9,.3,1)'}).finished;
+  slot.classList.add('filled'); fslot.innerHTML = ''; focus.classList.remove('on');
+  S.owned.add(d.word); S.focus = null; S.busy = false;
+  if (S.taken >= 5) endPack(); else sheetInfo();
+}
+async function collectAll(){
+  if (S.busy || S.focus || S.side !== 'front') return; S.busy = true; setInfo('');
+  const idx = S.cells.map((d, i) => i).filter(i => !S.cells[i].label && !S.cells[i].taken);
+  for (const i of idx){
+    const d = S.cells[i], el = $(`#face-front .cell[data-i="${i}"]`); if (!el) continue;
+    const r = el.getBoundingClientRect(); tearFX(r);
+    d.taken = true; d.revealed = true; S.taken++; S.owned.add(d.word);
+    const slot = nextTraySlot(), thumb = buildStamp(d, {stamped: true}); slot.appendChild(thumb);
+    renderSheet();
+    const to = thumb.getBoundingClientRect(); thumb.style.transformOrigin = '0 0';
+    thumb.animate([{transform: `translate(${r.left - to.left}px,${r.top - to.top}px) scale(${r.width / to.width}) rotate(-6deg)`}, {transform: 'none'}], {duration: D(620), easing: 'cubic-bezier(.3,.9,.3,1)'}).finished.then(() => slot.classList.add('filled'));
+    await wait(230);
+  }
+  await wait(500); S.busy = false; endPack();
+}
+async function endPack(){
+  S.phase = 'end';
+  const sw = $('#sheet-wrap');
+  if (sw){ Sfx.whoosh(); await sw.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(40px) rotate(-3deg) scale(.92)'}], {duration: D(600), easing: 'ease-in', fill: 'forwards'}).finished; }
+  tray.classList.add('big');
+  const counts = {}; S.cells.forEach(d => { if (!d.label) counts[d.rarity] = (counts[d.rarity] || 0) + 1; });
+  const names = {courant: ['courant', 'courants'], dore: ['doré', 'dorés'], holo: ['holographique', 'holographiques'], faute: ['fauté', 'fautés']};
+  const parts = ['courant', 'dore', 'holo', 'faute'].filter(k => counts[k]).map(k => `${counts[k]} ${names[k][counts[k] > 1 ? 1 : 0]}`);
+  const txt = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' et ' + parts[parts.length - 1] : parts[0];
+  $('#stage').innerHTML = '';
+  setInfo(`<h2 class="sum-title">Cinq timbres de plus.</h2><p class="sub-t">${txt}. La vignette d’édition reste dans le paquet.</p><div class="acts"><button class="btn-primary" type="button" data-act="album">Ranger dans l’album</button><button class="btn-secondary" type="button" data-act="again">Ouvrir un autre paquet</button></div>`);
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (b){ const a = b.dataset.act; if (a === 'auto-tear') autoTear(); else if (a === 'flip') flipSheet(); else if (a === 'collect') collectAll(); else if (a === 'stow') stow(); else if (a === 'again') startPack(); else if (a === 'album'){ toast(`Rangés. Ta collection compte ${S.owned.size} timbre${S.owned.size > 1 ? 's' : ''}.`); } return; }
+  const c = e.target.closest('#face-front .cell, #face-back .bcell'); if (c) detach(+c.dataset.i);
+  if (e.target.closest('#focus-slot') && S.focus) stow();
+});
+veil.addEventListener('click', () => { if (S.focus) stow(); });
+const stage = $('#stage');
+stage.addEventListener('pointerdown', e => { if (S.phase !== 'tear') return; tearing = true; lastX = e.clientX; acc = 0; refs.hint.classList.add('off'); try { stage.setPointerCapture(e.pointerId); } catch (_){} });
+stage.addEventListener('pointermove', e => {
+  if (S.phase === 'tear' && tearing){ const dx = e.clientX - lastX; lastX = e.clientX; if (dx > 0){ const w = refs.attached.getBoundingClientRect().width || 300; setTear(tearP + dx / w * 1.15); acc += dx; while (acc > 7){ acc -= 7; Sfx.grain(Math.min(1, dx / 12)); if (Math.random() < .5) fiberAt(); } if (tearP >= .9) completeTear(); } }
+});
+const endTear = () => { tearing = false; }; stage.addEventListener('pointerup', endTear); stage.addEventListener('pointercancel', endTear);
+/* tilt & gum sheen */
+const canHover = matchMedia('(hover: hover)').matches; let tx = 0, ty = 0, rx = 0, ry = 0;
+addEventListener('pointermove', e => {
+  const t = $('#tilt'); if (t){ const r = t.getBoundingClientRect(); const nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height; tx = clamp((ny - .5) * -7, -6, 6); ty = clamp((nx - .5) * 8, -7, 7); const g = $('#face-back .gum'); g && g.parentElement.style.setProperty('--mx', clamp(nx, 0, 1).toFixed(3)); }
+  if (S.focus){ const tf = $('.tiltf', fslot); if (tf){ const r = fslot.getBoundingClientRect(), px = clamp(.5 + (e.clientX - (r.left + r.width / 2)) / (r.width * 1.3), 0, 1), py = clamp(.5 + (e.clientY - (r.top + r.height / 2)) / (r.height * 1.3), 0, 1); tf.style.transform = `rotateX(${((.5 - py) * 16).toFixed(2)}deg) rotateY(${((px - .5) * 20).toFixed(2)}deg)`; const st = $('.stamp', fslot); st.style.setProperty('--mx', px.toFixed(3)); st.style.setProperty('--my', py.toFixed(3)); st.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); st.style.setProperty('--gy', (py * 100).toFixed(1) + '%'); } }
+  if (S.phase === 'tear' && refs.tilt){ const r = refs.pack.getBoundingClientRect(); const dx = clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth * .45), -1, 1), dy = clamp((e.clientY - (r.top + r.height / 2)) / (innerHeight * .45), -1, 1); refs.tilt.style.transform = `rotateX(${(-dy * 9).toFixed(2)}deg) rotateY(${(dx * 12).toFixed(2)}deg)`; refs.pack.style.setProperty('--mx', (.5 + dx / 2).toFixed(3)); refs.pack.style.setProperty('--gx', ((.5 + dx / 2) * 100).toFixed(1) + '%'); }
+}, {passive: true});
+(function loop(){ const t = $('#tilt'); if (t){ const idle = S.phase === 'sheet' && !S.busy && !S.focus && canHover && !reduced; rx = lerp(rx, idle ? tx : 0, .07); ry = lerp(ry, idle ? ty : 0, .07); t.style.transform = Math.abs(rx) + Math.abs(ry) < .02 ? '' : `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`; } requestAnimationFrame(loop); })();
+addEventListener('keydown', e => { if (e.key === 'Escape' && S.focus) stow(); });
+startPack();
+})();
+</script>
+</body>
+</html>
