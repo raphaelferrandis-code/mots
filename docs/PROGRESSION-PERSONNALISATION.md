@@ -2,14 +2,16 @@
 
 Décisions du 23 septembre 2026 : XP par les activités de jeu ; cosmétiques gratuits par niveau, sans achat en Encre ; tous les emballages disponibles dès le départ. L'habillage existant est conservé.
 
+**Mise à jour du 26 septembre 2026 (décision de Raphaël) : la boutique de l'Encre.** Les cosmétiques gagnés par niveau restent gratuits, mais 15 pièces nouvelles ne s'obtiennent qu'à la boutique, avec l'Encre gagnée en jouant (champ `boutique` du catalogue) ; un Hors-série au choix s'y commande aussi (100 000 Encre). Voir l'en-tête d'ETAT-DU-PROJET.md.
+
 ## Fonctionnement
 
 - L'écran `#/profil`, accessible depuis le bandeau et l'accueil, présente le niveau, l'XP, le pseudo personnel, l'avatar, le cadre et le titre.
 - 20 XP par paquet ouvert, 15 par nouveau mot découvert dans un paquet, 5 par bonne définition (attaque ou parade), 30 par duel terminé et 20 supplémentaires par victoire. Aucun gain pour une simple visite ou un changement de personnalisation.
 - Le niveau 2 demande 100 XP ; chaque palier suivant demande 50 XP de plus. L'XP commence à zéro à l'installation de cette version, sans conversion rétroactive des anciennes statistiques.
-- 94 objets : 12 cadres, 50 titres et 8 choix dans chacune des catégories avatars, couleurs, dos et paquets. Le catalogue est centralisé dans `src/jeu/personnalisation.ts`.
+- 149 objets (26/09/2026) : 38 cadres, 30 avatars, 50 titres, 11 couleurs, 10 dos et 10 emballages de paquet, dont 15 pièces de la boutique de l’Encre. Le catalogue est centralisé dans `src/jeu/personnalisation.ts`.
 - Les cosmétiques Premium sont débloqués définitivement par l’achat unique. L’abonnement seul ne les donne pas.
-- Les titres se gagnent exclusivement via les [50 succès](SUCCES-ET-TITRES.md). Les autres cosmétiques gratuits se débloquent au niveau indiqué. L’Encre est réservée aux enchères ; les anciens achats sont conservés.
+- Les titres se gagnent exclusivement via les [50 succès](SUCCES-ET-TITRES.md). Les autres cosmétiques gratuits se débloquent au niveau indiqué. L’Encre gagnée en jouant sert aux enchères et à la boutique (depuis le 26/09/2026) ; les anciens achats sont conservés.
 - Bonus abonné : +25 % d’XP sur bonnes réponses et duels, fractions conservées. Aucun multiplicateur sur les ouvertures et découvertes. La Hors-série offerte ne donne pas les 20 XP d’un paquet ; sa découverte donne les 15 XP habituels.
 - Huit paquets gratuits dès le départ : Édition originale, L'Herbier, Courrier céleste, Poste lointaine, Jardin de minuit, Éclats de givre, Lettres océanes et Légendes de jade. Aucun effet sur le tirage.
 - Les choix s'appliquent à l'accueil, à l'écran d'ouverture et aux timbres face cachée. Les gains d'XP figurent dans les résultats du paquet et du duel.

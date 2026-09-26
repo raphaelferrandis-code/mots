@@ -12,7 +12,7 @@ Deux offres indépendantes, implémentées localement. Prix indicatifs : 5,99 �
 - Premier droit hebdomadaire à l’activation, puis tous les sept jours pendant la période active. Les droits acquis hors connexion restent récupérables après expiration. Une prolongation conserve l’échéancier ; une reprise après interruption ouvre une nouvelle période.
 - Cartes, XP et paquets déjà en réserve conservés après expiration. Retour à dix minutes et plafond gratuit de dix : la recharge attend que le stock passe sous ce plafond.
 - L’achat unique n’accélère pas les paquets ; l’abonnement ne débloque pas les cosmétiques premium. **Titres exclusivement par succès.** Cosmétiques gratuits liés aux niveaux ; anciens achats conservés.
-- **Encre uniquement pour les enchères**, aucun achat cosmétique ni paquet, aucun bonus ni rente. Plafonds du marché identiques pour tous.
+- **Encre uniquement pour les enchères**, aucun achat cosmétique ni paquet, aucun bonus ni rente. *(Depuis le 26/09/2026, l’Encre gagnée en jouant sert aussi à la boutique de l’Encre : cosmétiques de la boutique et Hors-série au choix ; l’Encre achetée reste réservée au marché.)* Plafonds du marché identiques pour tous.
 - Avantage initial en duel accepté par Raphaël. Bonus d’XP sans effet sur la cote, la maîtrise ou les succès ; pas de multiplicateur sur l’XP des paquets et découvertes. Les fractions d’XP sont conservées.
 
 ### Publication et limites

@@ -59,6 +59,7 @@ const Profil = aLaDemande(() => import('./ecrans/Profil.tsx').then((m) => m.Prof
 const Compte = aLaDemande(() => import('./ecrans/Compte.tsx').then((m) => m.Compte));
 const Reglages = aLaDemande(() => import('./ecrans/Reglages.tsx').then((m) => m.Reglages));
 const Confidentialite = aLaDemande(() => import('./ecrans/Confidentialite.tsx').then((m) => m.Confidentialite));
+const Boutique = aLaDemande(() => import('./ecrans/Boutique.tsx').then((m) => m.Boutique));
 const Formules = aLaDemande(() => import('./ecrans/Formules.tsx').then((m) => m.Formules));
 // Les écrans d'essai n'existent qu'en développement : ils ne partent même pas en production.
 const Galerie = import.meta.env.DEV ? aLaDemande(() => import('./ecrans/Galerie.tsx').then((m) => m.Galerie)) : null;
@@ -85,6 +86,7 @@ function Ecran({ route }: { route: Route }) {
     case 'reglages': return <Reglages />;
     case 'confidentialite': return <Confidentialite />;
     case 'marche': return <Marche />;
+    case 'boutique': return <Boutique />;
     case 'formules': return <Formules />;
     case 'galerie': return Galerie ? <Galerie /> : <Accueil />;
     case 'timbres': return EssaiTimbre ? <EssaiTimbre /> : <Accueil />;

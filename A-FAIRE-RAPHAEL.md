@@ -317,6 +317,19 @@ redéployer** ; le jeu reconnaît ces paquets à leur contenu et peut être publ
 - [x] Vérifié en lecture seule le 26 septembre : `tirer_les_cartes` identique au dépôt (empreinte égale, aux fins de
       ligne Windows près) et paquets d'exception présents.
 
+### Étape 17 — Coller le script 25 (la boutique de l'Encre)
+
+Ta décision du 26 septembre : l'Encre gagnée en jouant achète des cosmétiques qu'on ne trouve qu'à la boutique
+(15 pièces, de 2 000 à 12 000 Encre) et un Hors-série au choix parmi ceux qui manquent à l'album (100 000 Encre).
+L'Encre achetée reste réservée au marché. **Aucune fonction à redéployer.** Le jeu est publié : tant que le script
+n'est pas collé, un achat répond « La boutique ouvre très bientôt ».
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/25-boutique.sql → **Copy raw file** →
+      Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
+      attendue : **Success. No rows returned**.
+- [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule (les deux fonctions `acheter_a_la_boutique` et
+      `commander_un_hors_serie`, la table `achats_boutique` fermée aux joueurs).
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de

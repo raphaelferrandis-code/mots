@@ -3,7 +3,7 @@ import { serveurDesAmis } from './amis.ts';
 import type { ActionAmitie, ActionEchange, TimbreEchange } from './amis.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { calculerGainXp, cosmetiquesPremium } from '../jeu/formule.ts';
-import { XP, apparenceAApprendre, appliquerLApparence, estDisponible, ornement, PAQUETS } from '../jeu/personnalisation.ts';
+import { XP, apparenceAApprendre, appliquerLApparence, estDisponible, ornement, paquetDisponible } from '../jeu/personnalisation.ts';
 import type { Apparence, Categorie } from '../jeu/personnalisation.ts';
 import { appliquerIdentite, pseudoDuJoueur, verifierIdentite } from './identite.ts';
 // La partie du joueur : sa sauvegarde en mémoire, les actions qui la modifient, et son enregistrement.
@@ -331,7 +331,7 @@ export function personnaliser(categorie: Categorie | 'paquet', id: string): void
   const profil = partie.sauvegarde.profil;
   if (categorie === 'titre' && id === '') { enregistrer({ ...partie.sauvegarde, profil: { ...profil, titre: '' } }); envoyerLApparence({ titre: '' }); return; }
   const choix = ornement(id);
-  if (categorie === 'paquet' ? !PAQUETS.some((p) => p.id === id) : !choix || choix.categorie !== categorie || !estDisponible(profil, choix, partie.compte !== null && cosmetiquesPremium(partie.compte.formule, maintenant()))) return;
+  if (categorie === 'paquet' ? !paquetDisponible(profil, id) :!choix || choix.categorie !== categorie || !estDisponible(profil, choix, partie.compte !== null && cosmetiquesPremium(partie.compte.formule, maintenant()))) return;
   enregistrer({ ...partie.sauvegarde, profil: { ...profil, [categorie]: id } });
   envoyerLApparence({ [categorie]: id });
 }
@@ -505,6 +505,15 @@ export async function encherir(id: number, montant: number): Promise<Enchere> {
   const reponse = await surLeServeur(() => serveurDuMarche.encherir(id, montant));
   appliquer(reponse.etat);
   return reponse.enchere;
+}
+
+// ── La boutique de l'Encre (décision de Raphaël du 26/09/2026) ──────────────
+// Le serveur débite l'Encre gagnée en jouant et range l'achat ; son état fait le reste (achats, album, réserve).
+export async function acheterALaBoutique(article: string): Promise<void> {
+  appliquer(await surLeServeur(() => serveurDesCollections.acheterALaBoutique(article)));
+}
+export async function commanderUnHorsSerie(carte: string): Promise<void> {
+  appliquer(await surLeServeur(() => serveurDesCollections.commanderUnHorsSerie(carte)));
 }
 
 // ── La version payante (décision n° 34) ────────────────────────────────────

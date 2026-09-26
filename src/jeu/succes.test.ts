@@ -6,7 +6,7 @@ import { actualiserLesSucces, mesurerLesSucces } from './succes.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import type { CartePossedee } from './sauvegarde.ts';
 import type { CarteIndex, IndexEdition } from '../partage/types.ts';
-import { acheterOrnement, estDisponible, nouveauProfil, ornement, relireProfil } from './personnalisation.ts';
+import { estDisponible, nouveauProfil, ornement, refusDAchat, relireProfil } from './personnalisation.ts';
 import { noterUneReponse } from './progression.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { structure } from '../../serveur/fabriquer-le-script.ts';
@@ -112,7 +112,7 @@ it('interdit d’obtenir un titre par XP, Encre, ancien achat ou abonnement', ()
     const o = ornement(titreDuSucces(succes.id))!;
     const profil = { ...nouveauProfil(), xp: 1_000_000, achats: [o.id] };
     assert.equal(estDisponible(profil, o, true), false);
-    assert.throws(() => acheterOrnement(profil, 1_000_000, o.id), /succès/);
+    assert.equal(refusDAchat(profil, 1_000_000, o.id), 'Cette pièce ne se vend pas à la boutique.');
     assert.equal(estDisponible({ ...profil, succes: [succes.id] }, o), true);
     assert.ok(!sql.includes(`when '${o.id}' then`));
   }

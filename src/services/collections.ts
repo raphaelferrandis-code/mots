@@ -35,6 +35,9 @@ export type ServeurDesCollections = {
   definirUnCode(code: string): Promise<EtatDuCompte>;
   declarerMaNaissance(annee: number, mois: number): Promise<EtatDuCompte>;
   recupererParCode(code: string): Promise<Recuperation>;
+  // La boutique de l'Encre (script 25) : une pièce de la boutique, ou un Hors-série au choix. Rend l'état du compte.
+  acheterALaBoutique(article: string): Promise<EtatDuCompte>;
+  commanderUnHorsSerie(carte: string): Promise<EtatDuCompte>;
 };
 
 const estUnObjet = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -45,6 +48,17 @@ function lireLesCartesTirees(brut: unknown): CarteTireeParLeServeur[] {
   return brut.flatMap((t) => (estUnObjet(t) && typeof t.id === 'string' && estUneFinition(t.finition)
     ? [{ id: t.id, finition: t.finition, nouvelle: t.nouvelle === true, nouvelleFinition: t.nouvelleFinition === true, encre: typeof t.encre === 'number' ? t.encre : 0 }]
     : []));
+}
+
+// Tant que le script 25 n'est pas installé, le serveur ne connaît pas les fonctions de la boutique : un refus, et non
+// une panne (qui ferait passer le jeu hors ligne).
+async function boutiqueOuverte<T>(appel: () => Promise<T>): Promise<T> {
+  try {
+    return await appel();
+  } catch (erreur) {
+    if (erreur instanceof ErreurDuServeur && erreur.statut === 404) throw new ErreurDuServeur('La boutique ouvre très bientôt : réessaie un peu plus tard.', true, 404);
+    throw erreur;
+  }
 }
 
 // Le service branché sur un client donné : celui du serveur dans le jeu, une doublure dans les tests. Un paquet ou un
@@ -82,6 +96,12 @@ export function serveurDesCollectionsAvec(client: ClientSupabase, demandes: Avec
       if (estUnObjet(brut) && typeof brut.refus === 'string') throw new ErreurDuServeur(brut.refus, true);
       return lireRecuperation(brut);
     }),
+    acheterALaBoutique: (article) => chacunSonTour(async () => lireEtat(await boutiqueOuverte(() => client.appeler<unknown>('acheter_a_la_boutique', { p_article: article })))),
+    // Une commande relancée après une coupure reprend son identifiant de demande : le serveur ne la sert qu'une fois.
+    commanderUnHorsSerie: (carte) => chacunSonTour(async () => {
+      const brut = await boutiqueOuverte(() => appelerAvecUneDemande<unknown>(client, demandes, `hors-serie:${carte}`, 'commander_un_hors_serie', { p_carte: carte }));
+      return lireEtat(estUnObjet(brut) ? brut.etat : null);
+    }),
   };
 }
 
@@ -98,6 +118,8 @@ const inactif: ServeurDesCollections = {
   definirUnCode: async () => jamais(),
   declarerMaNaissance: async () => jamais(),
   recupererParCode: async () => jamais(),
+  acheterALaBoutique: async () => jamais(),
+  commanderUnHorsSerie: async () => jamais(),
 };
 
 export const serveurDesCollections: ServeurDesCollections = SERVEUR.collectionsSurLeServeur && serveurUtilise ? serveurDesCollectionsAvec(clientDuServeur()) : inactif;

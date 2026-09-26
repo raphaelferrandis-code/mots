@@ -56,6 +56,9 @@
 .vestiaire__obtention { font-size:.77rem; color:#9aafc7; margin:14px 0 21px; min-height:20px; }
 .vestiaire__description { font-size:.8rem; line-height:1.45; color:#b7c8db; margin:8px auto 0; max-width:34ch; text-wrap:balance; }
 .sceau-premium { color:#d4c1f3; }
+/* La boutique de l'Encre : son prix, à l'encre bleue des pièces qu'on y trouve. */
+.sceau-boutique { color:#b8c6f0; }
+.cosmetique[data-boutique=true] .cosmetique__acces { color:#b8c6f0; }
 .vestiaire__ou { padding-inline:8px; color:#667f99; }
 .vestiaire__action { width:100%; gap:24px; font-size:.85rem; }
 .vestiaire__annuler { padding:10px 16px; min-height:44px; margin-top:10px; font-size:.8rem; }

@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
-import { acheterOrnement, apparenceAApprendre, appliquerLApparence, lireApparence, nouveauProfil, progressionDuNiveau, relireProfil, estDisponible, ornement, PAQUETS, ORNEMENTS, profilVisible } from './personnalisation.ts';
+import { ARTICLES_DE_LA_BOUTIQUE, apparenceAApprendre, paquetDisponible, prixEnBoutique, refusDAchat, appliquerLApparence, lireApparence, nouveauProfil, progressionDuNiveau, relireProfil, estDisponible, ornement, PAQUETS, ORNEMENTS, profilVisible } from './personnalisation.ts';
 import { nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
 import { fusionner } from './synchronisation.ts';
 import { FORMULE_GRATUITE, cosmetiquesPremium } from './formule.ts';
@@ -12,7 +12,7 @@ it('réserve les objets premium aux formules, quels que soient le niveau, les ac
   const cadre = ornement('astral')!;
   assert.equal(estDisponible(profil, cadre), false);
   assert.equal(estDisponible(profil, cadre, true), true);
-  assert.throws(() => acheterOrnement(profil, 1_000_000, 'astral'), /enchères/);
+  assert.equal(refusDAchat(profil, 1_000_000, 'astral'), 'Cette pièce ne se vend pas à la boutique.');
 });
 
 it('réserve le rendu premium à l’achat définitif et conserve les choix', () => {
@@ -28,14 +28,16 @@ it('réserve le rendu premium à l’achat définitif et conserve les choix', ()
   assert.equal(cosmetiquesPremium({ ...FORMULE_GRATUITE, achatUnique: true }, 9999), true);
 });
 
-it('propose 134 objets identifiables, dont 34 cadres, 26 avatars et huit emballages libres', () => {
-  assert.equal(ORNEMENTS.length + PAQUETS.length, 134);
+it('propose 149 objets identifiables, dont 38 cadres, 30 avatars, dix emballages, et 15 pièces de boutique', () => {
+  assert.equal(ORNEMENTS.length + PAQUETS.length, 149);
   assert.equal(new Set([...ORNEMENTS, ...PAQUETS].map(o => o.id)).size, ORNEMENTS.length + PAQUETS.length);
-  assert.equal(ORNEMENTS.filter(o => o.categorie === 'cadre').length, 34);
-  assert.equal(ORNEMENTS.filter(o => o.categorie === 'avatar').length, 26);
-  for (const categorie of ['couleur', 'dos']) assert.equal(ORNEMENTS.filter(o => o.categorie === categorie).length, 8);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'cadre').length, 38);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'avatar').length, 30);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'couleur').length, 11);
+  assert.equal(ORNEMENTS.filter(o => o.categorie === 'dos').length, 10);
   assert.equal(ORNEMENTS.filter(o => o.categorie === 'titre').length, 50);
-  assert.equal(PAQUETS.length, 8);
+  assert.equal(PAQUETS.length, 10);
+  assert.equal(ARTICLES_DE_LA_BOUTIQUE.length, 15);
   assert.ok(ORNEMENTS.filter(o => o.categorie === 'cadre' && o.anime).every(o => o.premium));
 });
 
@@ -69,18 +71,34 @@ it('franchit les niveaux exactement au palier, même après plusieurs niveaux ga
     if (n > 1) assert.equal(progressionDuNiveau(seuil - 1).niveau, n - 1);
   }
 });
-it('refuse tout achat cosmétique en Encre, même avec un solde suffisant', () => {
+it('ne vend en Encre que les pièces de la boutique, qui n’appartiennent qu’à qui les a achetées', () => {
   const profil = nouveauProfil();
-  for (const id of ['boussole', 'astral']) assert.throws(() => acheterOrnement(profil, 1000000, id), /enchères/);
-  assert.deepEqual(profil.achats, []);
-  assert.equal(estDisponible({ ...profil, achats: ['boussole'] }, ornement('boussole')!), true);
+  for (const id of ['boussole', 'astral', 'original', 'inconnu']) assert.equal(refusDAchat(profil, 1_000_000, id), 'Cette pièce ne se vend pas à la boutique.');
+  assert.equal(estDisponible({ ...profil, achats: ['boussole'] }, ornement('boussole')!), true, 'les anciens achats sont conservés');
+  for (const article of ARTICLES_DE_LA_BOUTIQUE) {
+    assert.ok(article.prix > 0 && Number.isSafeInteger(article.prix), article.id);
+    assert.equal(prixEnBoutique(article.id), article.prix);
+    const o = ornement(article.id);
+    assert.equal(o?.premium ?? false, false, `${article.id} : une pièce de boutique n’est pas premium`);
+    const achetee = { ...profil, xp: 0, achats: [article.id] };
+    const dispo = (pr: typeof profil) => (o ? estDisponible(pr, o, true) : paquetDisponible(pr, article.id));
+    assert.equal(dispo({ ...profil, xp: 1_000_000 }), false, `${article.id} ne se gagne pas au niveau`);
+    assert.equal(dispo(achetee), true, article.id);
+    assert.equal(refusDAchat(achetee, 1_000_000, article.id), 'Déjà dans ta collection.');
+    assert.equal(refusDAchat(profil, article.prix - 1, article.id), 'Il te manque 1 Encre.');
+    assert.equal(refusDAchat(profil, article.prix, article.id), null);
+  }
 });
 it('migre les sauvegardes et répare les équipements inconnus ou verrouillés', () => {
   assert.deepEqual(relireSauvegarde({ version: 4, cartes: {} }, 0).profil, nouveauProfil());
   assert.equal(relireProfil({ xp: -2, dos: 'constellation' }).dos, 'gomme');
   assert.equal(relireProfil({ xp: Infinity }).xp, 0);
   assert.equal(relireProfil({ achats: ['constellation'], dos: 'constellation' }).dos, 'constellation');
-  for (const p of PAQUETS) assert.equal(relireProfil({ paquet: p.id }).paquet, p.id);
+  for (const p of PAQUETS.filter((p) => p.boutique === undefined)) assert.equal(relireProfil({ paquet: p.id }).paquet, p.id);
+  assert.equal(relireProfil({ paquet: 'vermeil' }).paquet, 'original', 'un emballage de boutique non acheté');
+  assert.equal(relireProfil({ paquet: 'vermeil', achats: ['vermeil'] }).paquet, 'vermeil');
+  assert.equal(relireProfil({ cadre: 'guilloche' }).cadre, 'simple');
+  assert.equal(relireProfil({ cadre: 'guilloche', achats: ['guilloche'] }).cadre, 'guilloche');
   const sauvegarde = nouvelleSauvegarde(0, 3);
   sauvegarde.profil = { ...nouveauProfil(), xp: 350, avatar: 'colombe', paquet: 'herbier' };
   assert.deepEqual(relireSauvegarde(JSON.parse(JSON.stringify(sauvegarde)), 0), sauvegarde);

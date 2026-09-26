@@ -3,6 +3,16 @@ import { ornement } from '../../jeu/personnalisation.ts';
 import { DESSINS_AVATARS, PLUME } from './dessins/avatars.ts';
 import { DESSINS_CADRES } from './dessins/cadres.ts';
 
+// La rosace guillochée (dos de la boutique de l'Encre) : huit courbes décalées, comme au tour à guillocher.
+const ROSACE = Array.from({ length: 8 }, (_, i) => {
+  let d = '';
+  for (let a = 0; a <= 360; a += 3) {
+    const r = 27 + 11 * Math.sin(((a * 7 + i * 45) * Math.PI) / 180), t = (a * Math.PI) / 180;
+    d += `${a ? 'L' : 'M'}${(50 + r * Math.sin(t)).toFixed(1)} ${(50 - r * Math.cos(t)).toFixed(1)}`;
+  }
+  return d + 'Z';
+});
+
 // Dessins originaux en SVG : un seul tracé net à toutes les tailles, sans textures téléchargées.
 export function Motif({ nom }: { nom: string }) {
   switch (nom) {
@@ -15,6 +25,8 @@ export function Motif({ nom }: { nom: string }) {
     case 'oracle': return <><path d="M8 50Q50 5 92 50Q50 95 8 50Z" fill="currentColor" fillOpacity=".12" /><circle cx="50" cy="50" r="20" /><path d="m50 34 9 16-9 16-9-16Z" fill="currentColor" fillOpacity=".5" /><path d="M50 3v14m0 66v14M20 15l7 10m53-10-7 10M20 85l7-10m53 10-7-10M35 9l4 10m26-10-4 10" /><circle cx="50" cy="50" r="29" strokeDasharray="1 5" /></>;
     case 'feuilles': return <><path d="M50 90V10" />{[22,39,56,73].map((y) => <g key={y} transform={`translate(50 ${y})`}><path d="M0 10Q-35 9-32-13Q-7-15 0 10ZM0 10Q35 9 32-13Q7-15 0 10Z" fill="currentColor" fillOpacity=".1" /><path d="m0 10-22-14m22 14 22-14" opacity=".5" /></g>)}</>;
     case 'cristal': return <><path d="m50 5 26 28-9 48-17 14-17-14-9-48Z" fill="currentColor" fillOpacity=".13" /><path d="m50 5-10 30 10 60 10-60ZM24 33l16 2 20 0 16-2M33 81l17-14 17 14M40 35l10 32 10-32" /><path d="m13 42-8 10 10 24 10-13Zm74 0 8 10-10 24-10-13Z" fill="currentColor" fillOpacity=".2" /></>;
+    case 'pieuvre': return <><path d="M50 12c-15 0-24 11-24 25 0 9 5 15 10 18h28c5-3 10-9 10-18 0-14-9-25-24-25Z" fill="currentColor" fillOpacity=".12" /><path d="M36 55c-7 5-14 8-15 15-1 5 4 7 6 3M42 57c-2 9-7 14-6 21 1 5 6 5 6 0M50 58c0 9-1 16 3 22 2 3 7 1 5-3M58 57c3 8 8 12 9 18 1 4 6 4 7 0M64 55c7 4 13 6 15 12 1 4-3 6-5 3" /><circle cx="42" cy="40" r="4.5" /><circle cx="58" cy="40" r="4.5" /><path d="M40 40h4M56 40h4" strokeWidth="2.4" /><path d="M36 22c3-3 7-4 11-4" opacity=".6" /></>;
+    case 'guilloche': return <><circle cx="50" cy="50" r="44" /><circle cx="50" cy="50" r="10" fill="currentColor" fillOpacity=".12" />{ROSACE.map((d, i) => <path key={i} d={d} strokeWidth=".9" opacity=".8" />)}</>;
     case 'vagues': return <>{[0,16,32].map((y) => <path key={y} transform={`translate(0 ${y})`} d="M5 34C22 5 39 54 55 30S82 15 95 31M5 39C22 10 39 59 55 35S82 20 95 36" />)}<circle cx="66" cy="12" r="5" /></>;
     default: return <g transform={PLUME.pose}><path d={PLUME.etendard} fill="currentColor" fillOpacity=".13" /><path d={PLUME.barbes} opacity=".55" /><path d={PLUME.rachis} /><path d={PLUME.bec} /></g>;
   }

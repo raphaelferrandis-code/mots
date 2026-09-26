@@ -23,6 +23,7 @@ import { equipes } from './equipes.ts';
 import { comptesNeufs, parrainage } from './parrainage.ts';
 import { secours } from './secours.ts';
 import { activite } from './activite.ts';
+import { boutique } from './boutique.ts';
 import { portraits } from './portraits.ts';
 import { direct, OUBLIER_L_EQUIPE_SQL } from './direct.ts';
 import { classement } from './classement.ts';
@@ -403,6 +404,7 @@ ${portraits()}
 ${amis()}
 ${equipes()}
 ${activite()}
+${boutique()}
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
 revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
@@ -576,6 +578,14 @@ export function migrationPaquetsDException(): string {
     + '\n\ncommit;\n';
 }
 
+// Script 25 : la boutique de l'Encre (décision de Raphaël du 26/09/2026) : des cosmétiques à acheter, et un Hors-série
+// au choix. Après 24-paquets-d-exception.sql. Aucune fonction Edge à redéployer.
+export function migrationBoutique(): string {
+  return `-- La boutique de l’Encre : des cosmétiques qui s’achètent, et un Hors-série au choix pour ${EQUILIBRAGE.boutique.prixDuHorsSerie.toLocaleString('fr-FR')} Encre. Après 24-paquets-d-exception.sql.\n`
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\nbegin;\n'
+    + boutique() + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -617,5 +627,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '22-apparence.sql'), migrationApparence());
   writeFileSync(path.join(RACINE, 'serveur', '23-six-timbres.sql'), migrationSixTimbres());
   writeFileSync(path.join(RACINE, 'serveur', '24-paquets-d-exception.sql'), migrationPaquetsDException());
+  writeFileSync(path.join(RACINE, 'serveur', '25-boutique.sql'), migrationBoutique());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

@@ -100,4 +100,24 @@ describe('le service des collections', () => {
     const { service: refus } = doublure({ recuperer_par_code: { refus: 'Ce code ne correspond à aucune collection.' } });
     await assert.rejects(refus.recupererParCode('ZZZZZZZZZZZZZZZZZZZZ'), (e: unknown) => e instanceof ErreurDuServeur && e.refus && e.message.includes('aucune collection'));
   });
+
+  it('achète à la boutique, et commande un Hors-série avec un identifiant de demande', async () => {
+    const { service, appels } = doublure({ acheter_a_la_boutique: ETAT, commander_un_hors_serie: { carte: 'amour-nom', etat: ETAT } });
+    assert.deepEqual(await service.acheterALaBoutique('pieuvre'), ETAT);
+    assert.deepEqual(await service.commanderUnHorsSerie('amour-nom'), ETAT);
+    assert.deepEqual(appels, [
+      { fonction: 'acheter_a_la_boutique', parametres: { p_article: 'pieuvre' } },
+      { fonction: 'commander_un_hors_serie', parametres: { p_carte: 'amour-nom', p_demande: 'demande-1' } },
+    ]);
+  });
+
+  it('dit que la boutique ouvre bientôt, sans panne, tant que le serveur n’a pas le script 25', async () => {
+    const absente = new ErreurDuServeur('Could not find the function', false, 404);
+    const { service } = doublure({ acheter_a_la_boutique: absente, commander_un_hors_serie: absente });
+    const bientot = (e: unknown) => e instanceof ErreurDuServeur && e.refus && e.message.includes('ouvre très bientôt');
+    await assert.rejects(service.acheterALaBoutique('pieuvre'), bientot);
+    await assert.rejects(service.commanderUnHorsSerie('amour-nom'), bientot);
+    const { service: pauvre } = doublure({ acheter_a_la_boutique: new ErreurDuServeur('Il te manque 3 Encre.', true, 400) });
+    await assert.rejects(pauvre.acheterALaBoutique('pieuvre'), /Il te manque 3 Encre/);
+  });
 });

@@ -340,4 +340,58 @@ export const DESSINS_CADRES: Record<string, DessinCadre> = {
       <path d="M100 176l-20-9v18Zm0 0 20-9v18Z" fill="#7a1f2b" stroke="${c}" stroke-width=".6"/><circle cx="100" cy="176" r="5" fill="url(#${u}m)"/>`;
     },
   },
+
+  // ── La boutique de l'Encre (26/09/2026) ──────────────────────────────────
+  'eclaboussures': {
+    dessin: (u, c) => {
+      // Chaque tache : une flaque ronde et bosselée, deux lobes, et des gouttelettes projetées vers l'extérieur.
+      const taches: [number, number, number][] = [[30, 73, 10], [84, 74, 5.5], [128, 74, 8], [180, 71, 9], [226, 74, 6], [270, 74, 8.5], [322, 73, 7]];
+      const flaques = taches.map(([a, r, t], i) => {
+        const [x, y] = pt(r, a);
+        const lobes = [a + 70 + i * 23, a - 110 + i * 31].map((b) => { const [lx, ly] = pt(t * 0.72, b, x, y); return `<circle cx="${lx}" cy="${ly}" r="${(t * 0.46).toFixed(1)}"/>`; }).join('');
+        const projetees = [[1.55, 0.24, -9], [2.05, 0.16, 7], [2.5, 0.11, -3]].map(([d, taille, ecart]) => { const [gx, gy] = pt(r + t * d, a + ecart); return `<circle cx="${gx}" cy="${gy}" r="${(t * taille).toFixed(1)}"/>`; }).join('');
+        return `<path d="${tache(x, y, t, t * 0.1, 3 + (i % 2), i * 61)}"/>${lobes}${projetees}`;
+      }).join('');
+      // Au bas du portrait, l'encre de la flaque coule un peu.
+      const [bx, by] = pt(70, 180);
+      const coulures = [[-3.2, 13], [2.4, 20]].map(([dx, l]) => `<path d="M${bx + dx - 1.1} ${by}Q${bx + dx - 0.7} ${by + l * 0.7} ${bx + dx} ${by + l}Q${bx + dx + 0.7} ${by + l * 0.7} ${bx + dx + 1.1} ${by}Z"/><circle cx="${bx + dx}" cy="${by + l + 1.2}" r="2.1"/>`).join('');
+      return `<defs>${metal(u + 'm', c)}</defs>${ring(u, c)}
+      <g fill="${c}">${flaques}${coulures}</g>
+      <g fill="#fff" fill-opacity=".4">${taches.map(([a, r, t]) => { const [x, y] = pt(r + t * 0.35, a - 4); return `<ellipse cx="${x}" cy="${y}" rx="${(t * 0.26).toFixed(1)}" ry="${(t * 0.13).toFixed(1)}"/>`; }).join('')}</g>`;
+    },
+  },
+  'casse': {
+    dessin: (u, c) => {
+      const lettres = ['P', 'H', 'I', 'L', 'A', 'M', 'O', 'T', 'S', '✦', 'E', 'N', 'C', 'R', 'E', '✦'];
+      return `<defs>${metal(u + 'm', c)}<linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${c}"/><stop offset=".5" stop-color="#8d8a86"/><stop offset="1" stop-color="#5b5854"/></linearGradient></defs>${ring(u, c)}
+      ${lettres.map((l, i) => rot(i * 22.5, `<rect x="93" y="16" width="14" height="16" rx="1.2" fill="url(#${u}p)" stroke="#2c241a" stroke-width=".7"/><path d="M93.6 28.5h12.8" stroke="#2c241a" stroke-opacity=".5" stroke-width=".7"/><text x="100" y="27" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="${l === '✦' ? 8 : 11}" fill="#1f1810">${l}</text>`)).join('')}
+      <circle cx="100" cy="100" r="70" fill="none" stroke="${c}" stroke-opacity=".5" stroke-width=".8"/>`;
+    },
+  },
+  'guilloche': {
+    dessin: (u, c) => {
+      const bande = (r: number, amp: number, k: number, ph: number) => { let d = ''; for (let a = 0; a <= 360; a += 1.5) { const [x, y] = pt(r + amp * Math.sin(((a * k + ph) * Math.PI) / 180), a); d += (a ? 'L' : 'M') + x + ' ' + y; } return d + 'Z'; };
+      return `<defs>${metal(u + 'm', c)}</defs>${ring(u, c)}
+      <circle cx="100" cy="100" r="68" fill="none" stroke="url(#${u}m)" stroke-width="1.4"/><circle cx="100" cy="100" r="87" fill="none" stroke="url(#${u}m)" stroke-width="1.6"/>
+      <g fill="none" stroke="${c}" stroke-width=".5" stroke-opacity=".85">${Array.from({ length: 12 }, (_, i) => `<path d="${bande(77.5, 8, 16, i * 30)}"/>`).join('')}</g>
+      <g fill="none" stroke="${c}" stroke-width=".45" stroke-opacity=".7">${[0, 180].map((ph) => `<path d="${bande(91, 1.6, 48, ph)}"/>`).join('')}</g>`;
+    },
+  },
+  'marbrure': {
+    fond: (u, c) => {
+      const couleurs = [c, '#f4e9d4', '#34466f', '#c9dbe8', c, '#f4e9d4', '#34466f', '#e9d6b8', c, '#f4e9d4'];
+      return `<defs><clipPath id="${u}a"><path d="${circlePath(86)}${circlePath(66)}" clip-rule="evenodd"/></clipPath></defs>
+      <g clip-path="url(#${u}a)">${couleurs.map((col, j) => `<path d="${wobble(88 - j * 2.3, 2, 16 + (j % 3) * 6, j * 37, 2)}" fill="${col}"/>`).join('')}</g>`;
+    },
+    dessin: (u, c) => `<defs>${metal(u + 'm', c)}</defs>${ring(u, c)}
+      <g fill="none" stroke="#1d1a2b" stroke-opacity=".28" stroke-width=".6">${rep(72, (a) => rot(a, '<path d="M100 15q2.4 4 0 8q-2.4 4 0 8q2.4 4 0 8"/>'))}</g>
+      <circle cx="100" cy="100" r="66" fill="none" stroke="url(#${u}m)" stroke-width="1.6"/><circle cx="100" cy="100" r="86" fill="none" stroke="url(#${u}m)" stroke-width="2"/>`,
+  },
 };
+
+// Une tache d'encre : un disque bosselé autour de (cx, cy).
+function tache(cx: number, cy: number, r: number, amp: number, k: number, ph: number): string {
+  let d = '';
+  for (let a = 0; a <= 360; a += 8) { const [x, y] = pt(r + amp * Math.sin(((a * k + ph) * Math.PI) / 180), a, cx, cy); d += (a ? 'L' : 'M') + x + ' ' + y; }
+  return d + 'Z';
+}

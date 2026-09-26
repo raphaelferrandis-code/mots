@@ -29,9 +29,9 @@ const DESSINS = {
   compte: <svg viewBox="0 0 24 24" {...trait}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>,
   reglages: <svg viewBox="0 0 24 24" {...trait}><path d="m9.5 3-.6 2.3-1.7 1-2.3-.6-2.5 4.3 1.7 1.7v2l-1.7 1.7 2.5 4.3 2.3-.6 1.7 1 .6 2.3h5l.6-2.3 1.7-1 2.3.6 2.5-4.3-1.7-1.7v-2l1.7-1.7-2.5-4.3-2.3.6-1.7-1-.6-2.3z" /><circle cx="12" cy="12" r="3" /></svg>,
   paquet: <svg viewBox="0 0 24 24" {...trait}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="m3 8 9 6 9-6" /></svg>,
+  boutique: <svg viewBox="0 0 24 24" {...trait}><path d="M5 8h14l-1.2 12H6.2Z" /><path d="M9 11V6a3 3 0 0 1 6 0v5" /></svg>,
   chevron: <svg viewBox="0 0 24 24" {...trait} strokeWidth={2}><path d="m6 9 6 6 6-6" /></svg>,
   suite: <svg viewBox="0 0 24 24" {...trait} strokeWidth={2}><path d="m9 6 6 6-6 6" /></svg>,
-  plus: <svg viewBox="0 0 24 24" {...trait} strokeWidth={2.4}><path d="M12 5v14M5 12h14" /></svg>,
   sortie: <svg viewBox="0 0 24 24" {...trait}><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>,
 };
 
@@ -121,29 +121,27 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
 
       <div className="navigation__personnel">
         <div className="encre">
-          {/* L'Encre ne sert qu'aux enchères : le compteur mène au marché (décision du 25/09/2026). */}
-          <a className="reserve-encre" href={lien({ ecran: 'marche' })} aria-label={encre === null ? 'Chargement de l’Encre' : `${encreEnClair} Encre — aller au marché`}>
-            <span className="reserve-encre__flacon"><Icone nom="encre" /></span>
-            <strong>{encreEnClair}</strong><span className="reserve-encre__mot"> Encre</span>
-          </a>
-          <button type="button" className="encre__plus" aria-expanded={ouvert === 'encre'} aria-controls="menu-encre" aria-label="Gagner de l’Encre" onClick={() => basculer('encre')}>{DESSINS.plus}</button>
+          {/* Un compteur discret, sans « + » (qui promettait un achat) : il ouvre la fiche de l'Encre (décision du 26/09/2026). */}
+          <button type="button" className="reserve-encre" aria-expanded={ouvert === 'encre'} aria-controls="menu-encre" onClick={() => basculer('encre')} aria-current={ecran === 'boutique' ? 'page' : undefined}
+            aria-label={encre === null ? 'Chargement de l’Encre' : `Ta réserve : ${encreEnClair} Encre`}>
+            <Icone nom="encre" />
+            <span className="reserve-encre__nombre">{encreEnClair}</span>
+          </button>
           {ouvert === 'encre' && <div id="menu-encre" className="menu-flottant menu-encre" onClick={fermerSurLien}>
             <div className="menu-encre__reserve">
               <span className="menu-encre__flacon" aria-hidden="true"><Icone nom="encre" /></span>
               <p><span className="menu-flottant__surtitre">Ta réserve</span><strong>{encreEnClair} <em>Encre</em></strong></p>
             </div>
-            <p className="menu-encre__usage">L’Encre sert à enchérir sur les timbres des autres joueurs, au marché.</p>
+            <p className="menu-encre__usage">Avec l’Encre, tu t’offres des pièces uniques à la boutique (jusqu’à un Hors-série au choix) et tu enchéris sur les timbres des autres joueurs, au marché.</p>
             <p className="menu-flottant__surtitre">Pour en gagner</p>
             <ul className="menu-encre__gains">
               <li><span className="menu-encre__icone" aria-hidden="true">{ICONES_DUEL.duel}</span><span><strong>Gagne des duels</strong>jusqu’à {ENCRE_PAR_VICTOIRE} Encre par victoire</span></li>
               <li><span className="menu-encre__icone" aria-hidden="true">{DESSINS.paquet}</span><span><strong>Ouvre des paquets</strong>chaque doublon se change en Encre</span></li>
             </ul>
-            <a className="bouton-menu bouton-menu--plein" href={lien({ ecran: 'paquet' })}>{DESSINS.paquet}Ouvrir un paquet</a>
-            <a className="bouton-menu bouton-menu--trait" href={lien({ ecran: 'marche' })}>{DESSINS.marche}Aller au marché</a>
+            <a className="bouton-menu bouton-menu--plein" href={lien({ ecran: 'boutique' })}>{DESSINS.boutique}La boutique</a>
+            <a className="bouton-menu bouton-menu--trait" href={lien({ ecran: 'marche' })}>{DESSINS.marche}Le marché</a>
           </div>}
         </div>
-
-        <span className="navigation__separateur" aria-hidden="true" />
 
         <div className="espace-joueur">
           <button type="button" className="bouton-joueur" aria-expanded={ouvert === 'profil'} aria-controls="menu-profil" onClick={() => basculer('profil')}

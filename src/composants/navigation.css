@@ -31,21 +31,17 @@
 /* ── L’espace personnel : Encre, avatar ──────────────────────────────── */
 .navigation__personnel { display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: auto; }
 
-.encre { position: relative; display: flex; align-items: center; height: 46px; box-sizing: border-box; padding: 0 6px; border: 1px solid var(--filet); border-radius: 23px; background: var(--carte-fond); }
-.reserve-encre { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-right: 10px; color: var(--encre-douce); text-decoration: none; white-space: nowrap; font-size: 0.82rem; }
-.reserve-encre__flacon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: rgb(241 138 75 / 16%); color: var(--accent); }
-.reserve-encre__flacon svg { width: 19px; height: 19px; }
-.reserve-encre strong { color: var(--encre); font-size: 1.12rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.encre__plus {
-  display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%;
-  background: var(--accent); color: var(--accent-texte); cursor: pointer; box-shadow: 0 0 14px rgb(241 138 75 / 45%); transition: background-color .15s;
+.encre { position: relative; }
+/* L'Encre ne sert qu'au marché et à la boutique : un compteur discret, du poids d'un onglet, qui ouvre sa fiche. */
+.reserve-encre {
+  display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 12px;
+  background: none; color: var(--encre-douce); font: inherit; font-size: 0.97rem; font-weight: 500; white-space: nowrap;
+  font-variant-numeric: tabular-nums; cursor: pointer; transition: color .15s, background-color .15s;
 }
-.encre__plus svg { width: 17px; height: 17px; }
-/* Une cible de 44 px pour le doigt, sans grossir le bouton : la zone cliquable déborde autour de lui. */
-.encre__plus { position: relative; }
-.encre__plus::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
-
-.navigation__separateur { width: 1px; height: 28px; background: var(--filet); }
+.reserve-encre svg { width: 18px; height: 18px; flex-shrink: 0; }
+.reserve-encre__nombre { color: var(--encre); transition: color .15s; }
+.reserve-encre[aria-expanded='true'] { background: rgb(173 195 218 / 8%); }
+.reserve-encre[aria-current='page'] { color: var(--accent); }
 
 .espace-joueur { position: relative; }
 .bouton-joueur {
@@ -55,7 +51,7 @@
 .bouton-joueur__chevron svg { display: block; width: 16px; height: 16px; transition: rotate .2s; }
 .bouton-joueur[aria-expanded='true'] .bouton-joueur__chevron svg { rotate: 180deg; }
 .bouton-joueur[aria-current='page'] .bouton-joueur__chevron { color: var(--accent); }
-:is(.encre__plus, .bouton-joueur)[aria-expanded='true'] { box-shadow: 0 0 0 2px rgb(241 138 75 / 65%); }
+.bouton-joueur[aria-expanded='true'] { box-shadow: 0 0 0 2px rgb(241 138 75 / 65%); }
 
 .avatar { position: relative; display: grid; place-items: center; width: 46px; height: 46px; }
 .avatar__anneau { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
@@ -168,8 +164,7 @@
 
 @media (hover: hover) {
   .navigation__lien:hover { color: var(--accent-survol); }
-  .reserve-encre:hover strong { color: var(--accent-survol); }
-  .encre__plus:hover { background: var(--accent-survol); }
+  .reserve-encre:hover, .reserve-encre:hover .reserve-encre__nombre { color: var(--accent-survol); }
   .bouton-joueur:hover { color: var(--encre); }
   .menu-profil__liens a:hover { background: rgb(173 195 218 / 7%); }
   .bouton-menu--trait:hover { border-color: var(--accent); }
@@ -185,8 +180,7 @@
 }
 /* Écran moyen : les onglets perdent leurs icônes, puis passent sur une seconde ligne. */
 @media (max-width: 1180px) and (min-width: 768px) {
-  .navigation__lien .navigation__icone, .navigation__separateur { display: none; }
-  .reserve-encre__mot { display: none; }
+  .navigation__lien .navigation__icone { display: none; }
 }
 @media (max-width: 980px) and (min-width: 768px) {
   .entete-application { flex-wrap: wrap; gap: 0 20px; padding-inline: 20px; }
@@ -209,14 +203,9 @@
   .navigation__lien[aria-current='page']::after { top: -1px; bottom: auto; left: 28%; right: 28%; border-radius: 0 0 3px 3px; }
 
   .navigation__personnel { gap: 8px; }
-  .encre { height: 40px; padding: 0 4px; border-radius: 20px; }
-  .reserve-encre { gap: 7px; padding-right: 7px; }
-  .reserve-encre__flacon { width: 28px; height: 28px; }
-  .reserve-encre__flacon svg { width: 17px; height: 17px; }
-  .reserve-encre strong { font-size: 0.95rem; }
-  .reserve-encre__mot, .navigation__separateur, .bouton-joueur__chevron { display: none; }
-  .encre__plus { width: 32px; height: 32px; }
-  .encre__plus svg { width: 16px; height: 16px; }
+  .reserve-encre { gap: 6px; padding: 0 8px; font-size: 0.92rem; }
+  .reserve-encre svg { width: 17px; height: 17px; }
+  .bouton-joueur__chevron { display: none; }
   .bouton-joueur { padding: 0; background: none; border-radius: 50%; }
   .avatar__niveau { border-color: var(--papier); }
 

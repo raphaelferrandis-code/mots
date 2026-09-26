@@ -2,6 +2,20 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — la boutique de l'Encre (script 25).** Décision de Raphaël : le compteur d'Encre de l'en-tête
+> devient discret (flacon et nombre, sans « + » : il promettait un achat) et ouvre une fiche qui mène à la **boutique**
+> (`#/boutique`, écran `src/ecrans/Boutique.tsx`). **Revient sur la décision du 23/09** (« l'Encre ne sert qu'aux
+> enchères ») : l'Encre gagnée en jouant achète 15 pièces qu'on ne trouve que là (4 cadres à 12 000, 4 avatars à 8 000,
+> 2 dos et 2 emballages à 5 000, 3 couleurs à 2 000 ; champ `boutique` du catalogue, `src/jeu/personnalisation.ts`)
+> et un **Hors-série au choix** parmi ceux qui manquent à l'album, **100 000 Encre** (`EQUILIBRAGE.boutique`). Estimé
+> avec les règles du 26/09 : ~1 500 Encre/jour pour un joueur régulier (2 à 3 mois pour un Hors-série), ~400 pour un
+> occasionnel, ~6 000 pour un acharné ; tout l'atelier ≈ un Hors-série. L'Encre achetée reste réservée au marché. Le
+> serveur débite et range (`serveur/boutique.ts` : `acheter_a_la_boutique`, idempotente ; `commander_un_hors_serie`,
+> avec identifiant de demande ; journal `achats_boutique`) ; les pièces achetées rejoignent `comptes.personnalisations`.
+> Aussi dans le vestiaire du profil (filtre « Boutique », achat depuis l'essayage) et la réserve en haut du marché.
+> **Script 25 à coller par Raphaël** (étape 17) ; d'ici là, un achat répond « La boutique ouvre très bientôt ». La
+> dernière migration sera la 25.
+
 > **26 septembre 2026 — les paquets d'exception (« god packs », script 24).** Décision de Raphaël : 1 paquet ordinaire
 > sur 10 000 ne contient que des Légendaires holographiques, 1 sur 30 000 que des Hors-série, six cartes différentes.
 > Un seul jet par paquet (d'abord la Hors-série) ; jamais parmi les paquets de départ ni dans le paquet hebdomadaire ;

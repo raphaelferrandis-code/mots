@@ -1,0 +1,67 @@
+/* La boutique de l'Encre : une vitrine sobre, dans l'esprit du vestiaire du profil. */
+.boutique__reserve { display: flex; align-items: center; gap: 12px; margin: 0; padding: 10px 20px 10px 14px; border: 1px solid var(--filet); border-radius: 14px; background: var(--carte-fond); color: var(--encre-douce); }
+.boutique__reserve > svg { width: 30px; height: 30px; flex-shrink: 0; color: var(--accent); }
+.boutique__reserve > span { display: grid; gap: 2px; }
+.boutique__reserve small { font: 600 .7rem/1.2 var(--police-mention); letter-spacing: .14em; text-transform: uppercase; }
+.boutique__reserve b { font-weight: 400; font-size: .9rem; white-space: nowrap; }
+.boutique__reserve strong { font: 700 1.6rem/1.1 var(--police-serif); color: var(--encre); font-variant-numeric: lining-nums tabular-nums; }
+
+.boutique__message { margin: 0 0 8px; padding: 10px 14px; border-left: 2px solid #9fdcb7; background: #132a2a66; color: #cdeedb; }
+.boutique__message--refus { border-color: #ff9d84; background: #3a1f1f55; color: #ffc8b8; }
+
+.boutique__rubrique { display: grid; gap: 8px; }
+.boutique__rubrique h2 { margin: 0; }
+.boutique__rubrique p { max-width: 64ch; margin: 0; }
+
+/* Les pièces : un aperçu, leur nom, et leur prix. */
+/* (Plus précis que .liste-nue, qui les mettrait en colonne.) */
+.boutique .boutique__articles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr)); gap: 16px; }
+.article { --article: var(--accent); display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--filet); border-radius: 14px; background: var(--carte-fond); overflow: hidden; }
+.article[data-achete='true'] { border-color: color-mix(in srgb, var(--article) 45%, var(--filet)); }
+.article__visuel {
+  display: grid; place-items: center; height: 168px; border-bottom: 1px dashed var(--filet);
+  background: radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--article) 17%, transparent), transparent 66%), var(--papier);
+}
+.article__visuel .portrait { width: 128px; filter: drop-shadow(0 4px 2px #020a1255); }
+.article__visuel .paquet-scelle { width: 92px; height: 127px; --ombre-paquet: drop-shadow(3px 5px 3px #020a1288); }
+.article__visuel :is(.tim, .tb) { width: 84px; pointer-events: none; --ombre-timbre: 2px 4px 2px #020a1288; }
+.article__encrier { display: block; width: 84px; height: 84px; filter: drop-shadow(0 4px 3px #020a1266); }
+.article__texte { display: grid; gap: 4px; padding: 14px 16px 4px; }
+.article__genre { font: 600 .72rem/1.2 var(--police-mention); letter-spacing: .14em; text-transform: uppercase; color: var(--article); }
+.article h3 { margin: 0; font: 700 1.12rem/1.25 var(--police-serif); }
+.article__texte p { margin: 2px 0 0; line-height: 1.45; }
+.article__achat { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: auto; padding: 12px 16px 16px; }
+.article__prix { display: inline-flex; align-items: center; gap: 6px; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.article__prix svg { width: 18px; height: 18px; color: var(--encre-douce); }
+.article__prix--acquis { font-size: .9rem; font-weight: 500; color: #b9e1c8; }
+.article__equipe { pointer-events: none; opacity: .8; }
+.article__manque { flex-basis: 100%; font-size: .8rem; color: var(--encre-douce); }
+
+/* Les Hors-série sur commande, et la jauge de l'épargne. */
+.boutique__commande { margin-top: 32px; }
+.boutique__epargne { display: grid; gap: 6px; max-width: 440px; margin-top: 6px; }
+.boutique__jauge { display: block; height: 8px; border-radius: 8px; background: var(--papier); box-shadow: inset 0 0 0 1px var(--filet); overflow: hidden; }
+.boutique__jauge > span { display: block; height: 100%; min-width: 2px; border-radius: 8px; background: linear-gradient(90deg, #c9b2ff, #f0d8a8); }
+.boutique .boutique__hors-serie { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 24px 16px; }
+.commande { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.commande__timbre { width: 100%; max-width: 158px; }
+.commande__etat { font-size: .85rem; color: #b9e1c8; }
+.commande__bouton { min-width: 0; }
+.boutique__pied { margin-top: 36px; }
+
+@media (max-width: 767px) {
+  .boutique .entete__actions { width: 100%; }
+  /* Deux pièces par rangée : le nom, le prix et le bouton suffisent ; la description reste dans le profil. */
+  .boutique .boutique__articles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .article__visuel { height: 118px; }
+  .article__visuel .portrait { width: 96px; }
+  .article__visuel .paquet-scelle { width: 66px; height: 92px; }
+  .article__visuel :is(.tim, .tb) { width: 62px; }
+  .article__encrier { width: 64px; height: 64px; }
+  .article__texte { padding: 10px 12px 2px; }
+  .article__texte p { display: none; }
+  .article h3 { font-size: 1rem; }
+  .article__achat { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 12px 12px; }
+  .article__achat .bouton { width: 100%; }
+  .boutique .boutique__hors-serie { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+}

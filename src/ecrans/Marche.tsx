@@ -55,7 +55,9 @@ export function Marche() {
 
   return (
     <main className="ecran ecran--large marche">
-      <Entete titre="Le marché" actions={<a className="bouton outil" href={lien({ ecran: 'amis' })}>Échanger avec un ami</a>} />
+      <Entete titre="Le marché" actions={<a className="bouton outil" href={lien({ ecran: 'amis' })}>Échanger avec un ami</a>}>
+        Ta réserve pour enchérir : <strong>{(partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)).toLocaleString('fr-FR')}</strong> Encre.
+      </Entete>
 
       {!disponible ? (
         <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a></section>

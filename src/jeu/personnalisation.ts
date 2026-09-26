@@ -3,7 +3,7 @@ import type { MesureSucces } from './catalogueSucces.ts';
 import type { Formule } from './formule.ts';
 import { cosmetiquesPremium } from './formule.ts';
 export type Categorie = 'avatar' | 'cadre' | 'titre' | 'dos' | 'couleur';
-export type Ornement = { id: string; categorie: Categorie; nom: string; niveau: number; prix: number; valeur: string; teinte: string; famille: string; premium: boolean; anime: boolean; succes?: string; prestige?: number; description?: string };
+export type Ornement = { id: string; categorie: Categorie; nom: string; niveau: number; prix: number; valeur: string; teinte: string; famille: string; premium: boolean; anime: boolean; succes?: string; prestige?: number; description?: string; boutique?: number };
 export const ORNEMENTS: readonly Ornement[] = [
   // Avatars et cadres : refonte de septembre 2026. Une récompense par niveau jusqu’au 50 ;
   // trois pièces premium sont offertes aux joueurs fidèles (« prestige »).
@@ -27,6 +27,12 @@ export const ORNEMENTS: readonly Ornement[] = [
   {"id":"montgolfiere","categorie":"avatar","nom":"Montgolfière","niveau":43,"prix":1720,"valeur":"montgolfiere","teinte":"#f0b48a","famille":"Explorateurs","premium":false,"anime":false,"description":"Le grand voyage : enveloppe à fuseaux, nacelle en osier."},
   {"id":"clef","categorie":"avatar","nom":"Clef des archives","niveau":45,"prix":1800,"valeur":"clef","teinte":"#e3cf8f","famille":"Héritage","premium":false,"anime":false,"description":"La clef ouvragée des réserves : anneau quadrilobé serti d’un rubis, panneton finement denté."},
   {"id":"dragon","categorie":"avatar","nom":"Dragon de jade","niveau":47,"prix":1880,"valeur":"dragon","teinte":"#8de0b8","famille":"Jade","premium":false,"anime":false,"description":"Dragon de jade lové en S dans le médaillon : gueule ouverte, bois dorés, crinière en volutes, pattes griffues."},
+  // La boutique de l’Encre (décision de Raphaël du 26/09/2026) : ces pièces ne se gagnent pas, elles s’achètent avec l’Encre
+  // gagnée en jouant (« boutique » = leur prix). Le serveur tient la liste de ce que chacun a acheté.
+  {"id":"pieuvre","categorie":"avatar","nom":"La pieuvre calligraphe","niveau":1,"prix":0,"valeur":"pieuvre","teinte":"#c3b3ef","famille":"Encre","premium":false,"anime":false,"boutique":8000,"description":"Huit bras, une plume : elle écrit en tirant sa propre encre."},
+  {"id":"corbeau","categorie":"avatar","nom":"Le corbeau d’encre","niveau":1,"prix":0,"valeur":"corbeau","teinte":"#a9b9dc","famille":"Encre","premium":false,"anime":false,"boutique":8000,"description":"Perché sur un porte-plume, le plumage noir d’encre aux reflets bleus."},
+  {"id":"presse","categorie":"avatar","nom":"La presse à bras","niveau":1,"prix":0,"valeur":"presse","teinte":"#dcbc8c","famille":"Atelier","premium":false,"anime":false,"boutique":8000,"description":"La vieille presse de l’imprimeur : vis de laiton, levier, et la feuille fraîchement tirée."},
+  {"id":"paon","categorie":"avatar","nom":"La plume de paon","niveau":1,"prix":0,"valeur":"paon","teinte":"#86d3c3","famille":"Héritage","premium":false,"anime":false,"boutique":8000,"description":"Une plume de paon taillée pour l’écriture, son œil bleu et or au sommet."},
   {"id":"oracle","categorie":"avatar","nom":"Œil de l’oracle","niveau":1,"prix":0,"valeur":"oracle","teinte":"#c3b5ff","famille":"Astral","premium":true,"anime":true,"prestige":30,"description":"L’œil cligne de temps en temps, l’iris tourne, des runes gravitent autour."},
   {"id":"kitsune","categorie":"avatar","nom":"Kitsune aux neuf queues","niveau":1,"prix":0,"valeur":"kitsune","teinte":"#ffd2a6","famille":"Sylvestre","premium":true,"anime":true,"description":"Masque de renard blanc aux marques rouges ; neuf queues de flamme qui ondulent, feux follets bleus en orbite."},
   {"id":"meduse","categorie":"avatar","nom":"Méduse d’opale","niveau":1,"prix":0,"valeur":"meduse","teinte":"#9ff5ff","famille":"Abysses","premium":true,"anime":true,"description":"Cloche opaline qui change de couleur, pulsation lente et tentacules qui ondulent."},
@@ -53,6 +59,10 @@ export const ORNEMENTS: readonly Ornement[] = [
   {"id":"laurier","categorie":"cadre","nom":"Couronne de laurier","niveau":46,"prix":1840,"valeur":"laurier","teinte":"#e3cf8f","famille":"Héritage","premium":false,"anime":false,"description":"Feuilles d’or une à une, nœud de ruban et pierre centrale. La récompense des fidèles."},
   {"id":"filigrane","categorie":"cadre","nom":"Filigrane d’or","niveau":48,"prix":1920,"valeur":"filigrane","teinte":"#ecd593","famille":"Héritage","premium":false,"anime":false,"description":"Dentelle d’orfèvre : boucles, volutes et perles, d’une finesse de bijou."},
   {"id":"eclipse","categorie":"cadre","nom":"Sceau de l’éclipse","niveau":49,"prix":1960,"valeur":"eclipse","teinte":"#d6b8ee","famille":"Firmament","premium":false,"anime":false,"description":"Couronne solaire rayonnante, croissant d’ombre et trois étoiles."},
+  {"id":"eclaboussures","categorie":"cadre","nom":"Éclaboussures d’encre","niveau":1,"prix":0,"valeur":"eclaboussures","teinte":"#aab8ec","famille":"Encre","premium":false,"anime":false,"boutique":12000,"description":"La plume a crachoté : taches, gouttes et coulures d’encre bleue autour du portrait."},
+  {"id":"casse","categorie":"cadre","nom":"Casse d’imprimeur","niveau":1,"prix":0,"valeur":"casse","teinte":"#d6c09a","famille":"Atelier","premium":false,"anime":false,"boutique":12000,"description":"Une couronne de caractères en plomb, rangés comme dans la casse, qui composent le nom du jeu."},
+  {"id":"guilloche","categorie":"cadre","nom":"Guilloché","niveau":1,"prix":0,"valeur":"guilloche","teinte":"#9fd8c2","famille":"Poste","premium":false,"anime":false,"boutique":12000,"description":"L’entrelacs de lignes des billets et des timbres gravés, tracé au tour à guillocher."},
+  {"id":"marbrure","categorie":"cadre","nom":"Papier marbré","niveau":1,"prix":0,"valeur":"marbrure","teinte":"#e6a9bd","famille":"Atelier","premium":false,"anime":false,"boutique":12000,"description":"Le papier des gardes de livres anciens : couleurs versées sur l’eau, puis peignées."},
   {"id":"astral","categorie":"cadre","nom":"Orbite astrale","niveau":1,"prix":0,"valeur":"astral","teinte":"#b8a1ff","famille":"Astral","premium":true,"anime":true,"description":"Deux orbites inclinées où gravitent des planètes ; étoiles qui scintillent."},
   {"id":"floraison","categorie":"cadre","nom":"Floraison éternelle","niveau":1,"prix":0,"valeur":"floraison","teinte":"#f2a9cd","famille":"Sylvestre","premium":true,"anime":true,"description":"Huit fleurs qui tournent doucement, des pétales se détachent et tombent en continu."},
   {"id":"cristal","categorie":"cadre","nom":"Couronne de cristal","niveau":1,"prix":0,"valeur":"cristal","teinte":"#85e9ef","famille":"Cristallin","premium":true,"anime":true,"description":"Éclats de quartz traversés par un reflet prismatique qui tourne sans fin."},
@@ -73,6 +83,8 @@ export const ORNEMENTS: readonly Ornement[] = [
   {"id":"herbier-dos","categorie":"dos","nom":"Herbier secret","niveau":11,"prix":440,"valeur":"feuilles","teinte":"#b0d7a2","famille":"Sylvestre","premium":false,"anime":false},
   {"id":"vitrail-dos","categorie":"dos","nom":"Verre et lumière","niveau":22,"prix":880,"valeur":"cristal","teinte":"#9bddeb","famille":"Cristallin","premium":false,"anime":false},
   {"id":"maree-dos","categorie":"dos","nom":"Les grandes marées","niveau":39,"prix":1560,"valeur":"vagues","teinte":"#a2dee1","famille":"Océan","premium":false,"anime":false},
+  {"id":"pieuvre-dos","categorie":"dos","nom":"Sceau de la pieuvre","niveau":1,"prix":0,"valeur":"pieuvre","teinte":"#c3b3ef","famille":"Encre","premium":false,"anime":false,"boutique":5000},
+  {"id":"guilloche-dos","categorie":"dos","nom":"Rosace guillochée","niveau":1,"prix":0,"valeur":"guilloche","teinte":"#a6dcc8","famille":"Poste","premium":false,"anime":false,"boutique":5000},
   {"id":"dragon-dos","categorie":"dos","nom":"Serment du dragon","niveau":1,"prix":0,"valeur":"dragon","teinte":"#a9e6c0","famille":"Jade","premium":true,"anime":true},
   {"id":"oracle-dos","categorie":"dos","nom":"Archives astrales","niveau":1,"prix":0,"valeur":"oracle","teinte":"#d3b8ff","famille":"Astral","premium":true,"anime":true},
   {"id":"cuivre","categorie":"couleur","nom":"Cuivre","niveau":1,"prix":0,"valeur":"#f1b987","teinte":"#f1b987","famille":"Atelier","premium":false,"anime":false},
@@ -83,9 +95,13 @@ export const ORNEMENTS: readonly Ornement[] = [
   {"id":"or","categorie":"couleur","nom":"Or pâle","niveau":42,"prix":1680,"valeur":"#e9d18d","teinte":"#e9d18d","famille":"Héritage","premium":false,"anime":false},
   {"id":"perle","categorie":"couleur","nom":"Perle","niveau":19,"prix":760,"valeur":"#d9e4f2","teinte":"#d9e4f2","famille":"Océan","premium":false,"anime":false},
   {"id":"corail","categorie":"couleur","nom":"Corail","niveau":34,"prix":1360,"valeur":"#ffa99c","teinte":"#ffa99c","famille":"Incandescent","premium":false,"anime":false},
+  {"id":"prusse","categorie":"couleur","nom":"Bleu de Prusse","niveau":1,"prix":0,"valeur":"#8eaaf5","teinte":"#8eaaf5","famille":"Encre","premium":false,"anime":false,"boutique":2000},
+  {"id":"absinthe","categorie":"couleur","nom":"Absinthe","niveau":1,"prix":0,"valeur":"#c3dd7c","teinte":"#c3dd7c","famille":"Encre","premium":false,"anime":false,"boutique":2000},
+  {"id":"pourpre","categorie":"couleur","nom":"Pourpre","niveau":1,"prix":0,"valeur":"#e897c9","teinte":"#e897c9","famille":"Encre","premium":false,"anime":false,"boutique":2000},
   ...SUCCES.map(s => ({ id: titreDuSucces(s.id), categorie: 'titre' as const, nom: s.titre, niveau: 1, prix: 0, valeur: s.titre, teinte: FAMILLES_SUCCES[s.famille].teinte, famille: FAMILLES_SUCCES[s.famille].nom, premium: false, anime: false, succes: s.id })),
 ];
-export const PAQUETS = [
+export type ModeleDePaquet = { id: string; nom: string; clair: string; fond: string; ombre: string; motif: string; metal: string; boutique?: number };
+export const PAQUETS: readonly ModeleDePaquet[] = [
   {"id":"original","nom":"Édition originale","clair":"#37688c","fond":"#153b5b","ombre":"#0c243b","motif":"rosace","metal":"#edb680"},
   {"id":"herbier","nom":"L’Herbier","clair":"#587864","fond":"#243f35","ombre":"#142a24","motif":"feuilles","metal":"#b9d5a7"},
   {"id":"celeste","nom":"Courrier céleste","clair":"#655487","fond":"#302647","ombre":"#1c1732","motif":"etoiles","metal":"#c9b2ec"},
@@ -94,7 +110,10 @@ export const PAQUETS = [
   {"id":"glaces","nom":"Éclats de givre","clair":"#528b9a","fond":"#1f465e","ombre":"#122b43","motif":"cristal","metal":"#abedf0"},
   {"id":"ocean","nom":"Lettres océanes","clair":"#3c8385","fond":"#16484e","ombre":"#102d35","motif":"vagues","metal":"#a3e1d4"},
   {"id":"draconique","nom":"Légendes de jade","clair":"#617864","fond":"#293b36","ombre":"#172622","motif":"dragon","metal":"#d6d8a0"},
-] as const;
+  // La boutique de l’Encre.
+  {"id":"encre-de-chine","nom":"Encre de Chine","clair":"#454c5e","fond":"#1a1e29","ombre":"#0b0d13","motif":"vagues","metal":"#d5dbe6","boutique":5000},
+  {"id":"vermeil","nom":"Vermeil","clair":"#8e3d44","fond":"#5b2029","ombre":"#321017","motif":"rosace","metal":"#f0c77a","boutique":5000},
+];
 export type ProfilPersonnel = { bonusXpReste?: number; succes: string[]; progressionSucces: Partial<Record<MesureSucces, number>>; pseudo: string; xp: number; achats: string[]; avatar: string; cadre: string; titre: string; dos: string; couleur: string; paquet: string };
 export const nouveauProfil = (): ProfilPersonnel => ({ succes: [], progressionSucces: {}, pseudo: '', xp: 0, achats: [], avatar: 'plume', cadre: 'simple', titre: '', dos: 'gomme', couleur: 'cuivre', paquet: 'original' });
 export const XP = { paquet: 20, decouverte: 15, reponse: 5, duel: 30, victoire: 20 };
@@ -108,7 +127,32 @@ export function progressionDuNiveau(xp: number) {
 export const ornement = (id: string): Ornement | undefined => ORNEMENTS.find((o) => o.id === id);
 // Une pièce de prestige est premium, mais aussi offerte à tous les joueurs qui atteignent son niveau.
 export const offertParPrestige = (profil: ProfilPersonnel, o: Ornement): boolean => !!o.prestige && progressionDuNiveau(profil.xp).niveau >= o.prestige;
-export const estDisponible = (profil: ProfilPersonnel, o: Ornement, premium = false): boolean => o.categorie === 'titre' ? !!o.succes && profil.succes.includes(o.succes) : o.premium ? premium || offertParPrestige(profil, o) : progressionDuNiveau(profil.xp).niveau >= o.niveau || profil.achats.includes(o.id);
+// Une pièce de la boutique n’appartient qu’à qui l’a achetée, quel que soit son niveau.
+export const estDisponible = (profil: ProfilPersonnel, o: Ornement, premium = false): boolean => o.boutique !== undefined ? profil.achats.includes(o.id) : o.categorie === 'titre' ? !!o.succes && profil.succes.includes(o.succes) : o.premium ? premium || offertParPrestige(profil, o) : progressionDuNiveau(profil.xp).niveau >= o.niveau || profil.achats.includes(o.id);
+
+
+// ── La boutique de l’Encre (décision de Raphaël du 26/09/2026) ───────────────
+// Des pièces qu’on ne gagne pas : elles s’achètent avec l’Encre gagnée en jouant (acheter_a_la_boutique,
+// serveur/boutique.ts, où ces mêmes prix sont recopiés par « npm run serveur:script »).
+export type ArticleDeLaBoutique = { id: string; categorie: Categorie | 'paquet'; nom: string; prix: number };
+export const ARTICLES_DE_LA_BOUTIQUE: readonly ArticleDeLaBoutique[] = [
+  ...ORNEMENTS.flatMap((o) => (o.boutique === undefined ? [] : [{ id: o.id, categorie: o.categorie, nom: o.nom, prix: o.boutique }])),
+  ...PAQUETS.flatMap((p) => (p.boutique === undefined ? [] : [{ id: p.id, categorie: 'paquet' as const, nom: p.nom, prix: p.boutique }])),
+];
+export const prixEnBoutique = (id: string): number | undefined => ARTICLES_DE_LA_BOUTIQUE.find((a) => a.id === id)?.prix;
+// Un emballage de paquet est libre, sauf ceux de la boutique, qui n’appartiennent qu’à qui les a achetés.
+export const paquetDisponible = (profil: ProfilPersonnel, id: string): boolean => {
+  const modele = PAQUETS.find((p) => p.id === id);
+  return !!modele && (modele.boutique === undefined || profil.achats.includes(id));
+};
+// Pourquoi une pièce ne peut pas s’acheter maintenant, tel que le joueur le lit ; null si rien ne l’en empêche.
+export function refusDAchat(profil: ProfilPersonnel, encre: number, id: string): string | null {
+  const prix = prixEnBoutique(id);
+  if (prix === undefined) return 'Cette pièce ne se vend pas à la boutique.';
+  if (profil.achats.includes(id)) return 'Déjà dans ta collection.';
+  if (encre < prix) return `Il te manque ${(prix - encre).toLocaleString('fr-FR')} Encre.`;
+  return null;
+}
 
 // Un équipement premium reste mémorisé ; il redevient visible si la formule est renouvelée.
 export function profilVisible(profil: ProfilPersonnel, formule: Formule | null, maintenant = Date.now()): ProfilPersonnel {
@@ -132,13 +176,13 @@ export function relireProfil(brut: unknown): ProfilPersonnel {
   }
   p.xp = typeof lu.xp === 'number' && Number.isSafeInteger(lu.xp) && lu.xp >= 0 ? lu.xp : 0;
   p.pseudo = typeof lu.pseudo === 'string' ? lu.pseudo.slice(0, 24) : '';
-  p.achats = Array.isArray(lu.achats) ? [...new Set(lu.achats.filter((id): id is string => typeof id === 'string' && !!ornement(id) && ornement(id)?.categorie !== 'titre'))] : [];
+  p.achats = Array.isArray(lu.achats) ? [...new Set(lu.achats.filter((id): id is string => typeof id === 'string' && (PAQUETS.some((m) => m.id === id) || (!!ornement(id) && ornement(id)?.categorie !== 'titre'))))] : [];
   for (const categorie of ['avatar', 'cadre', 'titre', 'dos', 'couleur'] as const) {
     const o = ORNEMENTS.find((o) => o.id === lu[categorie] && o.categorie === categorie);
     if (o && (o.premium || estDisponible(p, o))) p[categorie] = o.id;
   }
   if (Number.isInteger(lu.bonusXpReste) && (lu.bonusXpReste as number) >= 0 && (lu.bonusXpReste as number) < 100) p.bonusXpReste = lu.bonusXpReste as number;
-  p.paquet = PAQUETS.find((o) => o.id === lu.paquet)?.id ?? p.paquet;
+  p.paquet = typeof lu.paquet === 'string' && paquetDisponible(p, lu.paquet) ? lu.paquet : p.paquet;
   return p;
 }
 
@@ -174,10 +218,4 @@ export function apparenceAApprendre(profil: ProfilPersonnel, duServeur: Partial<
   if (duServeur === undefined) return {};
   const depart = nouveauProfil();
   return Object.fromEntries(CATEGORIES_D_APPARENCE.flatMap((c) => (duServeur?.[c] === undefined && profil[c] !== depart[c] ? [[c, profil[c]]] : []))) as Partial<Apparence>;
-}
-export function acheterOrnement(_profil: ProfilPersonnel, _encre: number, id: string): { profil: ProfilPersonnel; encre: number } {
-  const o = ornement(id);
-  if (!o) throw new Error('Personnalisation inconnue.');
-  if (o.categorie === 'titre') throw new Error('Ce titre se gagne en accomplissant son succès.');
-  throw new Error('L’Encre est réservée aux enchères.');
 }

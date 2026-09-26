@@ -237,6 +237,16 @@ export const EQUILIBRAGE = {
     cote: { fenetreEnJours: 30, historiqueEnJours: 90, ventesMontrees: 30, conservationEnJours: 400 },
   },
 
+  // ── La boutique de l'Encre (décision de Raphaël du 26/09/2026) ───────────────
+  // Seule l'Encre gagnée en jouant y sert (jamais l'Encre achetée, réservée au marché). Les prix des cosmétiques sont
+  // dans leur catalogue (src/jeu/personnalisation.ts, champ « boutique »).
+  boutique: {
+    // Un Hors-série au choix, parmi ceux qui manquent à l'album. Estimé avec les règles du 26/09 (6 timbres par paquet) :
+    // un joueur régulier gagne ~1 500 Encre par jour (2 à 3 mois d'économies), un occasionnel ~400 (8 mois),
+    // un acharné ~6 000 (moins d'un mois). Au hasard des paquets, un Hors-série précis prend plus d'un an au régulier.
+    prixDuHorsSerie: 100_000,
+  },
+
   // ── La version payante (décision n° 34) ───────────────────────────────────
   // Ce qu'un compte payant reçoit de plus. Le compte porte un drapeau « payant » (serveur/collections.ts) ;
   // personne ne l'a encore, et il n'existe aucun moyen de payer : voir docs/BRIEF-version-payante.md.

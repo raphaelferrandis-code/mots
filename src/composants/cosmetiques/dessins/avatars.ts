@@ -145,4 +145,60 @@ export const DESSINS_AVATARS: Record<string, Trace> = {
       <path d="${d}" fill="none" stroke="#b9d4ff" stroke-width=".9" pathLength="100" stroke-dasharray="100 100"><animate attributeName="stroke-dashoffset" values="100;0;0;100" keyTimes="0;.5;.9;1" dur="7s" repeatCount="indefinite"/></path>
       ${pts.slice(0, -1).map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? 1.3 : 2}" fill="#fff">${blink(1.8 + (i % 4) * 0.4, i * 0.2, '.5;1;.5')}</circle>`).join('')}`;
     },
+
+  // La boutique de l'Encre (26/09/2026) : métal bicolore, comme les avatars gagnés, avec une touche de couleur.
+  'pieuvre': (u, c) => metalA(u, c, '#4a3a7c', `
+      <g fill="none" stroke="F" stroke-width="4.6" stroke-linecap="round">
+        <path d="M31 52c-8 0-14-5-15-11-1-5 4-7 6-3"/><path d="M34 58c-6 6-13 9-15 16-1 5 4 8 7 4"/>
+        <path d="M41 61c-2 9-7 15-6 22 1 5 7 5 7 0"/><path d="M50 62c0 9-1 16 3 22 3 3 8 1 6-3"/>
+        <path d="M58 61c3 8 8 12 9 19 1 4 6 5 8 1"/><path d="M65 57c6 3 11 8 16 8 4 0 5-4 2-6"/>
+        <path d="M68 50c5-3 8-8 10-14"/>
+      </g>
+      <g fill="#241a40" stroke="none" fill-opacity=".55">${[[20, 66], [24, 77], [37, 76], [44, 84], [55, 80], [62, 72], [73, 80], [78, 64]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9"/>`).join('')}</g>
+      <path d="M50 12c-16 0-26 12-26 27 0 10 5 17 11 20h30c6-3 11-10 11-20 0-15-10-27-26-27Z" fill="F"/>
+      <path d="M38 20c3-3 7-4 11-4" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="44" cy="27" r="1.6" fill="#fff" fill-opacity=".35" stroke="none"/><circle cx="58" cy="22" r="1.2" fill="#fff" fill-opacity=".35" stroke="none"/>
+      <ellipse cx="41" cy="44" rx="5.6" ry="5" fill="#fff4dc"/><ellipse cx="59" cy="44" rx="5.6" ry="5" fill="#fff4dc"/>
+      <rect x="37.6" y="43" width="6.8" height="2.6" rx="1.3" fill="#1d1532" stroke="none"/><rect x="55.6" y="43" width="6.8" height="2.6" rx="1.3" fill="#1d1532" stroke="none"/>
+      <path d="M86 12c-7 4-11 12-12 22l-4 14 7-12c7-5 9-14 9-24Z" fill="#f3ead8" stroke="#8d7fb8" stroke-width=".8"/>
+      <path d="M85 14 69 50" stroke="#8d7fb8" stroke-width="1"/><path d="M69 50l-2 6 3-5" fill="#1d1532" stroke="#1d1532" stroke-width="1"/>
+      <path d="M66 60q-3 4 0 7q3-3 0-7Z" fill="#6c5bb0" stroke="none"/>`),
+  // Le corbeau, plumage d'encre : son propre dégradé, noir bleuté, plutôt que le métal clair des autres.
+  'corbeau': (u, c) => `<defs><linearGradient id="${u}f" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#a8bbe6"/><stop offset=".35" stop-color="#3b4b7c"/><stop offset="1" stop-color="#0e1428"/></linearGradient></defs>
+      <path d="M6 85h64" stroke="#c89a5e" stroke-width="3" stroke-linecap="round"/>
+      <path d="M68 85c7-5 15-6 24-2-7 5-16 6-24 2Z" fill="#f3ead8" stroke="#c89a5e" stroke-width=".8"/>
+      <path d="M47 72v12m-4 1h8M56 74v10m-4 1h8" stroke="#c89a5e" stroke-width="1.8" stroke-linecap="round"/>
+      <g stroke="${c}" stroke-width="1" stroke-linejoin="round">
+        <path d="M28 27C30 22 34 20 38 20C43 20 46 22 48 26C54 30 60 34 66 40C74 48 80 58 84 66L95 81L83 78L80 82L72 74C64 76 54 76 46 72C38 68 32 60 30 50C29 44 28 40 28 36Z" fill="url(#${u}f)"/>
+        <path d="M48 34C58 38 68 48 74 60C76 66 76 70 72 74C64 66 56 56 50 46Z" fill="#253258"/>
+        <path d="M28 27C21 28 15 31 9 36C16 37 22 37 28 36Z" fill="#2c3346"/>
+      </g>
+      <path d="M54 44l10 11M52 50l12 13M51 57l11 12" fill="none" stroke="#c8d6f5" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round"/>
+      <path d="M36 23c3-2 7-2 10 0" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.3" stroke-linecap="round"/>
+      <circle cx="36" cy="29" r="2.4" fill="#fff4dc"/><circle cx="35.6" cy="29" r="1.2" fill="#0b1020"/>`,
+  'presse': (u, c) => metalA(u, c, '#6d4b24', `
+      <path d="M14 84h72v6H14Z" fill="F"/><path d="M20 84v-4h60v4" fill="none"/>
+      <path d="M24 28h7v52h-7ZM69 28h7v52h-7Z" fill="F"/>
+      <path d="M19 20h62v9H19Z" fill="F"/><path d="M34 20c3-8 29-8 32 0" fill="none" stroke-width="1.6"/><circle cx="50" cy="11" r="3" fill="F"/>
+      <path d="M47 29h6v13h-6Z" fill="F"/><path d="M47 32h6M47 35h6M47 38h6" stroke-width=".8"/>
+      <path d="M53 34 88 27" stroke-width="3" stroke-linecap="round"/><circle cx="89" cy="27" r="3.6" fill="F"/>
+      <path d="M34 42h32v6H34Z" fill="F"/>
+      <path d="M37 54h26v8H37Z" fill="#fff4dc"/><path d="M41 57h18M41 59.5h12" stroke="#2a2016" stroke-width="1"/>
+      <path d="M20 62h60v5H20Z" fill="F"/><path d="M31 71h38" stroke-width="1" stroke-dasharray="2 2"/>`),
+  'paon': (u, c) => {
+    // La plume couchée en diagonale : barbes calculées le long du rachis, puis l'œil, et la pointe taillée.
+    const point = (t: number): [number, number] => [20 * (1 - t) ** 2 + 2 * t * (1 - t) * 38 + t * t * 66, 92 * (1 - t) ** 2 + 2 * t * (1 - t) * 58 + t * t * 28];
+    const barbes = Array.from({ length: 15 }, (_, i) => {
+      const t = 0.18 + i * 0.05, [x, y] = point(t), [x2, y2] = point(t + 0.01);
+      const dx = x2 - x, dy = y2 - y, n = Math.hypot(dx, dy), long = 6 + 16 * t;
+      const nx = -dy / n, ny = dx / n;
+      return `M${(x + nx * long - dx / n * 4).toFixed(1)} ${(y + ny * long - dy / n * 4).toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}L${(x - nx * long - dx / n * 4).toFixed(1)} ${(y - ny * long - dy / n * 4).toFixed(1)}`;
+    }).join('');
+    return `<defs>${deux(u, c, '#2f6f68')}<radialGradient id="${u}o" cx=".5" cy=".55" r=".55"><stop offset=".3" stop-color="#1c3f8c"/><stop offset=".62" stop-color="#2f7ac0"/><stop offset=".7" stop-color="#d9a441"/><stop offset=".86" stop-color="#b88a3a"/><stop offset=".92" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs>
+      <path d="${barbes}" fill="none" stroke="${c}" stroke-opacity=".7" stroke-width=".9" stroke-linecap="round"/>
+      <g transform="rotate(-38 68 26)"><ellipse cx="68" cy="26" rx="16" ry="21" fill="url(#${u}o)"/><ellipse cx="68" cy="28" rx="4" ry="6" fill="#0f1d45"/>
+        <path d="M58 12q10-8 20 0M54 22q-2-10 6-16M82 22q2-10-6-16" fill="none" stroke="${c}" stroke-opacity=".6" stroke-width=".8"/></g>
+      <path d="M20 92Q38 58 66 28" fill="none" stroke="url(#${u}f)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M20 92l-4 5 6-3Z" fill="#f3ead8" stroke="#f3ead8" stroke-width=".8"/>`;
+  },
 };

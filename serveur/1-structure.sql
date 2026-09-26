@@ -2230,6 +2230,75 @@ revoke execute on function public.noter_activite(text, text, text, text, text, i
 revoke execute on function public.fil_d_activite() from public;
 grant execute on function public.fil_d_activite() to anon, authenticated;
 
+
+-- ── La boutique de l'Encre ───────────────────────────────────────────────────
+create table if not exists public.achats_boutique (
+  id bigint generated always as identity primary key,
+  utilisateur uuid not null references public.comptes (utilisateur) on delete cascade,
+  article text not null, -- l'identifiant d'une pièce, ou « hors-serie:<carte> »
+  prix integer not null check (prix > 0),
+  le timestamptz not null default now()
+);
+create index if not exists achats_boutique_par_joueur on public.achats_boutique (utilisateur, le);
+alter table public.achats_boutique enable row level security;
+revoke all on public.achats_boutique from public, anon, authenticated;
+
+-- Une pièce de la boutique. Déjà achetée (second clic, réponse perdue en route) : rien n'est débité deux fois.
+create or replace function public.acheter_a_la_boutique(p_article text) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  c public.comptes%rowtype;
+  prix integer := case p_article when 'pieuvre' then 8000 when 'corbeau' then 8000 when 'presse' then 8000 when 'paon' then 8000 when 'eclaboussures' then 12000 when 'casse' then 12000 when 'guilloche' then 12000 when 'marbrure' then 12000 when 'pieuvre-dos' then 5000 when 'guilloche-dos' then 5000 when 'prusse' then 2000 when 'absinthe' then 2000 when 'pourpre' then 2000 when 'encre-de-chine' then 5000 when 'vermeil' then 5000 end;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  if prix is null then raise exception 'Cette pièce ne se vend pas à la boutique.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- l'Encre bouge : après les enchères en cours (serveur/verrous.ts)
+  select * into c from public.comptes where utilisateur = auth.uid() for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  if p_article = any(c.personnalisations) then return public.etat_du_compte(c.utilisateur); end if;
+  if c.encre < prix then raise exception 'Il te manque % Encre.', prix - c.encre; end if;
+  update public.comptes set encre = encre - prix, personnalisations = array_append(personnalisations, p_article), maj_le = now()
+    where utilisateur = c.utilisateur;
+  insert into public.achats_boutique (utilisateur, article, prix) values (c.utilisateur, p_article, prix);
+  return public.etat_du_compte(c.utilisateur);
+end $$;
+
+-- Un Hors-série au choix, parmi ceux qui manquent à l'album (une Hors-série n'a qu'une impression : « Normale »).
+-- Une commande relancée après une coupure reprend son identifiant de demande : elle n'est servie qu'une fois.
+create or replace function public.commander_un_hors_serie(p_carte text, p_demande uuid default null) returns jsonb
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  c public.comptes%rowtype;
+  deja jsonb;
+  possedee boolean;
+  prix constant integer := 100000;
+begin
+  if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  perform pg_advisory_xact_lock(20260923); -- un timbre et de l'Encre bougent : comme au marché
+  select * into c from public.comptes where utilisateur = auth.uid() for update;
+  if not found then raise exception 'Ouvre d''abord ton compte.'; end if;
+  deja := public.demande_deja_traitee(c.utilisateur, p_demande);
+  if deja is not null then return deja || jsonb_build_object('etat', public.etat_du_compte(c.utilisateur)); end if;
+  if not exists (select 1 from public.cartes k where k.id = p_carte and k.rarete = 'Hors-série') then
+    raise exception 'Ce timbre n''est pas un Hors-série.';
+  end if;
+  select exists (select 1 from public.possessions p, jsonb_each_text(p.finitions) f
+                 where p.utilisateur = c.utilisateur and p.carte = p_carte and f.value::integer > 0) into possedee;
+  if possedee then raise exception 'Ce Hors-série est déjà dans ton album.'; end if;
+  if c.encre < prix then raise exception 'Il te manque % Encre pour ce Hors-série.', prix - c.encre; end if;
+  update public.comptes set encre = encre - prix, maj_le = now() where utilisateur = c.utilisateur;
+  insert into public.possessions (utilisateur, carte, finitions) values (c.utilisateur, p_carte, '{"Normale": 1}'::jsonb)
+    on conflict (utilisateur, carte) do update set finitions = public.possessions.finitions || '{"Normale": 1}'::jsonb, obtenue_le = now();
+  insert into public.achats_boutique (utilisateur, article, prix) values (c.utilisateur, 'hors-serie:' || p_carte, prix);
+  perform public.noter_la_demande(c.utilisateur, p_demande, jsonb_build_object('carte', p_carte));
+  return jsonb_build_object('carte', p_carte, 'etat', public.etat_du_compte(c.utilisateur));
+end $$;
+
+revoke execute on function public.acheter_a_la_boutique(text), public.commander_un_hors_serie(text, uuid) from public, anon;
+grant execute on function public.acheter_a_la_boutique(text), public.commander_un_hors_serie(text, uuid) to authenticated;
+
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
 revoke execute on function public.publier_mon_profil(text, jsonb, jsonb, jsonb), public.adversaires(), public.commencer_une_joute(uuid), public.terminer_une_joute(bigint, text), public.classement(), public.supprimer_mon_profil(), public.supprimer_mon_compte(), public.pseudo_refuse(text), public.reclamer_recompense(text, text[], uuid), public.acheter_personnalisation(text), public.mon_compte(), public.ouvrir_mon_compte(), public.importer_ma_collection(bigint, integer, jsonb, jsonb, jsonb), public.ouvrir_un_paquet(text[], uuid), public.changer_de_deck(jsonb), public.changer_d_apparence(jsonb), public.commencer_un_duel(text), public.terminer_un_duel(bigint, text), public.declarer_mon_age(integer), public.declarer_ma_naissance(integer, integer), public.definir_un_code_de_secours(text), public.recuperer_par_code(text), public.mettre_en_vente(text, text, integer, integer, integer, uuid), public.retirer_de_la_vente(bigint), public.encherir(bigint, integer), public.marche(text, integer), public.mes_encheres(), public.cotes(text), public.historique_de_la_cote(text), public.demande_deja_traitee(uuid, uuid), public.noter_la_demande(uuid, uuid, jsonb), public.progression_du_compte(uuid), public.savoirs_verifies(uuid, jsonb), public.gagner_xp(uuid, integer, boolean), public.noter_reponse_verifiee(uuid, jsonb), public.importer_progression_validee(uuid), public.autoriser_joute(uuid), public.actualiser_deck_public(), public.nombre_entier(text), public.en_millisecondes(timestamptz), public.etat_du_compte(uuid), public.recharger(public.comptes), public.deck_propre(uuid, jsonb), public.finitions_propres(jsonb), public.recompenser(uuid, integer, text), public.tirer_un_paquet(uuid, text[]), public.actualiser_offres(public.comptes), public.changement_offre(), public.tirer_les_cartes(uuid, text[], text), public.niveau(public.comptes), public.verser_la_rente(uuid), public.code_propre(text), public.empreinte_du_code(text), public.cloturer_une_enchere(bigint), public.solder_compte_supprime(), public.pseudonyme_de(uuid), public.rendre_un_timbre(uuid, text, text, timestamptz, text), public.enchere_en_json(public.encheres), public.cloturer_les_encheres(), public.calculer_les_cotes(), public.cote_du_jour(text, text) from public, anon;

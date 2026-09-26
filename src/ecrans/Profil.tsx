@@ -9,13 +9,15 @@ import { mouvementReduit } from '../composants/mouvement.ts';
 import { DosDeCarte } from '../composants/carte/Carte.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
-import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, profilVisible, progressionDuNiveau } from '../jeu/personnalisation.ts';
+import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, paquetDisponible, prixEnBoutique, profilVisible, progressionDuNiveau, refusDAchat } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
 import { lien } from '../navigation/routes.ts';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { pseudoDuJoueur } from '../services/identite.ts';
-import { personnaliser } from '../services/partie.ts';
+import { acheterALaBoutique, personnaliser } from '../services/partie.ts';
+import { demanderConfirmation } from '../composants/Confirmation.tsx';
+import { messageDe } from '../partage/messages.ts';
 
 type Section = Categorie | 'paquet';
 const CATEGORIES: { id: Section; nom: string; motif: string }[] = [
@@ -39,6 +41,7 @@ export function Profil() {
   const essayage = useRef<HTMLElement>(null);
   const [message, dire] = useState('');
   const [erreur, signaler] = useState('');
+  const [achat, setAchat] = useState(false);
   useEffect(() => { if (edition) dialogue.current?.showModal(); else dialogue.current?.close(); }, [edition]);
   if (partie.etat !== 'prete') return <main className="ecran"><h1>Mon profil</h1><p role="status">{partie.etat === 'erreur' ? partie.message : 'Chargement…'}</p></main>;
   const sauvegarde = partie.sauvegarde;
@@ -50,11 +53,16 @@ export function Profil() {
   const paquet = PAQUETS.find((p) => p.id === choix);
   const nom = selection?.nom ?? paquet?.nom ?? '';
   const teinte = selection?.teinte ?? paquet?.metal ?? '#a3cee2';
-  const disponible = categorie === 'paquet' || !!selection && estDisponible(profil, selection, premium);
+  const disponible = categorie === 'paquet' ? paquetDisponible(profil, choix) : !!selection && estDisponible(profil, selection, premium);
+  // Une pièce de la boutique de l'Encre : son prix, et ce qui empêche de l'acheter maintenant.
+  const prix = prixEnBoutique(choix);
+  const refus = prix === undefined ? null : refusDAchat(profil, sauvegarde.encre, choix);
+  const serveur = partie.serveur.etat !== 'appareil';
+  const libreEnGrille = (o: (typeof ORNEMENTS)[number] | (typeof PAQUETS)[number]): boolean => 'categorie' in o ? estDisponible(profil, o, premium) : paquetDisponible(profil, o.id);
   const equipe = profil[categorie] === choix;
   const apercu = { ...profil, [categorie]: choix };
   const catalogue = categorie === 'paquet' ? PAQUETS : ORNEMENTS.filter((o) => o.categorie === categorie);
-  const visibles = catalogue.filter((o) => filtre === 'tout' || (filtre === 'premium' ? 'premium' in o && o.premium : !('premium' in o) || estDisponible(profil, o, premium)));
+  const visibles = catalogue.filter((o) => filtre === 'tout' || (filtre === 'premium' ? 'premium' in o && o.premium : filtre === 'boutique' ? o.boutique !== undefined : libreEnGrille(o)));
   function changerSection(id: Section) { choisirCategorie(id); choisir(profil[id] || ORNEMENTS.find(o => o.categorie === id)?.id || ''); filtrer('tout'); signaler(''); dire(''); }
   function selectionner(id: string) {
     choisir(id); signaler(''); dire('');
@@ -63,6 +71,15 @@ export function Profil() {
     }
   }
   function equiper() { personnaliser(categorie, choix); dire(`${nom} équipé.`); signaler(''); }
+  async function acheter() {
+    if (prix === undefined) return;
+    const oui = await demanderConfirmation({ titre: `Acheter « ${nom} » ?`, message: `${prix.toLocaleString('fr-FR')} Encre quittent ta réserve : il t’en restera ${(sauvegarde.encre - prix).toLocaleString('fr-FR')}. La pièce reste à toi pour toujours.`, confirmer: `Acheter pour ${prix.toLocaleString('fr-FR')} Encre` });
+    if (!oui) return;
+    setAchat(true); signaler(''); dire('');
+    try { await acheterALaBoutique(choix); dire(`${nom} est à toi.`); }
+    catch (e) { signaler(messageDe(e)); }
+    finally { setAchat(false); }
+  }
   function incliner(e: PointerEvent<HTMLDivElement>) {
     if (mouvementReduit() || e.pointerType !== 'mouse') return;
     const b = e.currentTarget.getBoundingClientRect();
@@ -93,10 +110,13 @@ export function Profil() {
           <span className="vestiaire__famille">{selection?.famille ?? 'Correspondances'}{selection?.anime && <span> · Animé</span>}</span>
           <h2 aria-live="polite">{nom}</h2>
           {selection?.description && <p className="vestiaire__description">{selection.description}</p>}
-          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique{selection.prestige ? ` · offert au niveau ${selection.prestige}` : ''}</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
+          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : prix !== undefined && !disponible ? <span className="sceau-boutique">Boutique de l’Encre · {prix.toLocaleString('fr-FR')} Encre</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique{selection.prestige ? ` · offert au niveau ${selection.prestige}` : ''}</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
           {equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
             : disponible ? <button className="bouton vestiaire__action" onClick={equiper}>Équiper</button>
             : succesSelectionne ? <button className="bouton vestiaire__action" onClick={() => { ciblerSucces(succesSelectionne.id); changerVue('succes'); }}>Voir le succès <span>↗</span></button>
+            : prix !== undefined ? (serveur
+              ? <button className="bouton vestiaire__action" disabled={refus !== null || achat} onClick={() => void acheter()}>{achat ? 'Achat…' : refus ?? `Acheter · ${prix.toLocaleString('fr-FR')} Encre`}</button>
+              : <a className="bouton vestiaire__action" href={lien({ ecran: 'boutique' })}>Voir la boutique <span>↗</span></a>)
             : selection?.premium ? null
             : <button className="bouton vestiaire__action" disabled>À gagner au niveau {selection?.niveau}</button>}
           {categorie === 'titre' && profil.titre && <button className="bouton vestiaire__annuler" onClick={() => { personnaliser('titre', ''); dire('Titre retiré.'); }}>Retirer le titre</button>}
@@ -105,13 +125,13 @@ export function Profil() {
       </aside>
       <section className="vestiaire__collection" aria-label="Collection de cosmétiques">
         <div className="vestiaire__categories" role="group" aria-label="Catégorie">{CATEGORIES.map((c) => <button type="button" key={c.id} aria-pressed={categorie === c.id} onClick={() => changerSection(c.id)}><Embleme motif={c.motif} /><span>{c.nom}</span></button>)}</div>
-        <div className="vestiaire__outils"><h2>{CATEGORIES.find((c) => c.id === categorie)?.nom} <small>{catalogue.length.toString().padStart(2,'0')}</small></h2><div role="group" aria-label="Filtrer la collection">{[['tout','Tout'],['acquis','Possédés'], ...(catalogue.some(o => 'premium' in o && o.premium) ? [['premium','Premium']] : [])].map(([id,label])=><button key={id} aria-pressed={filtre === id} onClick={() => filtrer(id)}>{label}</button>)}</div></div>
+        <div className="vestiaire__outils"><h2>{CATEGORIES.find((c) => c.id === categorie)?.nom} <small>{catalogue.length.toString().padStart(2,'0')}</small></h2><div role="group" aria-label="Filtrer la collection">{[['tout','Tout'],['acquis','Possédés'], ...(catalogue.some(o => o.boutique !== undefined) ? [['boutique','Boutique']] : []), ...(catalogue.some(o => 'premium' in o && o.premium) ? [['premium','Premium']] : [])].map(([id,label])=><button key={id} aria-pressed={filtre === id} onClick={() => filtrer(id)}>{label}</button>)}</div></div>
         <div className={`vestiaire__grille vestiaire__grille--${categorie}`}>
           {visibles.map((o) => {
             const item = 'categorie' in o ? o : null;
-            const libre = !item || estDisponible(profil,item,premium);
+            const libre = libreEnGrille(o);
             const actif = choix === o.id;
-            return <button type="button" className="cosmetique" key={o.id} data-selectionne={actif} data-equipe={profil[categorie] === o.id} data-premium={item?.premium ?? false} aria-pressed={actif} aria-label={`${o.nom}${item?.premium ? ', premium' : ''}${profil[categorie] === o.id ? ', équipé' : !libre ? ', verrouillé' : ''} — essayer`} style={{ '--objet': item?.teinte ?? ('metal' in o ? o.metal : teinte) } as CSSProperties} onClick={() => selectionner(o.id)}>
+            return <button type="button" className="cosmetique" key={o.id} data-selectionne={actif} data-equipe={profil[categorie] === o.id} data-premium={item?.premium ?? false} data-boutique={o.boutique !== undefined} aria-pressed={actif} aria-label={`${o.nom}${item?.premium ? ', premium' : o.boutique !== undefined ? ', boutique' : ''}${profil[categorie] === o.id ? ', équipé' : !libre ? ', verrouillé' : ''} — essayer`} style={{ '--objet': item?.teinte ?? ('metal' in o ? o.metal : teinte) } as CSSProperties} onClick={() => selectionner(o.id)}>
               <span className="cosmetique__badge" aria-hidden="true">{item?.premium ? '✦' : ''}</span>
               <span className="cosmetique__visuel">
                 {categorie === 'cadre' ? <Portrait avatar={profil.avatar} cadre={o.id} anime={actif} />
@@ -122,12 +142,12 @@ export function Profil() {
                   : <span className="cosmetique__titre" data-titre={o.id}><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true"><Motif nom={FAMILLES_SUCCES[succesDuTitre(o.id)?.famille ?? 'collection'].motif} /></svg></span>}
               </span>
               <span className="cosmetique__cartouche"><span className="cosmetique__nom">{o.nom}</span>
-              <span className="cosmetique__acces">{profil[categorie] === o.id ? '✓ Équipé' : libre ? 'Disponible' : item?.succes ? <><Verrou /> Succès</> : item?.premium ? <><Verrou /> Premium{item.prestige ? ` · Niv. ${item.prestige}` : ''}</> : <><Verrou /> Niv. {item?.niveau}</>}</span></span>
+              <span className="cosmetique__acces">{profil[categorie] === o.id ? '✓ Équipé' : libre ? 'Disponible' : o.boutique !== undefined ? <><Verrou /> Boutique · {o.boutique.toLocaleString('fr-FR')}</> : item?.succes ? <><Verrou /> Succès</> : item?.premium ? <><Verrou /> Premium{item.prestige ? ` · Niv. ${item.prestige}` : ''}</> : <><Verrou /> Niv. {item?.niveau}</>}</span></span>
             </button>;
           })}
         </div>
         {visibles.length === 0 && <p className="vestiaire__vide">Aucun élément dans cette sélection.</p>}
-        <footer className="vestiaire__pied"><span>✧ {ORNEMENTS.filter(o=>estDisponible(profil,o,premium)).length + PAQUETS.length} / {ORNEMENTS.length + PAQUETS.length} dans votre collection</span><details><summary>Gains d’XP</summary><p>Paquet {XP.paquet} · Nouveau mot {XP.decouverte} · Définition {XP.reponse} · Duel {XP.duel} · Victoire +{XP.victoire}</p></details></footer>
+        <footer className="vestiaire__pied"><span>✧ {ORNEMENTS.filter(o=>estDisponible(profil,o,premium)).length + PAQUETS.filter(p=>paquetDisponible(profil,p.id)).length} / {ORNEMENTS.length + PAQUETS.length} dans votre collection</span><details><summary>Gains d’XP</summary><p>Paquet {XP.paquet} · Nouveau mot {XP.decouverte} · Définition {XP.reponse} · Duel {XP.duel} · Victoire +{XP.victoire}</p></details></footer>
       </section>
     </div>}
     <dialog aria-label="Ton pseudonyme" className="vestiaire__dialogue" ref={dialogue} onCancel={(e) => { if (enregistrementPseudo) e.preventDefault(); else editer(false); }}>
