@@ -53,6 +53,15 @@ export function enteteDeLaPage(carte: CarteIndex, details: CarteDetails, texte: 
   ].join('\n    ');
 }
 
+// La première définition qui tient sur la carte du mot du jour (le Wiktionnaire en ouvre parfois une très longue).
+export function definitionDeLaCarte(definitions: { texte: string }[], longueurMaximale = 170): string {
+  return definitions.find((d) => d.texte.length <= longueurMaximale)?.texte ?? definitions[0]?.texte ?? '';
+}
+
+export function enteteDeLaCarte(carte: CarteIndex): string {
+  return [`<title>${echapper(carte.mot)} — carte du mot du jour</title>`, '<meta name="robots" content="noindex" />'].join('\n    ');
+}
+
 export function enteteDeLaListe(nombre: number): string {
   const titre = 'Tous les mots de Philamots';
   const description = `Les ${nombre.toLocaleString('fr-FR')} mots de la langue française du jeu Philamots, de A à Z, avec leur définition et leur origine.`;

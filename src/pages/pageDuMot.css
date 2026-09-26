@@ -80,3 +80,29 @@
   .page-mot__eventail { margin: 0 auto; }
   .page-mot__marque img { width: 120px; }
 }
+
+/* La carte du mot du jour (src/pages/CarteDePartage.tsx) : 1080 × 1350, prise en photo pour les réseaux sociaux. */
+.page-carte, .page-carte body { margin: 0; background: #0b1729; overflow: hidden; scrollbar-gutter: auto; }
+.carte-partage {
+  position: relative; box-sizing: border-box; width: 1080px; height: 1350px; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 96px 170px; text-align: center;
+  background: radial-gradient(ellipse 80% 60% at 50% 32%, #16304f 0%, #0b1729 62%, #07101d 100%);
+  color: var(--encre);
+}
+.carte-partage::after { content: ''; position: absolute; inset: 0; background-image: var(--grain-papier); opacity: .1; mix-blend-mode: overlay; pointer-events: none; }
+.carte-partage__surtitre { margin: 0; font-family: var(--police-etroite); font-weight: 500; font-size: 26px; letter-spacing: .34em; text-transform: uppercase; color: var(--c-cuivre); }
+.carte-partage__timbre { width: 440px; margin-top: 46px; }
+.carte-partage__timbre .tb { width: 100%; filter: drop-shadow(0 34px 38px rgba(0, 0, 0, .55)); }
+.carte-partage__mot { margin: 58px 0 0; font-family: var(--police-serif); font-weight: 900; font-size: 116px; line-height: 1; letter-spacing: -.02em; color: var(--c-papier); }
+.carte-partage__mot--long { font-size: 84px; }
+.carte-partage__origine { margin: 20px 0 0; font-family: var(--police-serif); font-style: italic; font-size: 30px; color: var(--c-texte-doux); }
+.carte-partage__definition {
+  margin: 34px 0 0; max-width: 860px; font-size: 37px; line-height: 1.42; color: #dfe8f3; text-wrap: balance;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.carte-partage__pied {
+  position: absolute; left: 96px; right: 96px; bottom: 58px; margin: 0; padding-top: 30px; border-top: 1px solid var(--c-ligne);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.carte-partage__pied img { display: block; width: 190px; height: auto; }
+.carte-partage__pied span { font-family: var(--police-etroite); font-size: 28px; letter-spacing: .12em; color: var(--c-cuivre); }

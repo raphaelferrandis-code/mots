@@ -2,6 +2,8 @@
 //   dist/mot/<adresse>/index.html  → une page par timbre de l'édition
 //   dist/mots/index.html           → la liste de tous les mots
 //   dist/sitemap.xml               → le plan du site pour Google, avec toutes ces pages
+//   dist/partage/carte/<adresse>/  → la carte du mot du jour de chaque mot du calendrier (data/mot-du-jour.txt), à
+//                                    photographier pour les réseaux sociaux (scripts/photographier-les-cartes.ts)
 // Les textes complets viennent de data/pages-des-mots.json (npm run pages:textes) ; un mot qui n'y serait pas garde les
 // textes du jeu.
 
@@ -12,7 +14,8 @@ import { adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
-import { adapterLeModele, enteteDeLaListe, enteteDeLaPage, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
+import { lireCalendrier } from '../pipeline/etapes/motDuJour.ts';
+import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const DIST = path.join(RACINE, 'dist');
@@ -64,9 +67,23 @@ try {
     .replace('<!--tete-->', () => enteteDeLaListe(mots.length))
     .replace('<!--page-->', () => rendu.rendreListe(mots)));
 
+  // Les cartes du mot du jour : hors du plan du site, et « noindex » (ce sont des images à fabriquer, pas des pages).
+  const pourUneCarte = adapterLeModele(modeleHtml, 3).replace('<html lang="fr">', '<html lang="fr" class="page-carte">');
+  const calendrier = lireCalendrier(lire('data', 'mot-du-jour.txt')).ids;
+  for (const id of calendrier) {
+    const carte = cartes.find((c) => c.id === id);
+    if (!carte) { console.warn(`    ⚠️ Mot du jour inconnu dans data/mot-du-jour.txt : ${id}`); continue; }
+    const details = lots[lotDeLaCarte(carte.id, edition.meta.lots)][carte.id];
+    const dossier = path.join(DIST, 'partage', 'carte', adresses.get(carte.id)!);
+    mkdirSync(dossier, { recursive: true });
+    writeFileSync(path.join(dossier, 'index.html'), pourUneCarte
+      .replace('<!--tete-->', () => `${enteteDeLaCarte(carte)}\n    ${textures}`)
+      .replace('<!--page-->', () => rendu.rendreCarte(carte, details, textes.mots[carte.id])));
+  }
+
   writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), textes.version));
   rmSync(modele);
-  console.log(`${cartes.length} pages par mot fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
+  console.log(`${cartes.length} pages par mot et ${calendrier.length} cartes du mot du jour fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
 } finally {
   await vite.close();
 }
