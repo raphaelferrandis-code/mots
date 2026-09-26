@@ -97,7 +97,7 @@ export function FinDuDuel(p: Props) {
             ? <button type="button" className="btn-primary" ref={(b) => { principal.current = b; }} disabled={p.bloque} onClick={p.rejouer}>Rejouer</button>
             : <button type="button" className="btn-primary" ref={(b) => { principal.current = b; }} disabled={p.bloque} onClick={p.onChangerDAdversaire}>Retour aux duels</button>}
           {p.rejouer && <button type="button" className="btn-secondary" disabled={p.bloque} onClick={p.onChangerDAdversaire}>Changer d’adversaire</button>}
-          <a className="btn-tertiary" href={lien({ ecran: 'deck' })}>Modifier mon deck</a>
+          <a className="btn-tertiary" href={lien({ ecran: 'deck' })}>Modifier mon carnet</a>
         </div>
       </div>
     </div>,

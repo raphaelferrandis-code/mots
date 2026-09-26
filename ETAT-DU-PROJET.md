@@ -2,6 +2,27 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (soir) — finitions, chantier 1 « Dire vrai partout ».** Suite de l'audit de finition du 26/09
+> (synthèse privée remise à Raphaël : 8 chantiers). Décisions de Raphaël : **« Album » partout** (onglet, adresse
+> `#/album`) ; **« carnet » au lieu de « deck »** à l'écran (adresse `#/carnet` ; `#/collection` et `#/deck` marchent
+> toujours ; le code garde `deck`) ; premier duel en Facile, feuille d'or au lieu des confettis, mots grossiers visibles
+> par défaut (ces trois-là viendront avec les chantiers 2 et 5). Fait : le faux rappel « enregistrée uniquement sur cet
+> appareil » devient, pour un invité sans code ni compte relié, **« Protège ta collection »** (après 20 paquets, « Plus
+> tard » le repousse de 100) ; la page **Mon compte** réunit la connexion, le **code de secours** (sorti du volet du
+> profil : `src/composants/CodeDeSecours.tsx`) et **« Supprimer mon compte »** (`SuppressionDuCompte.tsx`, ex-« Effacer
+> ma partie », qui supprimait déjà tout le compte en parlant de « cet appareil ») ; la classe `.compte` des pastilles
+> de la page Amis habillait toute la page Mon compte (fond, police de 12 px, texte centré) : renommée `.compteur` ;
+> Réglages titrés, sans nom de fichier interne, copie des données en téléchargement ; un **traducteur unique des
+> erreurs** (`src/partage/messages.ts` : plus de « Failed to fetch », détail rangé dans « Détails pour le support ») ;
+> les **codes couleur des définitions** retirés au nettoyage du pipeline (`sansCodesDeCouleur` : 13 cartes, pages des
+> mots, 2 devinettes ; aucune carte ne change) ; « Chargement des duels… » au lieu de « Reprise de ta partie… », et la
+> préparation reste utilisable si le serveur des duels ne répond pas ; plus de fausse annonce « N succès accomplis »
+> sur un nouvel appareil (`repereDesRecompenses`) ; Confidentialité exacte (pseudonyme public, contact@philamots.fr) ;
+> « Mes achats » seulement pour qui a payé ; textes périmés (5 joutes pour être classé, parrainage confirmé, succès des
+> définitions, l'Encre sert aussi à la boutique). **Étape 18 à faire par Raphaël** : redéployer `combats` et
+> `joutes-direct` (copie des définitions du serveur). Restent pour un futur script SQL : quelques messages rares du
+> serveur qui disent encore « deck » ou « carte ».
+
 > **26 septembre 2026 — la boutique de l'Encre (script 25).** Décision de Raphaël : le compteur d'Encre de l'en-tête
 > devient discret (flacon et nombre, sans « + » : il promettait un achat) et ouvre une fiche qui mène à la **boutique**
 > (`#/boutique`, écran `src/ecrans/Boutique.tsx`). **Revient sur la décision du 23/09** (« l'Encre ne sert qu'aux

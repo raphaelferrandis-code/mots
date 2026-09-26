@@ -1,4 +1,3 @@
-import { CompteDuProfil } from '../composants/CompteDuProfil.tsx';
 import { AlbumDesSucces } from '../composants/AlbumDesSucces.tsx';
 import { FAMILLES_SUCCES, SUCCES, succesDuTitre } from '../jeu/catalogueSucces.ts';
 import { useEffect, useRef, useState } from 'react';
@@ -9,6 +8,7 @@ import { mouvementReduit } from '../composants/mouvement.ts';
 import { DosDeCarte } from '../composants/carte/Carte.tsx';
 import { PaquetScelle } from '../composants/paquet/PaquetScelle.tsx';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
+import { useAchatsOuverts } from '../composants/useAchatsOuverts.ts';
 import { ORNEMENTS, PAQUETS, XP, estDisponible, ornement, paquetDisponible, prixEnBoutique, profilVisible, progressionDuNiveau, refusDAchat } from '../jeu/personnalisation.ts';
 import type { Categorie } from '../jeu/personnalisation.ts';
 import { cosmetiquesPremium } from '../jeu/formule.ts';
@@ -33,7 +33,9 @@ export function Profil() {
   const [vue, changerVue] = useState<'personnalisation' | 'succes'>('personnalisation');
   const [cibleSucces, ciblerSucces] = useState<string | null>(null);
   const [categorie, choisirCategorie] = useState<Section>('avatar');
-  const [choix, choisir] = useState('oracle');
+  // Le profil s’ouvre sur l’avatar que porte le joueur (il s’ouvrait sur un avatar premium qu’il ne pouvait pas acheter).
+  const [choix, choisir] = useState(() => (partie.etat === 'prete' ? partie.sauvegarde.profil.avatar : '') || ORNEMENTS.find((o) => o.categorie === 'avatar')?.id || '');
+  const achatsOuverts = useAchatsOuverts();
   const [filtre, filtrer] = useState('tout');
   const [edition, editer] = useState(false);
   const [enregistrementPseudo, setEnregistrementPseudo] = useState(false);
@@ -95,11 +97,10 @@ export function Profil() {
       <h1 className="visuellement-cache">Mon profil</h1><div className="vestiaire__vues" role="group" aria-label="Section du profil"><button aria-pressed={vue === 'personnalisation'} onClick={() => changerVue('personnalisation')}>Personnalisation</button><button aria-pressed={vue === 'succes'} onClick={() => { ciblerSucces(null); changerVue('succes'); }}>Succès <small>{profil.succes.length}/{SUCCES.length}</small></button></div>
       <div className="vestiaire__compte"><div><strong>{profil.pseudo || sauvegarde.joutes.pseudo || 'Collectionneur'}</strong><button className="vestiaire__renommer" aria-label={pseudoDuJoueur(sauvegarde) ? 'Changer mon pseudonyme' : 'Choisir mon pseudonyme'} onClick={() => { signaler(''); editer(true); }}>✎</button></div><div className="vestiaire__niveau"><span>Niv. {niveau.niveau}</span><progress aria-label={`Niveau ${niveau.niveau} : ${niveau.acquis} sur ${niveau.requis} XP`} value={niveau.acquis} max={niveau.requis} /><small>{niveau.acquis}/{niveau.requis} XP</small></div></div>
     </header>
-    <CompteDuProfil />
     {vue === 'succes' ? <AlbumDesSucces profil={profil} cible={cibleSucces} /> : <div className="vestiaire__atelier">
       <aside ref={essayage} className="vestiaire__essayage" aria-label="Aperçu de la personnalisation">
         <div className="vestiaire__scene" onPointerMove={incliner} onPointerLeave={(e) => { e.currentTarget.style.setProperty('--inclinaison-x','0deg'); e.currentTarget.style.setProperty('--inclinaison-y','0deg'); }}>
-          <span className="vestiaire__etat">{equipe ? 'VOTRE SIGNATURE' : 'ESSAYAGE'}</span>
+          <span className="vestiaire__etat">{equipe ? 'TA SIGNATURE' : 'ESSAYAGE'}</span>
           <svg className="vestiaire__astrolabe" viewBox="0 0 400 460" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="200" cy="205" r="168" /><circle cx="200" cy="205" r="153" strokeDasharray="1 9" /><path d="M200 18v374M12 205h376M68 73l264 264M68 337 332 73" /><path d="m200 30 8 18-8 18-8-18Zm0 313 8 18-8 18-8-18Z" /><ellipse cx="200" cy="408" rx="108" ry="11" /><ellipse cx="200" cy="408" rx="135" ry="19" /></svg>
           <div className={`vestiaire__objet vestiaire__objet--${categorie}`} key={choix}>
             {categorie === 'paquet' ? <PaquetScelle modele={choix} /> : categorie === 'dos' ? <DosDeCarte modele={choix} etiquette={nom} /> : <Identite profil={apercu} pseudo={sauvegarde.joutes.pseudo} apercu />}
@@ -110,7 +111,7 @@ export function Profil() {
           <span className="vestiaire__famille">{selection?.famille ?? 'Correspondances'}{selection?.anime && <span> · Animé</span>}</span>
           <h2 aria-live="polite">{nom}</h2>
           {selection?.description && <p className="vestiaire__description">{selection.description}</p>}
-          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : prix !== undefined && !disponible ? <span className="sceau-boutique">Boutique de l’Encre · {prix.toLocaleString('fr-FR')} Encre</span> : selection?.premium ? <span className="sceau-premium">✦ Premium · Achat unique{selection.prestige ? ` · offert au niveau ${selection.prestige}` : ''}</span> : disponible ? <span>{categorie === 'paquet' ? 'Collection ouverte' : 'Dans votre collection'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
+          <div className="vestiaire__obtention">{succesSelectionne ? <span>{disponible ? `Succès accompli · ${succesSelectionne.nom}` : succesSelectionne.description}</span> : prix !== undefined && !disponible ? <span className="sceau-boutique">Boutique de l’Encre · {prix.toLocaleString('fr-FR')} Encre</span> : selection?.premium ? <span className="sceau-premium">✦ Premium{achatsOuverts ? ' · Achat unique' : ''}{selection.prestige ? ` · offert au niveau ${selection.prestige}` : achatsOuverts ? '' : ' · bientôt'}</span> : disponible ? <span>{categorie === 'paquet' ? 'Pour tous' : 'Dans ton vestiaire'}</span> : <span>À gagner au niveau {selection?.niveau}</span>}</div>
           {equipe ? <button className="bouton vestiaire__action" disabled>✓ Équipé</button>
             : disponible ? <button className="bouton vestiaire__action" onClick={equiper}>Équiper</button>
             : succesSelectionne ? <button className="bouton vestiaire__action" onClick={() => { ciblerSucces(succesSelectionne.id); changerVue('succes'); }}>Voir le succès <span>↗</span></button>
@@ -147,7 +148,7 @@ export function Profil() {
           })}
         </div>
         {visibles.length === 0 && <p className="vestiaire__vide">Aucun élément dans cette sélection.</p>}
-        <footer className="vestiaire__pied"><span>✧ {ORNEMENTS.filter(o=>estDisponible(profil,o,premium)).length + PAQUETS.filter(p=>paquetDisponible(profil,p.id)).length} / {ORNEMENTS.length + PAQUETS.length} dans votre collection</span><details><summary>Gains d’XP</summary><p>Paquet {XP.paquet} · Nouveau mot {XP.decouverte} · Définition {XP.reponse} · Duel {XP.duel} · Victoire +{XP.victoire}</p></details></footer>
+        <footer className="vestiaire__pied"><span>✧ {ORNEMENTS.filter(o=>estDisponible(profil,o,premium)).length + PAQUETS.filter(p=>paquetDisponible(profil,p.id)).length} / {ORNEMENTS.length + PAQUETS.length} dans ton vestiaire</span><details><summary>Gains d’XP</summary><p>Paquet {XP.paquet} · Nouveau mot {XP.decouverte} · Définition {XP.reponse} · Duel {XP.duel} · Victoire +{XP.victoire}</p></details></footer>
       </section>
     </div>}
     <dialog aria-label="Ton pseudonyme" className="vestiaire__dialogue" ref={dialogue} onCancel={(e) => { if (enregistrementPseudo) e.preventDefault(); else editer(false); }}>

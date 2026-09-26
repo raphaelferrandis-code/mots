@@ -164,7 +164,7 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
         <h1 id="titre-comptoir" className="comptoir__titre">{titreDuComptoir(stock)}</h1>
         <div className="comptoir__actions">
           <button type="button" className="bouton-dentele" disabled={stock <= 0 || ouverture !== null} onClick={() => ouvrir(ouvrirUnPaquet, true)}>Ouvrir un paquet</button>
-          <a className="comptoir__lien" href={lien({ ecran: 'collection' })}>Voir ma collection</a>
+          <a className="comptoir__lien" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a>
         </div>
         {(hebdomadaires > 0 || cadeau) && <div className="comptoir__actions comptoir__actions--offres">
           {hebdomadaires > 0 && <button type="button" className="bouton-dentele bouton-dentele--filet" disabled={ouverture !== null} onClick={() => ouvrir(() => ouvrirRecompense('hebdomadaire'), false)}>Paquet hebdomadaire · {hebdomadaires}</button>}
@@ -173,11 +173,11 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
         <div className="comptoir__infos">
           <p>{paquets.attente !== null
             ? <>Prochain paquet dans <span role="timer">{enMinutesEtSecondes(paquets.attente)}</span></>
-            : `Réserve pleine (${paquets.maximum} paquets)`}</p>
+            : `Réserve pleine (${paquets.maximum} paquets) : ouvre-en un pour relancer la recharge.`}</p>
           <p className="comptoir__garantie"><span aria-hidden="true">✦</span> {phraseDeLaGarantie(partie.sauvegarde.paquets.sansLegendaire, EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie)}</p>
         </div>
-        {partie.serveur.etat === 'hors ligne' && <p className="bloc bloc--alerte" role="alert">{HORS_LIGNE} <button type="button" className="bouton outil" onClick={() => void synchroniser()}>Réessayer</button></p>}
-        {erreur && erreur !== HORS_LIGNE && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
+        {partie.serveur.etat === 'hors ligne' && <p className="bloc bloc--alerte" role="alert">Les paquets s’ouvrent en ligne. {partie.serveur.message} <button type="button" className="bouton outil" onClick={() => void synchroniser()}>Réessayer</button></p>}
+        {erreur && erreur !== HORS_LIGNE && !(partie.serveur.etat === 'hors ligne' && erreur === partie.serveur.message) && <p className="bloc bloc--alerte" role="alert">{erreur}</p>}
       </div>
 
       <div className="comptoir__scene" ref={scene} style={{ '--masque-paquet': MASQUE_DU_PAQUET } as CSSProperties}>

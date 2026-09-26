@@ -9,10 +9,11 @@ import { Portrait } from './Identite.tsx';
 import { useCompteur } from './ceremonie/compteurs.ts';
 import { progressionDuNiveau } from '../jeu/personnalisation.ts';
 import { compteConnecte, deconnecter } from '../services/connexion.ts';
+import { messageDe } from '../partage/messages.ts';
 import { ICONES_DUEL } from './SousOngletsDuel.tsx';
 import './navigation.css';
 
-// Quatre onglets, sur ordinateur comme sur téléphone. Le deck, les joutes et les classements se rangent dans Duel :
+// Quatre onglets, sur ordinateur comme sur téléphone. Le carnet, les joutes et les classements se rangent dans Duel :
 // l'onglet mène à la page Duel, dont les sous-onglets donnent tout le reste, et reste allumé sur leurs pages.
 // Le reste (profil, amis, compte, réglages, formules) passe dans le menu du joueur, derrière l'avatar.
 type Onglet = { route: Route; nom: string; nomCourt?: string; icone: ReactNode; actifPour: Route['ecran'][] };
@@ -42,7 +43,7 @@ function Eclat({ id }: { id: string }) {
 
 const ONGLETS: Onglet[] = [
   { route: { ecran: 'accueil' }, nom: 'Accueil', actifPour: ['accueil', 'paquet'], icone: DESSINS.accueil },
-  { route: { ecran: 'collection' }, nom: 'Collection', nomCourt: 'Album', actifPour: ['collection', 'carte'], icone: DESSINS.collection },
+  { route: { ecran: 'collection' }, nom: 'Album', actifPour: ['collection', 'carte'], icone: DESSINS.collection },
   { route: { ecran: 'duel' }, nom: 'Duel', actifPour: ['duel', 'joutes', 'deck', 'classement'], icone: ICONES_DUEL.duel },
   { route: { ecran: 'marche' }, nom: 'Marché', actifPour: ['marche'], icone: DESSINS.marche },
 ];
@@ -50,7 +51,7 @@ const ONGLETS: Onglet[] = [
 const ESPACE_DU_JOUEUR: { route: Route; nom: string; detail: string; icone: ReactNode; actifPour: Route['ecran'][] }[] = [
   { route: { ecran: 'profil' }, nom: 'Mon profil', detail: 'Succès, apparence', icone: DESSINS.profil, actifPour: ['profil'] },
   { route: { ecran: 'amis' }, nom: 'Amis', detail: 'Échanges, défis', icone: DESSINS.amis, actifPour: ['amis'] },
-  { route: { ecran: 'compte' }, nom: 'Mon compte', detail: 'Connexion', icone: DESSINS.compte, actifPour: ['compte'] },
+  { route: { ecran: 'compte' }, nom: 'Mon compte', detail: 'Connexion, code de secours', icone: DESSINS.compte, actifPour: ['compte'] },
   { route: { ecran: 'reglages' }, nom: 'Réglages', detail: 'Préférences', icone: DESSINS.reglages, actifPour: ['reglages', 'confidentialite'] },
 ];
 
@@ -96,7 +97,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
   const sortir = async () => {
     setSortie({ enCours: true, erreur: null });
     try { await deconnecter(); }
-    catch (e) { setSortie({ enCours: false, erreur: e instanceof Error ? e.message : 'Déconnexion impossible. Réessaie.' }); }
+    catch (e) { setSortie({ enCours: false, erreur: messageDe(e) }); }
   };
 
   const encreEnClair = encre === null ? '…' : encre.toLocaleString('fr-FR');
@@ -109,7 +110,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
       <nav className="navigation" aria-label="Navigation principale">
         <ul className="navigation__liste">
           {ONGLETS.map((onglet) => <li key={onglet.nom}>
-            {/* Pas d'aria-label : le nom lu est celui qui s'affiche (« Album » sur téléphone, « Collection » ailleurs). */}
+            {/* Pas d'aria-label : le nom lu est celui qui s'affiche (un nom court sur téléphone, s'il y en a un). */}
             <a className="navigation__lien" href={lien(onglet.route)} aria-current={onglet.actifPour.includes(ecran) ? 'page' : undefined}>
               <span className="navigation__icone" aria-hidden="true">{onglet.icone}</span>
               <span className="navigation__nom-long">{onglet.nom}</span>

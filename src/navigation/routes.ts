@@ -26,6 +26,10 @@ export type Route =
   | { ecran: 'timbres' } // essai du timbre de la refonte, pendant le développement seulement
   | { ecran: 'maquettes' }; // maquettes de paquet, pendant le développement seulement
 
+// Les adresses affichées : « album » et « carnet », les mots du jeu. (Les écrans gardent leur nom dans le code.)
+const ADRESSES: Partial<Record<Route['ecran'], string>> = { collection: 'album', deck: 'carnet' };
+const ALIAS: Record<string, string> = { album: 'collection', carnet: 'deck' };
+
 const ECRANS_SIMPLES = ['joutes', 'equipe', 'amis', 'compte', 'classement', 'profil', 'paquet', 'collection', 'deck', 'duel', 'reglages', 'confidentialite', 'marche', 'boutique', 'formules', 'galerie', 'timbres', 'maquettes'] as const;
 
 export function lireRoute(hash: string): Route {
@@ -37,7 +41,8 @@ export function lireRoute(hash: string): Route {
       return { ecran: 'accueil' };
     }
   }
-  const simple = ECRANS_SIMPLES.find((e) => e === premier);
+  // L'album et le carnet (décisions de Raphaël du 26/09/2026) gardent aussi leurs anciennes adresses : #/collection et #/deck.
+  const simple = ECRANS_SIMPLES.find((e) => e === (ALIAS[premier] ?? premier));
   return simple ? { ecran: simple } : { ecran: 'accueil' };
 }
 
@@ -49,7 +54,7 @@ const TITRES: Record<Exclude<Route['ecran'], 'carte'>, string> = {
   amis: 'Amis',
   compte: 'Mon compte',
   classement: 'Classement',
-  profil: 'Profil', accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Deck', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', boutique: 'Boutique', formules: 'Version payante', galerie: 'Galerie', timbres: 'Essai du timbre', maquettes: 'Maquettes de paquet',
+  profil: 'Profil', accueil: '', paquet: 'Paquets', collection: 'Album', deck: 'Carnet', duel: 'Duels', reglages: 'Réglages', confidentialite: 'Confidentialité', marche: 'Marché', boutique: 'Boutique', formules: 'Formules', galerie: 'Galerie', timbres: 'Essai du timbre', maquettes: 'Maquettes de paquet',
 };
 export function titreDeLaRoute(route: Route): string {
   const nom = route.ecran === 'carte' ? route.id.replace(/-(?:nom|verbe|adj|adv)$/, '') : TITRES[route.ecran];
@@ -60,5 +65,5 @@ export function titreDeLaRoute(route: Route): string {
 export function lien(route: Route): string {
   if (route.ecran === 'accueil') return '#/';
   if (route.ecran === 'carte') return `#/carte/${encodeURIComponent(route.id)}`;
-  return `#/${route.ecran}`;
+  return `#/${ADRESSES[route.ecran] ?? route.ecran}`;
 }

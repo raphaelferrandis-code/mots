@@ -100,7 +100,7 @@ export function Amis() {
       : partie.etat !== 'prete' ? <p role="status">{partie.etat === 'erreur' ? partie.message : 'Chargement du compte…'}</p>
       : <>
         {carnet.etat === 'erreur' && <section className="bloc bloc--alerte" role="alert"><p>{carnet.message}</p><button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></section>}
-        {carnet.etat === 'en cours' && !donnees && <p role="status">Chargement du carnet…</p>}
+        {carnet.etat === 'en cours' && !donnees && <p role="status">Chargement de tes amis…</p>}
         {donnees && !donnees.moi && <>
           {secoursEtParrainage && <InviterDesAmis grand />}
           <section className="rubrique"><ChoixDuPseudonyme onValide={() => { setMessage('Ton pseudonyme est enregistré.'); setTour(t => t + 1); }} /></section>
@@ -124,17 +124,17 @@ export function Amis() {
               </section>}
               <section className="amis__section" aria-labelledby="titre-amis">
                 <div className="amis__entete-liste">
-                  <div className="amis__titre"><h2 id="titre-amis">Amis</h2><span className="compte">{amis.length}</span></div>
+                  <div className="amis__titre"><h2 id="titre-amis">Amis</h2><span className="compteur">{amis.length}</span></div>
                   <FormulaireAmi occupe={occupe} agir={agir} compact />
                 </div>
-                {!pret && <p className="petit"><a href={lien({ ecran: 'deck' })}>Compose un deck de {EQUILIBRAGE.duel.tailleDuDeck} timbres pour lancer un défi.</a></p>}
+                {!pret && <p className="petit"><a href={lien({ ecran: 'deck' })}>Compose ton carnet de {EQUILIBRAGE.duel.tailleDuDeck} timbres pour lancer un défi.</a></p>}
                 <ul className="liste-nue fiches-amis">
                   {amis.map(a => <FicheAmi key={a.id} ami={a} cartes={cartes} pret={pret} occupe={occupe} agir={agir}
                     equipier={!!monEquipe?.equipe?.membres.some(m => m.id === a.id)} echanger={() => choisir(a)} defier={() => void defier(a)}
                     retire={() => { if (amiChoisi?.id === a.id) setAmiChoisi(null); }} />)}
                   {secoursEtParrainage && <li><a className="fiche-ami fiche-ami--place" href="#inviter" onClick={e => { e.preventDefault(); document.getElementById('inviter')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>
                     <span className="fiche-ami__plus">{ICONE_PLUS}</span><strong>Une place à prendre</strong>
-                    <span>Envoie ton lien d’invitation : à son premier duel, vous recevez chacun {EQUILIBRAGE.parrainage.paquetsOfferts} paquets.</span>
+                    <span>Envoie ton lien d’invitation : ton ami reçoit {EQUILIBRAGE.parrainage.paquetsOfferts} paquets à son premier duel, et toi aussi quand il revient jouer avec un compte Google ou e-mail.</span>
                   </a></li>}
                 </ul>
               </section>
@@ -146,7 +146,7 @@ export function Amis() {
           </div>)}
         {amiChoisi && <ComposerEchange key={amiChoisi.id} ami={amiChoisi} cartes={cartes} monAlbum={Object.entries(partie.sauvegarde.cartes).map(([carte, p]) => ({ carte, finitions: p.finitions }))} occupe={occupe} agir={agir} fermer={() => setAmiChoisi(null)} />}
         {donnees?.moi && (!carnetVide || donnees.echanges.length > 0) && <section id="echanges" className="amis__section echanges" aria-labelledby="titre-echanges">
-          <div className="amis__titre"><h2 id="titre-echanges">Échanges</h2>{echangesEnCours.length > 0 && <span className="compte">{echangesEnCours.length}</span>}</div>
+          <div className="amis__titre"><h2 id="titre-echanges">Échanges</h2>{echangesEnCours.length > 0 && <span className="compteur">{echangesEnCours.length}</span>}</div>
           {edition.etat === 'erreur' && <p role="alert">{edition.message}</p>}
           {echangesEnCours.length === 0 && <p className="texte-doux">Aucun échange en cours. Un timbre contre un timbre, sans frais : choisis un ami et propose.</p>}
           {echangesEnCours.length > 0 && <ul className="liste-nue echanges__liste">
@@ -178,7 +178,7 @@ function FicheAmi({ ami, cartes, pret, occupe, agir, equipier, echanger, defier,
 }) {
   const [menu, setMenu] = useState(false);
   const [confirmer, setConfirmer] = useState(false);
-  const raison = !ami.defiable ? 'Son deck n’est pas encore prêt.' : !pret ? 'Ton deck n’est pas encore prêt.' : '';
+  const raison = !ami.defiable ? 'Son carnet n’est pas encore prêt.' : !pret ? 'Ton carnet n’est pas encore prêt.' : '';
   return <li className="fiche-ami">
     <div className="fiche-ami__tete">
       <PortraitAmi apparence={ami} />
@@ -256,7 +256,7 @@ function PremierPas({ pseudo, occupe, agir }: { pseudo: string; occupe: boolean;
       <h2 id="titre-ensemble">Ce que vous ferez ensemble</h2>
       <ul className="liste-nue ensemble__liste">
         <li><span className="ensemble__dessin ensemble__dessin--echange" aria-hidden="true"><i className="timbre-papier" /><i className="timbre-papier timbre-papier--holo" /><b>{ICONE_ECHANGE}</b></span><div><strong>Échanger</strong><span>Un timbre contre un timbre, sans frais.</span></div></li>
-        <li><span className="ensemble__dessin" aria-hidden="true"><Cachet haut="Défi" bas="amical" incline={-12} /></span><div><strong>Défier son double</strong><span>Un duel contre son deck, sans effet sur le classement.</span></div></li>
+        <li><span className="ensemble__dessin" aria-hidden="true"><Cachet haut="Défi" bas="amical" incline={-12} /></span><div><strong>Défier son double</strong><span>Un duel contre son carnet, joué par l’ordinateur, sans effet sur le classement.</span></div></li>
         <li><span className="ensemble__dessin ensemble__dessin--duo" aria-hidden="true"><i className="ensemble__place" /><em>&amp;</em><i className="ensemble__place ensemble__place--vide" /></span><div><strong>Former une équipe</strong><span>Un duo et une cote commune pour les joutes à deux.</span></div></li>
       </ul>
     </section>
@@ -296,7 +296,7 @@ function CarteEchange({ e, ami, cartes, occupe, agir, editionPrete }: { e: Echan
       </div>}
     </div>
     {examiner && enAttente && recu && <div className="echange__confirmation">
-      <p>Tu donnes <strong>{cartes.get(donne.carte)?.mot ?? donne.carte}</strong> ({donne.finition.toLowerCase()}) et tu reçois <strong>{cartes.get(recoit.carte)?.mot ?? recoit.carte}</strong> ({recoit.finition.toLowerCase()}). Les deux timbres sont transférés ensemble. Si tu donnes ton dernier exemplaire d’un mot, il sera aussi retiré de ton deck.</p>
+      <p>Tu donnes <strong>{cartes.get(donne.carte)?.mot ?? donne.carte}</strong> ({donne.finition.toLowerCase()}) et tu reçois <strong>{cartes.get(recoit.carte)?.mot ?? recoit.carte}</strong> ({recoit.finition.toLowerCase()}). Les deux timbres sont transférés ensemble. Si tu donnes ton dernier exemplaire d’un mot, il sera aussi retiré de ton carnet.</p>
       <div className="rangee-de-boutons"><button className="bouton bouton--accent" disabled={occupe} onClick={() => void agir(() => repondreAUnEchange(e.id, 'accepter'), 'Échange effectué. Ta collection est à jour.').then(ok => { if (ok) setExaminer(false); })}>Confirmer l’échange</button><button className="bouton bouton--discret" disabled={occupe} onClick={() => setExaminer(false)}>Fermer</button></div>
     </div>}
   </li>;
@@ -336,7 +336,7 @@ function ComposerEchange({ ami, monAlbum, cartes, occupe, agir, fermer }: { ami:
       void agir(() => proposerUnEchange(requete.current.id, ami.id, offerte, demandee), 'Proposition envoyée. Tes timbres restent dans ta collection jusqu’à l’acceptation.').then(ok => { if (ok) fermer(); });
     }}><fieldset disabled={occupe}><div className="amis__timbres"><ChoixTimbre titre="Tu donnes" album={monAlbum} cartes={cartes} choix={offerte} choisir={setOfferte} /><span className="echange__fleche amis__fleche">{ICONE_ECHANGE}</span><ChoixTimbre titre="Tu reçois" album={album.donnees} cartes={cartes} choix={demandee} choisir={setDemandee} /></div>
       {album.donnees.length === 0 && <p>Ton ami ne possède pas encore de timbres.</p>}
-      <p className="texte-doux petit">Si tu échanges ton dernier exemplaire d’un mot, il sera retiré de ton deck à l’acceptation. Tes apprentissages restent acquis.</p>
+      <p className="texte-doux petit">Si tu échanges ton dernier exemplaire d’un mot, il sera retiré de ton carnet à l’acceptation. Tes apprentissages restent acquis.</p>
       <div className="rangee-de-boutons"><button className="bouton bouton--accent" disabled={!offerte || !demandee || JSON.stringify(offerte) === JSON.stringify(demandee)}>Envoyer la proposition</button>
         <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={fermer}>Fermer</button></div></fieldset></form>}
     {album.etat !== 'pret' && <button className="bouton bouton--discret" disabled={occupe} onClick={fermer}>Fermer la proposition</button>}

@@ -9,6 +9,7 @@ import { histoireDesPrix } from '../jeu/formule.ts';
 import type { Enchere } from '../jeu/marche.ts';
 import { meilleureFinition } from '../jeu/sauvegarde.ts';
 import type { Finition } from '../partage/types.ts';
+import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
@@ -40,12 +41,12 @@ export function FicheCarte({ id }: { id: string }) {
   const cotes = useChargement(async () => (marcheOuvert && fiche.etat === 'pret' && fiche.donnees ? lireLesCotes(id) : null), `cotes:${id}:${marcheOuvert}:${fiche.etat}`);
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
-  if (fiche.etat === 'erreur') return <main className="ecran"><p role="alert">La fiche n'a pas pu être chargée. {fiche.message}</p></main>;
+  if (fiche.etat === 'erreur') return <main className="ecran"><h1 className="visuellement-cache">Fiche du timbre</h1><ErreurDeChargement quoi="La fiche de ce timbre" feminin reessayer={fiche.relancer} /></main>;
   if (!fiche.donnees) {
     return (
       <main className="ecran">
-        <Entete titre="Carte introuvable">Cette carte ne fait pas partie de l'édition en cours.</Entete>
-        <a className="bouton" href={lien({ ecran: 'accueil' })}>Retour à l'accueil</a>
+        <Entete titre="Timbre introuvable">Ce timbre ne fait pas partie de l’édition en cours.</Entete>
+        <a className="bouton" href={lien({ ecran: 'accueil' })}>Retour à l’accueil</a>
       </main>
     );
   }

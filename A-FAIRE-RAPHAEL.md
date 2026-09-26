@@ -1,6 +1,6 @@
 # Ce qu'il reste à faire — pour Raphaël
 
-*Mis à jour le 25 septembre 2026.* Une seule page pour reprendre le travail, sur n'importe quel ordinateur.
+*Mis à jour le 26 septembre 2026.* Une seule page pour reprendre le travail, sur n'importe quel ordinateur.
 L'état complet du projet est dans [ETAT-DU-PROJET.md](ETAT-DU-PROJET.md).
 
 ---
@@ -71,6 +71,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | **En ligne** (étape 12 faite) |
 | Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | **En ligne** (étape 12 faite) |
 | Défi contre un joueur simulé : plus moyen de viser le plus faible (le serveur n'accepte que ceux qu'il propose) | **En ligne** (étape 13 faite) |
+| Finitions, chantier 1 « Dire vrai partout » (26 septembre) : « Protège ta collection » au lieu du faux rappel d'export, « Supprimer mon compte » dit enfin ce qu'il fait, Mon compte réunit connexion, code de secours et suppression, erreurs en français, plus de fausse annonce de succès, Confidentialité exacte, « Album » et « carnet » partout, définitions sans codes de couleur | **En ligne** ; étape 18 à faire (les définitions du serveur des duels) |
 
 ---
 
@@ -329,6 +330,21 @@ n'est pas collé, un achat répond « La boutique ouvre très bientôt ».
       attendue : **Success. No rows returned**.
 - [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule (les deux fonctions `acheter_a_la_boutique` et
       `commander_un_hors_serie`, la table `achats_boutique` fermée aux joueurs).
+
+### Étape 18 — Redéployer les deux fonctions du combat (définitions sans codes de couleur)
+
+Pourquoi : douze définitions montraient un code de couleur (« … tirant sur le roux. #A76726 ») ou un renvoi du
+Wiktionnaire (« Voir la note sur les accords… »), en duel, sur les pages des mots et dans deux devinettes. Le jeu, les
+pages et les devinettes sont corrigés et publiés. Mais les duels et les joutes sont joués sur le serveur, qui garde sa
+propre copie des définitions : tant que les deux fonctions ne sont pas redéployées, une parade peut encore proposer
+une définition avec son code. **Aucune carte ne change** (ni rareté, ni attaque, ni défense). Le redéploiement emporte
+aussi trois messages rares, qui disent désormais « carnet » et « timbre ».
+
+- [ ] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
+      `serveur/deploiement-combats/combats.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
+- [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+      `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
+- [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule que le code déployé est identique aux fichiers.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

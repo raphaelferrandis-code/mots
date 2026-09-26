@@ -12,6 +12,9 @@ describe('adresses des écrans', () => {
   it('reconnaît chaque écran', () => {
     assert.deepEqual(lireRoute('#/amis'), { ecran: 'amis' });
     assert.deepEqual(lireRoute('#/collection'), { ecran: 'collection' });
+    assert.deepEqual(lireRoute('#/album'), { ecran: 'collection' });
+    assert.deepEqual(lireRoute('#/deck'), { ecran: 'deck' });
+    assert.deepEqual(lireRoute('#/carnet'), { ecran: 'deck' });
     assert.deepEqual(lireRoute('#/reglages'), { ecran: 'reglages' });
     assert.deepEqual(lireRoute('#/duel'), { ecran: 'duel' });
     assert.deepEqual(lireRoute('#/confidentialite'), { ecran: 'confidentialite' });
@@ -29,6 +32,9 @@ describe('adresses des écrans', () => {
     assert.equal(titreDeLaRoute({ ecran: 'accueil' }), 'Philamots — collectionne les mots de la langue française');
     assert.equal(titreDeLaRoute({ ecran: 'collection' }), 'Album — Philamots');
     assert.equal(titreDeLaRoute({ ecran: 'marche' }), 'Marché — Philamots');
+    assert.equal(titreDeLaRoute({ ecran: 'deck' }), 'Carnet — Philamots');
+    assert.equal(lien({ ecran: 'collection' }), '#/album');
+    assert.equal(lien({ ecran: 'deck' }), '#/carnet');
     assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'arc-en-ciel-nom' }), 'arc-en-ciel — Philamots');
     assert.equal(titreDeLaRoute({ ecran: 'carte', id: 'sérendipité-nom' }), 'sérendipité — Philamots');
   });

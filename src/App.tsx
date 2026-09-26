@@ -13,6 +13,7 @@ import { useRoute } from './navigation/useRoute.ts';
 import { titreDeLaRoute } from './navigation/routes.ts';
 import type { Route } from './navigation/routes.ts';
 import { pseudoDuJoueur } from './services/identite.ts';
+import { repereDesRecompenses } from './services/partie.ts';
 
 // Une nouvelle version du site remplace les fichiers de l'ancienne : un écran pas encore chargé ne se trouve plus.
 // La page se recharge alors, une seule fois par minute (pas de boucle si c'est le réseau qui manque) ; sinon le filet
@@ -115,11 +116,11 @@ function allerAuContenu(essaisRestants = 60, depuis: Element | null = document.a
 function PartieIllisible({ message }: { message: string }) {
   return (
     <main className="ecran">
-      <h1>Ta partie n'a pas pu être ouverte</h1>
+      <h1>Le jeu n’a pas pu s’ouvrir</h1>
       <section className="bloc bloc--alerte" role="alert">
-        <p>Le navigateur n'a pas réussi à lire ta partie sur cet appareil. Recharge la page ; si le problème revient, écris à <a href="mailto:contact@philamots.fr">contact@philamots.fr</a>.</p>
-        <p className="texte-doux petit">{message}</p>
+        <p>Le navigateur n’a pas réussi à lire les données du jeu sur cet appareil. Recharge la page ; si le problème revient, écris à <a href="mailto:contact@philamots.fr">contact@philamots.fr</a>.</p>
         <button type="button" className="bouton" onClick={() => window.location.reload()}>Recharger la page</button>
+        <details className="texte-doux petit"><summary>Détails pour le support</summary><p>{message}</p></details>
       </section>
     </main>
   );
@@ -156,7 +157,7 @@ export function App() {
   useEffect(() => { document.documentElement.toggleAttribute('data-animations-reduites', animationsReduites); }, [animationsReduites]);
 
   return (
-    <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null}><div className="application">
+    <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null} repere={repereDesRecompenses()}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null}
         pseudo={partie.etat === 'prete' ? pseudoDuJoueur(partie.sauvegarde) : ''} portrait={partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null) : null} />

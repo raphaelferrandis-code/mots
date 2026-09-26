@@ -52,10 +52,19 @@ var e = {
 				Rare: 74,
 				Épique: 22,
 				Légendaire: 4
+			},
+			{
+				Rare: 74,
+				Épique: 22,
+				Légendaire: 4
 			}
 		],
-		paquetsAvantLegendaireGarantie: 40,
-		chanceHorsSerie: 1 / 1e3
+		paquetsAvantLegendaireGarantie: 20,
+		chanceHorsSerie: 1 / 1e3,
+		paquetsDException: {
+			"Hors-série": 1 / 3e4,
+			Légendaire: 1 / 1e4
+		}
 	},
 	encreParDoublon: {
 		Commune: 1,
@@ -213,6 +222,7 @@ var e = {
 			conservationEnJours: 400
 		}
 	},
+	boutique: { prixDuHorsSerie: 1e5 },
 	payant: {
 		minutesEntreDeuxPaquets: 8,
 		stockMaximum: 15,
@@ -571,7 +581,7 @@ function M(e, t, n, r) {
 }
 function de(e, t, n, r, i, a) {
 	let o = k(r, e.masques), s = new Map(o.map((e) => [e.id, e])), c = [...new Set(t.deck)].flatMap((e) => t.possedees.includes(e) && s.has(e) ? [s.get(e)] : []);
-	if (c.length !== O.tailleDuDeck) throw new D(`Ton deck doit compter ${O.tailleDuDeck} cartes jouables.`);
+	if (c.length !== O.tailleDuDeck) throw new D(`Ton carnet doit compter ${O.tailleDuDeck} timbres jouables.`);
 	if (e.mode !== "entrainement" && (!n || n.id !== e.adversaire)) throw new D("Cet adversaire est indisponible.");
 	let l = e.mode === "entrainement" ? {
 		type: "entrainement",
@@ -581,7 +591,7 @@ function de(e, t, n, r, i, a) {
 		profil: n,
 		...e.mode === "amical" ? { amical: !0 } : {}
 	}, d = l.type === "entrainement" ? te(c, o, l.niveau, i, O) : [...new Set(l.profil.deck)].flatMap((e) => s.has(e) ? [s.get(e)] : []);
-	if (d.length !== O.tailleDuDeck) throw new D("Le deck adverse contient des mots masqués ou est incomplet.");
+	if (d.length !== O.tailleDuDeck) throw new D("Le carnet adverse contient des mots masqués ou est incomplet.");
 	let f = u(c, d, i, O);
 	return {
 		versionMoteur: 3,
@@ -628,7 +638,7 @@ function fe(t, n, r, i, a) {
 	let l = (e, t) => E(e, r.definitions, k(r, o.masques).filter((e) => e.id !== t.id), o.masques, i);
 	if (n.type === "choisir" && s.nom === "choix") {
 		let e = o.duel.camps.joueur.main.find((e) => e.id === n.carte);
-		if (!e) throw new D("Cette carte ne figure pas dans ta main.");
+		if (!e) throw new D("Ce timbre ne figure pas dans ta main.");
 		let t = s.adverse ?? j(o.duel, o.adversaire, r, i, e.type);
 		o.etape = {
 			nom: "parade",
@@ -2252,7 +2262,7 @@ var Ee = {
 			defense: 1,
 			faction: "Espagnol et portugais",
 			registre: [],
-			definition: "Dont la robe est d’une couleur fauve tirant sur le roux (au sujet de la robe des chevaux). #A76726"
+			definition: "Dont la robe est d’une couleur fauve tirant sur le roux (au sujet de la robe des chevaux)."
 		},
 		{
 			id: "alliance-nom",
@@ -4434,7 +4444,7 @@ var Ee = {
 			defense: 3,
 			faction: "Occitan",
 			registre: [],
-			definition: "Qui a la peau mate, le teint brun. #8B6C42, de couleur brune, noirâtre ou bistrée ou qui a été hâlé, bruni par le soleil, le grand air."
+			definition: "Qui a la peau mate, le teint brun. De couleur brune, noirâtre ou bistrée ou qui a été hâlé, bruni par le soleil, le grand air."
 		},
 		{
 			id: "basane-nom",
@@ -5197,7 +5207,7 @@ var Ee = {
 			defense: 10,
 			faction: "Francique",
 			registre: [],
-			definition: "De la couleur du ciel en plein jour quand il est dégagé. #0000FF"
+			definition: "De la couleur du ciel en plein jour quand il est dégagé."
 		},
 		{
 			id: "blindage-nom",
@@ -6377,7 +6387,7 @@ var Ee = {
 			defense: 1,
 			faction: "Allemand et néerlandais",
 			registre: [],
-			definition: "Couleur rouge fade tirant sur le brun. #842E1B"
+			definition: "Couleur rouge fade tirant sur le brun."
 		},
 		{
 			id: "briquet-nom",
@@ -8735,7 +8745,7 @@ var Ee = {
 			defense: 2,
 			faction: "Espagnol et portugais",
 			registre: [],
-			definition: "Couleur brun-marron foncé moyennement saturé. #5A3A22"
+			definition: "Couleur brun-marron foncé moyennement saturé."
 		},
 		{
 			id: "chômé-adj",
@@ -10710,7 +10720,7 @@ var Ee = {
 			defense: 1,
 			faction: "Espagnol et portugais",
 			registre: [],
-			definition: "D’une couleur rouge foncé, tirant sur le violet. #DC143C",
+			definition: "D’une couleur rouge foncé, tirant sur le violet.",
 			attestation: "XIIIᵉ siècle"
 		},
 		{
@@ -16289,7 +16299,7 @@ var Ee = {
 			defense: 9,
 			faction: "Francique",
 			registre: [],
-			definition: "De la couleur ocre orangé à roux. #AD4F09",
+			definition: "De la couleur ocre orangé à roux.",
 			attestation: "1176"
 		},
 		{
@@ -18248,7 +18258,7 @@ var Ee = {
 			defense: 2,
 			faction: "Vieux français",
 			registre: [],
-			definition: "Qui est de couleur rouge sombre légèrement rosé comme la grenade. #6E0B14"
+			definition: "Qui est de couleur rouge sombre légèrement rosé comme la grenade."
 		},
 		{
 			id: "grenouillard-adj",
@@ -18394,7 +18404,7 @@ var Ee = {
 			defense: 1,
 			faction: "Francique",
 			registre: [],
-			definition: "Couleur rouge vif du même nom que le fruit. #CF0A1D",
+			definition: "Couleur rouge vif du même nom que le fruit.",
 			attestation: "XVIᵉ siècle"
 		},
 		{
@@ -20011,7 +20021,7 @@ var Ee = {
 			defense: 1,
 			faction: "Espagnol et portugais",
 			registre: [],
-			definition: "De couleur bleu foncé violacé. #791CF8 Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.",
+			definition: "De couleur bleu foncé violacé.",
 			attestation: "XVIᵉ siècle"
 		},
 		{
@@ -22252,7 +22262,7 @@ var Ee = {
 			defense: 3,
 			faction: "Anglais",
 			registre: [],
-			definition: "Couleur rouge pourpre complémentaire du vert. L’une des trois couleurs secondaires dans le RVB. #ED0FED",
+			definition: "Couleur rouge pourpre complémentaire du vert. L’une des trois couleurs secondaires dans le RVB.",
 			attestation: "1862"
 		},
 		{
@@ -22686,7 +22696,7 @@ var Ee = {
 			defense: 10,
 			faction: "Langues d'ailleurs",
 			registre: [],
-			definition: "Brun, de la couleur du fruit mûr du châtaignier. Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.",
+			definition: "Brun, de la couleur du fruit mûr du châtaignier.",
 			attestation: "1736"
 		},
 		{
@@ -32891,7 +32901,7 @@ var Ee = {
 			defense: 6,
 			faction: "Vieux français",
 			registre: [],
-			definition: "Qui est de couleur à peu près semblable à celle du tan, qui est d’une sorte de brun roux. #A75502"
+			definition: "Qui est de couleur à peu près semblable à celle du tan, qui est d’une sorte de brun roux."
 		},
 		{
 			id: "tannée-nom",
@@ -36428,7 +36438,7 @@ var Ee = {
 			quiz: !0
 		}]],
 		["alezan-adj", [{
-			texte: "Dont la robe est d’une couleur fauve tirant sur le roux (au sujet de la robe des chevaux). #A76726",
+			texte: "Dont la robe est d’une couleur fauve tirant sur le roux (au sujet de la robe des chevaux).",
 			quiz: !0
 		}]],
 		["alliance-nom", [
@@ -36724,7 +36734,7 @@ var Ee = {
 				quiz: !1
 			},
 			{
-				texte: "Couleur rouge intense de cette teinture et de cette étoffe. #a91101",
+				texte: "Couleur rouge intense de cette teinture et de cette étoffe.",
 				quiz: !0
 			}
 		]],
@@ -38437,7 +38447,7 @@ var Ee = {
 			}
 		]],
 		["basané-adj", [{
-			texte: "Qui a la peau mate, le teint brun. #8B6C42, de couleur brune, noirâtre ou bistrée ou qui a été hâlé, bruni par le soleil, le grand air.",
+			texte: "Qui a la peau mate, le teint brun. De couleur brune, noirâtre ou bistrée ou qui a été hâlé, bruni par le soleil, le grand air.",
 			quiz: !0
 		}, {
 			texte: "Pantalon basané, pantalon d’équitation.",
@@ -39068,8 +39078,8 @@ var Ee = {
 				quiz: !0
 			},
 			{
-				texte: "Couleur rose orangée. #FFE4C4",
-				quiz: !0
+				texte: "Couleur rose orangée.",
+				quiz: !1
 			},
 			{
 				texte: "Dépit, rage.",
@@ -39213,11 +39223,11 @@ var Ee = {
 		}]],
 		["bleu-adj", [
 			{
-				texte: "De la couleur du ciel en plein jour quand il est dégagé. #0000FF",
+				texte: "De la couleur du ciel en plein jour quand il est dégagé.",
 				quiz: !0
 			},
 			{
-				texte: "D’une couleur appartenant au champ chromatique du bleu, c’est-à-dire légèrement différente de la couleur originelle mais liée à celle-ci. #DFF2FF #77B5FE #2BFAFA #3A8EBA #0000FF #17657D #686F8C",
+				texte: "D’une couleur appartenant au champ chromatique du bleu, c’est-à-dire légèrement différente de la couleur originelle mais liée à celle-ci.",
 				quiz: !1
 			},
 			{
@@ -40471,7 +40481,7 @@ var Ee = {
 			registre: ["Familier"]
 		}]],
 		["brique-adj", [{
-			texte: "Couleur rouge fade tirant sur le brun. #842E1B",
+			texte: "Couleur rouge fade tirant sur le brun.",
 			quiz: !0
 		}]],
 		["briquet-nom", [
@@ -41837,7 +41847,7 @@ var Ee = {
 			texte: "Relatif à la dignité de cardinal.",
 			quiz: !1
 		}, {
-			texte: "Qui a la couleur du rouge violacé intense. #965578",
+			texte: "Qui a la couleur du rouge violacé intense.",
 			quiz: !0
 		}]],
 		["cargaison-nom", [
@@ -42578,7 +42588,7 @@ var Ee = {
 				quiz: !1
 			},
 			{
-				texte: "Couleur bleu profond tirant légèrement sur le vert. #17657D",
+				texte: "Couleur bleu profond tirant légèrement sur le vert.",
 				quiz: !0
 			},
 			{
@@ -42859,7 +42869,7 @@ var Ee = {
 			registre: ["Familier"]
 		}]],
 		["chocolat-adj", [{
-			texte: "Couleur brun-marron foncé moyennement saturé. #5A3A22",
+			texte: "Couleur brun-marron foncé moyennement saturé.",
 			quiz: !0
 		}, {
 			texte: "Déçu, embarrassé.",
@@ -44846,7 +44856,7 @@ var Ee = {
 			}
 		]],
 		["cramoisi-adj", [{
-			texte: "D’une couleur rouge foncé, tirant sur le violet. #DC143C",
+			texte: "D’une couleur rouge foncé, tirant sur le violet.",
 			quiz: !0
 		}]],
 		["cramoisi-nom", [{
@@ -50528,7 +50538,7 @@ var Ee = {
 		]],
 		["fauve-adj", [
 			{
-				texte: "De la couleur ocre orangé à roux. #AD4F09",
+				texte: "De la couleur ocre orangé à roux.",
 				quiz: !0
 			},
 			{
@@ -52566,7 +52576,7 @@ var Ee = {
 			}
 		]],
 		["grenat-adj", [{
-			texte: "Qui est de couleur rouge sombre légèrement rosé comme la grenade. #6E0B14",
+			texte: "Qui est de couleur rouge sombre légèrement rosé comme la grenade.",
 			quiz: !1
 		}, {
 			texte: "Couleur de la robe d’un vin rouge, indiquant une meilleure maturité que la couleur « violette »; mais une maturité moindre qu’une robe de couleur « pourpre ».",
@@ -52694,7 +52704,7 @@ var Ee = {
 			registre: ["Familier"]
 		}]],
 		["groseille-adj", [{
-			texte: "Couleur rouge vif du même nom que le fruit. #CF0A1D",
+			texte: "Couleur rouge vif du même nom que le fruit.",
 			quiz: !0
 		}]],
 		["grotesque-adj", [
@@ -54174,7 +54184,7 @@ var Ee = {
 			}
 		]],
 		["indigo-adj", [{
-			texte: "De couleur bleu foncé violacé. #791CF8 Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.",
+			texte: "De couleur bleu foncé violacé.",
 			quiz: !0
 		}]],
 		["individualiser-verbe", [{
@@ -56209,7 +56219,7 @@ var Ee = {
 			quiz: !0
 		}]],
 		["magenta-nom", [{
-			texte: "Couleur rouge pourpre complémentaire du vert. L’une des trois couleurs secondaires dans le RVB. #ED0FED",
+			texte: "Couleur rouge pourpre complémentaire du vert. L’une des trois couleurs secondaires dans le RVB.",
 			quiz: !0
 		}, {
 			texte: "Fuchsine, rouge d’aniline.",
@@ -56648,7 +56658,7 @@ var Ee = {
 		]],
 		["marron-adj", [
 			{
-				texte: "Brun, de la couleur du fruit mûr du châtaignier. Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.",
+				texte: "Brun, de la couleur du fruit mûr du châtaignier.",
 				quiz: !0
 			},
 			{
@@ -56666,7 +56676,7 @@ var Ee = {
 				quiz: !0
 			},
 			{
-				texte: "Brun, couleur du fruit mûr. #a04000 #602000 #402000 Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.",
+				texte: "Brun, couleur du fruit mûr.",
 				quiz: !0
 			},
 			{
@@ -66566,7 +66576,7 @@ var Ee = {
 		]],
 		["tanné-adj", [
 			{
-				texte: "Qui est de couleur à peu près semblable à celle du tan, qui est d’une sorte de brun roux. #A75502",
+				texte: "Qui est de couleur à peu près semblable à celle du tan, qui est d’une sorte de brun roux.",
 				quiz: !0
 			},
 			{

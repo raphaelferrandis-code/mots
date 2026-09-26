@@ -27,7 +27,7 @@ import { AnalyseDuDeck } from './AnalyseDuDeck.tsx';
 const REGLES = EQUILIBRAGE.duel;
 const TAILLE = REGLES.tailleDuDeck;
 const PAR_PAGE = 30;
-const TRIS = { force: 'Les plus fortes', attaque: 'Attaque', defense: 'Défense', rarete: 'Les plus rares', alphabet: 'Ordre alphabétique' } as const;
+const TRIS = { force: 'Les plus forts', attaque: 'Attaque', defense: 'Défense', rarete: 'Les plus rares', alphabet: 'Ordre alphabétique' } as const;
 type Tri = keyof typeof TRIS;
 
 const Moins = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" aria-hidden="true"><path d="M6 12h12" /></svg>;
@@ -93,7 +93,7 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
     setPlein(null);
     changerLeDeck(ids);
   };
-  const vider = useActionArmee(() => modifier([], 'Deck vidé'));
+  const vider = useActionArmee(() => modifier([], 'Carnet vidé'));
 
   // Arrivé en édition (#/deck, « Modifier mon deck ») : sur téléphone, le deck est sous les réglages, on l'amène à l'écran.
   const amene = useRef(false);
@@ -104,14 +104,14 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
   }, [cartes, enEdition]);
 
   if (edition.etat === 'erreur') return <section className="panneau-deck"><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></section>;
-  if (!cartes) return <section className="panneau-deck" aria-busy="true"><p className="preparation__note" role="status">Chargement du deck…</p></section>;
+  if (!cartes) return <section className="panneau-deck" aria-busy="true"><p className="preparation__note" role="status">Chargement du carnet…</p></section>;
 
   const ajouter = (carte: CarteIndex, source: HTMLElement): void => {
     if (deck.length >= TAILLE) {
       // Le timbre secoue la tête le temps de l'animation (.42 s), puis se calme.
       setPlein(carte.id);
       window.setTimeout(() => setPlein((actuel) => (actuel === carte.id ? null : actuel)), 450);
-      setRetour({ ids: deck.map((c) => c.id), message: `Ton deck est plein : retire d’abord un timbre pour ajouter « ${carte.mot} ».` });
+      setRetour({ ids: deck.map((c) => c.id), message: `Ton carnet est plein : retire d’abord un timbre pour ajouter « ${carte.mot} ».` });
       return;
     }
     arrivee.current = { id: carte.id, rect: source.getBoundingClientRect() };
@@ -120,27 +120,27 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
   const retirer = (carte: CarteIndex): void => modifier(deck.filter((c) => c.id !== carte.id).map((c) => c.id), `« ${carte.mot} » retiré`);
   const filtrer = <T,>(regler: (valeur: T) => void) => (valeur: T): void => { regler(valeur); setPages(1); };
   const origines = [...new Set(possedees.map((c) => c.faction))].sort((a, b) => a.localeCompare(b, 'fr'));
-  const annulable = retour && retour.message !== '' && !retour.message.startsWith('Ton deck est plein');
+  const annulable = retour && retour.message !== '' && !retour.message.startsWith('Ton carnet est plein');
 
   return (
     <section className="panneau-deck" ref={panneau} data-edition={enEdition} aria-labelledby="panneau-deck-titre">
       <header className="panneau-deck__entete">
-        <h2 id="panneau-deck-titre">Ton deck <span className="panneau-deck__compte">{deck.length} / {TAILLE}</span></h2>
+        <h2 id="panneau-deck-titre">Ton carnet <span className="panneau-deck__compte">{deck.length} / {TAILLE}</span></h2>
         <button type="button" className="btn-secondary sm" aria-pressed={enEdition} onClick={() => { setPlein(null); onEdition(!enEdition); }}>{enEdition ? 'Terminer' : 'Modifier'}</button>
       </header>
 
       {possedees.length < TAILLE && (
         <div className="preparation__vide">
-          <p>Encore {TAILLE - possedees.length} timbre{TAILLE - possedees.length > 1 ? 's' : ''} à collectionner pour composer ton deck.</p>
+          <p>Encore {TAILLE - possedees.length} timbre{TAILLE - possedees.length > 1 ? 's' : ''} à collectionner pour composer ton carnet.</p>
           <a className="btn-secondary" href={lien({ ecran: 'paquet' })}>Ouvrir des paquets</a>
         </div>
       )}
 
-      <ol className="panneau-deck__grille" aria-label={enEdition ? 'Timbres du deck : touche un timbre pour le retirer' : 'Timbres du deck'}>
+      <ol className="panneau-deck__grille" aria-label={enEdition ? 'Timbres du carnet : touche un timbre pour le retirer' : 'Timbres du carnet'}>
         {deck.map((carte) => (
           <li key={carte.id} className="panneau-deck__place" ref={(element) => { if (element) places.current.set(carte.id, element); else places.current.delete(carte.id); }}>
             {enEdition
-              ? <button type="button" className="panneau-deck__timbre" onClick={() => retirer(carte)} aria-label={`Retirer « ${carte.mot} » du deck`}>
+              ? <button type="button" className="panneau-deck__timbre" onClick={() => retirer(carte)} aria-label={`Retirer « ${carte.mot} » du carnet`}>
                 <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id]?.maitriseeLe ?? null} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
                 <span className="panneau-deck__pastille panneau-deck__pastille--retirer"><Moins /></span>
               </button>
@@ -159,8 +159,8 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
 
       {enEdition && (
         <div className="panneau-deck__outils">
-          <button type="button" className="btn-secondary sm" onClick={() => modifier(meilleurDeck(possedees, REGLES).map((c) => c.id), 'Deck composé avec tes timbres les plus forts')}>Composer pour moi</button>
-          {deck.length > 0 && <button type="button" className="btn-tertiary danger" data-arme={vider.arme} onClick={vider.cliquer} onBlur={vider.desarmer}>{vider.arme ? 'Confirmer : vider le deck' : 'Vider le deck'}</button>}
+          <button type="button" className="btn-secondary sm" onClick={() => modifier(meilleurDeck(possedees, REGLES).map((c) => c.id), 'Carnet composé avec tes timbres les plus forts')}>Composer pour moi</button>
+          {deck.length > 0 && <button type="button" className="btn-tertiary danger" data-arme={vider.arme} onClick={vider.cliquer} onBlur={vider.desarmer}>{vider.arme ? 'Confirmer : vider le carnet' : 'Vider le carnet'}</button>}
         </div>
       )}
 
@@ -188,7 +188,7 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
             : <ul className="collection-deck__grille" ref={collection}>
               {disponibles.slice(0, pages * PAR_PAGE).map((carte) => (
                 <li key={carte.id}>
-                  <button type="button" className="panneau-deck__timbre" data-secoue={plein === carte.id} onClick={(e) => ajouter(carte, e.currentTarget)} aria-label={`Ajouter « ${carte.mot} » au deck`}>
+                  <button type="button" className="panneau-deck__timbre" data-secoue={plein === carte.id} onClick={(e) => ajouter(carte, e.currentTarget)} aria-label={`Ajouter « ${carte.mot} » au carnet`}>
                     <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id]?.maitriseeLe ?? null} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
                     <span className="panneau-deck__pastille panneau-deck__pastille--ajouter"><Plus /></span>
                   </button>

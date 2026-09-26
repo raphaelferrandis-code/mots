@@ -30,6 +30,9 @@ export function Formules() {
   const specimens = edition.etat === 'pret' ? ['oiseau-nom', 'amour-nom', 'hapax-nom'].flatMap(id => edition.donnees.cartes.filter(c => c.id === id)) : [];
   const formule: Formule | null = partie.etat === 'prete' ? partie.compte?.formule ?? null : null;
   const enCours = formule ? nomDeLaFormule(formule) : null;
+  // « Mes achats » (gérer son abonnement, vérifier ses avantages) ne sert qu’à qui a déjà payé, ou revient de Stripe.
+  const aDesAchats = formule !== null && (formule.achatUnique || formule.abonnement !== 'aucun');
+  const retourDePaiement = new URLSearchParams(window.location.search).has('paiement');
 
   return (
     <main className="ecran formules">
@@ -77,11 +80,11 @@ export function Formules() {
             <div className="offres-probabilites"><h3>La dernière carte du paquet hebdomadaire</h3><div className="offres-chances">{Object.entries(EQUILIBRAGE.payant.dernierEmplacementHebdomadaire).map(([rarete, chance]) => <div key={rarete}><strong>{chance}<small> %</small></strong><span>{rarete}</span></div>)}</div><p>Les quatre premières cartes suivent les probabilités habituelles. La garantie de Légendaire des paquets ordinaires reste séparée.</p></div>
           </div>
         </details>
-        <details><summary>Et si je possède déjà la carte ?</summary><p>Le tirage peut donner un doublon, converti en Encre selon les règles habituelles. L’Encre est réservée aux enchères.</p></details>
+        <details><summary>Et si je possède déjà la carte ?</summary><p>Le tirage peut donner un doublon, converti en Encre selon les règles habituelles. L’Encre sert à la boutique et aux enchères du marché.</p></details>
         <details><summary>Que reste-t-il à la fin de l’abonnement ?</summary><p>Tes cartes, ton XP, les paquets en réserve et les droits hebdomadaires déjà acquis sont conservés. Le rythme et le plafond de recharge redeviennent ceux du jeu gratuit.</p></details>
         <details><summary>Quel avantage en duel ?</summary><p>Les offres accélèrent la collection et peuvent donner un avantage en duel, particulièrement au début. Répondre correctement reste nécessaire. Tout le jeu reste accessible gratuitement, sans publicité.</p></details>
       </section>
-      {paiementsDisponibles && <PaiementsTest />}
+      {paiementsDisponibles && (paiementsDeTest || aDesAchats || retourDePaiement) && <PaiementsTest />}
       {achat && <ConfirmationAchat offre={achat} achatsOuverts={achatsOuverts} fermer={() => setAchat(null)} />}
       <footer className="offres-pied"><span>Sans publicité. Le jeu reste ouvert à tous.</span><a href="mailto:contact@philamots.fr">Une question ? Écris-nous ↗</a></footer>
     </main>
@@ -109,7 +112,7 @@ function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; ach
     setOccupe(true);
     setMessage('');
     try { await paiement('achat', offre.cle); }
-    catch (erreur) { setMessage(erreur instanceof Error ? erreur.message : 'Paiement indisponible.'); }
+    catch (erreur) { setMessage(messageDe(erreur)); }
     finally { setOccupe(false); }
   }
 
@@ -120,7 +123,7 @@ function ConfirmationAchat({ offre, achatsOuverts, fermer }: { offre: Etage; ach
     <p className="petit">{paiementsDeTest ? 'Paiement de test : aucun argent réel ne sera encaissé.' : achatsOuverts ? (offre.cle === 'collectionneur' ? 'Abonnement à 4,99 € par mois, renouvelé automatiquement. Résiliation possible depuis « Gérer mon abonnement ».' : 'Paiement unique de 5,99 €. Le cadeau de bienvenue est attribué une seule fois par compte.') : 'Les achats ne sont pas encore ouverts.'}</p>
     {achatsOuverts && (surLeServeur && compte ? <>
       <Age formule={compte.formule} />
-      {!compte.codeDeSecoursLe && <p className="petit">Avant l’achat, <a href={lien({ ecran: 'profil' })}>crée ton code de secours dans le Profil</a> pour protéger ta collection.</p>}
+      {!compte.codeDeSecoursLe && <p className="petit">Avant l’achat, <a href={lien({ ecran: 'compte' })}>crée ton code de secours dans Mon compte</a> pour protéger ta collection.</p>}
     </> : <p className="petit">Un compte connecté est nécessaire pour confirmer ton âge et accéder au paiement.</p>)}
     {active && <p role="status">Cette formule est déjà activée.</p>}
     {message && <p role="alert">{message}</p>}

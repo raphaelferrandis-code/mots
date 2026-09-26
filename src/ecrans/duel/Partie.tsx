@@ -162,7 +162,7 @@ export function Partie(p: Props) {
   } else if (etape.nom === 'parade' && adverse) {
     phrase = <>Pare son attaque : retrouve la définition de <b>« {adverse.mot} »</b>.</>;
   } else if (etape.nom === 'reprise') {
-    phrase = 'Les attaques sont désormais automatiques. Reprends cette manche avec la définition du mot adverse.';
+    phrase = 'Reprends cette manche : retrouve la définition du mot adverse.';
     bouton = <button type="button" className="btn-primary sm" ref={p.viser} disabled={p.bloque} onClick={p.onContinuer}>Passer à la parade</button>;
   } else if (etape.nom === 'bilan' && manche && !recap) {
     phrase = <span className="partie__attente">{manche.joueur.paree ? 'Il pare ton mot…' : 'Il ne trouve pas la définition de ton mot…'}</span>;

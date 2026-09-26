@@ -60,14 +60,14 @@ describe('le client Supabase', () => {
   });
   it('ne remplace jamais un compte pendant la reprise d’un combat si son renouvellement est refusé', async () => {
     const monde=fauxMonde(()=>({statut:401}),{acces:'ancien',renouvellement:'refuse',expireLe:0});
-    await assert.rejects(monde.client.appelerCombat({type:'lire'}),/Session expirée/);
+    await assert.rejects(monde.client.appelerCombat({type:'lire'}),/session a expiré/);
     assert.equal(monde.appels.length,1); assert.ok(!monde.appels[0].adresse.includes('/signup'));
     assert.equal(monde.session()!.acces,'ancien');
   });
   it('conserve aussi le compte lors d’une synchronisation refusée, puis permet une récupération explicitement demandée', async () => {
     const monde=fauxMonde(a=>a.adresse.includes('refresh_token')?{statut:401}:a.adresse.includes('/signup')?{statut:200,corps:JETONS}:{statut:200,corps:{retrouve:true}},
       {acces:'ancien',renouvellement:'refuse',expireLe:0});
-    await assert.rejects(monde.client.appeler('mon_compte'),/Session expirée/);
+    await assert.rejects(monde.client.appeler('mon_compte'),/session a expiré/);
     assert.equal(monde.appels.length,1);
     assert.deepEqual(await monde.client.appeler('recuperer_par_code',{p_code:'code-explicite'}),{retrouve:true});
     assert.equal(monde.appels.filter(a=>a.adresse.includes('/signup')).length,1);
@@ -211,10 +211,10 @@ describe('le client Supabase', () => {
     await assert.rejects(interne.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && !erreur.refus && !erreur.message.includes('technique'));
 
     const absente = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 404, corps: { code: 'PGRST202', message: 'Could not find the function public.recuperer_par_code' } }));
-    await assert.rejects(absente.client.appeler('recuperer_par_code'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.statut === 404 && erreur.message.includes("pas à jour"));
+    await assert.rejects(absente.client.appeler('recuperer_par_code'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.statut === 404 && erreur.message.includes("mise à jour"));
 
     const ferme = fauxMonde(() => ({ statut: 422, corps: { msg: 'Anonymous sign-ins are disabled' } }));
-    await assert.rejects(ferme.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.message.includes("n'accepte pas"));
+    await assert.rejects(ferme.client.appeler('classement'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.message.includes("accepte pas"));
   });
 
   it("sait si l'appareil a un compte, et l'oublie après la suppression du profil (réponse vide du serveur)", async () => {

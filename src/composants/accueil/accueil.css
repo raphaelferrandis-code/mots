@@ -51,6 +51,8 @@
 .accueil__rappel p, .accueil__rappel a { font-size: 0.85rem; }
 .accueil__rappel p { margin-top: 6px; color: var(--encre-douce); }
 .accueil__rappel a { flex-shrink: 0; min-height: 44px; }
+.accueil__rappel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; flex-shrink: 0; }
+.accueil__plus-tard { min-height: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 0.85rem; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; cursor: pointer; }
 .accueil-trouvailles { display: grid; gap: 16px; }
 .accueil-trouvailles h2 { font: 500 0.9rem var(--police-texte); color: var(--encre-douce); }
 .accueil-trouvailles__timbres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 18px; }

@@ -60,7 +60,7 @@ export function Marche() {
       </Entete>
 
       {!disponible ? (
-        <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a></section>
+        <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a></section>
       ) : (
         <>
           <section className="outils-album" aria-label="Chercher un timbre en vente">

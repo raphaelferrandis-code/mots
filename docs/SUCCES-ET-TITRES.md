@@ -72,9 +72,9 @@ Chaque succès rapporte un titre exclusif, disponible immédiatement dans le pro
 
 | Succès | Objectif | Titre remporté |
 | --- | --- | --- |
-| Trouver le sens | Retrouver 10 définitions de ses propres mots en duel. | Déchiffreur |
-| Entre les lignes | Retrouver 25 définitions de ses propres mots en duel. | Lecteur de l’invisible |
-| Les mots n’ont plus de secrets | Retrouver 100 définitions de ses propres mots en duel. | Interprète du lexique |
+| Trouver le sens | Retrouver 10 fois en duel la définition d’un mot de sa collection. | Déchiffreur |
+| Entre les lignes | Retrouver 25 fois en duel la définition d’un mot de sa collection. | Lecteur de l’invisible |
+| Les mots n’ont plus de secrets | Retrouver 100 fois en duel la définition d’un mot de sa collection. | Interprète du lexique |
 | Bien entendu | Réussir 10 parades en reconnaissant le mot adverse. | Oreille affûtée |
 | Lire dans le jeu adverse | Réussir 25 parades. | Déjoueur de pièges |
 | Le rempart du sens | Réussir 100 parades. | Sentinelle des définitions |

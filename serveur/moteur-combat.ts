@@ -45,12 +45,12 @@ export function creerCombat(choix: ChoixCombat, compte: { deck: string[]; possed
   const disponibles = visibles(catalogue, choix.masques);
   const parId = new Map(disponibles.map(c => [c.id, c]));
   const deck = [...new Set(compte.deck)].flatMap(id => compte.possedees.includes(id) && parId.has(id) ? [parId.get(id)!] : []);
-  if (deck.length !== R.tailleDuDeck) throw new RefusCombat(`Ton deck doit compter ${R.tailleDuDeck} cartes jouables.`);
+  if (deck.length !== R.tailleDuDeck) throw new RefusCombat(`Ton carnet doit compter ${R.tailleDuDeck} timbres jouables.`);
   if (choix.mode !== 'entrainement' && (!profil || profil.id !== choix.adversaire)) throw new RefusCombat('Cet adversaire est indisponible.');
   const adversaire: AdversaireCombat = choix.mode === 'entrainement' ? { type: 'entrainement', niveau: choix.niveau } : { type: 'joute', profil: profil!, ...(choix.mode === 'amical' ? { amical: true } : {}) };
   const autre = adversaire.type === 'entrainement' ? deckDeLOrdinateur(deck, disponibles, adversaire.niveau, hasard, R)
     : [...new Set(adversaire.profil.deck)].flatMap(id => parId.has(id) ? [parId.get(id)!] : []);
-  if (autre.length !== R.tailleDuDeck) throw new RefusCombat('Le deck adverse contient des mots masqués ou est incomplet.');
+  if (autre.length !== R.tailleDuDeck) throw new RefusCombat('Le carnet adverse contient des mots masqués ou est incomplet.');
   const duel = commencerLeDuel(deck, autre, hasard, R);
   return {
     versionMoteur: VERSION_MOTEUR, duel, adversaire, masques: choix.masques, temps: choix.temps,
@@ -77,7 +77,7 @@ export function avancerCombat(avant: EtatCombatPrive, action: ActionCombat, cata
   const question = (carte: CarteIndex, autre: CarteIndex) => composerLEpreuve(carte, catalogue.definitions, visibles(catalogue, etat.masques).filter(c => c.id !== autre.id), etat.masques, hasard);
   if (action.type === 'choisir' && e.nom === 'choix') {
     const carte = etat.duel.camps.joueur.main.find(c => c.id === action.carte);
-    if (!carte) throw new RefusCombat('Cette carte ne figure pas dans ta main.');
+    if (!carte) throw new RefusCombat('Ce timbre ne figure pas dans ta main.');
     // Quand le joueur a posé le premier, l'adversaire répond en ne voyant que la nature de son mot.
     const enFace = e.adverse ?? adverse(etat.duel, etat.adversaire, catalogue, hasard, carte.type);
     etat.etape = { nom: 'parade', carte, adverse: enFace, epreuve: question(enFace, carte), debut: maintenant };

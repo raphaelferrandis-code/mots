@@ -21,7 +21,7 @@ export function AnalyseDuDeck({ deck, tailles }: { deck: CarteIndex[]; tailles: 
   const id = useId();
   const analyse = analyserLeDeck(deck, tailles, REGLES);
   const n = analyse.parNature;
-  const description = `Triangle des types : le nom bat l’adjectif, l’adjectif bat le verbe, le verbe bat le nom, +${REGLES.bonusDeType} dégâts ; l’adverbe est neutre. Ton deck : ${n.Nom} ${pluralDe('Nom', n.Nom)}, ${n.Verbe} ${pluralDe('Verbe', n.Verbe)}, ${n.Adjectif} ${pluralDe('Adjectif', n.Adjectif)}, ${n.Adverbe} ${pluralDe('Adverbe', n.Adverbe)}.`;
+  const description = `Triangle des types : le nom bat l’adjectif, l’adjectif bat le verbe, le verbe bat le nom, +${REGLES.bonusDeType} dégâts ; l’adverbe est neutre. Ton carnet : ${n.Nom} ${pluralDe('Nom', n.Nom)}, ${n.Verbe} ${pluralDe('Verbe', n.Verbe)}, ${n.Adjectif} ${pluralDe('Adjectif', n.Adjectif)}, ${n.Adverbe} ${pluralDe('Adverbe', n.Adverbe)}.`;
   const sommet = (nature: Nature, [x, y]: [number, number], r = 31) => (
     <g key={nature} opacity={n[nature] ? 1 : .45}>
       <circle cx={x} cy={y} r={r} fill={ENCRES_DU_TIMBRE[nature]} fillOpacity={n[nature] ? .32 : .08} stroke={ENCRES_DU_TIMBRE[nature]} strokeWidth="1.3" />
@@ -31,7 +31,7 @@ export function AnalyseDuDeck({ deck, tailles }: { deck: CarteIndex[]; tailles: 
   );
 
   return (
-    <section className="analyse-deck" aria-label="Analyse du deck">
+    <section className="analyse-deck" aria-label="Analyse du carnet">
       <svg className="triangle-types" viewBox="0 0 290 240" role="img" aria-label={description}>
         <defs>
           {ARCS.map(([nature]) => <marker key={nature} id={`${id}-${nature}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill={ENCRES_DU_TIMBRE[nature]} /></marker>)}
@@ -44,16 +44,16 @@ export function AnalyseDuDeck({ deck, tailles }: { deck: CarteIndex[]; tailles: 
       </svg>
 
       <div className="analyse-deck__texte">
-        {deck.length === 0 ? <p className="analyse-deck__neutre">Ton deck est vide. Ajoute des timbres depuis ta collection.</p>
+        {deck.length === 0 ? <p className="analyse-deck__neutre">Ton carnet est vide. Touche « Modifier » pour y ajouter des timbres.</p>
           : analyse.dominante ? <>
             <p className="analyse-deck__fort">Tes <b>{analyse.dominante.nombre} {pluralDe(analyse.dominante.nature, 2)}</b> prennent +{REGLES.bonusDeType} contre les {pluralDe(analyse.dominante.forte, 2)}.</p>
             <p className="analyse-deck__faible">Point faible : les <b>{pluralDe(analyse.dominante.faible, 2)}</b> adverses prennent +{REGLES.bonusDeType} contre eux.</p>
-          </> : <p className="analyse-deck__fort">Deck équilibré : aucun type adverse ne te met vraiment en difficulté.</p>}
+          </> : <p className="analyse-deck__fort">Carnet équilibré : aucun type adverse ne te met vraiment en difficulté.</p>}
         {analyse.adverbes >= 3 && <p className="analyse-deck__neutre">Tes {analyse.adverbes} adverbes sont neutres : ni bonus ni faiblesse de type.</p>}
       </div>
 
       {analyse.origines.length > 0 && <div className="analyse-deck__origines">
-          <ul className="c-pastilles" aria-label="Origines du deck">
+          <ul className="c-pastilles" aria-label="Origines du carnet">
             {analyse.origines.map((o) => o.enchainable
               ? <li key={o.nom} className="c-pastille c-dorure"><span>{o.nom} ×{o.nombre} · +{o.bonus}</span></li>
               : <li key={o.nom} className="c-pastille c-vignette">{o.nom}</li>)}

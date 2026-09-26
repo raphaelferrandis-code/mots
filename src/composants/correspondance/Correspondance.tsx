@@ -89,10 +89,10 @@ export function EnteteCorrespondance({ actif, pseudo, amis, echanges, invitation
       <span className="visuellement-cache" role="status">{copie ? 'Pseudonyme copié.' : ''}</span>
     </div>}
     <nav className="onglets-correspondance" aria-label="Amis et équipe">
-      <a href={lien({ ecran: 'amis' })} aria-current={courant('amis')}>Amis{amis !== undefined && <span className="compte">{amis}</span>}</a>
-      <a href={LIEN_ECHANGES} aria-current={courant('echanges')}>Échanges{!!echanges && <span className="compte">{echanges}</span>}</a>
+      <a href={lien({ ecran: 'amis' })} aria-current={courant('amis')}>Amis{amis !== undefined && <span className="compteur">{amis}</span>}</a>
+      <a href={LIEN_ECHANGES} aria-current={courant('echanges')}>Échanges{!!echanges && <span className="compteur">{echanges}</span>}</a>
       <a href={lien({ ecran: 'equipe' })} aria-current={courant('equipe')}>Mon équipe{invitations > 0
-        ? <span className="compte compte--vif" title={`${invitations} invitation${invitations > 1 ? 's' : ''}`}>{invitations}</span>
+        ? <span className="compteur compteur--vif" title={`${invitations} invitation${invitations > 1 ? 's' : ''}`}>{invitations}</span>
         : signe && <span className="onglets-correspondance__signe" aria-hidden="true">{signe}</span>}</a>
       {actualiser && <button type="button" className="outil onglets-correspondance__outil" disabled={occupe} onClick={actualiser}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8" /><path d="M21 3v5h-5" /></svg><span className="onglets-correspondance__libelle">Actualiser</span>

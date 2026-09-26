@@ -1,6 +1,6 @@
 .compte__carte { width: min(100%, 500px); align-self: center; display: grid; gap: 20px; padding: clamp(20px, 4vw, 36px); margin-block: 16px; }
 .compte__carte p { overflow-wrap: anywhere; }
-.compte__sceau { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font: 30px var(--police-titre); }
+.compte__carte h2 { margin: 0; }
 .compte__modes { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--filet); border-radius: 10px; }
 .compte__modes button { flex: 1; padding: 12px 8px; border: 0; border-radius: 6px; background: transparent; font-size: .9rem; }
 .compte__modes button[aria-pressed="true"] { background: var(--papier-fonce); color: var(--accent); }
@@ -12,4 +12,9 @@
 .compte__formulaire input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; background: var(--papier); color: var(--encre); border: 1px solid var(--filet-fort); border-radius: 8px; font: inherit; }
 .compte__formulaire label { font-weight: 600; }
 .compte__erreur { padding: 12px; border: 1px solid var(--accent); border-radius: 8px; }
-.compte__retour { text-align: center; }
+/* Le code de secours et la suppression : des cartes plus discrètes que la connexion, sous elle. */
+.code-secours, .compte__suppression { gap: 14px; margin-block: 0 16px; }
+.code-secours .bouton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.code-secours .joute__saisie { min-width: 0; }
+.compte__suppression .bouton--danger { justify-self: start; }
+.compte__pied { text-align: center; }

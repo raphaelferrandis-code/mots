@@ -13,10 +13,17 @@ const DOSSIER = `${import.meta.env.BASE_URL}data/`;
 // L'empreinte des données (vite.config.ts) : une nouvelle édition a une nouvelle adresse, qu'aucun vieux cache ne connaît.
 const VERSION: string = import.meta.env?.VITE_VERSION_DES_DONNEES ?? '';
 
+// Le joueur lit une phrase, sans nom de fichier ; le détail (fichier, code de réponse) part dans la console.
+const DONNEES_ABSENTES = 'Les timbres n’ont pas pu être chargés. Vérifie ta connexion, puis recharge la page.';
+
 async function lireJson<T>(chemin: string): Promise<T> {
   const reponse = await fetch(`${DOSSIER}${chemin}${VERSION ? `?v=${VERSION}` : ''}`);
-  if (!reponse.ok) throw new Error(`Impossible de charger ${chemin} (erreur ${reponse.status})`);
-  return reponse.json() as Promise<T>;
+  if (!reponse.ok) {
+    console.error(`Impossible de charger ${chemin} (erreur ${reponse.status})`);
+    throw new Error(DONNEES_ABSENTES);
+  }
+  // (Une page HTML à la place du fichier — portail Wi-Fi, ancienne version du site — n'est pas lisible.)
+  try { return await reponse.json() as T; } catch (erreur) { console.error(chemin, erreur); throw new Error(DONNEES_ABSENTES); }
 }
 
 // Chaque fichier n'est téléchargé qu'une fois : les demandes suivantes réutilisent la première.

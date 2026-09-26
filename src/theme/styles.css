@@ -152,7 +152,8 @@ main:focus, main h1:focus { outline: none; }
 .paquets__stock strong { font-size: 3.2rem; line-height: 1; color: var(--encre); }
 .rangee-de-boutons { display: flex; flex-wrap: wrap; gap: 10px; }
 .bouton { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; text-align: center; }
-.bouton--danger { margin-top: 6px; }
+/* Une action définitive (supprimer son compte) : le même bouton, à l’encre rouge, pour qu’on ne la confonde pas avec « Exporter ». */
+.bouton--danger { margin-top: 6px; color: #ffb4a4; border-color: #8f4336; }
 .bloc--alerte { border-color: var(--accent); }
 
 /* Sur téléphone, les cinq timbres défilent un par un, en grand (on lit la définition) ; sur grand écran, ils sont côte à côte. */

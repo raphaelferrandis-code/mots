@@ -27,7 +27,8 @@ export class ErreurDuServeur extends Error {
   }
 }
 
-const PANNE = 'Le serveur du jeu ne répond pas. Réessaie dans un moment.';
+const PANNE = 'Le serveur du jeu ne répond pas. Réessaie dans un instant.';
+const SESSION_EXPIREE = 'Ta session a expiré. Reconnecte-toi depuis Mon compte, ou retrouve ta collection avec ton code de secours (dans ton profil).';
 const ANTI_ROBOT = "La vérification anti-robot n'a pas abouti. Recharge la page pour réessayer.";
 const MARGE_AVANT_EXPIRATION = 60_000;
 
@@ -61,12 +62,12 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       if (gardee) {
         const renouvelee = await demanderUneSession('token?grant_type=refresh_token', { refresh_token: gardee.renouvellement });
         if (renouvelee !== 'refusee') return renouvelee;
-        if (!recuperation) throw new ErreurDuServeur('Session expirée. Reconnecte-toi depuis Mon compte, ou utilise ton code de secours dans le Profil.', true, 401);
+        if (!recuperation) throw new ErreurDuServeur(SESSION_EXPIREE, true, 401);
       }
-      if (conserverCompte) throw new ErreurDuServeur('Recharge ton compte avant de reprendre le duel.', true, 401);
+      if (conserverCompte) throw new ErreurDuServeur('Ta session a expiré. Recharge la page pour reprendre.', true, 401);
       const jeton = exterieur.jetonAntiRobot ? await exterieur.jetonAntiRobot() : undefined;
       const nouvelle = await demanderUneSession('signup', { data: {}, gotrue_meta_security: jeton ? { captcha_token: jeton } : {} });
-      if (nouvelle === 'refusee') throw new ErreurDuServeur(exterieur.jetonAntiRobot ? ANTI_ROBOT : "Le serveur des joutes n'accepte pas de nouveau joueur pour l'instant.", false);
+      if (nouvelle === 'refusee') throw new ErreurDuServeur(exterieur.jetonAntiRobot ? ANTI_ROBOT : 'Le jeu n’accepte pas de nouveau joueur pour l’instant. Réessaie plus tard.', false);
       return nouvelle;
     };
     // Une ouverture déjà en cours, commencée avant le refus, peut rendre le jeton refusé : on l'attend, puis on en relance
@@ -93,7 +94,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       // « P0001 » : une exception levée exprès par nos fonctions, avec un message écrit pour le joueur.
       if (erreur?.code === 'P0001' && erreur.message) throw new ErreurDuServeur(erreur.message, true);
       // « PGRST202 » : la fonction n'existe pas encore sur le serveur (script pas recollé) — ce n'est pas une panne.
-      if (reponse.status === 404 && erreur?.code === 'PGRST202') throw new ErreurDuServeur("Le serveur du jeu n'est pas à jour : cette fonction n'y est pas encore installée.", true, 404);
+      if (reponse.status === 404 && erreur?.code === 'PGRST202') throw new ErreurDuServeur('Cette fonction n’est pas encore disponible : le jeu est en cours de mise à jour. Réessaie plus tard.', true, 404);
       throw new ErreurDuServeur(PANNE, false);
     }
     // Une fonction qui ne rend rien (supprimer_mon_profil) répond sans contenu. Une page HTML glissée par un intermédiaire
@@ -138,7 +139,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     } catch { throw new ErreurDuServeur(PANNE, false); }
     if (reponse.status === 401 && rejete === null) return appelerCombat<T>(corps, acces);
     const resultat = await reponse.json().catch(() => null);
-    if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Le serveur des combats est indisponible. Réessaie.', reponse.status < 500, reponse.status);
+    if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Les duels sont momentanément indisponibles. Réessaie dans un instant.', reponse.status < 500, reponse.status);
     if (!resultat || !('combat' in resultat) || !resultat.etat) throw new ErreurDuServeur(PANNE, false);
     return resultat as T;
   }
@@ -153,7 +154,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     } catch { throw new ErreurDuServeur(PANNE,false); }
     if (reponse.status === 401 && rejete === null) return appelerDirect<T>(corps,acces);
     const resultat = await reponse.json().catch(() => null);
-    if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Joutes en direct indisponibles.',reponse.status<500,reponse.status);
+    if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Les joutes en direct sont momentanément indisponibles. Réessaie dans un instant.',reponse.status<500,reponse.status);
     if (!resultat || !('partie' in resultat) || typeof resultat.maintenant !== 'number') throw new ErreurDuServeur(PANNE,false);
     return resultat as T;
   }

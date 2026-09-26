@@ -26,14 +26,3 @@
   text-decoration: none;
 }
 .reglages__confidentialite:hover { color: var(--encre); text-decoration: underline; }
-
-.vestiaire .profil-compte { margin-bottom: 24px; padding-block: 0; border-block: 1px solid var(--filet); }
-.profil-compte > summary { display: flex; align-items: center; min-height: 52px; }
-.profil-compte__contenu { display: grid; gap: 16px; padding-block: 8px 24px; max-width: 760px; }
-.profil-compte__contenu > .bouton { justify-self: start; }
-.profil-compte .bouton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
-.profil-compte .joute__saisie { min-width: 0; }
-
-@media (max-width: 600px) {
-  .profil-compte__contenu > .bouton { justify-self: stretch; }
-}

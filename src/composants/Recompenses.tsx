@@ -48,8 +48,11 @@ export function CarteRecompense({ recompense, pseudo, equipe, onEquiper }: { rec
   </div>;
 }
 
-export function Recompenses({ children, profil }: { children: ReactNode; profil: ProfilPersonnel | null }) {
+// « repere » (services/partie.ts, repereDesRecompenses) : null tant que le compte n'est pas à jour ; il change avec le
+// compte. Le premier profil vu après lui sert de référence : ce qui arrive avec la collection n'est pas un gain.
+export function Recompenses({ children, profil, repere }: { children: ReactNode; profil: ProfilPersonnel | null; repere: number | null }) {
   const precedent = useRef<Pick<ProfilPersonnel, 'xp' | 'succes'> | null>(null);
+  const reperePrecedent = useRef<number | null>(null);
   const [attente, setAttente] = useState<Recompense[]>([]);
   const [suspensions, setSuspensions] = useState(0);
   const [survolee, setSurvolee] = useState(false);
@@ -61,14 +64,15 @@ export function Recompenses({ children, profil }: { children: ReactNode; profil:
   const panneau = useRef<HTMLElement>(null);
   const origineFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    if (!profil) { precedent.current = null; setAttente([]); return; }
+    if (!profil || repere === null) { precedent.current = null; reperePrecedent.current = null; setAttente([]); return; }
+    if (reperePrecedent.current !== repere) { precedent.current = null; reperePrecedent.current = repere; setAttente([]); }
     if (precedent.current) {
       const gains = nouvellesRecompenses(precedent.current, profil);
       if (gains.length) setAttente(liste => [...liste, ...gains]);
       // Une correction serveur ne fait pas rejouer un succès déjà vu pendant cette session.
       precedent.current = { xp: Math.max(precedent.current.xp, profil.xp), succes: [...new Set([...precedent.current.succes, ...profil.succes])] };
     } else precedent.current = { xp: profil.xp, succes: [...profil.succes] };
-  }, [profil]);
+  }, [profil, repere]);
   const visible = suspensions === 0 && attente.length > 0;
   useEffect(() => {
     if (visible && !panneau.current?.contains(document.activeElement)) origineFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;

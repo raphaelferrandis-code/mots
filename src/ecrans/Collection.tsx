@@ -17,7 +17,7 @@ const TYPES: Nature[] = ['Nom', 'Adjectif', 'Verbe', 'Adverbe'];
 const PAR_PAGE = 60;
 
 const TRIS = {
-  recentes: 'Les plus récentes',
+  recentes: 'Les plus récents',
   alphabet: 'Ordre alphabétique',
   rarete: 'Les plus rares',
   attaque: 'Attaque',

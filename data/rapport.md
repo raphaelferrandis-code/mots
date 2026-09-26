@@ -1,12 +1,12 @@
 # Rapport de génération des cartes
 
-*Généré par `npm run pipeline` en 26 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
+*Généré par `npm run pipeline` en 34 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
 
 ## 1. En bref
 
 - Base complète : **52 046 cartes possibles**.
 - Édition 1 : **3 016 cartes**, choisies parmi 22 757 cartes éligibles.
-- Poids pour le jeu : 694 Ko chargés au démarrage, plus 1 413 Ko de détails répartis en 16 fichiers chargés à la demande.
+- Poids pour le jeu : 694 Ko chargés au démarrage, plus 1 412 Ko de détails répartis en 16 fichiers chargés à la demande.
 - L'édition est en jeu : ses cartes sont gardées telles quelles, seuls leurs textes et leurs notes sont recalculés (réglage `figee` de `pipeline/config.ts`, détail au §4).
 
 ## 2. Du fichier brut aux cartes
@@ -76,7 +76,7 @@ Origine héritée d'un autre mot (« danseur » prend l'origine de « danser »)
 | Littéraire | 84 | 0,2 % |
 
 - Prévalence mesurée : 32 806 cartes (63,0 %)
-- Au moins une définition utilisable en duel : 37 351 cartes (71,8 %)
+- Au moins une définition utilisable en duel : 37 349 cartes (71,8 %)
 - Date de première apparition connue : 11 659 cartes (22,4 %)
 - Homographes regroupés en une seule carte : 3 169, par exemple fils, banal, pouf, beau, bocage, bretelle, nazi, livre, composter, ya, seconde, daille, accordance, kan, coquard, chambrer, grimaud, marner, broc, slop, tonga, colon, pli, arène, triton
 
@@ -84,7 +84,7 @@ Origine héritée d'un autre mot (« danseur » prend l'origine de « danser »)
 
 Pour être éligible, une carte doit avoir une faction reconnue, une prévalence mesurée (au moins 10 personnes interrogées) et au moins une définition utilisable en duel. **22 757 cartes éligibles.**
 
-**L'édition est en jeu : ses 3 016 cartes sont gardées telles quelles.** Composée aujourd'hui avec les mêmes réglages, elle perdrait 4 cartes (chipie-nom, coquerie-nom, recourber-verbe, ronronnement-nom) et en gagnerait 4 (yéti-nom, chuchotement-nom, pâmer-verbe, pochon-nom).
+**L'édition est en jeu : ses 3 016 cartes sont gardées telles quelles.** Composée aujourd'hui avec les mêmes réglages, elle perdrait 6 cartes (brique-adj, chipie-nom, coquerie-nom, fauve-adj, recourber-verbe, ronronnement-nom) et en gagnerait 6 (yéti-nom, dégagé-adj, chuchotement-nom, pâmer-verbe, braisé-adj, pochon-nom).
 
 | Rareté | Cartes | Part | Attaque moyenne | Défense moyenne (brute) | Défense moyenne (avec le bonus de rareté) | Connu de… (moyenne) |
 |---|---|---|---|---|---|---|

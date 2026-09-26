@@ -80,7 +80,7 @@ export function Boutique() {
       </Entete>
 
       {!disponible ? (
-        <section className="etat-vide"><h2>Boutique indisponible</h2><p>La boutique nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Voir ma collection</a></section>
+        <section className="etat-vide"><h2>Boutique indisponible</h2><p>La boutique nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a></section>
       ) : <>
         {message && <p role={message.erreur ? 'alert' : 'status'} className={`boutique__message${message.erreur ? ' boutique__message--refus' : ''}`}>{message.texte}</p>}
 

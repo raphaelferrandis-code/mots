@@ -41,12 +41,12 @@ export async function deckJouable(): Promise<CarteIndex[]> {
 
 export async function preparerUnDuel(adversaire: Adversaire): Promise<{ terrain: Terrain; duel: Duel }> {
   const partie = lirePartie();
-  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  if (partie.etat !== 'prete') throw new Error('Le jeu n’est pas encore prêt. Réessaie dans un instant.');
   const masques = registresMasques(partie.sauvegarde);
   const [edition, definitions] = await Promise.all([chargerEdition(), chargerLesDefinitions()]);
   const visibles = edition.cartes.filter((c) => !c.registre.some((r) => masques.includes(r)));
   const deck = cartesDuDeck(partie.sauvegarde, new Map(visibles.map((c) => [c.id, c])));
-  if (deck.length !== REGLES.tailleDuDeck) throw new Error(`Ton deck doit compter ${REGLES.tailleDuDeck} cartes.`);
+  if (deck.length !== REGLES.tailleDuDeck) throw new Error(`Ton carnet doit compter ${REGLES.tailleDuDeck} timbres.`);
 
   // À l'entraînement, l'ordinateur reçoit un deck à la mesure de celui du joueur ; en joute, c'est le deck de l'autre joueur.
   let adverse: CarteIndex[];
@@ -54,7 +54,7 @@ export async function preparerUnDuel(adversaire: Adversaire): Promise<{ terrain:
   else {
     const connues = new Map(visibles.map((c) => [c.id, c]));
     adverse = adversaire.profil.deck.flatMap((id) => connues.get(id) ?? []);
-    if (adverse.length !== REGLES.tailleDuDeck) throw new Error("Le deck de cet adversaire contient des cartes que ton jeu ne peut pas afficher. Choisis-en un autre.");
+    if (adverse.length !== REGLES.tailleDuDeck) throw new Error('Le carnet de cet adversaire contient des timbres que ton jeu ne peut pas afficher. Choisis-en un autre.');
   }
   return {
     terrain: { adversaire, visibles, definitions, masques, tailles: taillesDesFactions(edition.cartes) },

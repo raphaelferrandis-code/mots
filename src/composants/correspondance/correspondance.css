@@ -16,11 +16,13 @@
 .mention--cuivre { font-weight: 600; letter-spacing: 0.2em; color: var(--cuivre); }
 .mention--vive { color: var(--accent); }
 
-.compte {
+/* Le petit compteur des onglets (« Amis 3 »). Il s’appelait « .compte » et habillait aussi toute la page Mon compte
+   (fond, police de 12 px, texte centré) : audit de finition du 26/09/2026. */
+.compteur {
   display: inline-block; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px;
   background: var(--papier-fonce); color: var(--encre); font: 600 0.75rem/22px var(--police-texte); text-align: center;
 }
-.compte--vif { background: var(--accent); color: var(--accent-texte); }
+.compteur--vif { background: var(--accent); color: var(--accent-texte); }
 
 /* Les boutons de la correspondance : l'orange pour la prochaine action, le discret pour le reste. */
 .correspondance .bouton { min-height: 46px; padding: 10px 20px; align-self: auto; gap: 8px; }
@@ -55,7 +57,7 @@
   color: var(--encre-douce); text-decoration: none; font-weight: 500; border-bottom: 2px solid transparent;
 }
 .onglets-correspondance a[aria-current='page'] { color: var(--encre); border-bottom-color: var(--accent); }
-.onglets-correspondance a[aria-current='page'] .compte { background: var(--accent); color: var(--accent-texte); }
+.onglets-correspondance a[aria-current='page'] .compteur { background: var(--accent); color: var(--accent-texte); }
 .onglets-correspondance__signe { font: 400 1.1rem/1 var(--police-signe); color: var(--cuivre); }
 .onglets-correspondance__outil { margin-left: auto; }
 .onglets-correspondance__outil svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

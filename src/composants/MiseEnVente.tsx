@@ -51,7 +51,7 @@ export function MiseEnVente({ carte, possedee, dansLeDeck, cotes = null, onVendu
   return (
     <form className="vente" onSubmit={(e) => void envoyer(e)}>
       <p className="texte-doux petit">
-        Le timbre quitte ton album le temps de la vente{exemplaires === 1 && dansLeDeck ? ', et ton deck' : ''}. À la fin, tu reçois le prix
+        Le timbre quitte ton album le temps de la vente{exemplaires === 1 && dansLeDeck ? ', et ton carnet' : ''}. À la fin, tu reçois le prix
         moins {Math.round(REGLES.commission * 100)} % de commission. Sans preneur, il revient dans ton album.
       </p>
       {finitions.length > 1 && (

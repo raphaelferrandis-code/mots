@@ -43,16 +43,16 @@ const MODES: { id: ModeDuSalon; nom: string }[] = [
 const IDS_DES_MODES = MODES.map((m) => m.id);
 
 const TITRES: Record<ModeDuSalon, [string, string]> = {
-  entrainement: ['Choisis ton adversaire', 'Entraînement contre l’ordinateur. Tes timbres ne risquent rien, ton encre peut grimper.'],
+  entrainement: ['Choisis ton adversaire', 'Entraînement contre l’ordinateur. Tes timbres ne risquent rien, ton Encre peut grimper.'],
   joutes: ['Joutes classées', 'De vrais joueurs, en direct. Ta cote monte ou descend à chaque joute.'],
-  ami: ['Défie un ami', 'Tu affrontes son double : son deck, joué par l’ordinateur. Le défi ne compte pas pour le classement.'],
+  ami: ['Défie un ami', 'Tu affrontes son double : son carnet, joué par l’ordinateur. Le défi ne compte pas pour le classement.'],
   equipe: ['Mon équipe', 'Ton duo et votre cote commune dans les joutes en 2 contre 2.'],
 };
 
 // Ce que chaque niveau change vraiment (jeu/duel.ts et la section « L'ordinateur » de l'équilibrage).
 const NIVEAUX_DECRITS: Record<Niveau, string> = {
   Facile: 'Ses mots ont la même rareté que les tiens. Il les pose au hasard, pare moins souvent, et le jeu t’affiche les dégâts prévus.',
-  Normal: 'Ses mots ont un cran de rareté de plus que les tiens, et il joue toujours sa carte la plus solide.',
+  Normal: 'Ses mots ont un cran de rareté de plus que les tiens, et il joue toujours son timbre le plus solide.',
   Difficile: 'Ses mots ont deux crans de rareté de plus, et quand tu poses le premier, il contre ton type.',
 };
 
@@ -112,9 +112,11 @@ export function Preparation(props: Props) {
   const ami = defiables.find((a) => a.id === amiChoisi) ?? null;
 
   const equipe = useChargement(async () => mode === 'equipe' && serveurUtilise ? serveurEquipes().lire() : null, `equipe:${mode === 'equipe'}`);
+  // Pour chaque joute : la ligne du joueur au classement, ou ce qui lui manque pour y entrer (joutes jouées, seuil).
   const cotes = useChargement(async () => {
     if (mode !== 'joutes' || !serveurUtilise) return null;
-    const lire = (m: ModeDirect) => clientDuServeur().appeler<ClassementDirect>('classement_direct', { p_mode: m }).then((c) => c.lignes.find((l) => l.moi) ?? null);
+    const lire = (m: ModeDirect) => clientDuServeur().appeler<ClassementDirect>('classement_direct', { p_mode: m })
+      .then((c) => ({ ligne: c.lignes.find((l) => l.moi) ?? null, jouees: c.moi?.jouees ?? 0, minimum: c.minimum ?? null }));
     const [solo, duo] = await Promise.all([lire('solo'), lire('duo_solo')]);
     return { solo, duo_solo: duo };
   }, `cotes:${mode === 'joutes'}`);
@@ -162,7 +164,7 @@ export function Preparation(props: Props) {
     }
   } else if (manque > 0) {
     appel = <button type="button" className="btn-primary" disabled aria-describedby="legende-preparation">{mode === 'entrainement' ? 'Lancer le duel' : mode === 'ami' ? 'Défier' : 'Chercher un adversaire'}</button>;
-    legende = <span data-manque="true">Il manque {pluriel(manque, 'timbre')} à ton deck.</span>;
+    legende = <span data-manque="true">Il manque {pluriel(manque, 'timbre')} à ton carnet.</span>;
   } else if (mode === 'entrainement') {
     appel = <button type="button" className="btn-primary" aria-busy={enPreparation} aria-describedby="legende-preparation" disabled={enPreparation || bloque} onClick={props.onLancer}>{enPreparation ? 'Préparation du duel…' : 'Lancer le duel'}</button>;
     legende = <><b>{niveau}</b> · {tempsEnClair(sauvegarde.reglages.tempsDeReponse)}<br />Jusqu’à <b>+{gain(REGLES.encreParVictoire[niveau])} Encre</b></>;
@@ -230,7 +232,9 @@ export function Preparation(props: Props) {
                 : <>
                   <div className="cartes-de-mode" role="radiogroup" aria-label="Joute à chercher" onKeyDown={rechercheEnCours ? undefined : choisirAuxFleches(MODES_DES_JOUTES, jouteChoisie, setJouteChoisie)}>
                     {JOUTES.map(({ mode: m, nom, phrase }) => {
-                      const ligne = cotes.etat === 'pret' ? cotes.donnees?.[m] ?? null : null;
+                      const lue = cotes.etat === 'pret' ? cotes.donnees?.[m] ?? null : null;
+                      const ligne = lue?.ligne ?? null;
+                      const restantes = lue?.minimum ? Math.max(1, lue.minimum - lue.jouees) : null;
                       return <button key={m} type="button" role="radio" className="carte-de-mode" aria-checked={jouteAffichee === m} aria-disabled={rechercheEnCours}
                         tabIndex={m === (jouteAffichee === 'duo_solo' ? 'duo_solo' : 'solo') ? 0 : -1} onClick={() => { if (!rechercheEnCours) setJouteChoisie(m); }}>
                         <strong className="carte-de-mode__nom">{nom}</strong>
@@ -240,7 +244,7 @@ export function Preparation(props: Props) {
                           : ligne ? <>
                             <span className="carte-de-mode__chiffre"><b>{ligne.cote.toLocaleString('fr-FR')}</b><small>cote</small></span>
                             <span className="carte-de-mode__phrase">Ligue {ligueDe(ligne.cote, EQUILIBRAGE.joute).nom} · {ligne.rang.toLocaleString('fr-FR')}<sup>e</sup> · {pluriel(ligne.gagnees, 'victoire')} en {pluriel(ligne.jouees, 'joute')}</span>
-                          </> : <span className="carte-de-mode__phrase">Pas encore classé : ta première joute t’y fera entrer.</span>}
+                          </> : <span className="carte-de-mode__phrase">{restantes !== null ? `Pas encore classé : encore ${pluriel(restantes, 'joute')} pour entrer au classement.` : 'Pas encore classé : joue tes premières joutes pour y entrer.'}</span>}
                         <span className="adversaire__coche" aria-hidden="true"><Coche /></span>
                       </button>;
                     })}
@@ -262,7 +266,7 @@ export function Preparation(props: Props) {
                   {listeDAmis.map((a) => (
                     <button key={a.id} type="button" role="radio" className="ami-a-defier" aria-checked={a.id === amiChoisi} aria-disabled={!a.defiable} tabIndex={a.id === amiChoisi ? 0 : -1} onClick={() => a.defiable && setAmiChoisi(a.id)}>
                       <PortraitAmi apparence={a} taille={44} />
-                      <span className="ami-a-defier__texte"><strong>{a.pseudo}</strong>{a.defiable ? <Presence vuLe={a.vu_le} /> : <small>Son deck n’est pas complet</small>}</span>
+                      <span className="ami-a-defier__texte"><strong>{a.pseudo}</strong>{a.defiable ? <Presence vuLe={a.vu_le} /> : <small>Son carnet n’est pas complet</small>}</span>
                       <span className="adversaire__coche" aria-hidden="true"><Coche /></span>
                     </button>
                   ))}

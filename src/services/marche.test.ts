@@ -60,6 +60,6 @@ describe('le service du marché', () => {
 
   it('refuse une réponse sans enchère lisible', async () => {
     const { service } = doublure({ encherir: { enchere: 'rien', etat: ETAT } });
-    await assert.rejects(service.encherir(3, 30), /illisible/);
+    await assert.rejects(service.encherir(3, 30), /pas pu être lue/);
   });
 });

@@ -35,7 +35,7 @@ const nombre = (v: unknown): number => (typeof v === 'number' && Number.isFinite
 function lireLaReponse(brut: unknown): ReponseDuMarche {
   const lu = estUnObjet(brut) ? brut : {};
   const enchere = lireEnchere(lu.enchere);
-  if (!enchere) throw new Error('Le serveur a envoyé une enchère illisible.');
+  if (!enchere) throw new Error('Cette enchère n’a pas pu être lue. Actualise le marché.');
   return { enchere, etat: lireEtat(lu.etat) };
 }
 

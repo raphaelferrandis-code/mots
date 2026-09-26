@@ -46,6 +46,16 @@ describe('nettoyage des textes', () => {
     assert.equal(nettoyerTexte('ou (En parlant des personnes.) Déjà un peu grand.'), '(En parlant des personnes.) Déjà un peu grand.');
     assert.equal(nettoyerTexte('outil de jardinage'), 'outil de jardinage');
   });
+  it('retire les codes de couleur du Wiktionnaire et le renvoi à sa note sur les couleurs', () => {
+    assert.equal(nettoyerTexte('De la couleur du ciel en plein jour quand il est dégagé. #0000FF'), 'De la couleur du ciel en plein jour quand il est dégagé.');
+    assert.equal(nettoyerTexte('Liée à celle-ci. #DFF2FF #77B5FE #2BFAFA'), 'Liée à celle-ci.');
+    assert.equal(nettoyerTexte('Qui a la peau mate, le teint brun. #8B6C42, de couleur brune, noirâtre.'), 'Qui a la peau mate, le teint brun. De couleur brune, noirâtre.');
+    assert.equal(nettoyerTexte('Brun, couleur du fruit mûr. #a04000 #602000 #402000 Voir la note sur les accords grammaticaux des noms de couleurs employés comme noms ou adjectifs.'), 'Brun, couleur du fruit mûr.');
+    assert.equal(nettoyerTexte('Rouge intense de cette étoffe. #a91101'), 'Rouge intense de cette étoffe.');
+    // Un « # » qui n'est pas un code de couleur reste : un numéro, un mot-dièse.
+    assert.equal(nettoyerTexte('Le modèle #12 de la série.'), 'Le modèle #12 de la série.');
+    assert.equal(nettoyerTexte('Le mot-dièse #philatélie circule.'), 'Le mot-dièse #philatélie circule.');
+  });
 });
 
 describe('renvois', () => {

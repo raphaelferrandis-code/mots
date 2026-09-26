@@ -247,9 +247,12 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
   // Deux temps : « Abandonner » arme l'action, « Confirmer l'abandon » l'exécute (défaite, sans récompense).
   const abandon = useActionArmee(() => void abandonner());
 
-  const incidentServeur = enLigne.erreur && <div className="bloc bloc--alerte" role="alert"><p>{enLigne.erreur}</p><div className="rangee-de-boutons"><button type="button" className="btn-primary sm" disabled={enLigne.occupe} onClick={() => void enLigne.reessayer()}>Réessayer</button><button type="button" className="btn-secondary" disabled={enLigne.occupe} onClick={() => void enLigne.reprendre()}>Reprendre la partie enregistrée</button></div></div>;
-  if (enLigne.actif && !enLigne.repris) return <main className="ecran"><p>Reprise de ta partie…</p>{incidentServeur}</main>;
-  if (deck.etat === 'erreur' && !enLigne.combat) return <main className="ecran"><p role="alert">{deck.message}</p><button type="button" className="btn-primary sm" onClick={() => window.location.reload()}>Réessayer</button></main>;
+  // (Tant que le serveur n'a pas répondu une première fois, il n'y a rien à reprendre : « Réessayer » suffit.)
+  const incidentServeur = enLigne.erreur && <div className="bloc bloc--alerte" role="alert"><p>{enLigne.erreur}</p><div className="rangee-de-boutons"><button type="button" className="btn-primary sm" disabled={enLigne.occupe} onClick={() => void enLigne.reessayer()}>Réessayer</button>{enLigne.repris && <button type="button" className="btn-secondary" disabled={enLigne.occupe} onClick={() => void enLigne.reprendre()}>Reprendre le duel enregistré</button>}</div></div>;
+  // Le serveur dit d'abord s'il y a un duel en cours. S'il ne répond pas, la préparation s'affiche quand même, avec
+  // l'incident : le carnet reste modifiable (audit de finition du 26/09/2026).
+  if (enLigne.actif && !enLigne.repris && !enLigne.erreur) return <main className="ecran"><h1 className="visuellement-cache">Duel</h1><p role="status" className="texte-doux">Chargement des duels…</p></main>;
+  if (deck.etat === 'erreur' && !enLigne.combat) return <main className="ecran"><p role="alert">{deck.message}</p><button type="button" className="btn-primary sm" onClick={deck.relancer}>Réessayer</button></main>;
   if (!sauvegarde || (deck.etat !== 'pret' && !enLigne.combat)) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
   // ── Avant le duel : la préparation (mode, adversaire, temps, récompense du jour) et le deck ──

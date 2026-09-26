@@ -68,7 +68,7 @@ Ne pas effacer une liaison de test pour convertir ses cadeaux et droits en droit
 ## Règles du 25 septembre 2026 (script 19 et fonctions redéployées)
 
 Décisions de Raphaël :
-- **Un joueur qui a payé supprime lui-même son compte** (« Effacer ma partie », Réglages). Si son abonnement
+- **Un joueur qui a payé supprime lui-même son compte** (« Supprimer mon compte », dans Mon compte ou les Réglages). Si son abonnement
   « Collectionneur » se renouvelle encore, le serveur lui demande de le résilier d'abord (« Gérer mon abonnement ») ;
   une résiliation à l'échéance suffit. Il est prévenu qu'il perd ce qu'il a acheté. La ligne de paiement reste, sans
   le joueur (`utilisateur` vide, `client_stripe` gardé) : la trace comptable est chez Stripe, et un remboursement ou

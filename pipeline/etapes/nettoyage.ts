@@ -5,7 +5,7 @@ import { contientLeMot } from '../../src/partage/famille.ts';
 
 // Retire les résidus de mise en forme laissés par l'extraction.
 export function nettoyerTexte(texte: string): string {
-  return texte
+  return sansNotesDeCouleur(sansCodesDeCouleur(texte))
     .replace(/\s*\^\(\[[^\]]*\]\)/g, '') // appels de note : « ^([1]) »
     .replace(/\^\(([^)]*)\)/g, '$1') // exposants : « XVII^(ème) » → « XVIIème »
     .replace(/^ou\s+(?=[(\p{Lu}])/u, '') // résidu en tête : « ou Donner corps à… », « ou (En parlant des personnes.) … »
@@ -13,6 +13,21 @@ export function nettoyerTexte(texte: string): string {
     .replace(/\s+([.,;])/g, '$1')
     .trim();
 }
+
+// Le modèle {{couleur}} du Wiktionnaire laisse son code dans le texte : « De la couleur du ciel… dégagé. #0000FF »,
+// jusqu'en duel, sur les pages des mots et dans les devinettes (audit de finition du 26/09/2026). Après un point, la
+// phrase qui suit reprend sa majuscule : « le teint brun. #8B6C42, de couleur brune » → « le teint brun. De couleur brune ».
+export function sansCodesDeCouleur(texte: string): string {
+  return texte.replace(/\s*(?:#[0-9A-Fa-f]{6}\b[\s,]*)+(\p{L}?)/gu, (_code: string, lettre: string, position: number, tout: string) => {
+    if (!lettre) return '';
+    const apresUnPoint = /[.!?…]\s*$/.test(tout.slice(0, position));
+    return ` ${apresUnPoint ? lettre.toUpperCase() : lettre}`;
+  });
+}
+
+// Le renvoi du Wiktionnaire à sa note de bas de page sur l'accord des couleurs n'a pas de sens hors de la page.
+const NOTE_DES_COULEURS = /\s*Voir la note sur les accords grammaticaux des noms de couleurs[^.]*\./g;
+const sansNotesDeCouleur = (texte: string): string => texte.replace(NOTE_DES_COULEURS, '');
 
 // Une définition qui ne fait que renvoyer à un autre mot n'apprend rien : « Pluriel de cheval. »
 // Le renvoi doit viser un seul mot : « Variante de la belote » est une vraie définition.

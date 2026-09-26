@@ -47,7 +47,7 @@ import type { MesEncheres, PageDuMarche } from './marche.ts';
 import { demanderUnStockageDurable, ecrireLaSauvegarde, effacerLaSauvegarde, lireLaSauvegarde } from './stockage.ts';
 import type { Emplacement } from './stockage.ts';
 import { ErreurDuServeur } from './supabase.ts';
-import { messageDe } from '../partage/messages.ts';
+import { detailDe, messageDe } from '../partage/messages.ts';
 
 // Où en est le serveur des collections : « appareil » quand il n'en est pas propriétaire.
 export type EtatDuServeur =
@@ -64,7 +64,10 @@ export type Partie =
   | { etat: 'erreur'; message: string }
   | { etat: 'prete'; sauvegarde: Sauvegarde; emplacement: Emplacement; stockageDurable: boolean; serveur: EtatDuServeur; compte: Compte | null };
 
-export const HORS_LIGNE = "Le serveur du jeu ne répond pas. Les paquets s'ouvrent en ligne : réessaie dans un moment.";
+// Toute action qui passe par le serveur (paquets, marché, amis, code de secours…) : le message ne parle d'aucune en
+// particulier. Le comptoir des paquets ajoute le sien.
+export const HORS_LIGNE = 'Le serveur du jeu ne répond pas. Vérifie ta connexion, puis réessaie dans un instant.';
+const PAS_PRET = 'Le jeu n’est pas encore prêt. Réessaie dans un instant.';
 
 // L'heure du jeu : celle de l'appareil, recalée sur celle du serveur quand c'est lui qui tient la collection
 // (le compte à rebours des paquets suit alors la même horloge que le serveur).
@@ -81,6 +84,20 @@ let ecritures: Promise<unknown> = Promise.resolve();
 let identiteLocale: string | undefined;
 
 export const lirePartie = (): Partie => partie;
+
+// Les récompenses (niveau, succès) s'annoncent par comparaison avec un premier état de référence. Il n'est pris qu'une
+// fois le compte à jour et les succès calculables : sur un nouvel appareil, après une connexion ou une récupération par
+// code, la collection arrive d'un coup du serveur, et ce n'est pas un gain (audit de finition du 26/09/2026).
+// Rend null tant qu'il ne faut rien annoncer ; un nombre qui change quand le compte change.
+let compteAJour = !serveurDesCollections.actif;
+let generationDuCompte = 0;
+export const repereDesRecompenses = (): number | null =>
+  partie.etat === 'prete' && compteAJour && editionDesSucces !== undefined ? generationDuCompte : null;
+function changerDeCompte(): void {
+  compteAJour = !serveurDesCollections.actif;
+  generationDuCompte++;
+}
+
 export function abonner(prevenir: () => void): () => void {
   abonnes.add(prevenir);
   return () => abonnes.delete(prevenir);
@@ -136,7 +153,8 @@ export function demarrerLaPartie(): Promise<void> {
       const durable = await demanderUnStockageDurable();
       if (partie.etat === 'prete') publier({ ...partie, stockageDurable: durable });
     } catch (erreur) {
-      publier({ etat: 'erreur', message: messageDe(erreur) });
+      // Le détail, pour le support : l'écran « Le jeu n'a pas pu s'ouvrir » le range dans un repli.
+      publier({ etat: 'erreur', message: detailDe(erreur) });
     }
   })();
   return demarrage;
@@ -151,6 +169,7 @@ function appliquer(etat: EtatDuCompte): void {
   if (partie.etat !== 'prete' || estPerime(etat, dernierEtat)) return;
   dernierEtat = Math.max(dernierEtat, etat.maintenant);
   decalage = etat.maintenant - Date.now();
+  compteAJour = true;
   publier({ ...partie, serveur: { etat: 'en ligne' }, compte: { codeDeSecoursLe: etat.codeDeSecoursLe, formule: etat.formule } });
   // Un choix d'apparence que le serveur n'a pas encore enregistré n'est pas défait par ce qu'il disait avant de le recevoir.
   enregistrer(fusionner(partie.sauvegarde, { ...etat, apparence: etat.apparence && horsDesChoixEnAttente(etat.apparence) }));
@@ -160,7 +179,7 @@ function appliquer(etat: EtatDuCompte): void {
 export async function commanderCombat(commande: RequeteCombat): Promise<ReponseServeurCombat> {
   const reponse = await surLeServeur(() => chacunSonTour(() => clientDuServeur().appelerCombat<ReponseServeurCombat>(commande)));
   const etat = lireEtat(reponse.etat);
-  if (!etat.progression) throw new Error('La progression serveur doit être installée avant de jouer.');
+  if (!etat.progression) throw new Error('Le jeu est en cours de mise à jour. Réessaie dans quelques minutes.');
   appliquer(etat);
   return { ...reponse, etat };
 }
@@ -179,9 +198,14 @@ export async function recupererAvecUnCode(saisie: string): Promise<{ timbres: nu
   if (!estUnCodeValable(code)) throw new Error('Ce code est incomplet : il compte vingt lettres et chiffres, en quatre groupes de cinq.');
   generationIdentite++;
   choixEnAttente = {}; // l'apparence du compte retrouvé l'emporte
+  // La collection retrouvée n'est pas un gain : aucune récompense ne s'annonce avant son arrivée.
+  const avant = compteAJour;
+  changerDeCompte();
   // Une session perdue ne doit pas empêcher la récupération explicite : aucun import local préalable.
-  const retrouvee = await serveurDesCollections.recupererParCode(code);
-  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  let retrouvee: Awaited<ReturnType<typeof serveurDesCollections.recupererParCode>>;
+  try { retrouvee = await serveurDesCollections.recupererParCode(code); }
+  catch (erreur) { compteAJour = avant; throw erreur; } // le compte n'a pas changé : on reprend le fil
+  if (partie.etat !== 'prete') throw new Error(PAS_PRET);
   // Le compte retrouvé remplace le classement et la progression de cet appareil.
   const joutes = retrouvee.profil
     ? { ...partie.sauvegarde.joutes, pseudo: retrouvee.profil.pseudo, cote: retrouvee.profil.cote, jouees: retrouvee.profil.jouees, gagnees: retrouvee.profil.gagnees }
@@ -286,16 +310,16 @@ async function reservePour(sauvegarde: Sauvegarde): Promise<Reserve> {
 }
 
 async function ouvrirSurLAppareil(action: (sauvegarde: Sauvegarde, contexte: Parameters<typeof ouvrirUnPaquetGratuit>[1]) => Ouverture): Promise<CarteObtenue[]> {
-  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  if (partie.etat !== 'prete') throw new Error(PAS_PRET);
   const reserve = await reservePour(partie.sauvegarde);
-  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  if (partie.etat !== 'prete') throw new Error(PAS_PRET);
   const ouverture = action(partie.sauvegarde, { reserve, maintenant: maintenant(), hasard: hasardDuSysteme, equilibrage: EQUILIBRAGE });
   enregistrer(ouverture.sauvegarde);
   return ouverture.cartes;
 }
 
 async function ouvrirSurLeServeur(type?: 'achat' | 'hebdomadaire'): Promise<CarteObtenue[]> {
-  if (partie.etat !== 'prete') throw new Error("La partie n'est pas encore chargée");
+  if (partie.etat !== 'prete') throw new Error(PAS_PRET);
   const masques = registresMasques(partie.sauvegarde);
   // L'édition d'abord : si elle ne se charge pas, le paquet reste fermé, au lieu d'être ouvert sur le serveur sans que le
   // joueur voie ses cartes.
@@ -536,7 +560,7 @@ export function exporterLaSauvegarde(): { nom: string; contenu: string } | null 
   const aJour = mettreAJour(partie.sauvegarde, maintenant(), EQUILIBRAGE);
   const exportee: Sauvegarde = { ...aJour, dernierExport: { le: maintenant(), paquetsOuverts: aJour.paquets.ouverts } };
   enregistrer(exportee);
-  return { nom: `mots-sauvegarde-${new Date(maintenant()).toISOString().slice(0, 10)}.json`, contenu: JSON.stringify(exportee) };
+  return { nom: `philamots-donnees-${new Date(maintenant()).toISOString().slice(0, 10)}.json`, contenu: JSON.stringify(exportee) };
 }
 
 // Remplace la partie par le contenu d'un fichier. Lève une erreur compréhensible si le fichier n'est pas une sauvegarde.
@@ -554,6 +578,7 @@ export async function toutEffacer(): Promise<void> {
   if (partie.etat !== 'prete') return;
   generationIdentite++;
   choixEnAttente = {};
+  changerDeCompte();
   await ecritures;
   await effacerLaSauvegarde();
   dernierEtat = 0;
