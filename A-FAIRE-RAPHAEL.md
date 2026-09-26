@@ -71,7 +71,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | **En ligne** (étape 12 faite) |
 | Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | **En ligne** (étape 12 faite) |
 | Défi contre un joueur simulé : plus moyen de viser le plus faible (le serveur n'accepte que ceux qu'il propose) | **En ligne** (étape 13 faite) |
-| Finitions, chantier 1 « Dire vrai partout » (26 septembre) : « Protège ta collection » au lieu du faux rappel d'export, « Supprimer mon compte » dit enfin ce qu'il fait, Mon compte réunit connexion, code de secours et suppression, erreurs en français, plus de fausse annonce de succès, Confidentialité exacte, « Album » et « carnet » partout, définitions sans codes de couleur | **En ligne** ; étape 18 à faire (les définitions du serveur des duels) |
+| Finitions, chantier 1 « Dire vrai partout » (26 septembre) : « Protège ta collection » au lieu du faux rappel d'export, « Supprimer mon compte » dit enfin ce qu'il fait, Mon compte réunit connexion, code de secours et suppression, erreurs en français, plus de fausse annonce de succès, Confidentialité exacte, « Album » et « carnet » partout, définitions sans codes de couleur | **En ligne** (étape 18 faite) |
 | Finitions, fin de l'étape 1 (26 septembre) : les premiers pas (phrase d'accueil, carnet composé tout seul, premier duel en Facile, bouton visible sur téléphone), logo tout de suite au démarrage, fil d'activité en pause, formule « Écrin » | **En ligne** |
 
 ---
@@ -319,20 +319,21 @@ redéployer** ; le jeu reconnaît ces paquets à leur contenu et peut être publ
 - [x] Vérifié en lecture seule le 26 septembre : `tirer_les_cartes` identique au dépôt (empreinte égale, aux fins de
       ligne Windows près) et paquets d'exception présents.
 
-### Étape 17 — Coller le script 25 (la boutique de l'Encre)
+### Étape 17 — Coller le script 25 (la boutique de l'Encre) — FAIT le 26 septembre
 
 Ta décision du 26 septembre : l'Encre gagnée en jouant achète des cosmétiques qu'on ne trouve qu'à la boutique
 (15 pièces, de 2 000 à 12 000 Encre) et un Hors-série au choix parmi ceux qui manquent à l'album (100 000 Encre).
 L'Encre achetée reste réservée au marché. **Aucune fonction à redéployer.** Le jeu est publié : tant que le script
 n'est pas collé, un achat répond « La boutique ouvre très bientôt ».
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/25-boutique.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/25-boutique.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned**.
-- [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule (les deux fonctions `acheter_a_la_boutique` et
-      `commander_un_hors_serie`, la table `achats_boutique` fermée aux joueurs).
+- [x] Vérifié par l'assistant le 26 septembre, de l'extérieur et sans compte : les deux fonctions `acheter_a_la_boutique`
+      et `commander_un_hors_serie` existent et refusent un visiteur sans compte ; la table `achats_boutique` est fermée ;
+      les paiements restent fermés.
 
-### Étape 18 — Redéployer les deux fonctions du combat (définitions sans codes de couleur)
+### Étape 18 — Redéployer les deux fonctions du combat (définitions sans codes de couleur) — FAIT le 26 septembre
 
 Pourquoi : douze définitions montraient un code de couleur (« … tirant sur le roux. #A76726 ») ou un renvoi du
 Wiktionnaire (« Voir la note sur les accords… »), en duel, sur les pages des mots et dans deux devinettes. Le jeu, les
@@ -341,11 +342,13 @@ propre copie des définitions : tant que les deux fonctions ne sont pas redéplo
 une définition avec son code. **Aucune carte ne change** (ni rareté, ni attaque, ni défense). Le redéploiement emporte
 aussi trois messages rares, qui disent désormais « carnet » et « timbre ».
 
-- [ ] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
+- [x] Supabase → **Edge Functions** → `combats` → onglet **Code** → remplacer tout le code par le contenu de
       `serveur/deploiement-combats/combats.ts.txt` (sur GitHub : ouvrir le fichier → **Copy raw file**) → **Deploy**.
-- [ ] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
+- [x] Supabase → **Edge Functions** → `joutes-direct` → remplacer tout le code par le contenu de
       `serveur/deploiement-direct/joutes-direct.ts.txt` → **Deploy**.
-- [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule que le code déployé est identique aux fichiers.
+- [x] Fait par Raphaël le 26 septembre. Pas revérifié octet par octet : le navigateur intégré de l'assistant n'était plus
+      connecté à Supabase. À savoir : les paquets ont été refaits le soir même pour le nom « Écrin » (commit 489e5f9) ;
+      un déploiement copié avant cette heure-là ne diffère du dépôt que par ce nom, qui ne sert pas aux duels.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

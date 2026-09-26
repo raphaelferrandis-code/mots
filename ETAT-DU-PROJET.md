@@ -36,7 +36,7 @@
 > préparation reste utilisable si le serveur des duels ne répond pas ; plus de fausse annonce « N succès accomplis »
 > sur un nouvel appareil (`repereDesRecompenses`) ; Confidentialité exacte (pseudonyme public, contact@philamots.fr) ;
 > « Mes achats » seulement pour qui a payé ; textes périmés (5 joutes pour être classé, parrainage confirmé, succès des
-> définitions, l'Encre sert aussi à la boutique). **Étape 18 à faire par Raphaël** : redéployer `combats` et
+> définitions, l'Encre sert aussi à la boutique). **Étape 18 faite par Raphaël le 26/09** : redéployer `combats` et
 > `joutes-direct` (copie des définitions du serveur). Restent pour un futur script SQL : quelques messages rares du
 > serveur qui disent encore « deck » ou « carte ».
 
@@ -51,8 +51,8 @@
 > serveur débite et range (`serveur/boutique.ts` : `acheter_a_la_boutique`, idempotente ; `commander_un_hors_serie`,
 > avec identifiant de demande ; journal `achats_boutique`) ; les pièces achetées rejoignent `comptes.personnalisations`.
 > Aussi dans le vestiaire du profil (filtre « Boutique », achat depuis l'essayage) et la réserve en haut du marché.
-> **Script 25 à coller par Raphaël** (étape 17) ; d'ici là, un achat répond « La boutique ouvre très bientôt ». La
-> dernière migration sera la 25.
+> **Script 25 collé par Raphaël le 26/09 et vérifié de l'extérieur** (étape 17 : les deux fonctions refusent un visiteur
+> sans compte, la table des achats est fermée). La dernière migration est la 25.
 
 > **26 septembre 2026 — les paquets d'exception (« god packs », script 24).** Décision de Raphaël : 1 paquet ordinaire
 > sur 10 000 ne contient que des Légendaires holographiques, 1 sur 30 000 que des Hors-série, six cartes différentes.
