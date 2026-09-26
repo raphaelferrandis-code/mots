@@ -95,7 +95,7 @@ function Diorama({ id }: { id: string }) {
       <path d={ARCHE} fill="none" stroke="#f0c48f" strokeWidth="2.2" />
       <path d="M33 402V210a127 127 0 0 1 254 0V402" fill="none" stroke="#d89a5c" strokeOpacity=".5" strokeWidth=".8" strokeDasharray="1 3" />
       <text x="160" y="58" textAnchor="middle" className="mw__etroit" fontSize="10" letterSpacing="4" fill="#f1e7d0">PHILAMOTS · LES TOITS DES MOTS</text>
-      <text x="160" y="424" textAnchor="middle" className="mw__serif" fontStyle="italic" fontSize="16" fill="#f0c48f">Cinq timbres à découvrir</text>
+      <text x="160" y="424" textAnchor="middle" className="mw__serif" fontStyle="italic" fontSize="16" fill="#f0c48f">Six timbres à découvrir</text>
     </Couche>
   </>;
 }
@@ -132,7 +132,7 @@ function EncreVivante({ id }: { id: string }) {
     </g>
     <text x="160" y="214" textAnchor="middle" className="mw__etroit" fontSize="8.5" letterSpacing="3" fill="#9c6431">ENCRE ORIGINALE</text>
     <text x="160" y="250" textAnchor="middle" className="mw__serif" fontStyle="italic" fontWeight="700" fontSize="38" fill="#14284d">Philamots</text>
-    <text x="160" y="270" textAnchor="middle" className="mw__serif" fontStyle="italic" fontSize="12" fill="#9c6431">cinq timbres-mots</text>
+    <text x="160" y="270" textAnchor="middle" className="mw__serif" fontStyle="italic" fontSize="12" fill="#9c6431">six timbres-mots</text>
     <Soudures id={id} />
   </Couche>;
 }
@@ -178,7 +178,7 @@ function Constellation({ id }: { id: string }) {
       <path d="M22 44H298V372Q298 382 288 382H32Q22 382 22 372Z" fill="none" stroke="#d89a5c" strokeWidth="1.2" />
       <Soudures id={id} />
       <text x="160" y="414" textAnchor="middle" className="mw__serif" fontStyle="italic" fontWeight="700" fontSize="28" fill="#f1e7d0">Philamots</text>
-      <text x="160" y="432" textAnchor="middle" className="mw__etroit" fontSize="8" letterSpacing="3" fill="#d89a5c">LA CONSTELLATION DES MOTS · 5 TIMBRES</text>
+      <text x="160" y="432" textAnchor="middle" className="mw__etroit" fontSize="8" letterSpacing="3" fill="#d89a5c">LA CONSTELLATION DES MOTS · 6 TIMBRES</text>
     </Couche>
   </>;
 }
@@ -206,7 +206,7 @@ function Cristal({ id }: { id: string }) {
       <text x="160" y="72" textAnchor="middle" className="mw__etroit" fontWeight="600" fontSize="17" letterSpacing="9" fill={`url(#${id}p)`}>PHILAMOTS</text>
       <line x1="120" y1="84" x2="200" y2="84" stroke="#fff" strokeOpacity=".7" />
       <rect x="0" y="392" width="320" height="42" fill="#fff" fillOpacity=".9" />
-      <text x="160" y="418" textAnchor="middle" className="mw__etroit" fontSize="11" letterSpacing="4" fill="#14284d">5 TIMBRES · ÉDITION CRISTAL</text>
+      <text x="160" y="418" textAnchor="middle" className="mw__etroit" fontSize="11" letterSpacing="4" fill="#14284d">6 TIMBRES · ÉDITION CRISTAL</text>
       <Soudures id={id} />
     </Couche>
   </>;
@@ -245,7 +245,7 @@ function Cuivre({ id }: { id: string }) {
       <circle cx="160" cy="246" r="118" fill="none" strokeWidth="2.4" />
       <circle cx="160" cy="246" r="42" stroke="none" />
       <text x="160" y="104" textAnchor="middle" className="mw__serif" fontWeight="900" fontSize="40" letterSpacing="2" stroke="none">PHILAMOTS</text>
-      <text x="160" y="398" textAnchor="middle" className="mw__etroit" fontSize="13" fontWeight="600" letterSpacing="6" stroke="none">CINQ TIMBRES</text>
+      <text x="160" y="398" textAnchor="middle" className="mw__etroit" fontSize="13" fontWeight="600" letterSpacing="6" stroke="none">SIX TIMBRES</text>
     </g>
     <text x="160" y="262" textAnchor="middle" className="mw__serif" fontStyle="italic" fontWeight="700" fontSize="46" fill="#4a230a" fillOpacity=".55">P</text>
     <Soudures id={id} opacite={.9} />

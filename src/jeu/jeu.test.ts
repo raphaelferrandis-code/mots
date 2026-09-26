@@ -41,20 +41,23 @@ describe('tirage d\'un paquet', () => {
     assert.ok(Math.abs(compte.get('Légendaire')! / 20000 - 0.04) < 0.006);
     assert.equal(compte.get('Commune'), undefined);
   });
-  it('donne cinq cartes différentes, avec au moins une Peu commune et une Rare ou mieux', () => {
+  it('donne six cartes différentes, avec au moins une Peu commune et deux Rares ou mieux', () => {
     const hasard = hasardReproductible(2);
     for (let i = 0; i < 500; i++) {
       const paquet = ouvrirPaquet(RESERVE, { hasard, paquetsSansLegendaire: 0 }, REGLAGES, FINITIONS);
-      assert.equal(paquet.length, 5);
-      assert.equal(new Set(paquet.map((t) => t.carte.id)).size, 5);
+      assert.equal(paquet.length, 6);
+      assert.equal(new Set(paquet.map((t) => t.carte.id)).size, 6);
       assert.ok(RARETES.indexOf(paquet[3].carte.rarete) >= 1);
       assert.ok(RARETES.indexOf(paquet[4].carte.rarete) >= 2);
+      assert.ok(RARETES.indexOf(paquet[5].carte.rarete) >= 2);
     }
   });
-  it('garantit une Légendaire au 40e paquet sans Légendaire, pas avant', () => {
+  it('garantit une Légendaire au 20e paquet sans Légendaire, pas avant, et seulement sur la dernière carte', () => {
     const jamais = (): number => 0; // ce « hasard » donne toujours la rareté la plus basse
-    assert.equal(ouvrirPaquet(RESERVE, { hasard: jamais, paquetsSansLegendaire: 38 }, REGLAGES, FINITIONS)[4].carte.rarete, 'Rare');
-    assert.equal(ouvrirPaquet(RESERVE, { hasard: jamais, paquetsSansLegendaire: 39 }, REGLAGES, FINITIONS)[4].carte.rarete, 'Légendaire');
+    assert.equal(REGLAGES.paquetsAvantLegendaireGarantie, 20);
+    assert.equal(ouvrirPaquet(RESERVE, { hasard: jamais, paquetsSansLegendaire: 18 }, REGLAGES, FINITIONS)[5].carte.rarete, 'Rare');
+    const garanti = ouvrirPaquet(RESERVE, { hasard: jamais, paquetsSansLegendaire: 19 }, REGLAGES, FINITIONS);
+    assert.deepEqual(garanti.slice(4).map((t) => t.carte.rarete), ['Rare', 'Légendaire']);
   });
   it('ne tire jamais une carte masquée par le joueur', () => {
     const reserve = preparerReserve(EDITION, ['Familier', 'Injurieux']);
@@ -65,7 +68,7 @@ describe('tirage d\'un paquet', () => {
     const hasard = hasardReproductible(4);
     const toutesLesRares = new Set(EDITION.filter((c) => c.rarete === 'Rare').map((c) => c.id));
     const paquet = ouvrirPaquet(RESERVE, { hasard, paquetsSansLegendaire: 0, exclure: toutesLesRares }, REGLAGES, FINITIONS);
-    assert.equal(paquet.length, 5);
+    assert.equal(paquet.length, 6);
     assert.ok(paquet.every((t) => t.carte.rarete !== 'Rare'));
   });
   it('donne toujours le même paquet avec le même hasard', () => {
@@ -97,17 +100,18 @@ describe('finitions et cartes Hors-série', () => {
     const paquets = 60000;
     for (let i = 0; i < paquets; i++) {
       const paquet = ouvrirPaquet(reserve, { hasard, paquetsSansLegendaire: 0 }, REGLAGES, FINITIONS);
-      assert.ok(paquet.slice(0, 4).every((t) => t.carte.rarete !== 'Hors-série'));
-      if (paquet[4].carte.rarete === 'Hors-série') { obtenues++; assert.equal(paquet[4].finition, 'Normale'); }
+      assert.ok(paquet.slice(0, 5).every((t) => t.carte.rarete !== 'Hors-série'));
+      if (paquet[5].carte.rarete === 'Hors-série') { obtenues++; assert.equal(paquet[5].finition, 'Normale'); }
     }
     assert.ok(Math.abs(obtenues / paquets - REGLAGES.chanceHorsSerie) < REGLAGES.chanceHorsSerie * 0.5, `${obtenues} cartes Hors-série en ${paquets} paquets`);
   });
   it('ne remplace jamais une carte ordinaire épuisée par une carte Hors-série, et la garantie de Légendaire passe avant', () => {
     const reserve = preparerReserve([...EDITION.filter((c) => c.rarete !== 'Légendaire'), ...HORS_SERIE]);
     const toujoursLeMinimum = (): number => 0; // ce hasard accorderait la carte Hors-série à tous les coups
-    const garanti = ouvrirPaquet(reserve, { hasard: toujoursLeMinimum, paquetsSansLegendaire: 39 }, REGLAGES, SANS_FINITION);
-    assert.notEqual(garanti[4].carte.rarete, 'Hors-série');
-    assert.equal(ouvrirPaquet(reserve, { hasard: toujoursLeMinimum, paquetsSansLegendaire: 0 }, REGLAGES, SANS_FINITION)[4].carte.rarete, 'Hors-série');
+    const garanti = ouvrirPaquet(reserve, { hasard: toujoursLeMinimum, paquetsSansLegendaire: REGLAGES.paquetsAvantLegendaireGarantie - 1 }, REGLAGES, SANS_FINITION);
+    assert.notEqual(garanti[5].carte.rarete, 'Hors-série');
+    const ordinaire = ouvrirPaquet(reserve, { hasard: toujoursLeMinimum, paquetsSansLegendaire: 0 }, REGLAGES, SANS_FINITION);
+    assert.deepEqual(ordinaire.slice(4).map((t) => t.carte.rarete), ['Rare', 'Hors-série'], 'la Hors-série ne tombe que sur la sixième carte');
   });
 });
 
@@ -149,7 +153,7 @@ describe('une partie', () => {
       assert.ok(ouverture.cartes.every((c) => c.nouvelle && c.nouvelleFinition && c.encre === 0));
       sauvegarde = ouverture.sauvegarde;
     }
-    assert.equal(Object.keys(sauvegarde.cartes).length, 15);
+    assert.equal(Object.keys(sauvegarde.cartes).length, 18);
     assert.equal(sauvegarde.paquets.stock, 0);
     assert.equal(sauvegarde.paquets.ouverts, 3);
     assert.throws(() => ouvrirUnPaquetGratuit(sauvegarde, contexte(T0, 5)), /Aucun paquet/);

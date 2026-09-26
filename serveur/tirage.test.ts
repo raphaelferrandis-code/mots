@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { baseDeTest } from './test-base.ts';
 import { cartes } from './collections.ts';
+import { migrationSixTimbres } from './fabriquer-le-script.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import type { Finition, IndexEdition, Rarete } from '../src/partage/types.ts';
 
@@ -205,3 +206,23 @@ it('tirage (serveur) : trois victoires pleines par jour (UTC), puis le quart ; u
 function rareteDesChances(chances: Partial<Record<Rarete, number>>): Partial<Record<Rarete, number>> {
   return Object.fromEntries(Object.entries(chances).filter(([, v]) => (v ?? 0) > 0));
 }
+
+it('la migration 23 passe le serveur de la production à six timbres et à la garantie du 20e paquet ; elle peut être rejouée', async () => {
+  const l = await laboratoire();
+  try {
+    await l.regler('ouverts=$2', [P.paquetsDeDepart]);
+    // Le tirage tel qu'il est en production avant le script 23 : cinq emplacements, garantie au 40e paquet.
+    const six = migrationSixTimbres();
+    const production = six.replace(`'${JSON.stringify(P.emplacements)}'::jsonb`, `'${JSON.stringify(P.emplacements.slice(0, 5))}'::jsonb`).replace(`>= ${P.paquetsAvantLegendaireGarantie};`, '>= 40;');
+    assert.notEqual(production, six);
+    await l.db.exec(production);
+    assert.equal((await l.ouvrir()).cartes.length, 5);
+    await l.db.exec(six);
+    await l.db.exec(six);
+    assert.equal((await l.ouvrir()).cartes.length, 6);
+    await l.regler('sans_legendaire=$2', [P.paquetsAvantLegendaireGarantie - 1]);
+    const garantie = await l.ouvrir();
+    assert.equal(garantie.cartes.length, 6);
+    assert.equal(rareteDe.get(garantie.cartes.at(-1)!.id), 'Légendaire', 'la garantie tombe sur la sixième carte');
+  } finally { await l.db.close(); }
+});

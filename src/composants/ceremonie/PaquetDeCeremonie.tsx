@@ -103,7 +103,7 @@ function Corps({ modele, vivant, graine }: { modele: string; vivant: boolean; gr
     </g>
     <text x="160" y="175" textAnchor="middle" className="cp__texte-etroit" fontSize="8.5" letterSpacing="3" style={{ fill: accent }}>{original ? 'ENCRE ORIGINALE' : design.nom.toLocaleUpperCase('fr')}</text>
     <text x="160" y="211" textAnchor="middle" className="cp__texte-serif" fontStyle="italic" fontWeight="700" fontSize="38" fill="#14284d">Philamots</text>
-    <text x="160" y="231" textAnchor="middle" className="cp__texte-serif" fontStyle="italic" fontSize="12" style={{ fill: accent }}>cinq timbres-mots</text>
+    <text x="160" y="231" textAnchor="middle" className="cp__texte-serif" fontStyle="italic" fontSize="12" style={{ fill: accent }}>six timbres-mots</text>
   </svg>;
 }
 

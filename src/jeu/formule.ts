@@ -49,7 +49,7 @@ export const ETAGES: Etage[] = [
   { ...P.formules[1], cle: 'collectionneur', avantages: [
     `Un paquet toutes les ${P.minutesEntreDeuxPaquets} minutes, réserve de ${P.stockMaximum} paquets`,
     `Un paquet spécial dès l’activation, puis tous les ${P.joursEntrePaquetsHebdomadaires} jours d’abonnement`,
-    'Cinq cartes dont au moins une Épique ou mieux ; dernière carte : 89 % Épique, 10 % Légendaire, 1 % Hors-série',
+    'Six cartes dont au moins une Épique ou mieux ; dernière carte : 89 % Épique, 10 % Légendaire, 1 % Hors-série',
     `+${P.bonusXpPourcent} % d’XP sur les duels et les bonnes réponses`,
     'Les cartes, l’XP et les paquets déjà acquis restent après expiration',
   ] },

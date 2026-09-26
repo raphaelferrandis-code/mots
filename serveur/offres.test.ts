@@ -45,9 +45,9 @@ it('exécute les droits, tirages et migrations dans PostgreSQL, sans toucher au 
     assert.equal((await etat()).formule.paquetsHebdomadaires, 1);
     const avantHebdo = await etat();
     const hebdo = await reclamer('hebdomadaire');
-    assert.equal(hebdo.cartes.length, 5);
-    assert.equal(new Set(hebdo.cartes.map(c => c.id)).size, 5);
-    assert.ok(['Épique', 'Légendaire', 'Hors-série'].includes(edition.cartes.find(c => c.id === hebdo.cartes[4].id)!.rarete));
+    assert.equal(hebdo.cartes.length, 6);
+    assert.equal(new Set(hebdo.cartes.map(c => c.id)).size, 6);
+    assert.ok(['Épique', 'Légendaire', 'Hors-série'].includes(edition.cartes.find(c => c.id === hebdo.cartes[5].id)!.rarete));
     assert.deepEqual((await etat()).paquets, avantHebdo.paquets);
     await assert.rejects(reclamer('hebdomadaire'), /Aucun paquet/);
     // Les droits gagnés hors connexion sont réglés avant le renouvellement.

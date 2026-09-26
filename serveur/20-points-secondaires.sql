@@ -36,7 +36,7 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   c public.comptes%rowtype;
-  emplacements jsonb := '[{"Commune":70,"Peu commune":25,"Rare":5},{"Commune":70,"Peu commune":25,"Rare":5},{"Commune":70,"Peu commune":25,"Rare":5},{"Peu commune":75,"Rare":20,"Épique":5},{"Rare":74,"Épique":22,"Légendaire":4}]'::jsonb;
+  emplacements jsonb := '[{"Commune":70,"Peu commune":25,"Rare":5},{"Commune":70,"Peu commune":25,"Rare":5},{"Commune":70,"Peu commune":25,"Rare":5},{"Peu commune":75,"Rare":20,"Épique":5},{"Rare":74,"Épique":22,"Légendaire":4},{"Rare":74,"Épique":22,"Légendaire":4}]'::jsonb;
   chances jsonb;
   numero integer := 0;
   dernier boolean;
@@ -62,13 +62,13 @@ begin
   masques := array(select distinct m from unnest(coalesce(p_masques, '{}')) m where m in ('Familier', 'Injurieux', 'Littéraire', 'Vieilli'));
   -- Le fil d'activité ne note que les trouvailles tirées d'un paquet (serveur/activite.ts), pas les échanges ni le marché.
   perform set_config('philamots.tirage', 'oui', true);
-  -- Au plus tard au 40e paquet sans Légendaire, la dernière carte en est une.
+  -- Au plus tard au 20e paquet sans Légendaire, la dernière carte en est une.
   if p_mode = 'achat' then emplacements := '[{"Hors-série":100}]'::jsonb;
   elsif p_mode = 'hebdomadaire' then
     emplacements := jsonb_set(emplacements, array[(jsonb_array_length(emplacements)-1)::text], '{"Épique":89,"Légendaire":10,"Hors-série":1}'::jsonb);
   elsif p_mode <> 'normal' then raise exception 'Tirage inconnu.';
   end if;
-  garantie := p_mode = 'normal' and c.sans_legendaire + 1 >= 40;
+  garantie := p_mode = 'normal' and c.sans_legendaire + 1 >= 20;
   -- Les 3 paquets de départ ne contiennent que des cartes nouvelles, pour composer un deck tout de suite.
   depart := p_mode = 'normal' and c.ouverts < 3;
 

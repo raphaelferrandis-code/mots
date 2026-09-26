@@ -102,9 +102,12 @@ const COLONNES = ['50 % de la collection', '90 %', '100 %', 'Légendaires par se
 const actuels = PROFILS.map((p) => ligne(`${p.nom} — ${p.paquetsParJour} paquets gratuits par jour`, p.paquetsParJour, EQUILIBRAGE));
 
 // ── « Et si… » : quelques variantes, pour le joueur régulier ───────────────
-const avecLeTaux = (taux: number): Equilibrage['paquets']['emplacements'] => EQUILIBRAGE.paquets.emplacements.map((chances, i, tous) => (i === tous.length - 1 ? { 'Rare': 96 - taux - 22 + 4, 'Épique': 22, 'Légendaire': taux } : chances));
+// Chaque emplacement qui peut donner une Légendaire (les deux derniers) passe au taux voulu.
+const avecLeTaux = (taux: number): Equilibrage['paquets']['emplacements'] => EQUILIBRAGE.paquets.emplacements.map((chances) => (chances['Légendaire'] ? { 'Rare': 96 - taux - 22 + 4, 'Épique': 22, 'Légendaire': taux } : chances));
 const VARIANTES: { nom: string; equilibrage: Equilibrage }[] = [
   { nom: 'Réglages actuels', equilibrage: EQUILIBRAGE },
+  // Les réglages d'avant le 26/09/2026, pour comparer : cinq timbres par paquet, Légendaire garantie au 40e paquet.
+  { nom: 'Avant le 26/09 : cinq timbres, garantie au 40e paquet', equilibrage: { ...EQUILIBRAGE, paquets: { ...EQUILIBRAGE.paquets, emplacements: EQUILIBRAGE.paquets.emplacements.slice(0, 5), paquetsAvantLegendaireGarantie: 40 } } },
   { nom: 'Légendaire à 2 % au lieu de 4 %', equilibrage: { ...EQUILIBRAGE, paquets: { ...EQUILIBRAGE.paquets, emplacements: avecLeTaux(2) } } },
   ...[300, 3000].map((n) => ({ nom: `Carte Hors-série : 1 paquet sur ${n}`, equilibrage: { ...EQUILIBRAGE, paquets: { ...EQUILIBRAGE.paquets, chanceHorsSerie: 1 / n } } })),
 ];

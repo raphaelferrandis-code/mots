@@ -555,6 +555,17 @@ export function migrationApparence(): string {
     + '\ncommit;\n';
 }
 
+// Six timbres par paquet et une Légendaire garantie au 20e paquet (décision de Raphaël du 26/09/2026). Après
+// 22-apparence.sql. Le sixième emplacement a les chances du cinquième ; la Hors-série, la garantie et le paquet
+// hebdomadaire passent au sixième, le dernier. L'importation d'une ancienne collection suit les mêmes bornes.
+// Aucune fonction Edge à redéployer : le jeu affiche les timbres que le serveur rend, cinq ou six.
+export function migrationSixTimbres(): string {
+  return `-- Six timbres par paquet, et une Légendaire garantie au plus tard au ${EQUILIBRAGE.paquets.paquetsAvantLegendaireGarantie}e paquet. Après 22-apparence.sql.\n`
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\nbegin;\n'
+    + ['tirer_les_cartes', 'importer_ma_collection'].map((nom) => reprise(structure(), nom)).join('\n\n')
+    + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -594,5 +605,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '20-points-secondaires.sql'), migrationPointsSecondaires());
   writeFileSync(path.join(RACINE, 'serveur', '21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
   writeFileSync(path.join(RACINE, 'serveur', '22-apparence.sql'), migrationApparence());
+  writeFileSync(path.join(RACINE, 'serveur', '23-six-timbres.sql'), migrationSixTimbres());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

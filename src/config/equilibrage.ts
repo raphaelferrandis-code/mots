@@ -56,17 +56,20 @@ export const EQUILIBRAGE = {
     // Paquets offerts à un nouveau joueur. Ils sont garantis sans doublon, pour pouvoir composer un deck tout de suite.
     paquetsDeDepart: 3,
 
-    // Les cinq cartes d'un paquet, emplacement par emplacement.
+    // Les six cartes d'un paquet, emplacement par emplacement (décision de Raphaël du 26/09/2026 : la sixième a les
+    // chances de la cinquième ; la Hors-série, la garantie et le paquet hebdomadaire ne touchent que la dernière).
     emplacements: [
       { 'Commune': 70, 'Peu commune': 25, 'Rare': 5 },
       { 'Commune': 70, 'Peu commune': 25, 'Rare': 5 },
       { 'Commune': 70, 'Peu commune': 25, 'Rare': 5 },
       { 'Peu commune': 75, 'Rare': 20, 'Épique': 5 },
       { 'Rare': 74, 'Épique': 22, 'Légendaire': 4 },
+      { 'Rare': 74, 'Épique': 22, 'Légendaire': 4 },
     ] as ChancesParRarete[],
 
-    // Garantie : au plus tard au 40e paquet sans Légendaire, la dernière carte du paquet en est une.
-    paquetsAvantLegendaireGarantie: 40,
+    // Garantie : au plus tard au 20e paquet sans Légendaire, la dernière carte du paquet en est une
+    // (décision de Raphaël du 26/09/2026 ; c'était le 40e).
+    paquetsAvantLegendaireGarantie: 20,
 
     // Rang ultime : chance que la dernière carte d'un paquet soit une carte Hors-série (1 paquet sur 1 000).
     // Ces cartes ne comptent pas pour la garantie ci-dessus.
