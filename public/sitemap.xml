@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Le plan du site pour les moteurs de recherche. Les écrans du jeu vivent après le « # » de l'adresse,
-     que les moteurs ne suivent pas : seule la page d'accueil est à déclarer. -->
+<!-- Le plan du site pour les moteurs de recherche, en développement seulement : le site construit le remplace par
+     celui que fabrique scripts/fabriquer-les-pages.ts (l'accueil, la liste des mots et une page par mot). Les écrans
+     du jeu vivent après le « # » de l'adresse, que les moteurs ne suivent pas. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://philamots.fr/</loc>

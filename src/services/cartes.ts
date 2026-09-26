@@ -2,7 +2,9 @@
 // Comme tout ce qui est dans src/services/, c'est le seul endroit du jeu qui sait d'où viennent
 // les données : aujourd'hui des fichiers fabriqués par le pipeline, demain peut-être un serveur.
 
+import { SITE } from '../config/site.ts';
 import { lotDeLaCarte, nomDuLot } from '../partage/lots.ts';
+import { adressesDesPages, cartesAvecUnePage, cheminDeLaPage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../partage/types.ts';
 
 const EDITION = 1;
@@ -31,6 +33,14 @@ export function chargerEdition(): Promise<IndexEdition> {
 export async function chargerCarte(id: string): Promise<CarteIndex | undefined> {
   const edition = await chargerEdition();
   return edition.cartes.find((carte) => carte.id === id);
+}
+
+// L'adresse publique de la page d'un timbre (philamots.fr/mot/…/), calculée comme pour le site construit.
+let adresses: Promise<Map<string, string>> | undefined;
+export async function pageDuTimbre(id: string): Promise<string | undefined> {
+  adresses ??= chargerEdition().then((edition) => adressesDesPages(cartesAvecUnePage(edition.cartes)));
+  const adresse = (await adresses).get(id);
+  return adresse ? `${SITE.adresse}${cheminDeLaPage(adresse)}` : undefined;
 }
 
 function chargerLot(lot: number): Promise<Record<string, CarteDetails>> {

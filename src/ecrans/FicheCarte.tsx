@@ -12,14 +12,14 @@ import type { Finition } from '../partage/types.ts';
 import { Entete } from '../composants/Entete.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { lien } from '../navigation/routes.ts';
-import { chargerCarte, chargerDetails } from '../services/cartes.ts';
+import { chargerCarte, chargerDetails, pageDuTimbre } from '../services/cartes.ts';
 import { partagerLeTimbre } from '../services/partage.ts';
 import { lireLesCotes } from '../services/partie.ts';
 import { messageDe } from '../partage/messages.ts';
 
 async function chargerFiche(id: string) {
-  const [carte, details] = await Promise.all([chargerCarte(id), chargerDetails(id)]);
-  return carte && details ? { carte, details } : null;
+  const [carte, details, page] = await Promise.all([chargerCarte(id), chargerDetails(id), pageDuTimbre(id)]);
+  return carte && details ? { carte, details, page } : null;
 }
 
 const enToutesLettres = (date: number): string => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -50,7 +50,7 @@ export function FicheCarte({ id }: { id: string }) {
     );
   }
 
-  const { carte, details } = fiche.donnees;
+  const { carte, details, page } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
   const finition = possedee && exemplaire?.id === carte.id && (possedee.finitions[exemplaire.finition] ?? 0) > 0
     ? exemplaire.finition : possedee ? meilleureFinition(possedee) : 'Normale';
@@ -60,7 +60,7 @@ export function FicheCarte({ id }: { id: string }) {
   const partager = async (): Promise<void> => {
     setPartage({ etat: 'en cours' });
     try {
-      const issue = await partagerLeTimbre(carte, { finition, maitriseeLe: possedee?.maitriseeLe ?? null, obtenuLe: possedee?.obtenueLe ?? null });
+      const issue = await partagerLeTimbre(carte, page, { finition, maitriseeLe: possedee?.maitriseeLe ?? null, obtenuLe: possedee?.obtenueLe ?? null });
       setPartage(issue === 'telecharge' ? { etat: 'fait', message: "L'image du timbre est enregistrée sur cet appareil." } : { etat: 'repos' });
     } catch (erreur) {
       setPartage({ etat: 'erreur', message: messageDe(erreur) });
@@ -134,6 +134,7 @@ export function FicheCarte({ id }: { id: string }) {
                 </li>
               ))}
             </ol>
+            {page && <p className="petit"><a href={page} target="_blank" rel="noreferrer">Toutes les définitions</a></p>}
           </section>
 
           <section className="rubrique">

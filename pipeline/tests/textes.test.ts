@@ -1,4 +1,4 @@
-// Tests : valeur des lettres, nettoyage des définitions, définitions pas encore rédigées, registres.
+// Tests : valeur des lettres, nettoyage des définitions, définitions pas encore rédigées, registres, textes des pages.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +7,7 @@ import path from 'node:path';
 import { valeurDesLettres } from '../../src/partage/lettres.ts';
 import { lotDeLaCarte } from '../../src/partage/lots.ts';
 import type { CarteDetails } from '../../src/partage/types.ts';
-import { construireDefinitions, contientLeMot, couper, estRenvoi, estUneDefinitionVide, nettoyerTexte } from '../etapes/nettoyage.ts';
+import { construireDefinitions, contientLeMot, couper, estRenvoi, estUneDefinitionVide, nettoyerTexte, sansReferences } from '../etapes/nettoyage.ts';
 import { registresDeLaCarte, registresDuSens, sensActuelsDAbord } from '../etapes/registre.ts';
 
 describe('valeur des lettres', () => {
@@ -146,5 +146,13 @@ describe('registres', () => {
     assert.deepEqual(sensActuelsDAbord(sens, (s) => s.r).map((s) => s.t), ['actuel', 'ancien', 'ancien 2']);
     const tousAnciens = [sens[0], sens[2]];
     assert.deepEqual(sensActuelsDAbord(tousAnciens, (s) => s.r), tousAnciens);
+  });
+});
+
+describe('textes des pages par mot', () => {
+  it('retire une référence de livre collée au texte', () => {
+    const texte = 'par la racine *ǵeus (« goûter, apprécier »)Michiel de Vaan, Dictionary of Latin, Brill, série « Leiden », 2008, 825 pages, ISBN 978-90-04-16797-1, qui donne aussi l’anglais choose.';
+    assert.equal(sansReferences(texte), 'par la racine *ǵeus (« goûter, apprécier ») qui donne aussi l’anglais choose.');
+    assert.equal(sansReferences('Du latin (« fantôme »). Rien à retirer.'), 'Du latin (« fantôme »). Rien à retirer.');
   });
 });

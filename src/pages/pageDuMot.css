@@ -1,0 +1,82 @@
+/* Les pages par mot et la liste des mots (src/pages/PageDuMot.tsx). Les couleurs de la cérémonie : nuit, cuivre, papier. */
+:root {
+  --c-cuivre: #d89a5c;
+  --c-papier: #f1e7d0;
+  --c-texte-doux: #a7b1c4;
+  --c-ligne: rgba(233, 225, 208, .12);
+}
+
+.page-mot { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 16px 40px; }
+
+.page-mot__bandeau { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--c-ligne); }
+.page-mot__marque { display: inline-flex; min-height: 44px; align-items: center; }
+.page-mot__marque img { display: block; width: 150px; height: auto; }
+.page-mot__jouer { min-height: 44px; padding: 0 22px; display: inline-flex; align-items: center; }
+
+.page-mot__article { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 48px; align-items: start; padding: 40px 0 32px; }
+.page-mot__timbre { position: sticky; top: 24px; }
+.page-mot__timbre .tb { width: 100%; filter: drop-shadow(0 22px 26px rgba(0, 0, 0, .5)); }
+
+.page-mot__texte h1 { margin: 0; font-family: var(--police-serif); font-size: clamp(40px, 7vw, 64px); line-height: 1.05; overflow-wrap: anywhere; color: var(--c-papier); }
+.page-mot__nature { margin: 8px 0 0; font-style: italic; color: var(--encre-douce); font-size: 17px; }
+.page-mot__texte h2, .page-mot__voisins h2 { margin: 32px 0 10px; font-family: var(--police-mention); font-weight: 500; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.page-mot__definitions { margin: 0; padding-left: 1.4em; display: grid; gap: 10px; font-size: 18px; line-height: 1.55; }
+.page-mot__registre { font-style: italic; color: var(--encre-douce); }
+.page-mot__suite { margin-top: 12px; font-size: 15px; }
+.page-mot__origine { margin: 0; line-height: 1.6; color: var(--encre-douce); }
+.page-mot__origine + .page-mot__origine { margin-top: 12px; }
+.page-mot a { color: var(--c-papier); text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 4px; }
+
+/* Le relevé : pas de cartes, des filets fins comme au bas du timbre, la jauge des duels et le rang de rareté. */
+.page-mot__releve { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 36px 0 0; border-block: 1px solid var(--c-ligne); }
+.page-mot__releve > div { padding: 16px 20px 18px; }
+.page-mot__releve > div + div { border-left: 1px solid var(--c-ligne); }
+.page-mot__releve > div:first-child { padding-left: 0; }
+.page-mot__releve dt { font-family: var(--police-etroite); font-weight: 500; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--c-texte-doux); }
+.page-mot__releve dd { margin: 6px 0 12px; font-family: var(--police-serif); font-size: 19px; line-height: 1.25; color: var(--c-papier); }
+.page-mot__releve p { margin: 0; font-family: var(--police-etroite); font-size: 14px; letter-spacing: .06em; color: var(--c-texte-doux); }
+.page-mot__jauge { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-width: 150px; }
+.page-mot__jauge i { height: 5px; background: rgba(233, 225, 208, .1); }
+.page-mot__jauge i.allume { background: var(--c-cuivre); }
+.page-mot__rang { color: var(--c-cuivre); font-size: 14px; letter-spacing: .1em; }
+
+/* L'appel à jouer : comme le comptoir de l'accueil, un filet, trois timbres en éventail et le bouton dentelé. */
+.page-mot__appel { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 40px; margin-top: 12px; padding: 36px 0; border-top: 1px solid var(--c-ligne); }
+.page-mot__appel p { flex: 1; min-width: 220px; margin: 0; font-family: var(--police-serif); font-weight: 700; font-size: clamp(24px, 3vw, 32px); line-height: 1.15; color: var(--c-papier); }
+.page-mot__appel .btn-primary { color: var(--bouton-cuivre-texte); }
+.page-mot__eventail { position: relative; width: 150px; height: 120px; flex: none; }
+.page-mot__eventail .page-mot__vignette { position: absolute; left: 40px; top: 4px; width: 72px; filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .5)); }
+.page-mot__eventail .page-mot__vignette:nth-child(1) { transform: translate(-34px, 10px) rotate(-10deg); filter: brightness(.6) drop-shadow(0 10px 12px rgba(0, 0, 0, .5)); }
+.page-mot__eventail .page-mot__vignette:nth-child(2) { transform: translate(34px, 12px) rotate(8deg); filter: brightness(.6) drop-shadow(0 10px 12px rgba(0, 0, 0, .5)); }
+
+.page-mot__voisins ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 22px; }
+.page-mot__voisins a { display: grid; gap: 8px; text-align: center; text-decoration: none; }
+.page-mot__vignette { display: block; width: 100%; }
+.page-mot__vignette .tb { width: 100%; }
+.page-mot__legende { font-size: 15px; }
+.page-mot__voisins a:hover .page-mot__legende { text-decoration: underline; }
+
+.page-mot__pied { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--c-ligne); font-size: 13px; color: var(--encre-douce); }
+.page-mot__pied a { color: inherit; }
+
+/* La liste de tous les mots */
+.page-mots__titre { margin: 40px 0 20px; font-family: var(--police-serif); font-size: clamp(36px, 6vw, 56px); color: var(--c-papier); }
+.page-mots__lettres { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; border-bottom: 1px solid var(--c-ligne); }
+.page-mots__lettres a { min-width: 36px; min-height: 36px; display: inline-grid; place-items: center; font-family: var(--police-etroite); font-size: 16px; text-decoration: none; }
+.page-mots__lettres a:hover { color: var(--c-cuivre); }
+.page-mots__section h2 { margin: 32px 0 12px; font-family: var(--police-serif); font-size: 32px; color: var(--c-cuivre); }
+.page-mots__section ul { list-style: none; margin: 0; padding: 0; columns: 4 170px; column-gap: 24px; }
+.page-mots__section li { padding: 3px 0; break-inside: avoid; }
+.page-mots__nature { font-size: 13px; color: var(--encre-douce); font-style: italic; }
+
+@media (max-width: 700px) {
+  .page-mot__article { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }
+  .page-mot__timbre { position: static; width: min(220px, 70%); margin: 0 auto; }
+  .page-mot__texte h1, .page-mot__nature { text-align: center; }
+  .page-mot__releve { grid-template-columns: 1fr; }
+  .page-mot__releve > div { padding-inline: 0; }
+  .page-mot__releve > div + div { border-left: 0; border-top: 1px solid var(--c-ligne); }
+  .page-mot__appel { justify-content: center; text-align: center; }
+  .page-mot__eventail { margin: 0 auto; }
+  .page-mot__marque img { width: 120px; }
+}

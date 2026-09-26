@@ -62,6 +62,8 @@ export default defineConfig(({ mode }) => {
   // Chemins relatifs : le site fonctionne aussi bien à la racine d'un domaine que dans un sous-dossier
   // (cas de GitHub Pages), sans rien avoir à régler chez l'hébergeur.
   base: './',
+  // Deux pages : le jeu, et le modèle des pages par mot (remplies ensuite par scripts/fabriquer-les-pages.ts).
+  build: { rollupOptions: { input: { index: path.join(process.cwd(), 'index.html'), mot: path.join(process.cwd(), 'mot.html') } } },
   server: { port: 5173, strictPort: true },
   };
 });

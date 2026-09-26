@@ -21,13 +21,14 @@ export type IssueDuPartage = 'partage' | 'telecharge' | 'annule';
 
 // Fabrique l'image du timbre, puis l'offre à la feuille de partage du système si elle accepte les fichiers ;
 // sinon (ordinateur, navigateur sans partage) l'image est téléchargée.
-export async function partagerLeTimbre(carte: CarteIndex, habillage: Habillage): Promise<IssueDuPartage> {
+// Le lien partagé mène à la page du mot (philamots.fr/mot/…/) : celui qui le reçoit lit la définition avant de jouer.
+export async function partagerLeTimbre(carte: CarteIndex, page: string | undefined, habillage: Habillage): Promise<IssueDuPartage> {
   const image = await fabriquerLImage(carte, habillage);
   const nom = nomDuFichierImage(carte.id);
   const fichier = new File([image], nom, { type: 'image/png' });
   if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [fichier] })) {
     try {
-      await navigator.share({ files: [fichier], title: `${carte.mot} — ${SITE.nom}`, text: texteDePartage(carte.mot, carte.rarete, carte.faction, SITE.adresse) });
+      await navigator.share({ files: [fichier], title: `${carte.mot} — ${SITE.nom}`, text: texteDePartage(carte.mot, carte.rarete, carte.faction, page ?? SITE.adresse) });
       return 'partage';
     } catch (erreur) {
       // Le joueur a refermé la feuille de partage : rien à faire. Toute autre erreur : on se rabat sur le téléchargement.

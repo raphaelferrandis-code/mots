@@ -35,6 +35,12 @@ export function estUneDefinitionVide(definition: string): boolean {
   return DEFINITION_VIDE.test(definition);
 }
 
+// Une note du Wiktionnaire (référence d'un livre) reste parfois collée au texte : « …apprécier »)Michiel de Vaan,
+// Dictionary…, 2008, 825 pages, ISBN 978-90-04-16797-1, qui donne aussi… ». On la retire.
+export function sansReferences(texte: string): string {
+  return texte.replace(/(?<=[)»\]])\p{Lu}[^]*?ISBN [\dXx-]+,?\s*/gu, ' ').replace(/\s+([,.;])/g, '$1').replace(/\s+/g, ' ').trim();
+}
+
 // Coupe proprement un texte trop long, à la fin d'un mot.
 export function couper(texte: string, longueurMaximale: number): string {
   if (texte.length <= longueurMaximale) return texte;

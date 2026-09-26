@@ -28,6 +28,7 @@
     "src",
     "pipeline",
     "simulateurs",
+    "scripts",
     "serveur",
     "supabase/functions",
     "vite.config.ts"

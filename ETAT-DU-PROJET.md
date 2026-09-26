@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — une page par mot, pour Google (philamots.fr/mot/zakouski/).** Chaque timbre a désormais sa
+> page, lisible sans jouer : le timbre, toutes les définitions (jusqu'à 12, sans coupure), l'origine entière, la
+> prévalence et l'usage en jauges, un appel à ouvrir un paquet et six timbres de la même faction. Plus une liste de
+> tous les mots (`/mots/`) et un plan du site qui les déclare tous. Les pages sont fabriquées au moment de la mise en
+> ligne (`scripts/fabriquer-les-pages.ts`, à la suite de `vite build`) à partir des vrais composants du jeu ; elles
+> n'ont aucun code. Textes complets : `npm run pages:textes` (après `npm run sources`) écrit
+> `data/pages-des-mots.json`, sans toucher aux fichiers du jeu. Les guillochis ne restent que sur le grand timbre
+> (une page pèse environ 60 Ko). Les 10 timbres étiquetés « injurieux » n'ont pas de page (`cartesAvecUnePage`).
+> Dans le jeu, la fiche d'un timbre mène à sa page (« Toutes les définitions ») et le partage d'un timbre donne
+> son lien. Rien à installer côté Supabase.
+
 > **26 septembre 2026 — six timbres par paquet (script 23).** Décision de Raphaël : le sixième timbre a les chances du
 > cinquième ; la Hors-série, la garantie et le paquet hebdomadaire ne touchent que le sixième ; la Légendaire est
 > garantie au plus tard au 20e paquet sans Légendaire (au lieu du 40e). **Script 23 collé par Raphaël et vérifié le
