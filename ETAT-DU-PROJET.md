@@ -12,7 +12,11 @@
 > qu'il n'y a pas de premier jour ; en développement, `?devinette=N` dans l'adresse montre le jour N). Les images des
 > posts (1080 × 1350) : `partage/question/<mot>/` et `partage/reponse/<mot>/`, photographiées par
 > `scripts/photographier-les-cartes.ts` (Chrome installé, playwright-core). Photo de profil :
-> `public/identite/photo-profil.png`. Reste : le texte des posts et la publication automatique (Bluesky d'abord).
+> `public/identite/photo-profil.png`. **Publication sur Bluesky prête, interrupteur éteint** :
+> `scripts/publier-la-devinette.ts` (textes : `src/partage/postsDeLaDevinette.ts`) et la tâche GitHub
+> `.github/workflows/devinette.yml`, chaque matin vers 8 h 30 ; elle ne publie que si la variable du dépôt
+> `PUBLICATION_ACTIVE` vaut « oui » (et le calendrier a un premier jour). Compte `@philamots.fr`, mot de passe
+> d'application dans le secret `MDPAPPLICATION`. Facebook et Instagram : pas encore de comptes.
 
 > **26 septembre 2026 — une page par mot, pour Google (philamots.fr/mot/zakouski/).** Chaque timbre a désormais sa
 > page, lisible sans jouer : le timbre, toutes les définitions (jusqu'à 12, sans coupure), l'origine entière, la
