@@ -8,10 +8,19 @@ const deux = (u: string, c: string, lo: string) => `<linearGradient id="${u}f" x
 /** Dessin en métal bicolore : « F » dans le tracé désigne le dégradé de l'avatar. */
 const metalA = (u: string, c: string, lo: string, corps: string) => `<defs>${deux(u, c, lo)}</defs><g stroke="${c}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">${corps.replace(/F/g, `url(#${u}f)`)}</g>`;
 const lueur = (u: string, c: string, o = 0.55) => `<radialGradient id="${u}h"><stop stop-color="${c}" stop-opacity="${o}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient><circle cx="50" cy="50" r="48" fill="url(#${u}h)"/>`;
+/** La plume d'écriture, dessinée pointe en haut puis couchée : étendard, barbes, rachis, puis tuyau taillé en bec.
+ *  Sert aussi d'emblème gravé (onglet Titres, médailles). */
+export const PLUME = {
+  pose: 'translate(-3 3) rotate(40 50 50)',
+  etendard: 'M52.5 71C51 69 46.5 63.5 44.5 59.5C42.5 56 41.5 53 40.5 49.5C39 46.5 38.5 43.5 38 40.5C37.5 37.5 37.5 35 38 32.5C38 29.5 38.5 27 39 25C39.5 22.5 40.5 20.5 41.5 18C42.5 16 43.5 14.5 44.5 12.5C45.5 11 46.5 9.5 47.5 8.5C48.5 7 49 6 50 6C51 6 51.5 7 52 7.5C53 8.5 54 10 55 11.5C56 13 57 14.5 58 16.5C59 18.5 60 20.5 60.5 23C61 25.5 62 28 62.5 31C62.5 33.5 63 36.5 62.5 39.5C62.5 43 62 46 61.5 49.5C61 53 60 56.5 58.5 60C57 63.5 53.5 69.5 52.5 71Z',
+  barbes: 'M52 23.5L43.5 18M52.5 34L40.5 28M53 44.5L40 38M53 54.5L42 48M52.5 65L46 58M52 25.5L56.5 18.5M53 38.5L60 31M53 51L60 44.5M52.5 64L57 57.5',
+  rachis: 'M50.5 10.5Q55 47 51.5 83.5',
+  bec: 'M54 73.5L53.5 83.5L50 92.5L49.5 83L50 73M51 84L50.5 88.5',
+};
 const etoile = (x: number, y: number, r: number, col: string, b?: number) => `<path d="M${x} ${y - r}L${x + r * 0.25} ${y - r * 0.25}L${x + r} ${y}L${x + r * 0.25} ${y + r * 0.25}L${x} ${y + r}L${x - r * 0.25} ${y + r * 0.25}L${x - r} ${y}L${x - r * 0.25} ${y - r * 0.25}Z" fill="${col}">${b === undefined ? '' : blink(2.4, b)}</path>`;
 
 export const DESSINS_AVATARS: Record<string, Trace> = {
-  'plume': (_u, c) => trait(c, `<path d="M24 84 76 18"/><path d="M31 67C12 42 48 17 82 13 80 48 56 80 31 67Z" fill="${c}" fill-opacity=".1"/><path d="m40 57-6-19m17 7-1-18m3 16 21-4M40 57l24-4M28 74l-6 10M18 90h56"/><path d="M39 64c17 0 30-11 35-24" stroke-opacity=".45"/>`),
+  'plume': (_u, c) => trait(c, `<g transform="${PLUME.pose}"><path d="${PLUME.etendard}" fill="${c}" fill-opacity=".1"/><path d="${PLUME.barbes}" stroke-opacity=".55"/><path d="${PLUME.rachis}"/><path d="${PLUME.bec}"/></g>`),
   'timbre': (_u, c) => `<rect x="24" y="16" width="52" height="68" fill="none" stroke="${c}" stroke-width="3.2" stroke-dasharray="0 5.2" stroke-linecap="round"/>` + trait(c, `<rect x="31" y="23" width="38" height="54" fill="${c}" fill-opacity=".08"/><path d="M36 62l9-14 7 9 5-6 8 11Z" fill="${c}" fill-opacity=".25"/><circle cx="58" cy="36" r="5"/>`) + `<text x="36" y="36" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="9" fill="${c}">M</text><text x="64" y="73" text-anchor="end" font-family="Oswald, sans-serif" font-size="6" fill="${c}">20c</text>`,
   'encrier': (_u, c) => trait(c, `<path d="M28 64h44v16a5 5 0 0 1-5 5H33a5 5 0 0 1-5-5Z" fill="${c}" fill-opacity=".1"/><path d="M37 64v-7h26v7M33 57h34"/><path d="M52 56 80 12"/><path d="M60 44c2-14 10-26 21-32-2 14-9 26-21 32Z" fill="${c}" fill-opacity=".14"/><path d="M64 38l8-2m-5-5 7-1"/><path d="M18 90q4-6 8 0q-4 3-8 0Z" fill="${c}"/>`),
   'colombe': (u, c) => metalA(u, c, '#7f93b3', `<path d="M50 48C52 34 58 22 68 12c1 5 4 7 7 6 0 5 3 7 6 6-2 8-9 18-21 26Z" fill="#cfdcef" fill-opacity=".8"/>

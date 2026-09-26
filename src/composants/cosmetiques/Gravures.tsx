@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef } from 'react';
 import { ornement } from '../../jeu/personnalisation.ts';
-import { DESSINS_AVATARS } from './dessins/avatars.ts';
+import { DESSINS_AVATARS, PLUME } from './dessins/avatars.ts';
 import { DESSINS_CADRES } from './dessins/cadres.ts';
 
 // Dessins originaux en SVG : un seul tracé net à toutes les tailles, sans textures téléchargées.
@@ -16,7 +16,7 @@ export function Motif({ nom }: { nom: string }) {
     case 'feuilles': return <><path d="M50 90V10" />{[22,39,56,73].map((y) => <g key={y} transform={`translate(50 ${y})`}><path d="M0 10Q-35 9-32-13Q-7-15 0 10ZM0 10Q35 9 32-13Q7-15 0 10Z" fill="currentColor" fillOpacity=".1" /><path d="m0 10-22-14m22 14 22-14" opacity=".5" /></g>)}</>;
     case 'cristal': return <><path d="m50 5 26 28-9 48-17 14-17-14-9-48Z" fill="currentColor" fillOpacity=".13" /><path d="m50 5-10 30 10 60 10-60ZM24 33l16 2 20 0 16-2M33 81l17-14 17 14M40 35l10 32 10-32" /><path d="m13 42-8 10 10 24 10-13Zm74 0 8 10-10 24-10-13Z" fill="currentColor" fillOpacity=".2" /></>;
     case 'vagues': return <>{[0,16,32].map((y) => <path key={y} transform={`translate(0 ${y})`} d="M5 34C22 5 39 54 55 30S82 15 95 31M5 39C22 10 39 59 55 35S82 20 95 36" />)}<circle cx="66" cy="12" r="5" /></>;
-    default: return <><path d="M22 84 74 19M30 67C10 42 48 17 82 13 80 48 55 82 30 67Z" fill="currentColor" fillOpacity=".13" /><path d="M39 57 33 37m17 7-1-18m3 16 21-4M39 57l24-4M28 72l-6 12M19 90h56" /><path d="M39 64c17 0 30-11 35-24" opacity=".45" /></>;
+    default: return <g transform={PLUME.pose}><path d={PLUME.etendard} fill="currentColor" fillOpacity=".13" /><path d={PLUME.barbes} opacity=".55" /><path d={PLUME.rachis} /><path d={PLUME.bec} /></g>;
   }
 }
 

@@ -19,7 +19,7 @@ import { personnaliser } from '../services/partie.ts';
 
 type Section = Categorie | 'paquet';
 const CATEGORIES: { id: Section; nom: string; motif: string }[] = [
-  { id: 'cadre', nom: 'Cadres', motif: 'boussole' }, { id: 'avatar', nom: 'Avatars', motif: 'renard' },
+  { id: 'avatar', nom: 'Avatars', motif: 'renard' }, { id: 'cadre', nom: 'Cadres', motif: 'boussole' },
   { id: 'dos', nom: 'Dos', motif: 'oracle' }, { id: 'paquet', nom: 'Paquets', motif: 'cristal' },
   { id: 'titre', nom: 'Titres', motif: 'plume' }, { id: 'couleur', nom: 'Couleurs', motif: 'papillon' },
 ];
@@ -30,8 +30,8 @@ export function Profil() {
   const maintenant = useMaintenant(60_000);
   const [vue, changerVue] = useState<'personnalisation' | 'succes'>('personnalisation');
   const [cibleSucces, ciblerSucces] = useState<string | null>(null);
-  const [categorie, choisirCategorie] = useState<Section>('cadre');
-  const [choix, choisir] = useState('astral');
+  const [categorie, choisirCategorie] = useState<Section>('avatar');
+  const [choix, choisir] = useState('oracle');
   const [filtre, filtrer] = useState('tout');
   const [edition, editer] = useState(false);
   const [enregistrementPseudo, setEnregistrementPseudo] = useState(false);
