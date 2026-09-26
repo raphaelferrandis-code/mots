@@ -794,7 +794,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   // Un timbre de la feuille actionné au clavier se détache d'un coup ; au doigt et à la souris, la scène suit le geste.
   actions.current.caseTouchee = (i: number, parClavier: boolean): void => { if (parClavier) void detacherVite(i); };
 
-  // ── « Tout révéler » : tous les timbres rejoignent le plateau d'un coup, et l'on passe au résumé ──
+  // ── « Tout révéler » : tous les timbres sortent vite du paquet, l'un après l'autre, et l'on passe au résumé ──
   function toutReveler(): void {
     const obtenues = cartesRef.current;
     if (!obtenues.length || !['dechirure', 'sortie', 'feuille', 'retournement'].includes(phaseRef.current)) return;
@@ -802,6 +802,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     geste.current.actif = false;
     gesteCase.current = null;
     const rang = Math.max(...obtenues.filter((_, i) => !etat.current.reveles[i]).map((o) => RANG_DE_L_ECLAT[eclatDe(o)]), 0);
+    // D'où sortent les timbres : le paquet (ou la feuille), mesuré avant qu'il ne quitte la scène.
+    const source = (dans<HTMLElement>(emballage.current, '.cp') ?? feuilleDom.current ?? scene.current)?.getBoundingClientRect();
     flushSync(() => {
       setReveles(obtenues.map(() => true));
       setRangement([...etat.current.rangement, ...obtenues.map((_, i) => i).filter((i) => !etat.current.rangement.includes(i))]);
@@ -809,6 +811,23 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       aller('resume');
     });
     SONS.souffle();
+    // Chaque timbre jaillit du paquet, petit et penché, et file à sa place avec un léger rebond (70 ms d'écart).
+    // L'envol attend que le résumé soit dessiné (deux images) : sur un téléphone lent, ce premier dessin est long et les
+    // timbres auraient fini leur course avant d'être vus. En attendant, ils restent cachés.
+    const j = jeton.current;
+    const envols = source?.width ? cases.current.map((c) => { const b = c?.getBoundingClientRect(); return c && b?.width ? { c, b } : null; }) : [];
+    for (const e of envols) if (e) e.c.style.opacity = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => envols.forEach((e, k) => {
+      if (!e) return;
+      e.c.style.opacity = '';
+      if (j !== jeton.current || !source) return;
+      const dx = source.left + source.width / 2 - (e.b.left + e.b.width / 2), dy = source.top + source.height / 2 - (e.b.top + e.b.height / 2);
+      e.c.animate([
+        { transform: `translate(${dx}px,${dy}px) rotate(${(k % 2 ? 1 : -1) * (6 + k * 2)}deg) scale(.5)`, opacity: 0 },
+        { opacity: 1, offset: .2 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: D(520), delay: D(40 + k * 70), easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
+    })));
     const r = scene.current?.getBoundingClientRect();
     if (!r) return;
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
