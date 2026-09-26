@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { CarteObtenue } from '../../jeu/partie.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
-import { bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, phraseDeLaGarantie, titreDuComptoir, titreDuResume } from './eclats.ts';
+import { bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, ordreDuResume, phraseDeLaGarantie, titreDuComptoir, titreDuResume } from './eclats.ts';
 
 const obtenue = (rarete: CarteIndex['rarete'], finition: Finition = 'Normale', changements: Partial<CarteObtenue> = {}): CarteObtenue => ({
   carte: { id: `${rarete}-${finition}`, mot: 'mot', type: 'Nom', rarete, faction: 'Latin', attaque: 5, defense: 5, registre: [], definition: '' },
@@ -20,6 +20,11 @@ describe('les effets de la cérémonie', () => {
     assert.equal(eclatDe(obtenue('Rare', 'Brillante')), 'dore');
     assert.equal(eclatDe(obtenue('Commune', 'Holographique')), 'holo');
     assert.equal(eclatDe(obtenue('Épique')), 'dore');
+  });
+  it('range le résumé du moins rare au plus rare, la finition départageant, puis l’ordre du paquet', () => {
+    const paquet = [obtenue('Rare'), obtenue('Commune', 'Brillante'), obtenue('Hors-série'), obtenue('Commune'), obtenue('Peu commune'), obtenue('Rare', 'Holographique'), obtenue('Commune')];
+    assert.deepEqual(ordreDuResume(paquet), [3, 6, 1, 4, 0, 5, 2]);
+    assert.deepEqual(ordreDuResume([]), []);
   });
 });
 

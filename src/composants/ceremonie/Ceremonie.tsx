@@ -20,7 +20,7 @@ import { Feuille, useEcranEtroit } from './Feuille.tsx';
 import type { FaceDeLaFeuille } from './Feuille.tsx';
 import { PARTS_DU_TOUR, SEUIL_DU_DETACHEMENT, avancement, caseDuTimbre, disposition, melanger, parcourir, pointDuTour, surLeTour, traceDesParts } from './feuille.ts';
 import { Particules, SONS } from './effets.ts';
-import { ABREGE_DE_LA_NATURE, COULEURS_DE_LA_LUEUR, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, titreDuResume } from './eclats.ts';
+import { ABREGE_DE_LA_NATURE, COULEURS_DE_LA_LUEUR, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, ordreDuResume, titreDuResume } from './eclats.ts';
 import { useRacineInerte } from '../useRacineInerte.ts';
 import { mouvementReduit } from '../mouvement.ts';
 import { messageDe } from '../../partage/messages.ts';
@@ -69,7 +69,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const [pli, setPli] = useState(false); // le volet du dépliage est à l'écran
   const [detaches, setDetachesEtat] = useState<boolean[]>([]);
   const [reveles, setRevelesEtat] = useState<boolean[]>([]);
-  const [rangement, setRangementEtat] = useState<number[]>([]); // les timbres du plateau, dans l'ordre où ils y sont arrivés
+  const [rangement, setRangementEtat] = useState<number[]>([]); // les timbres du plateau, dans l'ordre où ils y sont arrivés, puis, au résumé, du moins rare au plus rare
   const [grosPlan, setGrosPlanEtat] = useState<GrosPlan | null>(null);
   const [apercu, setApercu] = useState<number | null>(null);
   // Détachés d'un clic : les timbres qui se retournent sur place puis filent dans le plateau, et le dernier révélé.
@@ -777,11 +777,12 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       await feuille.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(40px) rotate(-3deg) scale(.92)' }], { duration: D(600), easing: 'ease-in', fill: 'forwards' }).finished;
       if (j !== jeton.current) return;
     }
-    // Chaque case glisse de sa place, en bas, jusqu'à la rangée agrandie du résumé.
-    const avant = cases.current.map((c) => c?.getBoundingClientRect());
-    flushSync(() => aller('resume'));
-    cases.current.forEach((c, k) => {
-      const a = avant[k], b = c?.getBoundingClientRect();
+    // Le résumé se range du moins rare au plus rare : chaque timbre glisse de sa case, en bas, jusqu'à sa place dans la
+    // rangée agrandie (on suit le timbre, pas la case, puisqu'il peut changer de case).
+    const avant = new Map(etat.current.rangement.map((i, k) => [i, cases.current[k]?.getBoundingClientRect()] as const));
+    flushSync(() => { setRangement(ordreDuResume(cartesRef.current)); aller('resume'); });
+    etat.current.rangement.forEach((i, k) => {
+      const c = cases.current[k], a = avant.get(i), b = c?.getBoundingClientRect();
       if (!c || !a?.width || !b?.width) return;
       c.animate([
         { transform: `translate(${a.left - b.left}px,${a.top - b.top}px) scale(${a.width / b.width})`, transformOrigin: '0 0' },
@@ -794,7 +795,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   // Un timbre de la feuille actionné au clavier se détache d'un coup ; au doigt et à la souris, la scène suit le geste.
   actions.current.caseTouchee = (i: number, parClavier: boolean): void => { if (parClavier) void detacherVite(i); };
 
-  // ── « Tout révéler » : tous les timbres sortent vite du paquet, l'un après l'autre, et l'on passe au résumé ──
+  // ── « Tout révéler » : tous les timbres sortent vite du paquet, du moins rare au plus rare, et l'on passe au résumé ──
   function toutReveler(): void {
     const obtenues = cartesRef.current;
     if (!obtenues.length || !['dechirure', 'sortie', 'feuille', 'retournement'].includes(phaseRef.current)) return;
@@ -806,7 +807,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const source = (dans<HTMLElement>(emballage.current, '.cp') ?? feuilleDom.current ?? scene.current)?.getBoundingClientRect();
     flushSync(() => {
       setReveles(obtenues.map(() => true));
-      setRangement([...etat.current.rangement, ...obtenues.map((_, i) => i).filter((i) => !etat.current.rangement.includes(i))]);
+      setRangement(ordreDuResume(obtenues));
       setPli(false);
       aller('resume');
     });
@@ -1018,7 +1019,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
 
       <div className="ceremonie__infos" ref={infos} aria-live="polite">{info}</div>
 
-      {/* Le plateau : les timbres rangés, dans l'ordre où ils y arrivent. À la fin, il s'agrandit et chaque timbre s'admire. */}
+      {/* Le plateau : les timbres rangés, dans l'ordre où ils y arrivent. À la fin, il s'agrandit, se range du moins rare au plus rare, et chaque timbre s'admire. */}
       <div className={`ceremonie__plateau${apercu !== null ? ' ceremonie__plateau--estompe' : ''}`}>
         {Array.from({ length: n || 6 }, (_, k) => {
           const i = rangement[k];

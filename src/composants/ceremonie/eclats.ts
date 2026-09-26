@@ -7,6 +7,7 @@ import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 import { paquetDException } from '../../jeu/paquets.ts';
 import type { PaquetDException } from '../../jeu/paquets.ts';
 import type { CarteObtenue } from '../../jeu/partie.ts';
+import { FINITIONS, RARETES } from '../../partage/types.ts';
 import type { Nature } from '../../partage/types.ts';
 
 export type Eclat = 'courant' | 'dore' | 'holo' | 'grand';
@@ -17,6 +18,13 @@ export function eclatDe({ carte, finition }: Pick<CarteObtenue, 'carte' | 'finit
   if (finition === 'Holographique') return 'holo';
   if (finition === 'Brillante' || carte.rarete === 'Épique') return 'dore';
   return 'courant';
+}
+
+// L'ordre du résumé (demande de Raphaël, 26/09/2026) : du moins rare au plus rare, de gauche à droite. La finition
+// départage deux timbres de même rareté (courant, brillant, holographique) ; à égalité, l'ordre du paquet.
+export function ordreDuResume(cartes: readonly Pick<CarteObtenue, 'carte' | 'finition'>[]): number[] {
+  const poids = ({ carte, finition }: Pick<CarteObtenue, 'carte' | 'finition'>): number => RARETES.indexOf(carte.rarete) * FINITIONS.length + FINITIONS.indexOf(finition);
+  return cartes.map((_, i) => i).sort((a, b) => poids(cartes[a]) - poids(cartes[b]) || a - b);
 }
 
 // Le signe d'un paquet d'exception (décision de Raphaël du 26/09/2026), visible dès que le paquet arrive, avant
