@@ -283,7 +283,7 @@ d'un appareil à l'autre. **Aucune fonction à redéployer.** Le jeu est déjà 
 - [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/22-apparence.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned**.
-- [ ] Ensuite, ouvrir le jeu **d'abord sur l'appareil qui a l'apparence à garder** : ses choix partent au serveur, puis
+- [x] Ensuite, ouvrir le jeu **d'abord sur l'appareil qui a l'apparence à garder** : ses choix partent au serveur, puis
       les autres appareils les reprennent. Un choix fait ensuite, n'importe où, vaut partout.
 - [x] Vérifié par l'assistant le 26 septembre, de l'extérieur (sans ouvrir le tableau de bord) : la fonction
       `changer_d_apparence` existe avec son réglage `p_apparence` et refuse les visiteurs sans compte ; le script
