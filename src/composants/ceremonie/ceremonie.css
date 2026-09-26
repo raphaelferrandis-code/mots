@@ -62,9 +62,30 @@ body.ceremonie-ouverte { overflow: hidden; }
 .cp__indice.cp__indice--eteint { display: none; }
 @keyframes c-indice { 0% { left: 3%; opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { left: 97%; opacity: 0; } }
 
+/* ── La feuille de timbres ────────────────────────────────────────────────────
+   Sa largeur suit la hauteur réellement visible (texte et plateau déduits) et le ratio de sa grille.
+   L'inclinaison au pointeur aplatit la 3D : la perspective du retournement est écrite dans ses images clés. */
+
+.c-feuille {
+  --fe-haut: calc(100vh - 320px);
+  position: relative; z-index: 1;
+  width: max(220px, min(760px, 94vw, calc(var(--fe-haut) * var(--fe-ratio))));
+  perspective: 2000px;
+}
+@supports (height: 100dvh) { .c-feuille { --fe-haut: calc(100dvh - 320px); } }
+.c-feuille[data-etat='cachee'] { visibility: hidden; }
+.c-feuille[data-etat='pliee'] .c-feuille__pivot > .fe { clip-path: inset(0 0 50% 0); }
+.c-feuille__inclinaison { transform-style: flat; will-change: transform; }
+.c-feuille__pivot { position: relative; will-change: transform; }
+/* Le volet du dépliage : la moitié basse du verso, qui pivote autour de la ligne de pli. */
+.c-feuille__volet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 50%; overflow: hidden;
+  transform-origin: 50% 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.c-feuille__volet > .fe { position: absolute; left: 0; right: 0; bottom: 0; box-shadow: none; }
+
 /* ── Les timbres ───────────────────────────────────────────────────────────── */
 
-.c-pile { position: relative; width: var(--sw); aspect-ratio: 30 / 38; z-index: 1; }
 .c-carte { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; perspective: 1100px; -webkit-tap-highlight-color: transparent; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
 .c-carte:focus-visible { outline: 2px solid var(--c-cuivre-clair); outline-offset: 12px; }
 .c-inclinaison { position: absolute; inset: 0; perspective: 1100px; transition: transform .14s ease-out; filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 3px rgba(0, 0, 0, 0)); }
@@ -122,6 +143,8 @@ body.ceremonie-ouverte { overflow: hidden; }
 .bouton-dentele:disabled { filter: grayscale(1) brightness(.6); cursor: not-allowed; transform: none; }
 .bouton-dentele--filet { background: none; color: var(--c-cuivre-clair); -webkit-mask: none; mask: none; border: 1px solid rgba(216, 154, 92, .6); }
 .bouton-dentele--filet:focus-visible { outline: 2px solid var(--c-cuivre-clair); box-shadow: none; }
+/* Sur un téléphone, deux boutons empilés sous la feuille ne doivent pas toucher le plateau. */
+@media (max-width: 479.98px) { .c-actions { gap: 10px; margin-top: 8px; } .c-actions .bouton-dentele { height: 50px; padding: 0 26px; font-size: 16px; } }
 
 /* ── Le plateau : cinq cases où se rangent les timbres révélés ─────────────── */
 

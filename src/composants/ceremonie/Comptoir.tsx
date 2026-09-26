@@ -190,7 +190,7 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
         </button>
       </div>
 
-      {ouverture && <Ceremonie premier={ouverture.premier} tirer={ouverture.tirer} continuer={ouverture.continuer} reserve={stock} depuis={ouverture.depuis}
+      {ouverture && <Ceremonie premier={ouverture.premier} tirer={ouverture.tirer} continuer={ouverture.continuer} reserve={stock} numero={partie.sauvegarde.paquets.ouverts} depuis={ouverture.depuis}
         modelePaquet={profil.paquet} dos={profilVisible(profil, formule ?? null).dos} sons={reglages.sonsPaquets} onSons={(actifs) => changerUnReglage('sonsPaquets', actifs)}
         reduire={reglages.reduireAnimations} onFermer={fermer} onRanger={ranger} onErreur={setErreur} />}
     </section>

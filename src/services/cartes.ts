@@ -8,7 +8,7 @@ import { adressesDesPages, cheminDeLaPage } from '../partage/pagesDesMots.ts';
 import type { Devinettes } from '../jeu/devinette.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../partage/types.ts';
 
-const EDITION = 1;
+export const EDITION = 1;
 const DOSSIER = `${import.meta.env.BASE_URL}data/`;
 // L'empreinte des données (vite.config.ts) : une nouvelle édition a une nouvelle adresse, qu'aucun vieux cache ne connaît.
 const VERSION: string = import.meta.env?.VITE_VERSION_DES_DONNEES ?? '';
