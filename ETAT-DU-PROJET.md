@@ -2,6 +2,16 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (soir) — finitions, étape 3 « Un seul langage visuel », lot A : une seule palette.** Nuit, crème
+> et cuivre partout : `theme.css` porte les jetons de l'audit (`--nuit*`, `--texte-fort/texte/texte-doux/texte-discret`,
+> `--filet`, `--cuivre*`, couleurs de sens `--succes/--erreur/--avertissement/--info/--danger`), les anciens noms
+> (`--papier`, `--encre`, `--accent`…) en deviennent des alias ; les copies locales (`--p-*`, `--prep-*`, `--c-*`,
+> `--bouton-*`, `--reussite`) sont supprimées. Texte en Jost partout ; trois polices (Barlow Condensed retirée,
+> les mentions en Oswald, image de partage comprise). Le bouton « de métal » (`.bouton`) prend la forme du bouton
+> secondaire de la refonte ; l'orange (Amis, menus, halos) devient le cuivre ; les erreurs prennent `--erreur`. Joutes
+> en direct : le mode choisi se voit (souligné). Suite : lot B (champs, onglets, messages, fenêtres), lot C (écrans :
+> vitrines du Profil…), lot D (typographie, sobriété).
+
 > **26 septembre 2026 (soir) — les cachets « Maîtrisé » et « Premier jour » retirés (décision de Raphaël).** « On ne joue
 > plus la définition de notre mot en duel » (on retrouve celle du mot adverse), et le « Premier jour » ne l'intéresse
 > pas : le lot C de l'étape 2 (1d86ad1) est annulé, et l'ancien cachet « Maîtrisé » disparaît du timbre (album, fiche,

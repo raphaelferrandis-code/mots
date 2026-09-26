@@ -33,7 +33,7 @@
 .fe__case .tb { position: absolute; inset: 0; width: 100%; transition: transform .25s cubic-bezier(.2, .8, .2, 1), filter .25s; }
 .fe__case::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; transition: background .25s, box-shadow .25s; }
 .fe__case:focus-visible { outline: none; }
-.fe__case:focus-visible::after { box-shadow: inset 0 0 0 3px var(--c-cuivre-clair, #f0c48f); }
+.fe__case:focus-visible::after { box-shadow: inset 0 0 0 3px var(--cuivre-clair, #f0c48f); }
 @media (hover: hover) {
   .fe--recto .fe__case:hover .tb { transform: translateY(-5px); filter: drop-shadow(0 12px 14px rgba(0, 0, 0, .4)); }
   .fe--verso .fe__case:hover::after { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 2px rgba(216, 154, 92, .55); }

@@ -21,10 +21,10 @@
 .navigation__icone { display: flex; }
 .navigation__icone svg { width: 19px; height: 19px; }
 .navigation__nom-court { display: none; }
-.navigation__lien[aria-current='page'] { color: #ffb488; background: rgb(241 138 75 / 13%); font-weight: 600; }
+.navigation__lien[aria-current='page'] { color: var(--cuivre-clair); background: rgb(216 154 92 / 13%); font-weight: 600; }
 .navigation__lien[aria-current='page']::after {
   content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
-  background: var(--accent); box-shadow: 0 0 14px rgb(241 138 75 / 90%);
+  background: var(--accent); box-shadow: 0 0 14px rgb(216 154 92 / 90%);
 }
 
 
@@ -51,7 +51,7 @@
 .bouton-joueur__chevron svg { display: block; width: 16px; height: 16px; transition: rotate .2s; }
 .bouton-joueur[aria-expanded='true'] .bouton-joueur__chevron svg { rotate: 180deg; }
 .bouton-joueur[aria-current='page'] .bouton-joueur__chevron { color: var(--accent); }
-.bouton-joueur[aria-expanded='true'] { box-shadow: 0 0 0 2px rgb(241 138 75 / 65%); }
+.bouton-joueur[aria-expanded='true'] { box-shadow: 0 0 0 2px rgb(216 154 92 / 65%); }
 
 .avatar { position: relative; display: grid; place-items: center; width: 46px; height: 46px; }
 .avatar__anneau { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
@@ -82,18 +82,18 @@
 .menu-encre__reserve p { margin: 0; display: grid; gap: 4px; }
 .menu-encre__reserve strong { font: 700 1.9rem/1 var(--police-serif); }
 .menu-encre__reserve em { font-weight: 400; font-size: 1.25rem; color: var(--encre-douce); }
-.menu-encre__flacon { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 16px; background: rgb(241 138 75 / 16%); color: var(--accent); box-shadow: 0 0 22px rgb(241 138 75 / 25%); }
+.menu-encre__flacon { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 16px; background: rgb(216 154 92 / 16%); color: var(--accent); box-shadow: 0 0 22px rgb(216 154 92 / 25%); }
 .menu-encre__flacon svg { width: 28px; height: 28px; }
 .bouton-menu { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 14px; text-decoration: none; font-size: 1rem; }
 .bouton-menu svg { width: 20px; height: 20px; }
-.bouton-menu--plein { background: var(--accent); color: var(--accent-texte); font-weight: 600; box-shadow: 0 8px 22px rgb(241 138 75 / 35%); }
+.bouton-menu--plein { background: var(--accent); color: var(--accent-texte); font-weight: 600; box-shadow: 0 8px 22px rgb(216 154 92 / 35%); }
 .bouton-menu--trait { border: 1.5px solid var(--filet); color: var(--encre); }
 .menu-encre__usage { margin: 0; color: var(--encre-douce); font-size: 0.9rem; line-height: 1.45; }
 .menu-encre__gains { list-style: none; margin: -4px 0 4px; padding: 0; display: grid; gap: 10px; }
 .menu-encre__gains li { display: flex; align-items: center; gap: 12px; }
 .menu-encre__gains li > span:last-child { display: grid; gap: 2px; font-size: 0.85rem; color: var(--encre-douce); }
 .menu-encre__gains strong { color: var(--encre); font-size: 0.95rem; font-weight: 600; }
-.menu-encre__icone { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgb(241 138 75 / 12%); color: var(--accent); }
+.menu-encre__icone { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgb(216 154 92 / 12%); color: var(--accent); }
 .menu-encre__icone svg { width: 19px; height: 19px; }
 .menu-profil__formules {
   border: 1.5px solid transparent; color: var(--encre);
@@ -120,9 +120,9 @@
 .timbre-joueur__papier > svg { width: 30px; height: 30px; }
 .timbre-joueur__papier .portrait { width: 50px; }
 .timbre-joueur__cachet {
-  position: absolute; right: -18px; bottom: -10px; width: 38px; height: 38px; box-sizing: border-box; border: 1.5px solid rgb(241 138 75 / 90%); border-radius: 50%;
+  position: absolute; right: -18px; bottom: -10px; width: 38px; height: 38px; box-sizing: border-box; border: 1.5px solid rgb(216 154 92 / 90%); border-radius: 50%;
   display: flex; flex-direction: column; align-items: center; justify-content: center; rotate: -14deg;
-  color: var(--accent); font: 700 15px/1 var(--police-mention);
+  color: var(--accent); font: 600 15px/1 var(--police-mention);
 }
 .timbre-joueur__cachet small { font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
 .menu-profil__identite { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -137,7 +137,7 @@
 .menu-profil__invite { align-self: flex-start; font-size: .85rem; color: var(--encre-douce); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .menu-profil__invite:hover { color: var(--encre); }
 .menu-profil__jauge { display: block; height: 8px; border-radius: 8px; background: var(--papier); box-shadow: inset 0 0 0 1px var(--filet); overflow: hidden; }
-.menu-profil__jauge > span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--accent), #ffc38a); box-shadow: 0 0 10px rgb(241 138 75 / 60%); transition: width 1s cubic-bezier(.3, .8, .3, 1); }
+.menu-profil__jauge > span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--accent), var(--cuivre-clair)); box-shadow: 0 0 10px rgb(216 154 92 / 60%); transition: width 1s cubic-bezier(.3, .8, .3, 1); }
 .menu-profil__xp { font-size: 0.78rem; color: var(--encre-douce); }
 .menu-profil__liens { list-style: none; margin: 0; padding: 10px 10px 4px; display: grid; gap: 2px; }
 .menu-profil__liens a {
@@ -148,8 +148,8 @@
 .menu-profil__icone svg { width: 19px; height: 19px; }
 .menu-profil__nom { flex: 1; white-space: nowrap; }
 .menu-profil__detail { font-size: 0.78rem; color: var(--encre-douce); text-align: right; }
-.menu-profil__liens a[aria-current='page'] { background: rgb(241 138 75 / 10%); }
-.menu-profil__liens a[aria-current='page'] .menu-profil__icone { background: rgb(241 138 75 / 16%); color: var(--accent); }
+.menu-profil__liens a[aria-current='page'] { background: rgb(216 154 92 / 10%); }
+.menu-profil__liens a[aria-current='page'] .menu-profil__icone { background: rgb(216 154 92 / 16%); color: var(--accent); }
 .menu-profil__formules {
   display: flex; align-items: center; gap: 14px; margin: 8px 16px 16px; padding: 14px 16px; border-radius: 16px;
   text-decoration: none; box-shadow: 0 0 24px rgb(225 183 255 / 18%);

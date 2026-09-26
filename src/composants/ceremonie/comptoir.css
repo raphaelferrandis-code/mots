@@ -5,21 +5,21 @@
   display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); align-items: center; gap: clamp(24px, 5vw, 80px);
   max-width: 1320px; margin: 0 auto; padding: clamp(20px, 5vh, 64px) 0 clamp(20px, 4vh, 48px);
   min-height: calc(100svh - 160px);
-  overflow-x: clip; color: var(--c-texte); font-family: var(--police-douce);
+  overflow-x: clip; color: var(--texte); font-family: var(--police-douce);
 }
-.comptoir__titre { margin: 0 0 38px; font-family: var(--police-serif); font-weight: 900; font-size: clamp(50px, 7.2vw, 110px); line-height: .93; letter-spacing: -.022em; color: var(--c-papier); text-wrap: balance; }
+.comptoir__titre { margin: 0 0 38px; font-family: var(--police-serif); font-weight: 900; font-size: clamp(50px, 7.2vw, 110px); line-height: .93; letter-spacing: -.022em; color: var(--texte-fort); text-wrap: balance; }
 /* Ce qu'est le jeu, sous le titre, tant que le joueur débute (Accueil.tsx). */
-.comptoir__accroche { margin: -16px 0 30px; max-width: 34em; color: var(--c-texte-doux); font-size: 17px; line-height: 1.5; }
+.comptoir__accroche { margin: -16px 0 30px; max-width: 34em; color: var(--texte-doux); font-size: 17px; line-height: 1.5; }
 .comptoir__accroche p { margin: 0; }
 .comptoir__accroche p + p { margin-top: 8px; font-size: 14.5px; }
 .comptoir__accroche a { color: inherit; text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 4px; }
 .comptoir__actions { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
 .comptoir__actions--offres { gap: 14px; margin-top: 18px; }
-.comptoir__lien { color: var(--c-papier); text-decoration: underline; text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 6px; text-decoration-thickness: 1px; font-size: 16px; }
-.comptoir__lien:hover { text-decoration-color: var(--c-cuivre-clair); }
-.comptoir__infos { margin-top: 24px; display: grid; gap: 6px; font-size: 15px; color: var(--c-texte-doux); font-variant-numeric: tabular-nums; }
+.comptoir__lien { color: var(--texte-fort); text-decoration: underline; text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 6px; text-decoration-thickness: 1px; font-size: 16px; }
+.comptoir__lien:hover { text-decoration-color: var(--cuivre-clair); }
+.comptoir__infos { margin-top: 24px; display: grid; gap: 6px; font-size: 15px; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
 .comptoir__infos p { margin: 0; }
-.comptoir__garantie { color: var(--c-cuivre-clair); }
+.comptoir__garantie { color: var(--cuivre-clair); }
 .comptoir__garantie span { margin-right: 4px; }
 
 .comptoir__scene { --pw: min(330px, 68vw); position: relative; display: grid; place-items: center; min-height: clamp(470px, 64vh, 640px); }
@@ -35,7 +35,7 @@
 .comptoir__fantome--2 { transform: translate(32px, 28px) rotate(6.5deg); }
 .comptoir__fantome--parti { opacity: 0; transform: translate(0, 60px) rotate(0); }
 .comptoir__paquet { position: relative; padding: 0; border: 0; background: none; cursor: pointer; animation: comptoir-flotte 7s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
-.comptoir__paquet:focus-visible { outline: 2px solid var(--c-cuivre-clair); outline-offset: 14px; }
+.comptoir__paquet:focus-visible { outline: 2px solid var(--cuivre-clair); outline-offset: 14px; }
 .comptoir__paquet:disabled { cursor: default; filter: grayscale(.9) brightness(.55); }
 @keyframes comptoir-flotte { 50% { translate: 0 -12px; } }
 
@@ -62,12 +62,12 @@
 
 /* ── Sous le comptoir : l'album en aperçu (et, sur l'accueil, les duels à côté) ── */
 
-.comptoir-bas { width: 100%; box-sizing: border-box; max-width: 1320px; margin: 0 auto; padding: 44px 0 52px; border-top: 1px solid var(--c-ligne); color: var(--c-texte); font-family: var(--police-douce); }
+.comptoir-bas { width: 100%; box-sizing: border-box; max-width: 1320px; margin: 0 auto; padding: 44px 0 52px; border-top: 1px solid var(--filet); color: var(--texte); font-family: var(--police-douce); }
 .comptoir-bas--double { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); }
-.comptoir-bas h2 { margin: 0; font-family: var(--police-serif); font-weight: 700; font-size: clamp(28px, 3vw, 36px); line-height: 1.1; color: var(--c-papier); }
+.comptoir-bas h2 { margin: 0; font-family: var(--police-serif); font-weight: 700; font-size: clamp(28px, 3vw, 36px); line-height: 1.1; color: var(--texte-fort); }
 .album-apercu__tete { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; }
-.album-apercu__compte { margin: 0; color: var(--c-texte-doux); font-size: 16px; }
-.album-apercu__compte b { display: inline-block; margin-right: 4px; font-family: var(--police-serif); font-weight: 900; font-size: 40px; color: var(--c-cuivre-clair); font-variant-numeric: lining-nums; }
+.album-apercu__compte { margin: 0; color: var(--texte-doux); font-size: 16px; }
+.album-apercu__compte b { display: inline-block; margin-right: 4px; font-family: var(--police-serif); font-weight: 900; font-size: 40px; color: var(--cuivre-clair); font-variant-numeric: lining-nums; }
 .album-apercu__cases { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(6px, 1vw, 12px); margin: 0; padding: 0; list-style: none; }
 .album-apercu__case { position: relative; aspect-ratio: 30 / 38; background: rgba(233, 225, 208, .045); -webkit-mask: var(--perf) center / 100% 100% no-repeat; mask: var(--perf) center / 100% 100% no-repeat; }
 .album-apercu__case::before { content: ''; position: absolute; inset: 14%; border: 1px dashed rgba(233, 225, 208, .16); }
@@ -75,7 +75,7 @@
 .album-apercu__case--pleine::before { display: none; }
 .album-apercu__case .tb { position: absolute; inset: 0; transition: translate .25s, opacity .2s; }
 .album-apercu__case--pleine:hover .tb { translate: 0 -4px; }
-.album-apercu__pied { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin: 22px 0 0; color: var(--c-texte-doux); font-size: 15px; }
+.album-apercu__pied { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin: 22px 0 0; color: var(--texte-doux); font-size: 15px; }
 
 /* L'envol : des copies des timbres, au-dessus de tout, le temps de rejoindre leur case. */
 .envol { position: fixed; inset: 0; z-index: 65; pointer-events: none; }

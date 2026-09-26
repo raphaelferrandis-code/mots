@@ -2,23 +2,45 @@
    THÈME DU JEU
    Toutes les couleurs, polices et mesures de l'interface sont ici. Changer la
    direction artistique, c'est d'abord changer ce fichier.
-   Bleu nuit, encre claire et orange postal. Les timbres gardent leur propre papier.
+   Nuit, crème et cuivre : la langue de la refonte (cérémonie, duel), celle de tout le jeu depuis l'étape 3 des
+   finitions (26/09/2026 : fini le « bureau » bleuté à l'orange postal). Les timbres gardent leur propre papier.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Couleurs générales */
   color-scheme: dark;
-  --papier: #0b1729;
-  --papier-fonce: #182e48;
-  --carte-fond: #102139;
-  --encre: #e0edfa;
-  --encre-douce: #adc3da;
-  --filet: #314a66;
-  --filet-fort: #587795; /* contour des champs de saisie : lisible à lui seul (contraste 3 pour 1 sur le fond) */
-  --accent: #f18a4b;
-  --accent-survol: #ffa366;
-  --accent-texte: #172235;
-  --focus: #a4d8ff;
+
+  /* Fonds */
+  --nuit: #0b1729;              /* la page */
+  --nuit-carte: #102139;        /* cartes, champs */
+  --nuit-relief: #182e48;       /* survol, sélection */
+  --voile: rgb(3 8 16 / 72%);
+
+  /* Textes : le crème de la refonte */
+  --texte-fort: #f1e7d0;        /* titres, mots, boutons (14,6 pour 1 sur la nuit) */
+  --texte: #e4dccb;             /* texte courant (13,2 pour 1) */
+  --texte-doux: #a7b1c4;        /* secondaire (8,3 pour 1) */
+  --texte-discret: #8d99ad;     /* le plus effacé permis (6,2 pour 1) */
+
+  /* Filets */
+  --filet: rgb(233 225 208 / 12%);
+  --filet-fort: #587795;        /* contour des champs de saisie : lisible à lui seul (3 pour 1 sur la nuit) */
+
+  /* Un seul accent : le cuivre */
+  --cuivre: #d89a5c;
+  --cuivre-clair: #f0c48f;
+  --cuivre-encre: #2a1605;      /* texte posé sur le cuivre (7,2 pour 1) */
+  --cuivre-voile: rgb(216 154 92 / 12%);
+  --focus: var(--cuivre-clair);
+
+  /* Couleurs de sens (le cuivre n'est jamais une erreur) */
+  --succes: #6fd49a;
+  --erreur: #ff7b7b;
+  --avertissement: #e8c56e;
+  --info: #a4d8ff;
+  --danger: #e9a0a0;            /* action destructive, au repos */
+  --danger-arme: #b33a3a;       /* la même, armée par un premier clic */
+
+  /* Le podium du classement et l'enveloppe par avion (Amis) */
   --classement-or: #e8c56e;
   --classement-argent: #ced9e5;
   --classement-bronze: #d9a077;
@@ -33,14 +55,15 @@
   --rarete-epique: #7a4bb0;
   --rarete-legendaire: #b8860b;
 
-  /* Polices : livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils. */
+  /* Polices : trois familles, livrées avec le jeu (voir polices.ts), pour le même rendu sur tous les appareils.
+     Playfair pour les titres, Jost pour le texte, Oswald pour les capitales étroites (mentions, timbres). */
   --police-serif: 'Playfair Display', 'Palatino Linotype', Palatino, Georgia, serif;
   --police-titre: var(--police-serif);
-  --police-texte: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --police-chiffres: var(--police-texte);
-  --police-mention: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
   --police-douce: 'Jost', 'Futura', 'Century Gothic', 'Trebuchet MS', sans-serif;
+  --police-texte: var(--police-douce);
+  --police-chiffres: var(--police-texte);
   --police-etroite: 'Oswald', 'Arial Narrow', 'Roboto Condensed', Impact, sans-serif;
+  --police-mention: var(--police-etroite);
 
   /* Mesures */
   --rayon: 12px;
@@ -51,6 +74,16 @@
   --largeur-accueil: clamp(1320px, 88vw, 1920px);
   --hauteur-navigation: 64px;
   --ombre: 0 12px 30px rgb(0 0 0 / 22%);
+
+  /* Les anciens noms, le temps que chaque écran passe aux nouveaux */
+  --papier: var(--nuit);
+  --papier-fonce: var(--nuit-relief);
+  --carte-fond: var(--nuit-carte);
+  --encre: var(--texte);
+  --encre-douce: var(--texte-doux);
+  --accent: var(--cuivre);
+  --accent-survol: var(--cuivre-clair);
+  --accent-texte: var(--cuivre-encre);
 }
 
 /* Le jeu n'a qu'un thème, sombre. Cette règle le dit aussi aux navigateurs qui repèrent un site sombre par

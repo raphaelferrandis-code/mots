@@ -19,7 +19,7 @@
 .confirmation__boutons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .confirmation__bouton { min-height: 48px; padding: 0 20px; border-radius: 12px; font: 600 1rem/1.2 var(--police-douce); cursor: pointer; transition: background-color .15s, border-color .15s; }
 .confirmation__bouton--annuler { border: 1.5px solid var(--filet); background: none; color: var(--encre); }
-.confirmation__bouton--confirmer { border: 0; background: var(--accent); color: var(--accent-texte); box-shadow: 0 8px 22px rgb(241 138 75 / 35%); }
+.confirmation__bouton--confirmer { border: 0; background: var(--accent); color: var(--accent-texte); box-shadow: 0 8px 22px rgb(216 154 92 / 35%); }
 .confirmation--danger .confirmation__bouton--confirmer { background: #ef7a62; box-shadow: 0 8px 22px rgb(239 122 98 / 30%); }
 .confirmation__bouton:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 

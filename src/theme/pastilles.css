@@ -21,11 +21,11 @@
 /* Le filet intérieur, comme le cadre du timbre. */
 .c-vignette::after, .c-dorure::after { content: ''; position: absolute; inset: 4px; border: 1px solid var(--filet-vignette); pointer-events: none; }
 
-.c-vignette { --losange: #8a96ad; --filet-vignette: rgba(31, 42, 68, .28); color: #1f2a44; background: var(--c-papier, #f1e7d0); }
+.c-vignette { --losange: #8a96ad; --filet-vignette: rgba(31, 42, 68, .28); color: #1f2a44; background: var(--texte-fort, #f1e7d0); }
 .c-vignette::before { content: ''; width: 5px; height: 5px; rotate: 45deg; background: var(--losange); flex-shrink: 0; }
 /* À partir de Rare, la pastille reprend la couleur du filet du timbre (timbre.css) : cuivre, violet, or, irisé. */
 .c-vignette[data-rarete='Peu commune'] { --losange: #5f9a7c; }
-.c-vignette[data-rarete='Rare'] { --losange: var(--c-cuivre, #d89a5c); --filet-vignette: rgba(176, 106, 48, .5); }
+.c-vignette[data-rarete='Rare'] { --losange: var(--cuivre, #d89a5c); --filet-vignette: rgba(176, 106, 48, .5); }
 .c-vignette[data-rarete='Épique'] { --losange: #7a5bc4; --filet-vignette: rgba(122, 91, 196, .45); }
 .c-vignette[data-rarete='Légendaire'] { --losange: #2a1605; --filet-vignette: rgba(42, 22, 5, .45); color: #2a1605; background: linear-gradient(100deg, #b07634, #fbe2ad 38%, #c88a44 58%, #fde9bd 80%, #b87d3a) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }
 .c-vignette[data-rarete='Hors-série'] { --losange: #2b1447; --filet-vignette: rgba(43, 20, 71, .4); color: #2b1447; background: linear-gradient(100deg, #cfaeff, #ffd9ec 30%, #b57bff 55%, #bfe9ff 80%, #e4ccff) 0 0 / 220% 100%; animation: c-reflet 3.2s ease-in-out infinite alternate; }
@@ -39,11 +39,11 @@
 
 /* Le tampon : double filet, encre un peu passée, posé de travers. */
 .c-tampon {
-  padding: 6px 10px 5px; color: var(--c-cuivre-clair, #f0c48f); border: 1.5px solid currentColor; border-radius: 3px;
+  padding: 6px 10px 5px; color: var(--cuivre-clair, #f0c48f); border: 1.5px solid currentColor; border-radius: 3px;
   outline: 1px solid currentColor; outline-offset: 2px; rotate: -4deg; opacity: .88;
   animation: c-coup-de-tampon .38s cubic-bezier(.2, 1.4, .4, 1) .12s backwards;
 }
-.c-tampon--doublon { color: var(--c-texte-doux, #a7b1c4); rotate: 3deg; opacity: .75; }
+.c-tampon--doublon { color: var(--texte-doux, #a7b1c4); rotate: 3deg; opacity: .75; }
 @keyframes c-coup-de-tampon { from { scale: 1.8; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .c-vignette, .c-dorure > span, .c-dorure::after, .c-tampon { animation: none; } }
 

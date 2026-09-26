@@ -6,22 +6,13 @@
    · tertiaire  : simple lien souligné (rouge et armé en deux temps pour une action destructive).
    ───────────────────────────────────────────────────────────────────────────── */
 
-:root {
-  --bouton-cuivre: #d89a5c;
-  --bouton-cuivre-clair: #f0c48f;
-  --bouton-cuivre-texte: #2a1605;
-  --bouton-texte: #f1e7d0;
-  --bouton-texte-doux: #a7b1c4;
-  --bouton-danger: #e9a0a0;
-  --bouton-danger-arme: #b33a3a;
-}
 
 .btn-primary, .btn-secondary, .btn-tertiary { font-family: var(--police-douce); text-decoration: none; cursor: pointer; }
 
 .btn-primary {
   min-height: 60px; padding: 0 42px; display: inline-flex; align-items: center; justify-content: center; gap: 12px;
   border: 0; font-weight: 600; font-size: 18px; letter-spacing: .01em; text-align: center;
-  color: var(--bouton-cuivre-texte); background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43);
+  color: var(--cuivre-encre); background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43);
   /* Deux rangées de dents (haut et bas), et le milieu plein : sans lui, un trait peut apparaître au raccord. */
   -webkit-mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x, linear-gradient(#000 0 0) 50% 50% / 100% calc(100% - 12px) no-repeat;
   mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x, linear-gradient(#000 0 0) 50% 50% / 100% calc(100% - 12px) no-repeat;
@@ -30,40 +21,40 @@
 @media (hover: hover) { .btn-primary:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.07); } }
 .btn-primary:not(:disabled):active { transform: translateY(1px); }
 /* Le masque dentelé rognerait un contour extérieur : le focus se dessine à l'intérieur. */
-.btn-primary:focus-visible { outline: none; filter: brightness(1.15); box-shadow: inset 0 0 0 3px var(--bouton-cuivre-texte); }
+.btn-primary:focus-visible { outline: none; filter: brightness(1.15); box-shadow: inset 0 0 0 3px var(--cuivre-encre); }
 .btn-primary:disabled, .btn-primary[aria-disabled='true'] { filter: grayscale(1) brightness(.55); cursor: not-allowed; transform: none; }
 .btn-primary.sm { min-height: 48px; padding: 0 26px; font-size: 16px; }
 
 .btn-secondary {
   min-height: 48px; padding: 0 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   border: 1px solid rgb(216 154 92 / 55%); border-radius: 3px; background: rgb(216 154 92 / 6%);
-  color: var(--bouton-texte); font-weight: 500; font-size: 16px; text-align: center;
+  color: var(--texte-fort); font-weight: 500; font-size: 16px; text-align: center;
   transition: background .2s, border-color .2s;
 }
-@media (hover: hover) { .btn-secondary:not(:disabled):hover { background: rgb(216 154 92 / 14%); border-color: var(--bouton-cuivre); } }
-.btn-secondary:focus-visible { outline: 2px solid var(--bouton-cuivre-clair); outline-offset: 3px; }
+@media (hover: hover) { .btn-secondary:not(:disabled):hover { background: rgb(216 154 92 / 14%); border-color: var(--cuivre); } }
+.btn-secondary:focus-visible { outline: 2px solid var(--cuivre-clair); outline-offset: 3px; }
 .btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
 .btn-secondary.sm { min-height: 38px; padding: 0 14px; font-size: 14.5px; }
-.btn-secondary[aria-pressed='true'] { background: var(--bouton-cuivre); color: var(--bouton-cuivre-texte); border-color: var(--bouton-cuivre); }
+.btn-secondary[aria-pressed='true'] { background: var(--cuivre); color: var(--cuivre-encre); border-color: var(--cuivre); }
 
 .btn-tertiary {
   min-height: 44px; display: inline-flex; align-items: center; padding: 8px 4px;
-  border: 0; background: none; color: var(--bouton-texte-doux); font-size: 15px;
+  border: 0; background: none; color: var(--texte-doux); font-size: 15px;
   text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(167 177 196 / 40%);
 }
-@media (hover: hover) { .btn-tertiary:not(:disabled):hover { color: var(--bouton-texte); } }
-.btn-tertiary:focus-visible { outline: 2px solid var(--bouton-cuivre-clair); outline-offset: 3px; border-radius: 2px; }
+@media (hover: hover) { .btn-tertiary:not(:disabled):hover { color: var(--texte-fort); } }
+.btn-tertiary:focus-visible { outline: 2px solid var(--cuivre-clair); outline-offset: 3px; border-radius: 2px; }
 .btn-tertiary:disabled { opacity: .5; cursor: not-allowed; }
-.btn-tertiary.danger { color: var(--bouton-danger); text-decoration-color: rgb(233 160 160 / 40%); }
+.btn-tertiary.danger { color: var(--danger); text-decoration-color: rgb(233 160 160 / 40%); }
 @media (hover: hover) { .btn-tertiary.danger:not(:disabled):hover { color: #f6c2c2; } }
 /* Premier clic : l'action est armée. Le second l'exécute ; sans second clic, elle se désarme seule. */
-.btn-tertiary.danger[data-arme='true'] { color: #fff; background: var(--bouton-danger-arme); text-decoration: none; padding: 8px 12px; border-radius: 3px; }
+.btn-tertiary.danger[data-arme='true'] { color: #fff; background: var(--danger-arme); text-decoration: none; padding: 8px 12px; border-radius: 3px; }
 
 /* Le bouton principal et sa légende : un résumé du choix, ou ce qui manque pour pouvoir agir. */
 .appel { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
-.appel__legende { margin: 0; color: var(--bouton-texte-doux); font-size: 14.5px; line-height: 1.45; }
-.appel__legende b { color: var(--bouton-texte); font-weight: 600; }
-.appel__legende[data-manque='true'] { color: var(--bouton-cuivre-clair); }
+.appel__legende { margin: 0; color: var(--texte-doux); font-size: 14.5px; line-height: 1.45; }
+.appel__legende b { color: var(--texte-fort); font-weight: 600; }
+.appel__legende[data-manque='true'] { color: var(--cuivre-clair); }
 
 @media (prefers-reduced-motion: reduce) {
   .btn-primary, .btn-secondary { transition: none; }

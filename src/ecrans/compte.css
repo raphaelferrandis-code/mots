@@ -11,7 +11,7 @@
 .compte__formulaire { display: grid; gap: 12px; }
 .compte__formulaire input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; background: var(--papier); color: var(--encre); border: 1px solid var(--filet-fort); border-radius: 8px; font: inherit; }
 .compte__formulaire label { font-weight: 600; }
-.compte__erreur { padding: 12px; border: 1px solid var(--accent); border-radius: 8px; }
+.compte__erreur { padding: 12px; border: 1px solid var(--erreur); border-radius: 8px; }
 /* Le code de secours et la suppression : des cartes plus discrètes que la connexion, sous elle. */
 .code-secours, .compte__suppression { gap: 14px; margin-block: 0 16px; }
 .code-secours .bouton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }

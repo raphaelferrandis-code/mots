@@ -131,7 +131,7 @@ export function JoutesDirectes() {
           <p className="texte-doux petit">Refuser, ou laisser passer le délai, ne compte pas comme une défaite.</p>
         </section>}
         {!v && !direct.etat?.attente && !proposition && <>
-          <div className="modes" role="group" aria-label="Mode de joute">{MODES_DIRECTS.map(m => <button key={m} className="bouton" aria-pressed={mode===m} disabled={bloque} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
+          <div className="modes" role="group" aria-label="Mode de joute">{MODES_DIRECTS.map(m => <button key={m} type="button" aria-pressed={mode===m} disabled={bloque} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
           <section className="bloc direct__salon"><h2>{mode === 'solo' ? 'Un adversaire, en face de toi' : mode === 'duo_solo' ? 'Un partenaire à découvrir' : monEquipe?.nom ?? 'Votre duo, votre classement'}</h2>
             <p>{mode === 'solo' ? 'Deux joueurs en direct. Chacun pose une carte ; retrouve la définition du mot adverse pour parer. Le premier à poser change à chaque manche.' : mode === 'duo_solo' ? 'Inscris-toi seul. Le jeu forme deux équipes de deux joueurs. Chaque résultat compte uniquement pour ta cote personnelle 2v2.' : 'Les deux membres de ton équipe doivent ouvrir ce mode et se déclarer prêts. Vos résultats font évoluer uniquement la cote de votre équipe.'}</p>
             {mode === 'duo_equipe' && (!monEquipe || monEquipe.membres.length !== 2) ? <a className="bouton" href={lien({ecran:'equipe'})}>Former mon équipe · inviter un ami</a>

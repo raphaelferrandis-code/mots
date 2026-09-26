@@ -1,6 +1,6 @@
-/* Les outils secondaires partagent le métal des commandes, dans un format compact. */
+/* Les outils secondaires : le bouton ordinaire, dans un format compact ; ouvert, il prend le cuivre. */
 .bouton.outil { min-height: 44px; padding: 9px 14px; font-size: .85rem; }
-.bouton.outil[aria-expanded='true'] { color: #efe5d1; border-color: #cfbd99; background: linear-gradient(110deg, #354957, #253647); }
+.bouton.outil[aria-expanded='true'] { color: var(--texte-fort); border-color: var(--cuivre); background: rgb(216 154 92 / 16%); }
 .album__resultats .bouton.outil { padding-block: 9px; }
 .filtres :is(input, select), .outils-album :is(input, select), .option--liste select, .enchere__mise input, .vente :is(input, select), .joute__saisie input {
   min-height: 46px; border-radius: 3px; border-color: #526777; background: #0c1a28; box-shadow: inset 0 2px 5px #0005, 0 1px 0 #a4b8c315; font-size: 1rem;
@@ -10,7 +10,7 @@
 .marche .outils-album { grid-template-columns: minmax(0, 1fr) auto; }
 .marche .outils-album input { grid-column: auto; }
 .option { min-height: 54px; padding: 14px 0; border-bottom: 1px solid #52677740; }
-.option input { accent-color: #bacbd3; }
+.option input { accent-color: var(--cuivre); }
 .option strong { font-size: .95rem; font-weight: 500; }
 .option--liste select { width: 100%; max-width: 100%; }
 .etat-vide { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: clamp(22px, 4vw, 40px); border-block: 1px solid #405568; background: linear-gradient(110deg, #182b3b88, transparent); }
@@ -22,7 +22,6 @@
 .tableau thead { background: #1b2e3e; }
 .tableau caption { padding: 12px; color: var(--encre-douce); }
 @media (hover: hover) {
-  .bouton.outil:hover { color: #f0e7d2; border-color: #bfb69d; background: linear-gradient(110deg, #3b4b57, #2a3c4b); }
   .option:hover { background: #b9cbd306; }
 }
 @media (max-width: 767px) {

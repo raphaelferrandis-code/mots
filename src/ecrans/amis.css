@@ -70,7 +70,7 @@
   display: grid; grid-template-columns: 220px minmax(0, 1fr) auto; align-items: center; gap: 20px 32px; padding: 20px 24px;
   border-radius: var(--rayon-carte); border: 1px solid var(--filet); background: var(--carte-fond);
 }
-.echange--recu { border-color: rgb(241 138 75 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 40%); }
+.echange--recu { border-color: rgb(216 154 92 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 40%); }
 .echange--termine { opacity: 0.8; }
 .echange__qui { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .echange__qui > div { display: grid; gap: 5px; min-width: 0; }

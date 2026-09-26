@@ -82,7 +82,7 @@
 .equipe .equipe__invitations { gap: 12px; }
 .invitation-equipe {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 28px; padding: 22px 26px;
-  border-radius: var(--rayon-carte); border: 1px solid rgb(241 138 75 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 45%);
+  border-radius: var(--rayon-carte); border: 1px solid rgb(216 154 92 / 40%); background: linear-gradient(90deg, #1a2a44, var(--carte-fond) 45%);
 }
 .invitation-equipe__texte { display: grid; gap: 8px; min-width: 0; }
 .invitation-equipe__texte p { margin: 0; }

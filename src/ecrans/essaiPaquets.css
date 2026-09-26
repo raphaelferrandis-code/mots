@@ -3,9 +3,9 @@
 .maquettes__grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 56px 36px; margin-top: 44px; }
 .maquettes__carte { margin: 0; display: grid; justify-items: center; align-content: start; gap: 26px; }
 .maquettes__carte figcaption { display: grid; gap: 7px; max-width: 17em; text-align: center; font-family: var(--police-douce); }
-.maquettes__carte figcaption b { font-family: var(--police-serif); font-size: 21px; color: var(--c-papier, #f1e7d0); }
-.maquettes__carte figcaption span { font-size: 14px; line-height: 1.45; color: var(--c-texte-doux, #a7b1c4); }
-.maquettes__carte figcaption em { font-style: normal; font-size: 13.5px; line-height: 1.4; color: var(--c-cuivre-clair, #f0c48f); }
+.maquettes__carte figcaption b { font-family: var(--police-serif); font-size: 21px; color: var(--texte-fort, #f1e7d0); }
+.maquettes__carte figcaption span { font-size: 14px; line-height: 1.45; color: var(--texte-doux, #a7b1c4); }
+.maquettes__carte figcaption em { font-style: normal; font-size: 13.5px; line-height: 1.4; color: var(--cuivre-clair, #f0c48f); }
 
 /* Le paquet : une scène 3D, des couches à leur profondeur. */
 .mw { --rx: 0deg; --ry: 0deg; position: relative; width: min(250px, 100%); aspect-ratio: 320 / 470; perspective: 800px; cursor: grab; }

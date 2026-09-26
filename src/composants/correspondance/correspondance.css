@@ -3,10 +3,8 @@
 
 .correspondance {
   --police-signe: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Apple Symbols', 'DejaVu Sans', var(--police-serif);
-  --cuivre: #d89a5c;
   --papier-timbre: #f1e7d0;
   --encre-timbre: #172235;
-  --reussite: #78c99c;
   display: flex; flex-direction: column; gap: 30px;
 }
 .correspondance h2 { margin: 0; font: 700 1.5rem/1.15 var(--police-serif); color: var(--encre); }
@@ -24,23 +22,17 @@
 }
 .compteur--vif { background: var(--accent); color: var(--accent-texte); }
 
-/* Les boutons de la correspondance : l'orange pour la prochaine action, le discret pour le reste. */
+/* Les boutons de la correspondance : le cuivre plein pour la prochaine action, le discret pour le reste. */
 .correspondance .bouton { min-height: 46px; padding: 10px 20px; align-self: auto; gap: 8px; }
 .correspondance .bouton svg { width: 17px; height: 17px; flex-shrink: 0; }
-.correspondance .bouton--accent {
-  background: linear-gradient(110deg, #f7a06a, #e5793a); border-color: #ffb887; border-bottom-color: #9e4c1c;
-  color: var(--accent-texte); font-weight: 600; text-shadow: none;
-}
-.correspondance .bouton--accent::before { border-color: #fff3; }
-.correspondance .bouton--discret { background: transparent; border-color: var(--filet); box-shadow: none; color: var(--encre-douce); text-shadow: none; }
-.correspondance .bouton--discret::before { display: none; }
+.correspondance .bouton--accent { background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43); border-color: transparent; color: var(--cuivre-encre); font-weight: 600; }
+.correspondance .bouton--discret { background: transparent; border-color: var(--filet); color: var(--texte-doux); }
 .correspondance .bouton--petit { min-height: 40px; padding: 6px 14px; font-size: 0.88rem; }
 .correspondance .bouton--icone { width: 44px; min-height: 44px; padding: 0; }
-.correspondance .bouton--danger-doux { color: #ffb49a; border-color: #7a3b2e; }
-.correspondance .bouton:disabled { background: #1b2937; color: #8fa1b2; border-color: #3b4b5b; box-shadow: inset 0 1px 3px #0005; }
+.correspondance .bouton--danger-doux { color: var(--danger); border-color: rgb(233 160 160 / 40%); }
 @media (hover: hover) {
-  .correspondance .bouton--accent:not(:disabled):hover { background: linear-gradient(110deg, #ffb07e, var(--accent)); color: var(--accent-texte); border-color: #ffc9a3; }
-  .correspondance .bouton--discret:not(:disabled):hover { background: var(--papier-fonce); border-color: var(--filet-fort); color: var(--encre); }
+  .correspondance .bouton--accent:not(:disabled):hover { background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43); filter: brightness(1.07); }
+  .correspondance .bouton--discret:not(:disabled):hover { background: var(--nuit-relief); border-color: var(--filet-fort); color: var(--texte); }
 }
 
 /* ── En-tête : carte d'expéditeur et onglets ── */
@@ -73,7 +65,7 @@
 
 .presence { display: inline-flex; align-items: center; gap: 7px; }
 .presence__point { width: 8px; height: 8px; border-radius: 50%; background: var(--filet-fort); flex-shrink: 0; }
-.presence__point--en-ligne { background: var(--reussite); box-shadow: 0 0 0 3px rgb(120 201 156 / 18%); }
+.presence__point--en-ligne { background: var(--succes); box-shadow: 0 0 0 3px rgb(120 201 156 / 18%); }
 
 /* ── Le cachet rond de la poste ── */
 .cachet {

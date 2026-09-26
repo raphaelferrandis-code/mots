@@ -694,7 +694,7 @@ function peindreUnElement(ctx: Contexte, el: Element, at: Atelier): void {
 
 // ── Monter la sonde, mesurer les textures, peindre ───────────────────────────
 
-const POLICES = ['500 40px Oswald', '600 40px Oswald', '400 40px "Playfair Display"', '700 40px "Playfair Display"', '900 40px "Playfair Display"', 'italic 400 40px "Playfair Display"', 'italic 700 40px "Playfair Display"', '600 40px "Barlow Condensed"'];
+const POLICES = ['500 40px Oswald', '600 40px Oswald', '400 40px "Playfair Display"', '700 40px "Playfair Display"', '900 40px "Playfair Display"', 'italic 400 40px "Playfair Display"', 'italic 700 40px "Playfair Display"'];
 
 async function chargerLesPolices(): Promise<void> {
   if (typeof document === 'undefined' || !('fonts' in document)) return;
@@ -797,7 +797,7 @@ const ECHELLES = [1, 0.9, 0.8];
 const TOLERANCE = 2;
 const NUIT = '#0b1729';
 const SERIF = '"Playfair Display", "Palatino Linotype", Palatino, Georgia, serif';
-const MENTION = '"Barlow Condensed", "Arial Narrow", Arial, sans-serif';
+const MENTION = 'Oswald, "Arial Narrow", Arial, sans-serif';
 const SANS = '"Segoe UI", system-ui, -apple-system, sans-serif';
 
 // Un texte espacé (letter-spacing), centré sur x.
