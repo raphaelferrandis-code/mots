@@ -2,6 +2,12 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (soir) — finitions, étape 3, lot C : les écrans à part rejoignent le jeu.** Le Profil (le
+> « cabinet ») perd ses vitrines de métal et son violet : cartes du duel, crème, cuivre (barre d'XP, onglets,
+> sélection), « Équipé » en couleur de réussite ; seules les pièces gardent leurs couleurs (`--objet`, titres,
+> couleur choisie). Succès et choix de finition passent aux jetons ; bandeau des récompenses, état vide, options des
+> Réglages et tableaux aussi. `src/ecrans/joutes.css`, importée nulle part, est supprimée.
+
 > **26 septembre 2026 (soir) — finitions, étape 3, lot B : des composants qui disent la même chose partout.** Un seul
 > champ de saisie (règle de base en `:where()` dans `styles.css` : 48 px, arrondi 3 px, fond de carte, contour
 > `--filet-fort`, focus cuivre ; les écrans ne gardent que la largeur, ou la police du nom d'équipe et du code). Onglets

@@ -165,7 +165,7 @@
 }
 .menu-profil__sortie svg { width: 18px; height: 18px; }
 .menu-profil__sortie:disabled { cursor: progress; opacity: .7; }
-.menu-profil__pied p { margin: 4px 10px 0; font-size: 0.8rem; color: #ffb4a0; }
+.menu-profil__pied p { margin: 4px 10px 0; font-size: 0.8rem; color: var(--erreur); }
 .eclat { flex-shrink: 0; width: 34px; height: 34px; animation: navigation-scintille 4s ease-in-out infinite; }
 @keyframes navigation-scintille { 0%, 100% { filter: drop-shadow(0 0 3px #e3bdf555); } 50% { filter: drop-shadow(0 0 7px #f0d7bbaa); } }
 .voile { display: none; }
