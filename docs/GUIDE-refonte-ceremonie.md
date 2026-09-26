@@ -18,7 +18,7 @@ Claude, fournis dans `files.zip`).*
   dont l'encre ondule, étiquette crème, soudures en cuivre. Tissé dans les couleurs de chacun des 8 modèles de paquet ;
   chaque paquet a son propre marbré. L'encre ne bouge que sur le paquet regardé (comptoir, cérémonie), jamais en
   mouvement réduit. Au-dessus du paquet : le titre en toutes lettres, puis le prochain paquet et la Légendaire garantie
-  (au plus tard tous les 40 paquets).
+  (au plus tard tous les 40 paquets ; tous les 20 depuis le 26/09).
 
 ## Où vit quoi
 
@@ -26,7 +26,7 @@ Claude, fournis dans `files.zip`).*
 |---|---|
 | Le timbre (`buildStamp`, `vignetteSVG`, `postmarkSVG`, `perfPath`) | `src/composants/timbre/` : `Timbre.tsx`, `dessins.ts`, `timbre.css`. `Carte` l'affiche partout. |
 | Le paquet (`buildPack`, `packBodySVG`, `stripSVG`) | `src/composants/ceremonie/PaquetDeCeremonie.tsx` (suit le modèle de paquet choisi) |
-| La cérémonie (machine à états, déchirure, révélation, plateau, éventail, aperçu) | `src/composants/ceremonie/Ceremonie.tsx`, `ceremonie.css` |
+| La cérémonie (machine à états, déchirure, révélation, plateau, aperçu) — depuis le 26/09, en feuille de timbres (voir ETAT-DU-PROJET.md) | `src/composants/ceremonie/Ceremonie.tsx`, `ceremonie.css` ; la feuille : `Feuille.tsx`, `feuille.ts`, `feuille.css` |
 | Sons (`Sfx`) et particules (`FX`) | `src/composants/ceremonie/effets.ts`. Le bouton muet suit le réglage « Sons du jeu ». |
 | Le haut de l'accueil, l'album en aperçu, l'envol vers l'album | `Comptoir.tsx`, `ApercuDeLAlbum.tsx`, `comptoir.css` |
 | Les compteurs figés puis animés (Encre, XP, collection) | `src/composants/ceremonie/compteurs.ts` ; l'anneau d'XP dans `Navigation.tsx` |

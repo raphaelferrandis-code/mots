@@ -72,8 +72,11 @@ export function EssaiTimbre() {
 
       <h2>Cérémonie d’essai</h2>
       <p className="texte-doux">Un faux paquet de six timbres qui montre chaque effet (courant, doré, holographique, Légendaire, Hors-série). Rien n’est tiré ni enregistré.</p>
-      <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(tousLesEffets))}>Ouvrir la cérémonie d’essai</button>
-      {essai && <Ceremonie premier={essai} tirer={() => Promise.resolve(tousLesEffets)} continuer={false} numero={142} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
+      <div className="rangee-de-boutons">
+        <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(tousLesEffets))}>Ouvrir la cérémonie d’essai</button>
+        <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(tousLesEffets.filter((o) => o.carte.rarete === 'Hors-série')))}>Une seule Hors-série</button>
+      </div>
+      {essai && <Ceremonie premier={essai} tirer={() => essai} continuer={false} numero={142} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
         sons={sons} onSons={setSons} reduire={false} onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
 
       <h2>La feuille de timbres (lot 1)</h2>

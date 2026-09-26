@@ -2,6 +2,15 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — l'ouverture en feuille de timbres.** Brief du 26/09 (prototype-ouverture-feuille.html),
+> travail purement esthétique : la pile de timbres de la cérémonie devient une feuille de six timbres, côté gomme, qui
+> sort pliée du paquet déchiré et se déplie. On détache les timbres en suivant leurs pointillés (gros plan, fiche,
+> « Ranger ce timbre ») ou d'un clic (le timbre se retourne sur place et file dans le plateau : un clic, une action),
+> ou l'on retourne la feuille : coups de tampon en cascade, du courant à la grande révélation. « Tout détacher »,
+> puis la fin : la feuille vide s'en va, le plateau s'agrandit, le résumé. Halo discret des raretés sur le dos des
+> timbres, place des timbres mélangée à l'affichage seulement, « Paquet n° » = paquets déjà ouverts. Code :
+> `src/composants/ceremonie/` (`feuille.ts` pour la géométrie et le geste, testés ; `Feuille.tsx`, `Ceremonie.tsx`).
+
 > **26 septembre 2026 — la devinette du jour (réseaux sociaux et accueil), prête mais pas lancée.** Décisions de
 > Raphaël : un calendrier de 365 mots (`data/mot-du-jour.txt`, validé tel quel), qui ne démarre qu'une fois tout prêt
 > (`npm run motdujour:dater -- AAAA-MM-JJ` fixe le premier jour et repose Halloween, Noël… à leur date) ; chaque jour,
@@ -216,7 +225,7 @@ attend Raphaël, et ce qui m'attend. Les détails restent dans les documents cit
 
 Tout ce qui suit est en ligne, vérifié contre le vrai serveur, et jouable.
 
-- **Les paquets et la collection.** Un paquet gratuit toutes les 10 minutes, 10 en réserve, 5 timbres par paquet,
+- **Les paquets et la collection.** Un paquet gratuit toutes les 10 minutes, 10 en réserve, 6 timbres par paquet,
   3 016 cartes dans l'édition dont 16 hors-série. Finitions normale, brillante, holographique. Les doublons
   deviennent de l'Encre. L'album se filtre et se cherche.
 - **Les duels.** Mot contre mot, avec parade. Un deck de dix cartes, trois niveaux, cinq bonnes réponses pour

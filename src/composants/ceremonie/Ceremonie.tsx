@@ -200,6 +200,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
 
   // Le clavier suit le bouton principal de chaque moment ; après un rangement, il revient sur la feuille.
   useEffect(() => {
+    // Le paquet à déchirer reçoit le focus : Entrée le déchire d'un coup.
+    if (phase === 'dechirure') scene.current?.focus({ preventScroll: true });
     if (phase === 'feuille') {
       const cible = retourALaFeuille.current === 'case' ? dans<HTMLElement>(pivotDom.current, ':scope > .fe .fe__case[data-i]') : dans<HTMLElement>(infos.current, '[data-action="principal"]');
       cible?.focus({ preventScroll: true });
@@ -527,11 +529,17 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     SONS.dechirure();
     arrachages.current.delete(i);
     el.style.transform = '';
+    const avaitLeFocus = document.activeElement === el;
     flushSync(() => {
       setDetaches(avec(etat.current.detaches, i));
       setVolants((v) => [...v, { i, cadre: { left: r.left, top: r.top, width: r.width, height: r.height }, face: depuisLeVerso && !dejaRevele ? 'verso' : 'recto', dejaRevele }]);
     });
     dessinerLesArrachages();
+    // Au clavier, la case détachée devient un trou : le focus passe au timbre suivant (ou au bouton principal).
+    if (avaitLeFocus) {
+      const restantes = Array.from(pivotDom.current?.querySelectorAll<HTMLElement>(':scope > .fe .fe__case[data-i]') ?? []).filter((c) => !enCours.current.has(Number(c.dataset.i)));
+      (restantes.find((c) => Number(c.dataset.i) > i) ?? restantes[0] ?? dans<HTMLElement>(infos.current, '[data-action="principal"]'))?.focus({ preventScroll: true });
+    }
     const volant = volantsDom.current.get(i), retourne = dans<HTMLElement>(volant, '.c-retourne');
     if (!volant || !retourne) { enCours.current.delete(i); return; }
     await volant.animate([{ transform: 'none' }, { transform: 'translateY(-10px) scale(1.08)' }], { duration: D(120), easing: 'ease-out', fill: 'forwards' }).finished;
