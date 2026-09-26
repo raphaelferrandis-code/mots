@@ -3,6 +3,9 @@
 // doré pour une Brillante ou une Épique, holographique pour une Holographique, et la grande révélation
 // (secousse, éclair, confettis) pour une Légendaire ou une Hors-série.
 
+import { EQUILIBRAGE } from '../../config/equilibrage.ts';
+import { paquetDException } from '../../jeu/paquets.ts';
+import type { PaquetDException } from '../../jeu/paquets.ts';
 import type { CarteObtenue } from '../../jeu/partie.ts';
 import type { Nature } from '../../partage/types.ts';
 
@@ -16,7 +19,21 @@ export function eclatDe({ carte, finition }: Pick<CarteObtenue, 'carte' | 'finit
   return 'courant';
 }
 
-export const NOM_DE_LA_FINITION = { Normale: 'Courant', Brillante: 'Brillant', Holographique: 'Holographique' } as const;
+// Le signe d'un paquet d'exception (décision de Raphaël du 26/09/2026), visible dès que le paquet arrive, avant
+// qu'on le déchire : une lueur s'échappe de la languette, puis la feuille sort avec une tranche dorée (Légendaires
+// holographiques) ou irisée (Hors-série).
+export type Lueur = 'legendaire' | 'hors-serie';
+const LUEURS: Record<PaquetDException, Lueur> = { 'Légendaire': 'legendaire', 'Hors-série': 'hors-serie' };
+export const COULEURS_DE_LA_LUEUR: Record<Lueur, string[]> = {
+  legendaire: ['#ffe3a0', '#f7c86a', '#fff6dc', '#e0a84e'],
+  'hors-serie': ['#cfaeff', '#ffd9ec', '#b57bff', '#bfe9ff'],
+};
+export function lueurDuPaquet(cartes: readonly Pick<CarteObtenue, 'carte' | 'finition'>[]): Lueur | null {
+  const exception = paquetDException(cartes, EQUILIBRAGE.paquets.emplacements.length);
+  return exception ? LUEURS[exception] : null;
+}
+
+export const NOM_DE_LA_FINITION ={ Normale: 'Courant', Brillante: 'Brillant', Holographique: 'Holographique' } as const;
 export const ABREGE_DE_LA_NATURE: Record<Nature, string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adj.', Adverbe: 'adv.' };
 
 // Les nombres en toutes lettres, pour les titres (« Dix paquets t'attendent »).

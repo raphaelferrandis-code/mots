@@ -386,6 +386,7 @@ declare
   gain integer;
   tirees jsonb := '[]'::jsonb;
   legendaire boolean := false;
+  exceptionnel text;
 begin
   select * into c from public.comptes where utilisateur = p_utilisateur;
   -- Seulement les registres connus : un tableau fabriqué ne sert ni à orienter les tirages ni à alourdir le calcul.
@@ -401,6 +402,19 @@ begin
   garantie := p_mode = 'normal' and c.sans_legendaire + 1 >= ${P.paquetsAvantLegendaireGarantie};
   -- Les ${P.paquetsDeDepart} paquets de départ ne contiennent que des cartes nouvelles, pour composer un deck tout de suite.
   depart := p_mode = 'normal' and c.ouverts < ${P.paquetsDeDepart};
+  -- Paquet d'exception (src/jeu/paquets.ts) : un seul jet, d'abord le paquet Hors-série (1 paquet ordinaire sur
+  -- ${Math.round(1 / P.paquetsDException['Hors-série'])}), sinon le paquet de Légendaires holographiques (1 sur ${Math.round(1 / P.paquetsDException['Légendaire'])}), s'il y a assez de cartes pour le remplir.
+  if p_mode = 'normal' and not depart then
+    tirage := random();
+    if tirage < ${P.paquetsDException['Hors-série']} then
+      if (select count(*) from public.cartes k where k.rarete = 'Hors-série' and not (k.registre && masques)) >= jsonb_array_length(emplacements) then exceptionnel := 'Hors-série'; end if;
+    elsif tirage < ${P.paquetsDException['Hors-série'] + P.paquetsDException['Légendaire']} then
+      if (select count(*) from public.cartes k where k.rarete = 'Légendaire' and not (k.registre && masques)) >= jsonb_array_length(emplacements) then exceptionnel := 'Légendaire'; end if;
+    end if;
+    if exceptionnel is not null then
+      emplacements := (select jsonb_agg(jsonb_build_object(exceptionnel, 100)) from generate_series(1, jsonb_array_length(emplacements)));
+    end if;
+  end if;
 
   for chances in select * from jsonb_array_elements(emplacements) loop
     numero := numero + 1;
@@ -414,7 +428,7 @@ begin
       if seuil < 0 then rarete := r; exit; end if;
     end loop;
     if rarete is null then rarete := 'Commune'; end if;
-    if dernier and p_mode = 'normal' then
+    if dernier and p_mode = 'normal' and exceptionnel is null then
       -- La garantie de Légendaire passe avant tout ; sinon, une toute petite chance de carte Hors-série.
       if garantie then rarete := 'Légendaire';
       elsif exists (select 1 from public.cartes k where k.rarete = 'Hors-série' and not (k.registre && masques)) and random() < ${P.chanceHorsSerie} then rarete := 'Hors-série';
@@ -423,7 +437,7 @@ begin
 
     -- La carte : de cette rareté, sinon de la plus proche ; jamais deux fois la même dans un paquet.
     ordre := case rarete ${cas(RARETES, (r) => `array[${liste(ordreDeRepli(r as Rarete))}]`)} end;
-    if p_mode = 'achat' or (p_mode = 'hebdomadaire' and dernier) then
+    if p_mode = 'achat' or (p_mode = 'hebdomadaire' and dernier) or exceptionnel is not null then
       -- Ne jamais dégrader la garantie en cas de catalogue ou filtre incompatible.
       ordre := array[rarete];
     end if;
@@ -440,6 +454,7 @@ begin
 
     -- La finition, tirée à part (une Hors-série a sa propre impression : pas de finition).
     if rarete_choisie = 'Hors-série' then finition := 'Normale';
+    elsif exceptionnel = 'Légendaire' then finition := 'Holographique';
     else
       tirage := random();
       finition := case when tirage < ${chanceHolo} then 'Holographique' when tirage < ${chanceHolo + chanceBrillante} then 'Brillante' else 'Normale' end;

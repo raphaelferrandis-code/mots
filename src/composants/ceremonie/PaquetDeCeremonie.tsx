@@ -10,6 +10,7 @@ import { SITE } from '../../config/site.ts';
 import { PAQUETS } from '../../jeu/personnalisation.ts';
 import { empreinte } from '../timbre/dessins.ts';
 import { mouvementReduit } from '../mouvement.ts';
+import type { Lueur } from './eclats.ts';
 import './ceremonie.css';
 
 function cheminDuCorps(): string {
@@ -109,7 +110,8 @@ function Corps({ modele, vivant, graine }: { modele: string; vivant: boolean; gr
 
 // « cp » : le paquet. La languette attachée et la languette arrachée sont deux copies du même dessin,
 // découpées au fil de la déchirure par la cérémonie (clip-path).
-export function PaquetDeCeremonie({ modele = 'original', vivant = true, className, style }: { modele?: string; vivant?: boolean; className?: string; style?: CSSProperties }) {
+// « lueur » : un paquet d'exception laisse passer la lumière par la fente de sa languette (voir eclats.ts).
+export function PaquetDeCeremonie({ modele = 'original', vivant = true, lueur, className, style }: { modele?: string; vivant?: boolean; lueur?: Lueur; className?: string; style?: CSSProperties }) {
   const id = useId();
   // Un marbré par paquet : deux paquets côte à côte ne se ressemblent jamais tout à fait.
   const graine = 1 + (empreinte(id) % 89);
@@ -123,6 +125,7 @@ export function PaquetDeCeremonie({ modele = 'original', vivant = true, classNam
         <div className="cp__bande cp__bande--arrachee" style={{ clipPath: 'inset(0 100% 0 0)' }}><Languette modele={modele} /></div>
         <span className="cp__indice" />
       </div>
+      {lueur && <span className="cp__fente" data-lueur={lueur} />}
     </div>
   </div>;
 }

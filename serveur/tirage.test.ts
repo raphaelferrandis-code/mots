@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { baseDeTest } from './test-base.ts';
 import { cartes } from './collections.ts';
-import { migrationSixTimbres } from './fabriquer-le-script.ts';
+import { migrationPaquetsDException, migrationSixTimbres } from './fabriquer-le-script.ts';
 import { EQUILIBRAGE } from '../src/config/equilibrage.ts';
 import type { Finition, IndexEdition, Rarete } from '../src/partage/types.ts';
 
@@ -147,6 +147,13 @@ it('tirage (serveur) : sur 3 000 paquets, raretés par emplacement, finitions et
         t := public.tirer_les_cartes('${l.uid}', '{}', 'normal');
         insert into tirages select i, o, x->>'id', x->>'finition' from jsonb_array_elements(t) with ordinality as a(x, o);
       end loop; end $$;`);
+    // Les paquets d'exception (1 sur 7 500 en tout, testés à part) sont mis de côté : on mesure les paquets ordinaires.
+    // On en attend 0,4 ; au-delà de 4, le réglage ne serait pas respecté.
+    const exceptionnels = (await l.db.query<{ n: number }>(`with p as (select t.paquet from tirages t join public.cartes k on k.id = t.carte group by t.paquet
+      having bool_and(k.rarete = 'Hors-série') or bool_and(k.rarete = 'Légendaire' and t.finition = 'Holographique'))
+      , d as (delete from tirages where paquet in (select paquet from p) returning 1) select (select count(*)::int from p) n`)).rows[0].n;
+    assert.ok(exceptionnels <= 4, `paquets d'exception : ${exceptionnels}`);
+    const ordinaires = paquets - exceptionnels;
     const lignes = (await l.db.query<{ place: number; rarete: Rarete; n: number }>(
       'select t.place, k.rarete, count(*)::int n from tirages t join public.cartes k on k.id = t.carte group by 1, 2')).rows;
     const nombre = (place: number, rarete: Rarete) => lignes.find((x) => x.place === place && x.rarete === rarete)?.n ?? 0;
@@ -157,7 +164,7 @@ it('tirage (serveur) : sur 3 000 paquets, raretés par emplacement, finitions et
       const somme = Object.values(chances).reduce((s, v) => s + (v ?? 0), 0);
       for (const rarete of Object.keys(rareteDesChances(chances)) as Rarete[]) {
         const p = (chances[rarete] ?? 0) / somme;
-        assert.ok(proche(nombre(place, rarete) / paquets, p, paquets), `emplacement ${place}, ${rarete} : ${nombre(place, rarete)} sur ${paquets} (attendu ${(p * 100).toFixed(1)} %)`);
+        assert.ok(proche(nombre(place, rarete) / ordinaires, p, ordinaires), `emplacement ${place}, ${rarete} : ${nombre(place, rarete)} sur ${ordinaires} (attendu ${(p * 100).toFixed(1)} %)`);
       }
       const ailleurs = lignes.filter((x) => x.place === place && !(x.rarete in chances) && x.rarete !== 'Hors-série');
       assert.deepEqual(ailleurs, [], `emplacement ${place} : aucune autre rareté`);
@@ -224,5 +231,46 @@ it('la migration 23 passe le serveur de la production à six timbres et à la ga
     const garantie = await l.ouvrir();
     assert.equal(garantie.cartes.length, 6);
     assert.equal(rareteDe.get(garantie.cartes.at(-1)!.id), 'Légendaire', 'la garantie tombe sur la sixième carte');
+  } finally { await l.db.close(); }
+});
+
+it('tirage (serveur) : les paquets d’exception — six Hors-série ou six Légendaires holographiques, jamais parmi les paquets de départ ; la migration 24 peut être rejouée', async () => {
+  const l = await laboratoire();
+  try {
+    const script = migrationPaquetsDException();
+    const { 'Hors-série': horsSerie, 'Légendaire': legendaire } = P.paquetsDException;
+    // Le même script, avec un jet qui tombe à coup sûr sur le paquet voulu.
+    const forcer = (quoi: 'Hors-série' | 'Légendaire'): string => {
+      const force = script.replace(`tirage < ${horsSerie} then`, `tirage < ${quoi === 'Hors-série' ? 2 : -1} then`).replace(`tirage < ${horsSerie + legendaire} then`, 'tirage < 2 then');
+      assert.notEqual(force, script);
+      return force;
+    };
+    const raretes = (o: Ouverture) => o.cartes.map((c) => rareteDe.get(c.id));
+    await l.db.exec(forcer('Hors-série'));
+    // Un paquet de départ reste un paquet de départ.
+    assert.ok(raretes(await l.ouvrir()).some((r) => r !== 'Hors-série'));
+    await l.regler('ouverts=$2, sans_legendaire=5', [P.paquetsDeDepart]);
+    const hs = await l.ouvrir();
+    assert.equal(hs.cartes.length, P.emplacements.length);
+    assert.equal(new Set(hs.cartes.map((c) => c.id)).size, P.emplacements.length);
+    assert.ok(raretes(hs).every((r) => r === 'Hors-série'));
+    assert.ok(hs.cartes.every((c) => c.finition === 'Normale'));
+    assert.equal(hs.etat.paquets.sansLegendaire, 6, 'les Hors-série ne comptent pas pour la garantie');
+
+    await l.db.exec(forcer('Légendaire'));
+    const leg = await l.ouvrir();
+    assert.equal(new Set(leg.cartes.map((c) => c.id)).size, P.emplacements.length);
+    assert.ok(raretes(leg).every((r) => r === 'Légendaire'));
+    assert.ok(leg.cartes.every((c) => c.finition === 'Holographique'));
+    assert.equal(leg.etat.paquets.sansLegendaire, 0);
+
+    // Le paquet hebdomadaire n'est jamais un paquet d'exception.
+    const hebdo = (await l.db.query<{ r: Tiree[] }>("select public.tirer_les_cartes($1, '{}', 'hebdomadaire') r", [l.uid])).rows[0].r;
+    assert.ok(hebdo.map((c) => rareteDe.get(c.id)).some((r) => r !== 'Légendaire'));
+
+    // Les vraies chances, rejouées deux fois : le paquet suivant est ordinaire.
+    await l.db.exec(script);
+    await l.db.exec(script);
+    assert.ok(raretes(await l.ouvrir()).some((r) => r !== 'Légendaire' && r !== 'Hors-série'));
   } finally { await l.db.close(); }
 });

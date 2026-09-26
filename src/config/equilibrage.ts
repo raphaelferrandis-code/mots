@@ -77,6 +77,13 @@ export const EQUILIBRAGE = {
     //  de « très très rare » ; à 1 sur 1 000, sa première arrive après deux à trois semaines, et une quinzaine par an.)
     chanceHorsSerie: 1 / 1000,
 
+    // Paquets d'exception (« god packs », décision de Raphaël du 26/09/2026) : un paquet ordinaire sur 10 000 ne
+    // contient que des Légendaires holographiques, un sur 30 000 que des Hors-série, toutes différentes. Jamais parmi
+    // les paquets de départ ni dans le paquet hebdomadaire ; la garantie et la chance de Hors-série ne s'y ajoutent pas.
+    // (Joueur régulier, 30 paquets par jour : un paquet Légendaire par an environ, un paquet Hors-série tous les deux
+    //  ans et demi. En moyenne, +50 % de Légendaires holographiques et +20 % de Hors-série ; l'Encre ne bouge pas.)
+    paquetsDException: { 'Hors-série': 1 / 30000, 'Légendaire': 1 / 10000 } satisfies Record<'Légendaire' | 'Hors-série', number>,
+
     // Les paquets ne s’achètent pas : l’Encre sert uniquement aux enchères.
   },
 

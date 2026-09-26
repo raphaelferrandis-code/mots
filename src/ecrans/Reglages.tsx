@@ -150,6 +150,10 @@ export function Reglages() {
             <strong>Hors-série :</strong> environ 1 paquet sur {Math.round(1 / EQUILIBRAGE.paquets.chanceHorsSerie).toLocaleString('fr-FR')}, en dernière position.
           </p>
           <p className="texte-doux petit">
+            <strong>Paquets d’exception :</strong> {EQUILIBRAGE.paquets.emplacements.length} Légendaires holographiques environ 1 paquet sur {Math.round(1 / EQUILIBRAGE.paquets.paquetsDException['Légendaire']).toLocaleString('fr-FR')} ;
+            {' '}{EQUILIBRAGE.paquets.emplacements.length} Hors-série environ 1 sur {Math.round(1 / EQUILIBRAGE.paquets.paquetsDException['Hors-série']).toLocaleString('fr-FR')}. Jamais parmi les paquets de départ.
+          </p>
+          <p className="texte-doux petit">
             <strong>Finitions :</strong> brillante 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Brillante)}, holographique 1 sur {Math.round(1 / EQUILIBRAGE.finitions.chances.Holographique)}, tirées indépendamment de la rareté.
             Chaque nouvelle finition est conservée. Les doublons deviennent de l'Encre (×{EQUILIBRAGE.finitions.encre.Brillante} si brillants, ×{EQUILIBRAGE.finitions.encre.Holographique} si holographiques).
           </p>

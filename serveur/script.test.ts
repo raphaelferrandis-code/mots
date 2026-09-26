@@ -11,7 +11,7 @@ import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts'
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { CarteDetails, Definition, IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours, migrationApparence, migrationSixTimbres } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours, migrationApparence, migrationSixTimbres, migrationPaquetsDException } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -49,6 +49,7 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
     assert.equal(lire('22-apparence.sql'), migrationApparence());
     assert.equal(lire('23-six-timbres.sql'), migrationSixTimbres());
+    assert.equal(lire('24-paquets-d-exception.sql'), migrationPaquetsDException());
   });
 
   it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {
@@ -63,6 +64,8 @@ describe('les scripts du serveur', () => {
     assert.ok(sql.includes(`'${JSON.stringify(P.emplacements)}'::jsonb`));
     assert.ok(sql.includes(`>= ${P.paquetsAvantLegendaireGarantie};`));
     assert.ok(sql.includes(`random() < ${P.chanceHorsSerie}`));
+    assert.ok(sql.includes(`tirage < ${P.paquetsDException['Hors-série']} then`), 'le paquet Hors-série');
+    assert.ok(sql.includes(`tirage < ${P.paquetsDException['Hors-série'] + P.paquetsDException['Légendaire']} then`), 'le paquet Légendaire');
     assert.ok(sql.includes('drop function if exists public.acheter_un_paquet(text[]);'));
     assert.ok(!sql.includes('create or replace function public.acheter_un_paquet'));
     assert.doesNotMatch(sql, /grant execute on function [^;]*public\.acheter_un_paquet/);

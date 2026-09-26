@@ -566,6 +566,16 @@ export function migrationSixTimbres(): string {
     + '\n\ncommit;\n';
 }
 
+// Script 24 : les paquets d'exception (décision de Raphaël du 26/09/2026), seulement parmi les paquets ordinaires.
+// Aucune fonction Edge à redéployer : le jeu reconnaît un paquet d'exception à son contenu.
+export function migrationPaquetsDException(): string {
+  const { 'Légendaire': legendaire, 'Hors-série': horsSerie } = EQUILIBRAGE.paquets.paquetsDException;
+  return `-- Paquets d'exception : 1 paquet ordinaire sur ${Math.round(1 / legendaire)} ne contient que des Légendaires holographiques, 1 sur ${Math.round(1 / horsSerie)} que des Hors-série. Après 23-six-timbres.sql.\n`
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\nbegin;\n'
+    + reprise(structure(), 'tirer_les_cartes')
+    + '\n\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -606,5 +616,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '21-adversaire-de-secours.sql'), migrationAdversaireDeSecours());
   writeFileSync(path.join(RACINE, 'serveur', '22-apparence.sql'), migrationApparence());
   writeFileSync(path.join(RACINE, 'serveur', '23-six-timbres.sql'), migrationSixTimbres());
+  writeFileSync(path.join(RACINE, 'serveur', '24-paquets-d-exception.sql'), migrationPaquetsDException());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

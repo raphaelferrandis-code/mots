@@ -1,4 +1,4 @@
--- Six timbres par paquet, et une Légendaire garantie au plus tard au 20e paquet. Après 22-apparence.sql.
+-- Paquets d'exception : 1 paquet ordinaire sur 10000 ne contient que des Légendaires holographiques, 1 sur 30000 que des Hors-série. Après 23-six-timbres.sql.
 -- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.
 begin;
 create or replace function public.tirer_les_cartes(p_utilisateur uuid, p_masques text[], p_mode text) returns jsonb
@@ -127,61 +127,6 @@ begin
   perform public.gagner_xp(p_utilisateur, case when p_mode='achat' then 0 else 20 end
     + 15 * (select count(*)::integer from jsonb_array_elements(tirees) t where (t->>'nouvelle')::boolean), false);
   return tirees;
-end $$;
-
-create or replace function public.importer_ma_collection(p_cree_le bigint, p_encre integer, p_paquets jsonb, p_cartes jsonb, p_deck jsonb) returns jsonb
-language plpgsql security definer set search_path = ''
-as $$
-declare
-  moi uuid := auth.uid();
-  jours integer;
-  ouverts integer;
-  carte record;
-  validee jsonb;
-begin
-  if moi is null then raise exception 'Connexion requise.'; end if;
-  perform pg_advisory_xact_lock(hashtextextended(moi::text, 1));
-  if exists (select 1 from public.comptes where utilisateur = moi) then raise exception 'Ce compte a déjà une collection.'; end if;
-  select sauvegarde into validee from public.importations_validees where utilisateur = moi for update;
-  if not found then raise exception 'Cette ancienne collection doit être validée avant son transfert. Conserve son export et contacte le support.'; end if;
-  -- Seule la copie approuvée fait foi ; les paramètres du navigateur sont ignorés.
-  p_cree_le := (validee ->> 'creeLe')::bigint;
-  p_encre := (validee ->> 'encre')::integer;
-  p_paquets := validee -> 'paquets';
-  p_cartes := validee -> 'cartes';
-  p_deck := validee -> 'deck';
-  if jsonb_typeof(p_paquets) <> 'object' or jsonb_typeof(p_cartes) <> 'object' or jsonb_typeof(p_deck) <> 'array' or pg_column_size(p_cartes) > 3000000 then
-    raise exception 'Cette sauvegarde ne peut pas être importée.';
-  end if;
-
-  jours := greatest(1, ceil(extract(epoch from (now() - to_timestamp(least(coalesce(p_cree_le, 0), public.en_millisecondes(now())) / 1000.0))) / 86400));
-  ouverts := least(greatest(coalesce(public.nombre_entier(p_paquets ->> 'ouverts'), 0), 0), 3 + jours * 200);
-
-  insert into public.comptes (utilisateur, encre, stock, reference, ouverts, sans_legendaire, importee_le) values (
-    moi,
-    least(greatest(coalesce(p_encre, 0), 0), 2000 + ouverts * 30),
-    least(greatest(coalesce(public.nombre_entier(p_paquets ->> 'stock'), 0), 0), 10),
-    least(to_timestamp(coalesce(public.nombre_entier(p_paquets ->> 'reference'), 0) / 1000.0), now()),
-    ouverts,
-    least(greatest(coalesce(public.nombre_entier(p_paquets ->> 'sansLegendaire'), 0), 0), 20),
-    now());
-
-  for carte in
-    select e.key as id, e.value as v from jsonb_each(p_cartes) e
-    join public.cartes k on k.id = e.key
-    where jsonb_typeof(e.value) = 'object'
-    order by coalesce(public.nombre_entier(e.value ->> 'obtenueLe'), 0), e.key
-    limit ouverts * 6
-  loop
-    insert into public.possessions (utilisateur, carte, finitions, doublons, obtenue_le) values (
-      moi, carte.id,
-      public.finitions_propres(carte.v -> 'finitions'),
-      least(coalesce(public.nombre_entier(carte.v ->> 'doublons'), 0), 10000),
-      least(to_timestamp(coalesce(public.nombre_entier(carte.v ->> 'obtenueLe'), 0) / 1000.0), now()));
-  end loop;
-  update public.comptes set deck = public.deck_propre(moi, p_deck) where utilisateur = moi;
-  delete from public.importations_validees where utilisateur = moi;
-  return public.etat_du_compte(moi);
 end $$;
 
 commit;

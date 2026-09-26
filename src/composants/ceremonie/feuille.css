@@ -84,3 +84,10 @@
 
 .fe[data-reduit] .fe__halo::before { animation: none; }
 @media (prefers-reduced-motion: reduce) { .fe__halo::before { animation: none; } }
+
+/* ── Paquet d'exception : la tranche de la feuille, dorée (Légendaires holographiques) ou irisée (Hors-série),
+   et une lueur autour. Les couleurs --lueur-* sont définies avec le paquet (ceremonie.css). ── */
+.fe[data-lueur] { box-shadow: 0 0 calc(var(--u) * 70) calc(var(--u) * 8) var(--lueur-douce, transparent), 0 30px 60px rgba(0, 0, 0, .55), 0 4px 8px rgba(0, 0, 0, .35); }
+.fe__tranche { position: absolute; inset: 0; z-index: 5; pointer-events: none; border: calc(var(--u) * 11) solid transparent; border-image: var(--fe-tranche) 1; }
+.fe[data-lueur='legendaire'] { --fe-tranche: linear-gradient(135deg, #9a6a24, #f7d98b 20%, #b8832f 42%, #fff0c2 58%, #a8712a 78%, #f2cf7d); }
+.fe[data-lueur='hors-serie'] { --fe-tranche: linear-gradient(135deg, #b57bff, #ffd9ec 22%, #bfe9ff 44%, #cfaeff 62%, #ffd9ec 80%, #b57bff); }

@@ -6,7 +6,7 @@ import { EQUILIBRAGE, reglagesDeRecharge } from '../config/equilibrage.ts';
 import { RARETES, RARETES_ORDINAIRES } from '../partage/types.ts';
 import type { CarteIndex, Rarete } from '../partage/types.ts';
 import { hasardReproductible } from './hasard.ts';
-import { ouvrirPaquet, preparerReserve, tirerFinition, tirerRarete } from './paquets.ts';
+import { ouvrirPaquet, paquetDException, preparerReserve, tirerFinition, tirerRarete } from './paquets.ts';
 import { mettreAJour, ouvrirUnPaquetGratuit } from './partie.ts';
 import { attenteAvantLeProchain, rechargerLesPaquets, retirerUnPaquet } from './recharge.ts';
 import { VERSION_DE_SAUVEGARDE, meilleureFinition, nouvelleSauvegarde, relireSauvegarde } from './sauvegarde.ts';
@@ -112,6 +112,49 @@ describe('finitions et cartes Hors-série', () => {
     assert.notEqual(garanti[5].carte.rarete, 'Hors-série');
     const ordinaire = ouvrirPaquet(reserve, { hasard: toujoursLeMinimum, paquetsSansLegendaire: 0 }, REGLAGES, SANS_FINITION);
     assert.deepEqual(ordinaire.slice(4).map((t) => t.carte.rarete), ['Rare', 'Hors-série'], 'la Hors-série ne tombe que sur la sixième carte');
+  });
+});
+
+describe('paquets d\'exception', () => {
+  const SIX_HORS_SERIE: CarteIndex[] = Array.from({ length: 8 }, (_, i) => ({ ...HORS_SERIE[0], id: `hs-${i}`, mot: `hs${i}` }));
+  const reserve = preparerReserve([...EDITION, ...SIX_HORS_SERIE]);
+  const { 'Légendaire': chanceLegendaire, 'Hors-série': chanceHorsSerie } = REGLAGES.paquetsDException;
+  // Le premier jet décide du paquet d'exception ; la suite du hasard est ordinaire.
+  const premierJet = (jet: number) => { const suite = hasardReproductible(21); let premier = true; return (): number => (premier ? ((premier = false), jet) : suite()); };
+
+  it('sont réglés à 1 paquet sur 10 000 (Légendaires holographiques) et 1 sur 30 000 (Hors-série)', () => {
+    assert.equal(chanceLegendaire, 1 / 10000);
+    assert.equal(chanceHorsSerie, 1 / 30000);
+  });
+  it('le paquet Légendaire : six Légendaires différentes, toutes holographiques', () => {
+    const paquet = ouvrirPaquet(reserve, { hasard: premierJet(chanceHorsSerie + chanceLegendaire / 2), paquetsSansLegendaire: 0 }, REGLAGES, FINITIONS);
+    assert.equal(paquet.length, 6);
+    assert.equal(new Set(paquet.map((t) => t.carte.id)).size, 6);
+    assert.ok(paquet.every((t) => t.carte.rarete === 'Légendaire' && t.finition === 'Holographique'));
+    assert.equal(paquetDException(paquet, 6), 'Légendaire');
+  });
+  it('le paquet Hors-série : six Hors-série différentes, sans finition, passe avant la garantie de Légendaire', () => {
+    const paquet = ouvrirPaquet(reserve, { hasard: premierJet(chanceHorsSerie / 2), paquetsSansLegendaire: REGLAGES.paquetsAvantLegendaireGarantie - 1 }, REGLAGES, FINITIONS);
+    assert.equal(new Set(paquet.map((t) => t.carte.id)).size, 6);
+    assert.ok(paquet.every((t) => t.carte.rarete === 'Hors-série' && t.finition === 'Normale'));
+    assert.equal(paquetDException(paquet, 6), 'Hors-série');
+  });
+  it('au-delà de ces deux chances, le paquet est ordinaire', () => {
+    const paquet = ouvrirPaquet(reserve, { hasard: premierJet(chanceHorsSerie + chanceLegendaire), paquetsSansLegendaire: 0 }, REGLAGES, FINITIONS);
+    assert.equal(paquetDException(paquet, 6), null);
+    assert.ok(RARETES.indexOf(paquet[0].carte.rarete) <= 2);
+  });
+  it('jamais parmi les paquets de départ, ni sans assez de Hors-série pour remplir le paquet', () => {
+    const depart = ouvrirPaquet(reserve, { hasard: premierJet(0), paquetsSansLegendaire: 0, exclure: new Set() }, REGLAGES, FINITIONS);
+    assert.equal(paquetDException(depart, 6), null);
+    const deuxHorsSerie = ouvrirPaquet(preparerReserve([...EDITION, ...HORS_SERIE]), { hasard: premierJet(0), paquetsSansLegendaire: 0 }, REGLAGES, FINITIONS);
+    assert.equal(paquetDException(deuxHorsSerie, 6), null);
+  });
+  it('se reconnaissent à leur contenu, pas le cadeau d\'une seule Hors-série ni un paquet ordinaire', () => {
+    assert.equal(paquetDException([{ carte: HORS_SERIE[0], finition: 'Normale' }], 6), null);
+    assert.equal(paquetDException([{ carte: HORS_SERIE[0], finition: 'Normale' }], 1), null);
+    const hasard = hasardReproductible(22);
+    for (let i = 0; i < 300; i++) assert.equal(paquetDException(ouvrirPaquet(RESERVE, { hasard, paquetsSansLegendaire: 0 }, { ...REGLAGES, paquetsDException: { 'Légendaire': 0, 'Hors-série': 0 } }, FINITIONS), 6), null);
   });
 });
 

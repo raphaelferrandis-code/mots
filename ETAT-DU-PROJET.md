@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — les paquets d'exception (« god packs », script 24).** Décision de Raphaël : 1 paquet ordinaire
+> sur 10 000 ne contient que des Légendaires holographiques, 1 sur 30 000 que des Hors-série, six cartes différentes.
+> Un seul jet par paquet (d'abord la Hors-série) ; jamais parmi les paquets de départ ni dans le paquet hebdomadaire ;
+> la garantie et la chance de Hors-série ne s'y ajoutent pas ; le paquet Légendaire remet la garantie à zéro, pas le
+> paquet Hors-série. Joueur régulier : un paquet Légendaire par an environ, un paquet Hors-série tous les deux ans et
+> demi ; en moyenne +50 % de Légendaires holographiques, +20 % de Hors-série, l'Encre ne bouge pas. Un signe visible
+> dès l'arrivée du paquet, avant de le déchirer : une aura, de la lumière et des étincelles par la fente de la
+> languette ; puis la feuille sort avec une tranche dorée (Légendaires) ou irisée (Hors-série). Le jeu reconnaît ces
+> paquets à leur contenu (`paquetDException`, `lueurDuPaquet`) : rien à redéployer. Probabilités affichées dans les
+> Réglages. Essai en développement : `#/timbres`, « Paquet d'exception ». **Script 24 à coller** (étape 16).
+
 > **26 septembre 2026 — l'ouverture en feuille de timbres.** Brief du 26/09 (prototype-ouverture-feuille.html),
 > travail purement esthétique : la pile de timbres de la cérémonie devient une feuille de six timbres, côté gomme, qui
 > sort pliée du paquet déchiré et se déplie. On détache les timbres en suivant leurs pointillés (gros plan, fiche,

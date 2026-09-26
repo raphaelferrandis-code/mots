@@ -8,6 +8,7 @@ import { Ceremonie } from '../composants/ceremonie/Ceremonie.tsx';
 import { Feuille, useEcranEtroit } from '../composants/ceremonie/Feuille.tsx';
 import type { FaceDeLaFeuille } from '../composants/ceremonie/Feuille.tsx';
 import { melanger } from '../composants/ceremonie/feuille.ts';
+import { lueurDuPaquet } from '../composants/ceremonie/eclats.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { ouvrirPaquet, preparerReserve } from '../jeu/paquets.ts';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
@@ -60,6 +61,10 @@ export function EssaiTimbre() {
     const obtenues = tirees.map((t): CarteObtenue => ({ ...t, nouvelle: true, nouvelleFinition: true, encre: 0 }));
     setFeuille({ numero, cartes: melanger(obtenues, obtenues.map((o) => o.carte.id).join('|')) });
   };
+  // Les deux paquets d'exception : six Légendaires holographiques, six Hors-série.
+  const sixDe = (test: (c: CarteIndex) => boolean, finition: Finition): CarteObtenue[] => Array.from({ length: 6 }, (_, k) => ({ carte: trouver(test, k * 7), finition, nouvelle: true, nouvelleFinition: true, encre: 0 }));
+  const exceptionLegendaire = sixDe((c) => c.rarete === 'Légendaire', 'Holographique');
+  const exceptionHorsSerie = sixDe((c) => c.rarete === 'Hors-série', 'Normale');
   const tousLesEffets: CarteObtenue[] = [{ carte: trouver((c) => c.rarete === 'Commune', 3), finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 }, ...paquetDEssai];
   const etroite = format === 'ecran' ? etroitParEcran : format === 'telephone';
 
@@ -75,6 +80,8 @@ export function EssaiTimbre() {
       <div className="rangee-de-boutons">
         <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(tousLesEffets))}>Ouvrir la cérémonie d’essai</button>
         <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(tousLesEffets.filter((o) => o.carte.rarete === 'Hors-série')))}>Une seule Hors-série</button>
+        <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(exceptionLegendaire))}>Paquet d’exception : Légendaires</button>
+        <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(exceptionHorsSerie))}>Paquet d’exception : Hors-série</button>
       </div>
       {essai && <Ceremonie premier={essai} tirer={() => essai} continuer={false} numero={142} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
         sons={sons} onSons={setSons} reduire={false} onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
@@ -84,13 +91,15 @@ export function EssaiTimbre() {
       <div className="rangee-de-boutons">
         <button type="button" className="bouton" onClick={() => tirer((feuille?.numero ?? 141) + 1)}>Tirer un paquet</button>
         <button type="button" className="bouton" onClick={() => setFeuille({ numero: 142, cartes: melanger(tousLesEffets, 'tous-les-effets') })}>Paquet avec tous les halos</button>
+        <button type="button" className="bouton" onClick={() => setFeuille({ numero: 143, cartes: exceptionLegendaire })}>Feuille d’exception (Légendaires)</button>
+        <button type="button" className="bouton" onClick={() => setFeuille({ numero: 144, cartes: exceptionHorsSerie })}>Feuille d’exception (Hors-série)</button>
         <button type="button" className="bouton" onClick={() => setFace((f) => (f === 'recto' ? 'verso' : 'recto'))}>{face === 'recto' ? 'Voir le verso' : 'Voir le recto'}</button>
         <select value={format} onChange={(e) => setFormat(e.target.value as typeof format)} aria-label="Disposition">
           <option value="ecran">Selon l’écran</option><option value="ordinateur">Ordinateur (3 × 2)</option><option value="telephone">Téléphone (2 × 3)</option>
         </select>
       </div>
       {feuille && <div className="essai-timbre__feuille" data-etroite={etroite || undefined}>
-        <Feuille cartes={feuille.cartes} face={face} etroite={etroite} numero={feuille.numero} edition={edition.donnees.meta.edition} />
+        <Feuille cartes={feuille.cartes} face={face} etroite={etroite} numero={feuille.numero} edition={edition.donnees.meta.edition} lueur={lueurDuPaquet(feuille.cartes)} />
       </div>}
 
       <h2>Fil d’activité (exemples)</h2>

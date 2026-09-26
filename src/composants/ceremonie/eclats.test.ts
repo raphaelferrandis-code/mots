@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { CarteObtenue } from '../../jeu/partie.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
-import { bilanDuPaquet, eclatDe, gainsDuPaquet, phraseDeLaGarantie, titreDuComptoir, titreDuResume } from './eclats.ts';
+import { bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, phraseDeLaGarantie, titreDuComptoir, titreDuResume } from './eclats.ts';
 
 const obtenue = (rarete: CarteIndex['rarete'], finition: Finition = 'Normale', changements: Partial<CarteObtenue> = {}): CarteObtenue => ({
   carte: { id: `${rarete}-${finition}`, mot: 'mot', type: 'Nom', rarete, faction: 'Latin', attaque: 5, defense: 5, registre: [], definition: '' },
@@ -45,5 +45,18 @@ describe('les phrases de la cérémonie', () => {
   it('annonce les nouveautés et l’Encre des doublons', () => {
     assert.equal(gainsDuPaquet([obtenue('Commune', 'Normale', { nouvelle: true }), obtenue('Commune', 'Normale', { encre: 4 })]), '1 nouveau · +4 Encre');
     assert.equal(gainsDuPaquet([obtenue('Commune')]), 'aucun nouveau');
+  });
+});
+
+describe('le signe des paquets d’exception', () => {
+  const six = (rarete: CarteIndex['rarete'], finition: Finition) => Array.from({ length: 6 }, (_, i) => obtenue(rarete, finition, { carte: { ...obtenue(rarete).carte, id: `c${i}` } }));
+  it('dore le paquet de six Légendaires holographiques, irise celui de six Hors-série', () => {
+    assert.equal(lueurDuPaquet(six('Légendaire', 'Holographique')), 'legendaire');
+    assert.equal(lueurDuPaquet(six('Hors-série', 'Normale')), 'hors-serie');
+  });
+  it('ne signale ni un paquet ordinaire, ni des Légendaires sans holographie, ni le cadeau d’une Hors-série', () => {
+    assert.equal(lueurDuPaquet(six('Légendaire', 'Brillante')), null);
+    assert.equal(lueurDuPaquet([...six('Légendaire', 'Holographique').slice(0, 5), obtenue('Rare', 'Holographique')]), null);
+    assert.equal(lueurDuPaquet([obtenue('Hors-série')]), null);
   });
 });

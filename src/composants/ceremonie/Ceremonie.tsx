@@ -20,7 +20,7 @@ import { Feuille, useEcranEtroit } from './Feuille.tsx';
 import type { FaceDeLaFeuille } from './Feuille.tsx';
 import { PARTS_DU_TOUR, SEUIL_DU_DETACHEMENT, avancement, caseDuTimbre, disposition, melanger, parcourir, pointDuTour, surLeTour, traceDesParts } from './feuille.ts';
 import { Particules, SONS } from './effets.ts';
-import { ABREGE_DE_LA_NATURE, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, titreDuResume } from './eclats.ts';
+import { ABREGE_DE_LA_NATURE, COULEURS_DE_LA_LUEUR, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, titreDuResume } from './eclats.ts';
 import { useRacineInerte } from '../useRacineInerte.ts';
 import { mouvementReduit } from '../mouvement.ts';
 import { messageDe } from '../../partage/messages.ts';
@@ -76,6 +76,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const [volants, setVolants] = useState<Volant[]>([]);
   const [dernier, setDernier] = useState<number | null>(null);
   const [tentative, setTentative] = useState(0);
+  // Un paquet d'exception : sa lueur se voit dès que le paquet arrive (eclats.ts).
+  const lueur = cartes ? lueurDuPaquet(cartes) : null;
 
   const scene = useRef<HTMLDivElement>(null);
   const emballage = useRef<HTMLDivElement>(null);
@@ -178,6 +180,16 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     return () => cancelAnimationFrame(cadre);
   }, [phase, tentative]);
 
+  // Tant qu'on ne l'a pas déchiré, un paquet d'exception laisse filer des étincelles par sa fente.
+  useEffect(() => {
+    if (phase !== 'dechirure' || !lueur || reduit()) return;
+    const minuterie = window.setInterval(() => {
+      const r = dans<HTMLElement>(emballage.current, '.cp__fente')?.getBoundingClientRect();
+      if (r?.width && !document.hidden) jaillir(r.left + r.width * entre(.12, .88), r.top + r.height * .09, { n: 2, genre: 'etincelle', couleurs: COULEURS_DE_LA_LUEUR[lueur], vitesse: [20, 110], duree: [.7, 1.5], taille: [1, 2.4], ouverture: 1.6, g: -40 });
+    }, 160);
+    return () => window.clearInterval(minuterie);
+  }, [phase, lueur, tentative]);
+
   // La feuille posée s'incline doucement vers le pointeur (souris seulement), et se redresse pendant un geste.
   useEffect(() => {
     if (etatFeuille !== 'depliee' || reduit() || !window.matchMedia('(hover: hover)').matches) return;
@@ -260,6 +272,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       setDetaches(places.map(() => false)); setReveles(places.map(() => false));
       aller('dechirure');
     });
+    // Un paquet d'exception s'annonce avant qu'on le déchire : sa lueur apparaît, et elle tinte.
+    if (lueurDuPaquet(places)) SONS.scintillement();
   }
 
   // ── La déchirure du paquet ──
@@ -308,6 +322,15 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const arrachee = dans<HTMLElement>(emballage.current, '.cp__bande--arrachee');
     const tr = arrachee?.getBoundingClientRect();
     if (tr) jaillir(tr.right - 10, tr.bottom, { n: 26, genre: 'fibre', couleurs: ['#f6ead2', '#e8bb83', '#fff6e6'], vitesse: [80, 320], g: 900, duree: [.8, 1.6], taille: [2, 5] });
+    // Paquet d'exception : la lumière retenue jaillit de la fente.
+    const signe = lueurDuPaquet(cartesRef.current);
+    const fente = dans<HTMLElement>(emballage.current, '.cp__fente');
+    const fr = fente?.getBoundingClientRect();
+    if (signe && fente && fr) {
+      fente.animate([{ opacity: 1, transform: 'scaleY(1)' }, { opacity: 1, transform: 'scaleY(2.2)', offset: .25 }, { opacity: 0, transform: 'scaleY(1.5)' }], { duration: D(900), easing: 'ease-out', fill: 'forwards' });
+      jaillir(fr.left + fr.width / 2, fr.top + fr.height / 2, { n: 80, genre: 'etincelle', couleurs: COULEURS_DE_LA_LUEUR[signe], vitesse: [140, 560], duree: [.6, 1.4], taille: [1.2, 2.8], ouverture: 2.6 });
+      SONS.carillon(3);
+    }
     if (attachee) attachee.style.visibility = 'hidden';
     arrachee?.animate([{ transform: arrachee.style.transform, opacity: 1 }, { transform: 'translate(110px,-260px) rotate(-38deg)', opacity: 0 }], { duration: D(820), easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' });
     await attendre(260); if (j !== jeton.current) return;
@@ -321,7 +344,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const k = (pr.width * .88) / sr.width;
     const y0 = pr.top + pr.height * .18 - sr.top, y1 = pr.top - sr.top - sr.height * k * .45;
     feuille.style.transformOrigin = '50% 0';
-    jaillir(pr.left + pr.width / 2, pr.top + pr.height * .12, { n: 40, genre: 'poussiere', couleurs: ['#ffe3b0', '#f0c48f', '#fff8e8'], vitesse: [40, 220], ouverture: 1.7, duree: [.8, 1.6], frein: .94, taille: [1.2, 3] });
+    jaillir(pr.left + pr.width / 2, pr.top + pr.height * .12, { n: signe ? 90 : 40, genre: 'poussiere', couleurs: signe ? COULEURS_DE_LA_LUEUR[signe] : ['#ffe3b0', '#f0c48f', '#fff8e8'], vitesse: [40, 220], ouverture: 1.7, duree: [.8, 1.6], frein: .94, taille: [1.2, 3] });
     SONS.souffle();
     await feuille.animate([{ transform: `translateY(${y0}px) scale(${k})` }, { transform: `translateY(${y1}px) scale(${k})` }], { duration: D(700), easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'forwards' }).finished;
     if (j !== jeton.current) return;
@@ -888,7 +911,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const avantLaSortie = phase === 'ouverture' || phase === 'dechirure' || phase === 'sortie';
   const auResume = phase === 'resume' || (phase === 'fermeture' && n > 0 && rangement.length >= n);
   const feuille = (face: FaceDeLaFeuille, principale: boolean) => cartes && <Feuille cartes={cartes} face={face} etroite={feuilleEtroite} numero={numero} edition={EDITION} dos={dos}
-    detaches={detaches} reveles={reveles} reduire={reduit()} onCase={principale ? caseTouchee : undefined} />;
+    detaches={detaches} reveles={reveles} reduire={reduit()} lueur={lueur} onCase={principale ? caseTouchee : undefined} />;
   const detail = grosPlan && cartes ? cartes[grosPlan.i] : null;
 
   const fiche = (obtenue: CarteObtenue, sous: string | null) => {
@@ -951,7 +974,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
         </button>
       </div>
 
-      <div className="ceremonie__scene" ref={scene} tabIndex={phase === 'dechirure' ? 0 : -1} aria-label={phase === 'dechirure' ? 'Paquet à déchirer : glisse de gauche à droite, ou appuie sur Entrée' : undefined}
+      <div className="ceremonie__scene" ref={scene} tabIndex={phase === 'dechirure' ? 0 : -1} aria-label={phase === 'dechirure' ? `Paquet${lueur ? ' d’exception' : ''} à déchirer : glisse de gauche à droite, ou appuie sur Entrée` : undefined}
         onPointerDown={appuyer} onPointerMove={glisser} onPointerUp={lacher} onPointerCancel={lacher} onPointerLeave={redresser} onKeyDown={clavierDeLaScene}>
         {cartes && !auResume && <div className="c-feuille" ref={feuilleDom} key={`feuille-${tentative}`} data-etat={etatFeuille}
           style={{ '--fe-ratio': (d.largeur / d.hauteur).toFixed(4) } as CSSProperties}>
@@ -966,7 +989,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
           </div>
         </div>}
         {avantLaSortie && <div className="c-emballage" ref={emballage} key={`paquet-${tentative}`}>
-          <PaquetDeCeremonie modele={modelePaquet} className="cp--scene" />
+          {lueur && <span className="c-emballage__aura" data-lueur={lueur} />}
+          <PaquetDeCeremonie modele={modelePaquet} lueur={lueur ?? undefined} className="cp--scene" />
         </div>}
         {apercu !== null && cartes && <button type="button" ref={apercuDom} className="c-carte c-apercu" aria-label={`${cartes[apercu].carte.mot}, fermer l’aperçu`} onClick={() => setApercu(null)}>
           <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere cliquable={false} reagir={false} /></div></div>

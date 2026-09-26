@@ -8,6 +8,7 @@ import type { CSSProperties, PointerEvent } from 'react';
 import type { CarteObtenue } from '../../jeu/partie.ts';
 import { Timbre, VersoDuTimbre } from '../timbre/Timbre.tsx';
 import { eclatDe } from './eclats.ts';
+import type { Lueur } from './eclats.ts';
 import { ECRAN_ETROIT, caseDuTimbre, disposition, trous } from './feuille.ts';
 import type { Disposition, Rectangle } from './feuille.ts';
 import './feuille.css';
@@ -24,6 +25,7 @@ type Props = {
   detaches?: readonly boolean[];
   reveles?: readonly boolean[]; // au recto : cachet posé ; au verso : plus de halo
   reduire?: boolean; // réglage « Réduire les animations »
+  lueur?: Lueur | null; // un paquet d'exception : la feuille a une tranche dorée ou irisée
   onCase?: (i: number, parClavier: boolean) => void; // parClavier : Entrée ou Espace, pas un geste
 };
 
@@ -44,7 +46,7 @@ const placer = (r: Rectangle, d: Disposition): CSSProperties => ({ left: pourcen
 const chiffres = (n: number, longueur: number): string => String(Math.max(0, n)).padStart(longueur, '0');
 
 // Mémorisée : la feuille ne se redessine que si elle change (face, timbre détaché ou révélé), pas à chaque envol.
-export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, onCase }: Props) {
+export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, lueur, onCase }: Props) {
   const d = useMemo(() => disposition(cartes.length, etroite), [cartes.length, etroite]);
   const verso = face === 'verso';
   const perforations = useMemo(() => trous(d, verso).map((t) => `M${t.x - 7} ${t.y}a7 7 0 1 0 14 0a7 7 0 1 0 -14 0`).join(''), [d, verso]);
@@ -55,7 +57,7 @@ export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, ed
   };
 
   return (
-    <div className={`fe fe--${face}`} data-reduit={reduire || undefined} onPointerMove={verso ? reflet : undefined}
+    <div className={`fe fe--${face}`} data-reduit={reduire || undefined} data-lueur={lueur ?? undefined} onPointerMove={verso ? reflet : undefined}
       style={{ '--fe-l': d.largeur, aspectRatio: `${d.largeur} / ${d.hauteur}` } as CSSProperties}>
       <span className="fe__papier" />
       {verso ? <MargesDuVerso d={d} numero={numero} /> : <MargesDuRecto d={d} numero={numero} edition={edition} />}
@@ -79,6 +81,7 @@ export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, ed
         </button>;
       })}
       {verso && <span className="fe__gomme" />}
+      {lueur && <span className="fe__tranche" />}
       <svg className="fe__perforations" viewBox={`0 0 ${d.largeur} ${d.hauteur}`} aria-hidden="true"><path d={perforations} /></svg>
     </div>
   );

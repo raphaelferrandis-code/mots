@@ -7,10 +7,14 @@ import type { ChancesParRarete } from '../config/equilibrage.ts';
 import { choisir } from './hasard.ts';
 import type { Hasard } from './hasard.ts';
 
+// Un paquet d'exception (« god pack ») : toutes ses cartes sont des Légendaires holographiques, ou des Hors-série.
+export type PaquetDException = 'Légendaire' | 'Hors-série';
+
 export type ReglagesDesPaquets = {
   emplacements: ChancesParRarete[];
   paquetsAvantLegendaireGarantie: number;
   chanceHorsSerie: number;
+  paquetsDException: Record<PaquetDException, number>;
 };
 
 export type ReglagesDesFinitions = {
@@ -80,11 +84,44 @@ export type OptionsDOuverture = {
   exclure?: ReadonlySet<string>; // cartes à ne pas tirer (paquets de départ : celles déjà possédées)
 };
 
+// Un seul jet par paquet : d'abord le paquet Hors-série, sinon le paquet Légendaire. Il faut assez de cartes
+// différentes pour remplir tout le paquet (le joueur a pu en masquer).
+function tirerLException(reserve: Reserve, reglages: ReglagesDesPaquets, hasard: Hasard): PaquetDException | null {
+  const jet = hasard();
+  const taille = reglages.emplacements.length;
+  let seuil = 0;
+  for (const rarete of ['Hors-série', 'Légendaire'] as const) {
+    seuil += reglages.paquetsDException[rarete];
+    if (jet < seuil) return reserve[rarete].length >= taille ? rarete : null;
+  }
+  return null;
+}
+
+// Un paquet d'exception se reconnaît à son contenu : aucun autre paquet ne peut être plein de Légendaires
+// holographiques ou de Hors-série (le cadeau de l'achat unique, une seule Hors-série, n'en est pas un).
+export function paquetDException(paquet: readonly Pick<CarteTiree, 'carte' | 'finition'>[], taille: number): PaquetDException | null {
+  if (paquet.length !== taille || taille < 2) return null;
+  if (paquet.every((t) => t.carte.rarete === 'Hors-série')) return 'Hors-série';
+  if (paquet.every((t) => t.carte.rarete === 'Légendaire' && t.finition === 'Holographique')) return 'Légendaire';
+  return null;
+}
+
 export function ouvrirPaquet(reserve: Reserve, options: OptionsDOuverture, reglages: ReglagesDesPaquets, finitions: ReglagesDesFinitions): CarteTiree[] {
   const { hasard } = options;
   const garantie = options.paquetsSansLegendaire + 1 >= reglages.paquetsAvantLegendaireGarantie;
   const interdites = new Set(options.exclure);
   const paquet: CarteTiree[] = [];
+
+  // Le paquet d'exception, jamais parmi les paquets de départ (ceux qui excluent les cartes déjà possédées).
+  const exception = options.exclure ? null : tirerLException(reserve, reglages, hasard);
+  if (exception) {
+    for (let i = 0; i < reglages.emplacements.length; i++) {
+      const carte = tirerCarte(reserve, exception, interdites, hasard)!;
+      paquet.push({ carte, finition: exception === 'Légendaire' ? 'Holographique' : 'Normale' });
+      interdites.add(carte.id);
+    }
+    return paquet;
+  }
 
   reglages.emplacements.forEach((chances, position) => {
     const dernier = position === reglages.emplacements.length - 1;
@@ -115,5 +152,11 @@ export function encreMaximaleMoyenneParPaquet(reglages: ReglagesDesPaquets, fini
   const brillante = finitions.chances.Brillante ?? 0;
   const holographique = finitions.chances.Holographique ?? 0;
   const multiplicateurMoyen = (1 - brillante - holographique) * finitions.encre.Normale + brillante * finitions.encre.Brillante + holographique * finitions.encre.Holographique;
-  return parCarte * multiplicateurMoyen + reglages.chanceHorsSerie * encreParDoublon['Hors-série'];
+  const ordinaire = parCarte * multiplicateurMoyen + reglages.chanceHorsSerie * encreParDoublon['Hors-série'];
+  // Les paquets d'exception remplacent un paquet ordinaire.
+  const { 'Légendaire': legendaire, 'Hors-série': horsSerie } = reglages.paquetsDException;
+  const taille = reglages.emplacements.length;
+  return (1 - legendaire - horsSerie) * ordinaire
+    + legendaire * taille * encreParDoublon['Légendaire'] * finitions.encre.Holographique
+    + horsSerie * taille * encreParDoublon['Hors-série'];
 }

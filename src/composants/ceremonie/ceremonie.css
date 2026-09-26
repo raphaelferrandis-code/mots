@@ -62,6 +62,31 @@ body.ceremonie-ouverte { overflow: hidden; }
 .cp__indice.cp__indice--eteint { display: none; }
 @keyframes c-indice { 0% { left: 3%; opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { left: 97%; opacity: 0; } }
 
+/* ── Le paquet d'exception (eclats.ts) : dès son arrivée, la lumière passe par la fente de la languette et une aura
+   l'entoure ; dorée pour les Légendaires holographiques, irisée pour les Hors-série. Seulement transform et opacity. */
+[data-lueur='legendaire'] { --lueur-vive: rgba(255, 214, 135, .95); --lueur-douce: rgba(236, 168, 76, .42); --lueur-loin: rgba(236, 168, 76, .12); }
+[data-lueur='hors-serie'] { --lueur-vive: rgba(218, 190, 255, .95); --lueur-douce: rgba(255, 186, 228, .4); --lueur-loin: rgba(170, 220, 255, .14); }
+/* L'aura : une ellipse à la forme du paquet, dont on ne voit que le bord, autour de lui. */
+.c-emballage__aura {
+  position: absolute; left: 50%; top: 50%; width: calc(var(--pw) * 1.9); height: calc(var(--pw) * 2.3); translate: -50% -50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, var(--lueur-vive) 40%, var(--lueur-douce) 62%, var(--lueur-loin) 82%, transparent);
+  animation: c-aura 2.8s ease-in-out infinite;
+}
+/* La fente : un trait de lumière sous la languette, qui déborde sur le paquet. Centrée sur la fente, elle s'éteint avant
+   ses bords : rien ne dépasse du paquet (ni lueur ni ombre portée) quand la languette s'en va. */
+.cp__fente {
+  position: absolute; left: 0; right: 0; top: calc(48 / 470 * 100% - 17%); height: 34%;
+  pointer-events: none; mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 48% 9% at 50% 50%, #fff 0%, var(--lueur-vive) 40%, transparent 100%),
+    radial-gradient(closest-side, var(--lueur-vive) 0%, var(--lueur-douce) 36%, transparent 100%);
+  animation: c-fente 2.8s ease-in-out infinite;
+}
+@keyframes c-aura { 0%, 100% { opacity: .6; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.03); } }
+@keyframes c-fente { 0%, 100% { opacity: .75; transform: scaleX(.95); } 50% { opacity: 1; transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .c-emballage__aura, .cp__fente { animation: none; } }
+
 /* ── La feuille de timbres ────────────────────────────────────────────────────
    Sa largeur suit la hauteur réellement visible (texte et plateau déduits) et le ratio de sa grille.
    L'inclinaison au pointeur aplatit la 3D : la perspective du retournement est écrite dans ses images clés. */
