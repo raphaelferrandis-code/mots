@@ -5,6 +5,11 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Ceremonie } from '../composants/ceremonie/Ceremonie.tsx';
+import { Feuille, useEcranEtroit } from '../composants/ceremonie/Feuille.tsx';
+import type { FaceDeLaFeuille } from '../composants/ceremonie/Feuille.tsx';
+import { melanger } from '../composants/ceremonie/feuille.ts';
+import { EQUILIBRAGE } from '../config/equilibrage.ts';
+import { ouvrirPaquet, preparerReserve } from '../jeu/paquets.ts';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
 import '../composants/accueil/refonte.css';
 import type { CarteObtenue } from '../jeu/partie.ts';
@@ -26,6 +31,11 @@ export function EssaiTimbre() {
   const [verso, setVerso] = useState(true);
   const [sons, setSons] = useState(true);
   const [essai, setEssai] = useState<Promise<CarteObtenue[]> | null>(null);
+  // La feuille : un paquet tiré ici avec les vraies règles et les vraies cartes (rien n'est enregistré).
+  const [feuille, setFeuille] = useState<{ numero: number; cartes: CarteObtenue[] } | null>(null);
+  const [face, setFace] = useState<FaceDeLaFeuille>('verso');
+  const [format, setFormat] = useState<'ecran' | 'ordinateur' | 'telephone'>('ecran');
+  const etroitParEcran = useEcranEtroit();
   if (edition.etat !== 'pret') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
   const { cartes } = edition.donnees;
@@ -45,6 +55,13 @@ export function EssaiTimbre() {
     { carte: trouver((c) => c.rarete === 'Légendaire', 9), finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 },
     { carte: aspects[3].carte, finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 },
   ];
+  const tirer = (numero: number): void => {
+    const tirees = ouvrirPaquet(preparerReserve(cartes), { hasard: Math.random, paquetsSansLegendaire: 0 }, EQUILIBRAGE.paquets, EQUILIBRAGE.finitions);
+    const obtenues = tirees.map((t): CarteObtenue => ({ ...t, nouvelle: true, nouvelleFinition: true, encre: 0 }));
+    setFeuille({ numero, cartes: melanger(obtenues, obtenues.map((o) => o.carte.id).join('|')) });
+  };
+  const tousLesEffets: CarteObtenue[] = [{ carte: trouver((c) => c.rarete === 'Commune', 3), finition: 'Normale', nouvelle: true, nouvelleFinition: true, encre: 0 }, ...paquetDEssai];
+  const etroite = format === 'ecran' ? etroitParEcran : format === 'telephone';
 
   return (
     <main className="ecran ecran--large essai-timbre">
@@ -58,6 +75,20 @@ export function EssaiTimbre() {
       <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(paquetDEssai))}>Ouvrir la cérémonie d’essai</button>
       {essai && <Ceremonie premier={essai} tirer={() => Promise.resolve(paquetDEssai)} continuer={false} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
         sons={sons} onSons={setSons} reduire={false} onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
+
+      <h2>La feuille de timbres (lot 1)</h2>
+      <p className="texte-doux">Un paquet tiré avec les vraies règles et les vraies cartes ; rien n’est enregistré.</p>
+      <div className="rangee-de-boutons">
+        <button type="button" className="bouton" onClick={() => tirer((feuille?.numero ?? 141) + 1)}>Tirer un paquet</button>
+        <button type="button" className="bouton" onClick={() => setFeuille({ numero: 142, cartes: melanger(tousLesEffets, 'tous-les-effets') })}>Paquet avec tous les halos</button>
+        <button type="button" className="bouton" onClick={() => setFace((f) => (f === 'recto' ? 'verso' : 'recto'))}>{face === 'recto' ? 'Voir le verso' : 'Voir le recto'}</button>
+        <select value={format} onChange={(e) => setFormat(e.target.value as typeof format)} aria-label="Disposition">
+          <option value="ecran">Selon l’écran</option><option value="ordinateur">Ordinateur (3 × 2)</option><option value="telephone">Téléphone (2 × 3)</option>
+        </select>
+      </div>
+      {feuille && <div className="essai-timbre__feuille" data-etroite={etroite || undefined}>
+        <Feuille cartes={feuille.cartes} face={face} etroite={etroite} numero={feuille.numero} edition={edition.donnees.meta.edition} />
+      </div>}
 
       <h2>Fil d’activité (exemples)</h2>
       <p className="texte-doux">En local, le serveur n’est pas branché : voici le fil avec des événements d’exemple.</p>

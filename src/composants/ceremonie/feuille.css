@@ -1,0 +1,86 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   LA FEUILLE DE TIMBRES (ouverture d'un paquet, brief du 26/09/2026)
+   Tout est préfixé « fe » : la feuille et le timbre ne partagent aucune classe (le timbre a déjà .tb__face).
+   --u vaut une unité de la maquette (la feuille mesure --fe-l unités de large) : pour les petits textes du verso.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.fe {
+  --fe-fond: #0a1322; /* la couleur de la table, vue à travers les trous */
+  --u: calc(100cqw / var(--fe-l));
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, .55), 0 4px 8px rgba(0, 0, 0, .35);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.fe__papier { position: absolute; inset: 0; background: radial-gradient(130% 110% at 25% 12%, #fcf6e6 0%, #f1e5ca 60%, #e4d3ae 100%); }
+.fe__papier::after { content: ""; position: absolute; inset: 0; background-image: var(--grain-papier); opacity: .45; mix-blend-mode: multiply; }
+.fe--verso .fe__papier { background: radial-gradient(130% 110% at 30% 12%, #fbf6e8, #eee2c4 62%, #e0cfa8); }
+.fe--verso .fe__papier::before { content: ""; position: absolute; inset: 0; background-image: var(--filigrane); background-size: calc(var(--u) * 46) calc(var(--u) * 46); opacity: .6; }
+
+.fe__marges, .fe__perforations { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.fe__perforations { z-index: 4; fill: var(--fe-fond); }
+.fe__titre { font-family: var(--police-serif); font-weight: 900; }
+.fe__etroit { font-family: var(--police-etroite); }
+
+/* Un emplacement : un vrai bouton, occupé par un timbre sans dentelure. */
+.fe__case {
+  position: absolute; z-index: 2; display: block; padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.fe__case .tb { position: absolute; inset: 0; width: 100%; transition: transform .25s cubic-bezier(.2, .8, .2, 1), filter .25s; }
+.fe__case::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; transition: background .25s, box-shadow .25s; }
+.fe__case:focus-visible { outline: none; }
+.fe__case:focus-visible::after { box-shadow: inset 0 0 0 3px var(--c-cuivre-clair, #f0c48f); }
+@media (hover: hover) {
+  .fe--recto .fe__case:hover .tb { transform: translateY(-5px); filter: drop-shadow(0 12px 14px rgba(0, 0, 0, .4)); }
+  .fe--verso .fe__case:hover::after { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 2px rgba(216, 154, 92, .55); }
+}
+
+/* Au verso, la feuille porte son propre numéro et sa propre gomme : pas ceux de chaque dos. */
+.fe .tb__note, .fe .tb__gomme { display: none; }
+.fe__numero {
+  position: absolute; left: 50%; bottom: 9%; z-index: 2; translate: -50% 0; pointer-events: none;
+  font-family: var(--police-etroite); font-size: calc(var(--u) * 13); letter-spacing: .2em; color: rgba(110, 80, 40, .5);
+}
+.fe__gomme {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: soft-light;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .55) 46%, transparent 62%);
+  background-size: 260% 260%; background-position: calc(var(--mx, .3) * 100%) 0;
+}
+
+/* Un timbre détaché : un trou, la table se voit au travers. */
+.fe__trou { position: absolute; z-index: 3; background: var(--fe-fond); box-shadow: inset 0 10px 20px rgba(0, 0, 0, .6); }
+
+/* ── Le halo des raretés, au verso : discret, sur la surface même du timbre ──
+   Doré (Brillante, Épique) : un reflet chaud qui passe ; holographique : une irisation qui tourne ;
+   grande révélation (Légendaire, Hors-série) : une lueur qui bat. Seulement transform et opacity : rien à repeindre. */
+.fe__halo { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; opacity: 0; }
+.fe__halo::before { content: ""; position: absolute; }
+.fe__case[data-halo] .fe__halo { opacity: 1; }
+
+.fe__case[data-halo='dore'] .fe__halo { mix-blend-mode: soft-light; background: radial-gradient(circle at 50% 45%, rgba(236, 176, 92, .5), transparent 72%); }
+.fe__case[data-halo='dore'] .fe__halo::before {
+  inset: 0 -100%; background: linear-gradient(105deg, transparent 38%, rgba(255, 226, 160, .95) 48%, rgba(255, 248, 225, 1) 50%, rgba(255, 226, 160, .95) 52%, transparent 62%);
+  animation: fe-balayage 3.6s ease-in-out infinite;
+}
+.fe__case[data-halo='holo'] .fe__halo { mix-blend-mode: soft-light; }
+.fe__case[data-halo='holo'] .fe__halo::before {
+  inset: -40%; opacity: .9;
+  background: conic-gradient(from 0deg, #ff8fb0, #ffe38a, #9dffc8, #8fdcff, #cfaeff, #ff8fb0);
+  animation: fe-tour 9s linear infinite;
+}
+.fe__case[data-halo='grand'] .fe__halo { mix-blend-mode: multiply; }
+.fe__case[data-halo='grand'] .fe__halo::before {
+  inset: 8%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(214, 120, 70, .34), rgba(200, 145, 75, .16) 45%, transparent 70%);
+  animation: fe-pouls 2.6s ease-in-out infinite;
+}
+@keyframes fe-balayage { 0%, 25% { transform: translateX(-34%); } 75%, 100% { transform: translateX(34%); } }
+@keyframes fe-tour { to { transform: rotate(1turn); } }
+@keyframes fe-pouls { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.04); } }
+
+.fe[data-reduit] .fe__halo::before { animation: none; }
+@media (prefers-reduced-motion: reduce) { .fe__halo::before { animation: none; } }

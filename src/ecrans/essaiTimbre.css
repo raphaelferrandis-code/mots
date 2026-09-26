@@ -7,3 +7,5 @@
 .essai-timbre__timbres figcaption { margin-top: 10px; text-align: center; font-size: 14px; color: var(--encre-douce); }
 .essai-timbre__option { display: inline-flex; align-items: center; gap: 8px; }
 .essai-timbre__matrice { display: grid; gap: 22px; }
+.essai-timbre__feuille { width: min(760px, 100%); margin: 28px auto 0; }
+.essai-timbre__feuille[data-etroite] { width: min(430px, 100%); }

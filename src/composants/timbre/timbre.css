@@ -30,6 +30,8 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
   mask: var(--perf) center / 100% 100% no-repeat;
 }
 .tb[data-face='recto'] .tb__verso, .tb[data-face='verso'] .tb__recto { visibility: hidden; }
+/* Encore dans sa feuille : pas de découpe, ce sont les perforations de la feuille qui dessinent les bords. */
+.tb[data-dentele='non'] .tb__face { -webkit-mask: none; mask: none; }
 
 /* ── Le papier et l'impression ──────────────────────────────────────────────── */
 

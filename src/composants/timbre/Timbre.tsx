@@ -40,6 +40,7 @@ type Props = {
   montrerVerso?: boolean; // avec « verso » : quelle face est visible
   dosRenseigne?: boolean; // avec « verso » : le verso porte la nature, l'attaque et la défense (timbre adverse face cachée en duel)
   dos?: string; // modèle de dos choisi par le joueur (personnalisation)
+  dentele?: boolean; // false : sans découpe dentelée (timbre encore dans sa feuille : les perforations dessinent ses bords)
   maitriseeLe?: number | null; // le mot est maîtrisé en duel : second cachet
   reagir?: boolean; // les reflets suivent le pointeur (par défaut : dès qu'il y a un reflet à faire jouer)
   cliquable?: boolean; // ouvre la fiche de la carte
@@ -50,7 +51,7 @@ type Props = {
   style?: CSSProperties;
 };
 
-export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
+export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
   const racine = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -103,6 +104,7 @@ export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe
     'data-finition': effet,
     'data-oblitere': oblitere || undefined,
     'data-face': verso ? (montrerVerso ? 'verso' : 'recto') : undefined,
+    'data-dentele': dentele ? undefined : 'non',
     style: { '--encre-timbre': horsSerie ? '#17161c' : ENCRES_DU_TIMBRE[carte.type], ...style } as CSSProperties,
     onPointerMove: suitLePointeur ? eclairer : undefined,
     onPointerDown: suitLePointeur ? eclairer : undefined,
@@ -185,10 +187,13 @@ function CachetDuTimbre({ faction, le, attestation }: { faction: string; le: num
 }
 
 // Un timbre vu de dos, seul (paquet à révéler, fiche retournée, aperçu des dos dans le Profil).
-export function VersoDuTimbre({ dos = 'gomme', etiquette, onRetourner }: { dos?: string; etiquette: string; onRetourner?: () => void }) {
+// « dentele » à false : un dos encore dans sa feuille, sans découpe ; « etiquette » absente : le dos n'est qu'un décor.
+export function VersoDuTimbre({ dos = 'gomme', etiquette, onRetourner, dentele = true }: { dos?: string; etiquette?: string; onRetourner?: () => void; dentele?: boolean }) {
   const contenu = <span className="tb__cadre"><span className="tb__echelle"><DosDuTimbre dos={dos} /></span></span>;
-  if (onRetourner) return <button type="button" className="tb tb--dos" data-modele={dos} onClick={onRetourner} aria-label={etiquette}>{contenu}</button>;
-  return <div className="tb tb--dos" data-modele={dos} role="img" aria-label={etiquette}>{contenu}</div>;
+  const decoupe = dentele ? undefined : 'non';
+  if (onRetourner) return <button type="button" className="tb tb--dos" data-modele={dos} data-dentele={decoupe} onClick={onRetourner} aria-label={etiquette}>{contenu}</button>;
+  if (etiquette === undefined) return <div className="tb tb--dos" data-modele={dos} data-dentele={decoupe} aria-hidden="true">{contenu}</div>;
+  return <div className="tb tb--dos" data-modele={dos} data-dentele={decoupe} role="img" aria-label={etiquette}>{contenu}</div>;
 }
 
 // Le verso : papier gommé, filigrane, sceau et reflet mobile. Le sceau porte le dos choisi par le joueur.

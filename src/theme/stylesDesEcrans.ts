@@ -28,3 +28,4 @@ import '../ecrans/duel/partie.css';
 import '../composants/carte/timbreManipulable.css';
 import '../composants/carte/choixFinition.css';
 import '../ecrans/formules.css';
+import '../composants/ceremonie/feuille.css';
