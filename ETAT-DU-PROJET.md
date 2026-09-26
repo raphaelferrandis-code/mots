@@ -7,7 +7,9 @@
 > (`joueurs_simules_admissibles`) dit qui est admissible avec ses filtres, pour la liste comme pour la vérification,
 > et la limite (écart du 5e plus proche + l'aléa de 150) couvre exactement ce que la liste peut contenir. Pas d'attente
 > de 30 s imposée, défis entre amis inchangés. La base de test imite désormais Supabase, qui ouvre d'office toute
-> nouvelle fonction aux joueurs. **Script 21 à coller** (étape 13), aucune fonction à redéployer.
+> nouvelle fonction aux joueurs. **Script 21 collé par Raphaël et vérifié le 26/09** (109 fonctions identiques au dépôt ;
+> un joueur à 1 000 ne peut défier que les joueurs simulés de 848 à 1 160, ni le plus faible à 750 ni le plus fort à
+> 1 652). La dernière migration est désormais la 21.
 
 > **25 septembre 2026 — les points secondaires de l'audit.** Décisions de Raphaël : le compteur d'Encre mène **au
 > marché** (le « + » explique comment en gagner et mène aux paquets et au marché, sans les formules) ; le fil d'activité

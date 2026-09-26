@@ -70,7 +70,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Paiements : suppression par le joueur, mois et année de naissance, reprises après une panne de Stripe | **En ligne** (étape 11 faite), achats toujours fermés |
 | Plus de « Définition manquante ou à compléter » parmi les réponses de la parade (8 cartes corrigées) | **En ligne** (étape 12 faite) |
 | Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | **En ligne** (étape 12 faite) |
-| Défi contre un joueur simulé : plus moyen de viser le plus faible (le serveur n'accepte que ceux qu'il propose) | **Étape 13 à faire** (script 21) |
+| Défi contre un joueur simulé : plus moyen de viser le plus faible (le serveur n'accepte que ceux qu'il propose) | **En ligne** (étape 13 faite) |
 
 ---
 
@@ -258,17 +258,22 @@ annoncée d'un mot face cachée avec son bonus d'enchaînement.
 - [ ] Trois requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE :
       elles peuvent être supprimées.
 
-### Étape 13 — Coller le script 21 (le défi contre un joueur simulé)
+### Étape 13 — Coller le script 21 (le défi contre un joueur simulé) — FAIT le 26 septembre
 
 Ta décision du 26 septembre : **le serveur vérifie**. Un jeu trafiqué pouvait choisir, comme adversaire de secours, le
 joueur simulé le plus faible, pour des victoires faciles. Désormais le serveur n'accepte que l'un de ceux que le jeu
 propose au joueur (les plus proches de sa cote, compte tenu de ses filtres). **Rien ne change à l'écran**, pas
 d'attente imposée, les défis entre amis restent tels quels. **Aucune fonction à redéployer**, le jeu ne change pas.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/21-adversaire-de-secours.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/21-adversaire-de-secours.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned** (confirmer l'avertissement « Potential issue detected » s'il apparaît).
-- [ ] Dire à l'assistant que c'est fait : il vérifie en lecture seule.
+- [x] Vérifié par l'assistant en lecture seule le 26 septembre : les 109 fonctions de la base identiques au dépôt ;
+      aides internes fermées aux joueurs et aux visiteurs ; sur les vrais joueurs simulés (240, cotes de 750 à 1 652),
+      un joueur à 1 000 ne peut défier que ceux de 848 à 1 160 — le plus faible (750) et le plus fort (1 652) sont
+      refusés.
+- [ ] Deux requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL, rubrique PRIVATE :
+      elles peuvent être supprimées.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

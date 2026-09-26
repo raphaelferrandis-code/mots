@@ -30,7 +30,7 @@ Les audits précédents (`docs/ANALYSE-CODE-MECANIQUES-2026-09-23.md`, `docs/AUD
 > ne montre plus que les paquets ; CSP dans le site construit) ; le « Rangement du dépôt » (anciens scripts marqués
 > « ne pas rejouer », actions GitHub figées par empreinte, code mort, doublons, documents dans `docs/`, `filesduel.zip`
 > décompressé dans `docs/duel/`).
-> **Corrigé le 26/09 (script 21, à installer) :** le défi amical contre le joueur maison le plus faible — le serveur
+> **Corrigé le 26/09 (script 21, installé et vérifié) :** le défi amical contre le joueur maison le plus faible — le serveur
 > n'accepte qu'un joueur maison qu'il peut proposer au joueur (décision de Raphaël).
 > **Restent, volontairement :** les robots de parade (limite déjà acceptée) ; l'empreinte des fonctions Supabase vérifiée
 > automatiquement (l'assistant la vérifie à la main, à chaque déploiement) ; n° 6 pour le Marché et le comptoir des
