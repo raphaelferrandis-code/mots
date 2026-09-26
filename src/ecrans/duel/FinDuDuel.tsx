@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { MomentsDeProgres, useRecompensesDuMoment } from '../../composants/Recompenses.tsx';
 import { SceauDuel } from '../../composants/SceauDuel.tsx';
 import { useRacineInerte } from '../../composants/useRacineInerte.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
@@ -34,6 +35,8 @@ type Props = {
 
 export function FinDuDuel(p: Props) {
   useRacineInerte(); // les onglets derrière le voile ne quittent pas le duel par erreur
+  // Le niveau et les succès gagnés pendant ce duel s’affichent sur la carte (et non plus dans un bandeau par-dessus).
+  const progres = useRecompensesDuMoment(true);
   const { duel, resultat } = p;
   const moi = duel.camps.joueur.pv;
   const lui = duel.camps.adversaire.pv;
@@ -90,6 +93,7 @@ export function FinDuDuel(p: Props) {
           <div><dt>Dégâts infligés</dt><dd>{total}</dd></div>
           <div><dt>Meilleur coup</dt><dd>{meilleure && meilleure.joueur.infliges > 0 ? <><span lang="fr">{meilleure.joueur.carte.mot}</span> · {meilleure.joueur.infliges}</> : '—'}</dd></div>
         </dl>
+        <MomentsDeProgres recompenses={progres} />
         {p.bilan.maitrises.length > 0 && <p className="fin-duel__note">Cachet « Maîtrisé » : {p.bilan.maitrises.join(', ')}.</p>}
 
         <div className="fin-duel__actions">

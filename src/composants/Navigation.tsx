@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { SITE } from '../config/site.ts';
@@ -70,6 +70,18 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
   const encre = useCompteur('encre', encreReelle);
   const xp = useCompteur('xp', xpReel);
   const progression = xp === null ? null : progressionDuNiveau(xp);
+  // Un niveau gagné pendant la visite : l’anneau repart de zéro sans se vider à reculons (il change d’élément), et le
+  // chiffre reçoit un coup de tampon (audit de finition du 26/09/2026 : on aurait dit une perte).
+  // (Retenu en état : le compteur d’XP redessine la barre à chaque image, le tampon doit tenir jusqu’au bout.)
+  const niveauVu = useRef<number | null>(null);
+  const [niveauGagne, setNiveauGagne] = useState<number | null>(null);
+  const niveau = progression?.niveau ?? null;
+  useEffect(() => {
+    if (niveau === null) return;
+    if (niveauVu.current !== null && niveau > niveauVu.current) setNiveauGagne(niveau);
+    niveauVu.current = niveau;
+  }, [niveau]);
+  const niveauMonte = niveau !== null && niveauGagne === niveau;
   const nom = pseudo.trim();
 
   // Un seul menu ouvert à la fois. Il se referme tout seul quand on change d'écran.
@@ -150,9 +162,9 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
             aria-label={`Mon espace${nom ? ` — ${nom}` : ''}${progression ? `, niveau ${progression.niveau}` : ''}`}
             aria-current={ESPACE_DU_JOUEUR.some((e) => e.actifPour.includes(ecran)) || ecran === 'formules' ? 'page' : undefined}>
             <span className="avatar" aria-hidden="true">
-              {progression && <svg className="avatar__anneau" viewBox="0 0 46 46"><circle className="avatar__anneau-fond" cx="23" cy="23" r="21" /><circle className="avatar__anneau-plein" cx="23" cy="23" r="21" strokeDasharray={TOUR.toFixed(2)} strokeDashoffset={(TOUR * (1 - progression.acquis / progression.requis)).toFixed(2)} /></svg>}
+              {progression && <svg className="avatar__anneau" viewBox="0 0 46 46"><circle className="avatar__anneau-fond" cx="23" cy="23" r="21" /><circle key={progression.niveau} className="avatar__anneau-plein" cx="23" cy="23" r="21" strokeDasharray={TOUR.toFixed(2)} strokeDashoffset={(TOUR * (1 - progression.acquis / progression.requis)).toFixed(2)} /></svg>}
               {portrait ? <Portrait avatar={portrait.avatar} cadre={portrait.cadre} anime={false} /> : <span className="avatar__visage">{DESSINS.profil}</span>}
-              {progression && <b className="avatar__niveau">{progression.niveau}</b>}
+              {progression && <b key={progression.niveau} className="avatar__niveau" data-monte={niveauMonte || undefined}>{progression.niveau}</b>}
             </span>
             <span className="bouton-joueur__chevron" aria-hidden="true">{DESSINS.chevron}</span>
           </button>

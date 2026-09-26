@@ -2,7 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **27 septembre 2026 — finitions, étape 2, lot A : les premiers pas guidés.** Sous le bouton de l'accueil, « Tes
+> **26 septembre 2026 (soir) — finitions, étape 2, lot B : les récompenses en vraies cartes.** Le niveau atteint et
+> les succès gagnés avec un paquet ou un duel s'affichent dans son écran de fin (résumé du paquet, carte de fin du duel),
+> et non plus dans un bandeau de 5 s par-dessus : une carte « Niveau atteint » (ce qu'il débloque, lien « Voir ») et une
+> carte par succès, au métal de sa famille, avec son titre et « Porter ce titre » (`MomentsDeProgres` dans
+> `src/composants/Recompenses.tsx`). Le bandeau ne sert plus qu'aux récompenses gagnées ailleurs : le guichet les
+> « capture » pendant l'écran de fin et les oublie quand il se ferme (oubli fait dans le guichet, pas dans le nettoyage
+> de l'écran : en développement, React démonte et remonte chaque écran une fois). Dans la barre, un niveau gagné repart
+> d'un anneau neuf (il ne se vide plus à reculons) et le chiffre reçoit un coup de tampon. `#/profil/succes` ouvre
+> l'onglet des succès.
+
+> **26 septembre 2026 (soir) — finitions, étape 2, lot A : les premiers pas guidés.** Sous le bouton de l'accueil, « Tes
 > premiers pas » : trois étapes qui se cochent seules (paquets de départ, carnet, première victoire), puis « Bravo, tu
 > connais le jeu ! » avec deux suites (joutes classées : `#/duel/joutes` ouvre l'onglet ; inviter un ami), à fermer
 > (`src/composants/accueil/PremiersPas.tsx` ; rien pour qui a joué plus de 5 duels). Au tout premier duel contre
@@ -10,7 +20,7 @@
 > `Partie.tsx`). Protection de l'invité : le rappel « Protège ta collection » arrive dès la première Épique (ou mieux)
 > après les paquets de départ, au plus tard au 20e paquet ; dans le menu du joueur, « Invité · protège ta collection ».
 
-> **26 septembre 2026 (nuit) — finitions, fin de l'étape 1 : les premiers pas.** Décisions de Raphaël : la formule
+> **26 septembre 2026 (soir) — finitions, fin de l'étape 1 : les premiers pas.** Décisions de Raphaël : la formule
 > « Mon album » s'appelle **« Écrin »** (l'onglet est « Album » ; le paiement ne dépend que des identifiants Stripe :
 > renommer aussi le produit Stripe avant d'ouvrir les achats, voir docs/GUIDE-paiements-production.md) ; documents
 > internes hors du dépôt public : plus tard. Fait : sur l'accueil, tant que le joueur n'a joué aucun duel, **une phrase

@@ -27,9 +27,32 @@
 .gain-duel__gains > span { padding: 0 24px; color: var(--encre-douce); font: .95rem var(--police-mention); }
 .gain-duel__gains > span + span { border-left: 1px solid var(--filet); }
 .gain-duel__gains b { display: block; color: var(--encre); font: 400 2rem var(--police-chiffres); animation: recompense-entree .5s .2s both; }
+/* Les progrès d’un paquet ou d’un duel, dans son écran de fin (MomentsDeProgres) : des cartes compactes, au métal de
+   la famille du succès. */
+.progres { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 6px auto 2px; max-width: min(100%, 780px); }
+.progres__carte { display: flex; align-items: center; gap: 12px; flex: 1 1 280px; max-width: 380px; box-sizing: border-box; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--metal-recompense, #d7c397) 45%, transparent); border-radius: 6px; background: rgb(11 23 41 / 72%); text-align: left; animation: recompense-entree .45s ease-out both; }
+.progres__carte .recompense__medaille { flex: none; width: 40px; height: 44px; margin: 0; }
+.progres__niveau { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #d7c397; outline: 1px solid #d7c39755; outline-offset: 3px; border-radius: 50%; color: #d7c397; font: 400 1.4rem var(--police-serif); animation: recompense-sceau .6s ease-out both; }
+.progres__texte { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.progres__rubrique { color: var(--metal-recompense, #d7c397); font: .68rem var(--police-mention); letter-spacing: .16em; text-transform: uppercase; }
+.progres__texte strong { font: 700 1rem/1.2 var(--police-serif); color: #f1e7d0; }
+.progres__detail { font-size: .8rem; line-height: 1.4; color: #b6c6d4; }
+.progres__detail a { color: inherit; text-underline-offset: 3px; }
+.progres__titre { display: inline-block; font-style: italic; color: var(--metal-recompense, #d7c397); animation: recompense-gravure 1.1s .15s ease-out both; }
+.progres__porter { flex: none; min-height: 40px; padding: 6px 12px; border: 1px solid var(--metal-recompense, #d7c397); border-radius: 4px; background: transparent; color: #f1e7d0; font: 600 .8rem var(--police-douce); cursor: pointer; }
+.progres__porter:not(:disabled):hover { background: color-mix(in srgb, var(--metal-recompense, #d7c397) 16%, transparent); }
+.progres__porter:disabled { opacity: .6; cursor: default; }
+/* Sur téléphone, « Porter ce titre » passe sous le texte (aligné sur lui) : le nom du succès garde toute la largeur. */
+@media (max-width: 479.98px) {
+  .progres__carte { padding: 8px 10px; gap: 6px 10px; }
+  .progres__carte[data-type="succes"] { flex-wrap: wrap; }
+  .progres__carte[data-type="succes"] .progres__texte { flex: 1 1 calc(100% - 50px); }
+  .progres__porter { margin-left: 50px; min-height: 36px; }
+}
 @keyframes recompense-entree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes recompense-sceau { from { opacity: 0; transform: scale(1.15) rotate(-12deg); } to { opacity: 1; transform: none; } }
 @keyframes recompense-gravure { from { clip-path: inset(0 100% 0 0); opacity: .3; } to { clip-path: inset(0); opacity: 1; } }
 /* Sous 768 px, la barre de navigation est en bas : la notification se pose au-dessus d’elle, jamais dessus. */
 @media (max-width: 767px) { .recompenses { bottom: calc(var(--hauteur-navigation, 64px) + 14px + env(safe-area-inset-bottom)); right: 12px; width: min(380px, calc(100% - 24px)); padding: 8px 6px 8px 10px; gap: 8px; } }
-@media (prefers-reduced-motion: reduce) { .recompenses, .recompense, .recompense *, .recompense *::before, .gain-duel * { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .recompenses, .recompense, .recompense *, .recompense *::before, .gain-duel *, .progres, .progres * { animation: none !important; } }
+:root[data-animations-reduites] :is(.progres, .progres *) { animation: none !important; }

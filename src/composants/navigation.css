@@ -127,6 +127,11 @@
 .timbre-joueur__cachet small { font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
 .menu-profil__identite { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-profil__identite > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: italic 700 1.55rem/1.15 var(--police-serif); }
+/* Un niveau gagné : le chiffre de l’avatar reçoit un coup de tampon. */
+.avatar__niveau[data-monte] { animation: avatar-tampon .45s cubic-bezier(.3, 1.4, .5, 1) both; }
+@keyframes avatar-tampon { from { transform: scale(1.8) rotate(-12deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .avatar__niveau[data-monte] { animation: none; } }
+:root[data-animations-reduites] .avatar__niveau[data-monte] { animation: none; }
 .menu-profil__niveau { font: 600 0.8rem/1 var(--police-mention); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
 /* Un invité sans code de secours : de quoi protéger sa collection, sous son nom. */
 .menu-profil__invite { align-self: flex-start; font-size: .85rem; color: var(--encre-douce); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }

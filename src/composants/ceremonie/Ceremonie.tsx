@@ -22,6 +22,7 @@ import { PARTS_DU_TOUR, SEUIL_DU_DETACHEMENT, avancement, caseDuTimbre, disposit
 import { Particules, SONS } from './effets.ts';
 import { ABREGE_DE_LA_NATURE, COULEURS_DE_LA_LUEUR, NOM_DE_LA_FINITION, RANG_DE_L_ECLAT, bilanDuPaquet, eclatDe, gainsDuPaquet, lueurDuPaquet, ordreDuResume, titreDuResume } from './eclats.ts';
 import { useRacineInerte } from '../useRacineInerte.ts';
+import { MomentsDeProgres, useRecompensesDuMoment } from '../Recompenses.tsx';
 import { mouvementReduit } from '../mouvement.ts';
 import { messageDe } from '../../partage/messages.ts';
 import './ceremonie.css';
@@ -61,6 +62,8 @@ const entre = (a: number, b: number): number => a + Math.random() * (b - a);
 export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
   useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
+  // Au résumé, le niveau et les succès gagnés avec ce paquet s’y affichent (au lieu du bandeau, après coup).
+  const progres = useRecompensesDuMoment(phase === 'resume');
   // La feuille passe en 2 colonnes × 3 rangées sous 700 px.
   const feuilleEtroite = useEcranEtroit();
   const [cartes, setCartes] = useState<CarteObtenue[] | null>(null);
@@ -975,6 +978,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     info = apercu !== null && courante ? fiche(courante, 'Touche le timbre pour revenir au résumé.') : <>
       <h2 className="c-titre">{titreDuResume(cartes)}</h2>
       <p className="c-sous">{bilanDuPaquet(cartes)}. {gainsDuPaquet(cartes)}. Touche un timbre pour l’admirer.</p>
+      <MomentsDeProgres recompenses={progres} />
       <div className="c-actions">
         <button type="button" className="bouton-dentele" data-action="ranger" onClick={ranger}>Ranger dans l’album</button>
         {continuer && reserve > 0 && <button type="button" className="bouton-dentele bouton-dentele--filet" onClick={() => void demarrer(null)}>Ouvrir le suivant ({reserve})</button>}

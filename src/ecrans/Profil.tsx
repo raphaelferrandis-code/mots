@@ -30,7 +30,13 @@ function Verrou() { return <svg viewBox="0 0 16 16" fill="none" stroke="currentC
 export function Profil() {
   const partie = usePartie();
   const maintenant = useMaintenant(60_000);
-  const [vue, changerVue] = useState<'personnalisation' | 'succes'>('personnalisation');
+  // #/profil/succes ouvre l'onglet des succès (lien des cartes de récompense).
+  const [vue, changerVue] = useState<'personnalisation' | 'succes'>(() => (window.location.hash.endsWith('/succes') ? 'succes' : 'personnalisation'));
+  useEffect(() => {
+    const suivre = (): void => { if (window.location.hash.endsWith('/succes')) changerVue('succes'); };
+    window.addEventListener('hashchange', suivre);
+    return () => window.removeEventListener('hashchange', suivre);
+  }, []);
   const [cibleSucces, ciblerSucces] = useState<string | null>(null);
   const [categorie, choisirCategorie] = useState<Section>('avatar');
   // Le profil s’ouvre sur l’avatar que porte le joueur (il s’ouvrait sur un avatar premium qu’il ne pouvait pas acheter).
