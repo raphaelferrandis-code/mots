@@ -263,6 +263,7 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
         erreur={erreur} incident={incidentServeur}
         onLancer={() => void lancer({ type: 'entrainement', niveau })}
         onDefier={(ami) => void defier(ami)}
+        onDuelDeSecours={() => { sons.preparer(); void enLigne.reprendre(); }}
       />
     );
   }

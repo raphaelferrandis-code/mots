@@ -6,10 +6,13 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { FondAnime } from '../../composants/accueil/FondAnime.tsx';
+import { ChoixDuPseudonyme } from '../../composants/ChoixDuPseudonyme.tsx';
 import { PortraitAmi, Presence, signeGrave } from '../../composants/correspondance/Correspondance.tsx';
 import { choisirAuxFleches } from '../../composants/fleches.ts';
 import { useChargement } from '../../composants/useChargement.ts';
+import { useMaintenant } from '../../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
+import { NOMS_DIRECTS } from '../../jeu/direct.ts';
 import type { ClassementDirect, ModeDirect } from '../../jeu/direct.ts';
 import { NIVEAUX } from '../../jeu/duel.ts';
 import type { Niveau } from '../../jeu/duel.ts';
@@ -25,6 +28,7 @@ import { clientDuServeur, serveurUtilise } from '../../services/compte.ts';
 import { serveurEquipes } from '../../services/equipes.ts';
 import { changerUnReglage, lireMesAmis } from '../../services/partie.ts';
 import { PanneauDuDeck } from './PanneauDuDeck.tsx';
+import { useRechercheEnDirect } from './useRechercheEnDirect.ts';
 import './preparation.css';
 
 const REGLES = EQUILIBRAGE.duel;
@@ -61,6 +65,14 @@ const tempsEnClair = (t: TempsDeReponse): string => t === 'illimite' ? 'sans lim
 
 const pluriel = (n: number, mot: string): string => `${n} ${mot}${n > 1 ? 's' : ''}`;
 
+// Les joutes classées que l'on cherche d'ici (le 2v2 en équipe part de l'onglet « Mon équipe »).
+type JouteChoisie = 'solo' | 'duo_solo';
+const JOUTES: { mode: JouteChoisie; nom: string; phrase: string }[] = [
+  { mode: 'solo', nom: 'Solo', phrase: 'Un contre un, en direct.' },
+  { mode: 'duo_solo', nom: '2 contre 2', phrase: 'Avec un partenaire tiré au sort.' },
+];
+const MODES_DES_JOUTES = JOUTES.map((j) => j.mode);
+
 type Props = {
   sauvegarde: Sauvegarde;
   deck: CarteIndex[]; // le deck jouable (cartes possédées et visibles)
@@ -77,6 +89,7 @@ type Props = {
   incident: ReactNode;
   onLancer: () => void;
   onDefier: (ami: Relation) => void;
+  onDuelDeSecours: () => void; // un duel contre un joueur simulé vient d'être commencé (joutes classées)
 };
 
 export function Preparation(props: Props) {
@@ -103,22 +116,63 @@ export function Preparation(props: Props) {
     if (mode !== 'joutes' || !serveurUtilise) return null;
     const lire = (m: ModeDirect) => clientDuServeur().appeler<ClassementDirect>('classement_direct', { p_mode: m }).then((c) => c.lignes.find((l) => l.moi) ?? null);
     const [solo, duo] = await Promise.all([lire('solo'), lire('duo_solo')]);
-    return { solo, duo };
+    return { solo, duo_solo: duo };
   }, `cotes:${mode === 'joutes'}`);
+
+  // La joute à chercher, puis la recherche elle-même (file d'attente, match à accepter, adversaire de secours).
+  const [jouteChoisie, setJouteChoisie] = useState<JouteChoisie>('solo');
+  const recherche = useRechercheEnDirect(sauvegarde, mode === 'joutes', props.onDuelDeSecours);
+  const { attente, proposition } = recherche;
+  const rechercheEnCours = !!attente || !!proposition || recherche.partieEnCours;
+  // Un adversaire trouvé pendant que le joueur regarde un autre onglet : on le ramène aux joutes pour accepter.
+  useEffect(() => { if (proposition && mode !== 'joutes') onMode('joutes'); }, [proposition?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const jouteAffichee: ModeDirect = attente?.mode ?? proposition?.mode ?? jouteChoisie;
 
   // ── Le bouton principal et sa légende, selon le mode ──
   let appel: ReactNode;
   let legende: ReactNode;
-  if (manque > 0) {
+  if (mode === 'joutes' && rechercheEnCours) {
+    // La recherche passe avant le deck : il a été relevé par le serveur au moment de chercher.
+    const r = recherche;
+    if (proposition) {
+      appel = proposition.jAccepte ? <button type="button" className="btn-primary" disabled aria-describedby="legende-preparation">J’y vais !</button>
+        : <>
+          <button type="button" className="btn-primary" autoFocus aria-describedby="legende-preparation" disabled={r.bloque} onClick={() => r.repondre(true)}>J’y vais !</button>
+          <button type="button" className="btn-tertiary" disabled={r.bloque} onClick={() => r.repondre(false)}>Refuser</button>
+        </>;
+      legende = <>
+        <b>Adversaire trouvé !</b> · <Decompte jusqua={proposition.accepterAvant} decalage={r.direct.decalage} /><br />
+        {proposition.jAccepte ? `En attente des autres joueurs (${proposition.acceptes}/${proposition.total})` : 'Refuser ne compte pas comme une défaite.'}
+        {!proposition.jAccepte && <span className="visuellement-cache" role="alert">Adversaire trouvé : accepte dans les {EQUILIBRAGE.direct.secondesPourAccepter} secondes.</span>}
+      </>;
+    } else if (attente) {
+      appel = <>
+        {r.secoursPropose && <button type="button" className="btn-primary" aria-busy={r.secours.etat === 'en cours'} disabled={r.bloque} onClick={() => void r.jouerContreUnSimule()}>{r.secours.etat === 'en cours' ? 'Préparation du duel…' : 'Jouer contre un joueur simulé'}</button>}
+        <button type="button" className={r.secoursPropose ? 'btn-tertiary' : 'btn-secondary'} aria-describedby="legende-preparation" disabled={r.bloque} onClick={r.annuler}>Annuler la recherche</button>
+      </>;
+      legende = <>
+        <b>{nomDeLaJoute(attente.mode)}</b> · recherche en cours{r.debutAttente !== null && <> · <Chrono depuis={r.debutAttente} /></>}
+        {attente.mode === 'duo_equipe' && !attente.partenairePret ? <><br />Ton partenaire doit aussi se déclarer prêt.</>
+          : r.secoursPropose && <><br />Personne n’est libre. Le joueur simulé ne compte pas pour le classement.</>}
+        {r.secours.etat === 'erreur' && <><br /><span data-manque="true" role="alert">{r.secours.message}</span></>}
+      </>;
+    } else {
+      appel = <button type="button" className="btn-primary" disabled aria-busy="true" aria-describedby="legende-preparation">Chercher un adversaire</button>;
+      legende = 'Ouverture de la joute…';
+    }
+  } else if (manque > 0) {
     appel = <button type="button" className="btn-primary" disabled aria-describedby="legende-preparation">{mode === 'entrainement' ? 'Lancer le duel' : mode === 'ami' ? 'Défier' : 'Chercher un adversaire'}</button>;
     legende = <span data-manque="true">Il manque {pluriel(manque, 'timbre')} à ton deck.</span>;
   } else if (mode === 'entrainement') {
     appel = <button type="button" className="btn-primary" aria-busy={enPreparation} aria-describedby="legende-preparation" disabled={enPreparation || bloque} onClick={props.onLancer}>{enPreparation ? 'Préparation du duel…' : 'Lancer le duel'}</button>;
     legende = <><b>{niveau}</b> · {tempsEnClair(sauvegarde.reglages.tempsDeReponse)}<br />Jusqu’à <b>+{gain(REGLES.encreParVictoire[niveau])} Encre</b></>;
   } else if (mode === 'joutes') {
-    appel = serveurUtilise ? <a className="btn-primary" href={lien({ ecran: 'joutes' })} aria-describedby="legende-preparation">Chercher un adversaire</a>
-      : <button type="button" className="btn-primary" disabled aria-describedby="legende-preparation">Chercher un adversaire</button>;
-    legende = serveurUtilise ? <>En direct, contre un joueur de ton niveau<br />Jusqu’à <b>+{gain(EQUILIBRAGE.joute.encreParVictoire)} Encre</b></> : <span data-manque="true">Les joutes demandent une connexion au serveur du jeu.</span>;
+    const pret = serveurUtilise && recherche.inscrit && !!recherche.direct.etat;
+    appel = <button type="button" className="btn-primary" aria-busy={recherche.direct.occupe} aria-describedby="legende-preparation" disabled={!pret || recherche.bloque} onClick={() => void recherche.chercher(jouteChoisie)}>Chercher un adversaire</button>;
+    legende = !serveurUtilise ? <span data-manque="true">Les joutes demandent une connexion au serveur du jeu.</span>
+      : !recherche.inscrit ? <span data-manque="true">Choisis d’abord ton pseudonyme.</span>
+      : !recherche.direct.etat && !recherche.direct.erreur ? 'Connexion aux joutes…'
+      : <>{recherche.avis ? <span data-manque="true">{recherche.avis}</span> : 'En direct, contre un joueur de ton niveau'}<br />Jusqu’à <b>+{gain(EQUILIBRAGE.joute.encreParVictoire)} Encre</b></>;
   } else if (mode === 'ami') {
     appel = <button type="button" className="btn-primary" aria-busy={enPreparation} aria-describedby="legende-preparation" disabled={!ami || !props.combatsEnLigne || enPreparation || bloque} onClick={() => ami && props.onDefier(ami)}>{enPreparation ? 'Préparation du duel…' : ami ? `Défier ${ami.pseudo}` : 'Défier'}</button>;
     legende = !props.combatsEnLigne || !amisDisponibles ? <span data-manque="true">Les défis entre amis demandent une connexion au serveur du jeu.</span>
@@ -173,21 +227,30 @@ export function Preparation(props: Props) {
 
             {mode === 'joutes' && (
               !serveurUtilise ? <p className="preparation__note">Les joutes classées se jouent en ligne. Connecte-toi au serveur du jeu pour y participer.</p>
-                : <div className="cartes-de-mode">
-                  {([['solo', 'Solo', 'Un contre un, en direct.'], ['duo', '2 contre 2', 'Avec un partenaire tiré au sort.']] as const).map(([cle, nom, phrase]) => {
-                    const ligne = cotes.etat === 'pret' ? cotes.donnees?.[cle] ?? null : null;
-                    return <section key={cle} className="carte-de-mode">
-                      <h2>{nom}</h2>
-                      <p className="carte-de-mode__phrase">{phrase}</p>
-                      {cotes.etat === 'en cours' ? <p className="carte-de-mode__chiffre" role="status">…</p>
-                        : cotes.etat === 'erreur' ? <p className="carte-de-mode__phrase" role="alert">{cotes.message}</p>
-                        : ligne ? <>
-                          <p className="carte-de-mode__chiffre"><b>{ligne.cote.toLocaleString('fr-FR')}</b><small>cote</small></p>
-                          <p className="carte-de-mode__phrase">Ligue {ligueDe(ligne.cote, EQUILIBRAGE.joute).nom} · {ligne.rang.toLocaleString('fr-FR')}<sup>e</sup> · {pluriel(ligne.gagnees, 'victoire')} en {pluriel(ligne.jouees, 'joute')}</p>
-                        </> : <p className="carte-de-mode__phrase">Pas encore classé : ta première joute t’y fera entrer.</p>}
-                    </section>;
-                  })}
-                </div>
+                : <>
+                  <div className="cartes-de-mode" role="radiogroup" aria-label="Joute à chercher" onKeyDown={rechercheEnCours ? undefined : choisirAuxFleches(MODES_DES_JOUTES, jouteChoisie, setJouteChoisie)}>
+                    {JOUTES.map(({ mode: m, nom, phrase }) => {
+                      const ligne = cotes.etat === 'pret' ? cotes.donnees?.[m] ?? null : null;
+                      return <button key={m} type="button" role="radio" className="carte-de-mode" aria-checked={jouteAffichee === m} aria-disabled={rechercheEnCours}
+                        tabIndex={m === (jouteAffichee === 'duo_solo' ? 'duo_solo' : 'solo') ? 0 : -1} onClick={() => { if (!rechercheEnCours) setJouteChoisie(m); }}>
+                        <strong className="carte-de-mode__nom">{nom}</strong>
+                        <span className="carte-de-mode__phrase">{phrase}</span>
+                        {cotes.etat === 'en cours' ? <span className="carte-de-mode__chiffre">…</span>
+                          : cotes.etat === 'erreur' ? <span className="carte-de-mode__phrase">{cotes.message}</span>
+                          : ligne ? <>
+                            <span className="carte-de-mode__chiffre"><b>{ligne.cote.toLocaleString('fr-FR')}</b><small>cote</small></span>
+                            <span className="carte-de-mode__phrase">Ligue {ligueDe(ligne.cote, EQUILIBRAGE.joute).nom} · {ligne.rang.toLocaleString('fr-FR')}<sup>e</sup> · {pluriel(ligne.gagnees, 'victoire')} en {pluriel(ligne.jouees, 'joute')}</span>
+                          </> : <span className="carte-de-mode__phrase">Pas encore classé : ta première joute t’y fera entrer.</span>}
+                        <span className="adversaire__coche" aria-hidden="true"><Coche /></span>
+                      </button>;
+                    })}
+                  </div>
+                  {!recherche.inscrit && <div className="preparation__vide"><ChoixDuPseudonyme /></div>}
+                  {recherche.direct.erreur && <div className="bloc bloc--alerte" role="alert">
+                    <p>{recherche.direct.erreur}</p>
+                    <button type="button" className="btn-secondary sm" disabled={recherche.direct.occupe} onClick={() => void recherche.direct.retenter()}>Réessayer</button>
+                  </div>}
+                </>
             )}
 
             {mode === 'ami' && (
@@ -266,6 +329,18 @@ export function Preparation(props: Props) {
       </div>
     </main>
   );
+}
+
+const nomDeLaJoute = (m: ModeDirect): string => JOUTES.find((j) => j.mode === m)?.nom ?? NOMS_DIRECTS[m];
+
+// ── Les horloges de la recherche : elles seules se redessinent chaque seconde ──
+function Decompte({ jusqua, decalage }: { jusqua: number; decalage: number }) {
+  const maintenant = useMaintenant(250) + decalage;
+  return <span role="timer" aria-live="off">{Math.max(0, Math.ceil((jusqua - maintenant) / 1000))} s</span>;
+}
+function Chrono({ depuis }: { depuis: number }) {
+  const secondes = Math.max(0, Math.floor((useMaintenant(1000) - depuis) / 1000));
+  return <span role="timer" aria-live="off">{Math.floor(secondes / 60)}:{String(secondes % 60).padStart(2, '0')}</span>;
 }
 
 // ── Petits dessins ──

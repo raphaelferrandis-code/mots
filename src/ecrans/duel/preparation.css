@@ -97,6 +97,24 @@
 .carte-de-mode__chiffre { margin: 0; display: flex; align-items: baseline; gap: 6px; }
 .carte-de-mode__chiffre b { font: 900 30px / 1 var(--police-serif); color: var(--prep-cuivre-clair); }
 .carte-de-mode__chiffre small { color: var(--prep-texte-doux); font-size: 14px; }
+/* Les joutes classées : deux cartes à choix unique, comme les adversaires de l'entraînement. */
+button.carte-de-mode {
+  position: relative; width: 100%; padding-right: 50px; color: var(--prep-papier); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color .2s, box-shadow .25s, background .25s, opacity .2s;
+}
+button.carte-de-mode[aria-checked='true'] {
+  border-color: var(--prep-cuivre);
+  box-shadow: 0 0 0 1px var(--prep-cuivre), 0 18px 36px rgb(0 0 0 / 40%), 0 0 44px rgb(216 154 92 / 14%);
+  background: linear-gradient(160deg, rgb(90 70 50 / 38%), rgb(18 28 48 / 75%));
+}
+@media (hover: hover) { button.carte-de-mode:not([aria-checked='true']):not([aria-disabled='true']):hover { border-color: rgb(216 154 92 / 45%); } }
+button.carte-de-mode:focus-visible { outline: 2px solid var(--prep-cuivre-clair); outline-offset: 3px; }
+/* Pendant la recherche, on ne change plus de joute. */
+button.carte-de-mode[aria-disabled='true'] { cursor: default; }
+button.carte-de-mode[aria-disabled='true']:not([aria-checked='true']) { opacity: .5; }
+.carte-de-mode__nom { font: 700 1.2rem var(--police-serif); color: var(--prep-papier); }
+.appel__legende [data-manque='true'] { color: var(--prep-cuivre-clair); }
+@media (prefers-reduced-motion: reduce) { button.carte-de-mode { transition: none; } }
 .carte-d-equipe { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; }
 .carte-d-equipe__embleme { display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid var(--prep-cuivre); border-radius: 50%; color: var(--prep-cuivre-clair); font-size: 28px; }
 @media (max-width: 560px) { .carte-d-equipe { grid-template-columns: auto minmax(0, 1fr); } .carte-d-equipe > .btn-secondary { grid-column: 1 / -1; } }
@@ -127,10 +145,12 @@
     margin-inline: calc(var(--marge) * -1); padding: 12px var(--marge);
     background: linear-gradient(to top, var(--papier) 70%, rgb(11 23 41 / 0%));
   }
+  /* Le haut de la barre est en fondu : un bouton sans fond laisserait voir la page qui défile dessous. */
+  .preparation__appel .btn-secondary { background-color: var(--papier); }
 }
 @media (min-width: 768px) and (max-width: 999px) { .preparation__appel { bottom: 0; } }
 @media (max-width: 560px) {
-  .preparation__appel .btn-primary { flex: 1 1 100%; }
+  .preparation__appel .btn-primary, .preparation__appel .btn-secondary { flex: 1 1 100%; }
   .preparation__appel .appel__legende { flex: 1 1 100%; text-align: center; }
 }
 
