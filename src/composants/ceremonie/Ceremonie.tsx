@@ -1,6 +1,7 @@
 // La cérémonie d'ouverture d'un paquet : la feuille de timbres (brief du 26/09/2026, prototype-ouverture-feuille.html).
 // Déroulé : ouverture → déchirure → sortie (la feuille pliée monte du paquet, puis se déplie) → feuille, d'où l'on
-// détache les timbres un à un (gros plan, révélation, rangement dans le plateau) ou que l'on retourne → résumé.
+// détache les timbres un à un (gros plan, révélation, rangement dans le plateau) ou que l'on retourne (cascade de
+// tampons) → fin : la feuille vide s'en va, le plateau s'agrandit, le résumé.
 //
 // Le tirage est fait par le serveur dès le clic, pendant que le paquet vient se placer : la cérémonie ne fait
 // qu'afficher un résultat déjà décidé et enregistré. Détacher un timbre est purement visuel ; fermer en cours de route
@@ -23,7 +24,7 @@ import { mouvementReduit } from '../mouvement.ts';
 import { messageDe } from '../../partage/messages.ts';
 import './ceremonie.css';
 
-type Phase = 'ouverture' | 'dechirure' | 'sortie' | 'feuille' | 'retournement' | 'detachement' | 'gros-plan' | 'rangement' | 'resume' | 'fermeture';
+type Phase = 'ouverture' | 'dechirure' | 'sortie' | 'feuille' | 'retournement' | 'detachement' | 'gros-plan' | 'rangement' | 'tout-detacher' | 'fin' | 'resume' | 'fermeture';
 // La feuille : cachée derrière le paquet, pliée en deux (seule sa moitié haute se voit), puis dépliée.
 type EtatDeLaFeuille = 'cachee' | 'pliee' | 'depliee';
 // Le timbre détaché, au premier plan : la face qu'il montre, s'il était déjà révélé, et si sa fiche est affichée.
@@ -56,14 +57,7 @@ const entre = (a: number, b: number): number => a + Math.random() * (b - a);
 export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
   useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
-  // L'éventail du résumé se resserre sur un écran étroit ; la feuille passe en 2 × 3 sous 700 px.
-  const [etroit, setEtroit] = useState(() => window.matchMedia('(max-width: 639.98px)').matches);
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 639.98px)');
-    const suivre = (): void => setEtroit(media.matches);
-    media.addEventListener('change', suivre);
-    return () => media.removeEventListener('change', suivre);
-  }, []);
+  // La feuille passe en 2 colonnes × 3 rangées sous 700 px.
   const feuilleEtroite = useEcranEtroit();
   const [cartes, setCartes] = useState<CarteObtenue[] | null>(null);
   const [face, setFaceEtat] = useState<FaceDeLaFeuille>('verso');
@@ -75,7 +69,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const [grosPlan, setGrosPlanEtat] = useState<GrosPlan | null>(null);
   const [apercu, setApercu] = useState<number | null>(null);
   const [tentative, setTentative] = useState(0);
-  const [aplati, setAplati] = useState(false);
 
   const scene = useRef<HTMLDivElement>(null);
   const emballage = useRef<HTMLDivElement>(null);
@@ -219,7 +212,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     cartesRef.current = [];
     flushSync(() => {
       setCartes(null); setFace('verso'); setEtatFeuille('cachee'); setPli(false);
-      setDetaches([]); setReveles([]); setRangement([]); setGrosPlan(null); setApercu(null); setAplati(false);
+      setDetaches([]); setReveles([]); setRangement([]); setGrosPlan(null); setApercu(null);
       setTentative((t) => t + 1); aller('ouverture');
     });
     const paquet = dans<HTMLElement>(emballage.current, '.cp');
@@ -615,10 +608,69 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       await vignette.animate([{ transform: `translate(${source.left - vers.left}px,${source.top - vers.top}px) scale(${source.width / vers.width})` }, { transform: 'none' }], { duration: D(560), easing: 'cubic-bezier(.3,.9,.3,1)' }).finished;
     }
     if (j !== jeton.current) return;
-    // Tous rangés : la fin du paquet (lot 5 : la feuille vide s'en va). En attendant, le résumé.
-    if (etat.current.rangement.length >= cartesRef.current.length) { aller('resume'); return; }
+    if (etat.current.rangement.length >= cartesRef.current.length) { await finDuPaquet(); return; }
     retourALaFeuille.current = 'case';
     aller('feuille');
+  }
+
+  // ── « Tout détacher » (au recto) : les timbres restants partent un à un vers le plateau, avec la déchirure ──
+  async function toutDetacher(): Promise<void> {
+    if (phaseRef.current !== 'feuille' || etat.current.face !== 'recto') return;
+    const j = jeton.current;
+    aller('tout-detacher');
+    const restants = cartesRef.current.map((_, i) => i).filter((i) => !etat.current.detaches[i]);
+    for (const i of restants) {
+      const el = caseDom(i);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      for (let k = 0; k < 20; k++) {
+        const [x, y] = pointDuTour({ x: r.left, y: r.top, l: r.width, h: r.height }, k / 20);
+        jaillir(x, y, { n: 2, genre: 'fibre', couleurs: ['#f6ead2', '#e8dcc0'], vitesse: [30, 140], taille: [2, 4.5], g: 500, duree: [.4, .9] });
+      }
+      SONS.dechirure();
+      arrachages.current.delete(i);
+      const k = etat.current.rangement.length;
+      flushSync(() => {
+        setDetaches(avec(etat.current.detaches, i));
+        setReveles(avec(etat.current.reveles, i));
+        setRangement([...etat.current.rangement, i]);
+      });
+      dessinerLesArrachages();
+      const vignette = dans<HTMLElement>(cases.current[k], '.tb');
+      if (vignette) {
+        const vers = vignette.getBoundingClientRect();
+        vignette.style.transformOrigin = '0 0';
+        vignette.animate([{ transform: `translate(${r.left - vers.left}px,${r.top - vers.top}px) scale(${r.width / vers.width}) rotate(-6deg)` }, { transform: 'none' }], { duration: D(620), easing: 'cubic-bezier(.3,.9,.3,1)' });
+      }
+      await attendre(230);
+      if (j !== jeton.current) return;
+    }
+    await attendre(500);
+    if (j !== jeton.current) return;
+    await finDuPaquet();
+  }
+
+  // ── La fin du paquet : la feuille vide s'en va, le plateau s'agrandit au milieu de la scène, le résumé s'affiche ──
+  async function finDuPaquet(): Promise<void> {
+    const j = jeton.current, feuille = feuilleDom.current;
+    aller('fin');
+    if (feuille) {
+      SONS.souffle();
+      await feuille.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(40px) rotate(-3deg) scale(.92)' }], { duration: D(600), easing: 'ease-in', fill: 'forwards' }).finished;
+      if (j !== jeton.current) return;
+    }
+    // Chaque case glisse de sa place, en bas, jusqu'à la rangée agrandie du résumé.
+    const avant = cases.current.map((c) => c?.getBoundingClientRect());
+    flushSync(() => aller('resume'));
+    cases.current.forEach((c, k) => {
+      const a = avant[k], b = c?.getBoundingClientRect();
+      if (!c || !a?.width || !b?.width) return;
+      c.animate([
+        { transform: `translate(${a.left - b.left}px,${a.top - b.top}px) scale(${a.width / b.width})`, transformOrigin: '0 0' },
+        { transform: 'none', transformOrigin: '0 0' },
+      ], { duration: D(640), delay: D(k * 45), easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
+    });
+    SONS.carillon(1);
   }
 
   // Un timbre de la feuille actionné au clavier se détache d'un coup ; au doigt et à la souris, la scène suit le geste.
@@ -654,16 +706,13 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     }
   }
 
-  // ── Le rangement : l'éventail s'aplatit, puis la page fait voler les timbres jusqu'à l'album ──
-  async function ranger(): Promise<void> {
+  // ── « Ranger dans l'album » : la page fait voler les timbres du plateau jusqu'à l'album ──
+  function ranger(): void {
     if (phaseRef.current !== 'resume') return;
-    const obtenues = cartesRef.current;
-    setApercu(null);
-    flushSync(() => setAplati(true));
-    await attendre(320);
-    if (phaseRef.current !== 'resume') return;
-    const places = Array.from(scene.current?.querySelectorAll('.c-eventail__timbre .tb') ?? [], (el) => el.getBoundingClientRect());
-    onRanger?.({ cartes: obtenues, places });
+    flushSync(() => setApercu(null));
+    const ordre = etat.current.rangement;
+    const places = ordre.map((_, k) => dans<HTMLElement>(cases.current[k], '.tb')?.getBoundingClientRect()).filter((r): r is DOMRect => !!r);
+    onRanger?.({ cartes: ordre.map((i) => cartesRef.current[i]), places });
     fermer(!!onRanger);
   }
 
@@ -741,10 +790,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const n = cartes?.length ?? 0;
   const courante = cartes?.[apercu ?? 0] ?? null;
   const d = disposition(Math.max(1, n), feuilleEtroite);
-  const eventail = (k: number): string => aplati
-    ? `translateX(${k * (etroit ? 22 : 46)}%) scale(${etroit ? .46 : .62})`
-    : `translateX(${k * (etroit ? 22 : 46)}%) translateY(${Math.abs(k) * 5}%) rotate(${k * 7}deg) scale(${etroit ? .46 : .62})`;
-  const milieu = (n - 1) / 2;
   const avantLaSortie = phase === 'ouverture' || phase === 'dechirure' || phase === 'sortie';
   const auResume = phase === 'resume' || (phase === 'fermeture' && n > 0 && rangement.length >= n);
   const feuille = (face: FaceDeLaFeuille, principale: boolean) => cartes && <Feuille cartes={cartes} face={face} etroite={feuilleEtroite} numero={numero} edition={EDITION} dos={dos}
@@ -775,7 +820,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     <div className="c-actions"><button type="button" className="bouton-dentele" data-action="principal" onClick={() => void retourner()}>Retourner la feuille</button></div>
   </>;
   else if (phase === 'feuille' || phase === 'detachement') info = <div className="c-actions">
-    <button type="button" className="bouton-dentele" data-action="principal" onClick={toutReveler}>Tout détacher</button>
+    <button type="button" className="bouton-dentele" data-action="principal" onClick={() => void toutDetacher()}>Tout détacher</button>
     <button type="button" className="bouton-dentele bouton-dentele--filet" onClick={() => void retourner()}>Retourner la feuille</button>
   </div>;
   else if (phase === 'resume' && cartes) {
@@ -783,14 +828,14 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       <h2 className="c-titre">{titreDuResume(cartes)}</h2>
       <p className="c-sous">{bilanDuPaquet(cartes)}. {gainsDuPaquet(cartes)}. Touche un timbre pour l’admirer.</p>
       <div className="c-actions">
-        <button type="button" className="bouton-dentele" data-action="ranger" onClick={() => void ranger()}>Ranger dans l’album</button>
+        <button type="button" className="bouton-dentele" data-action="ranger" onClick={ranger}>Ranger dans l’album</button>
         {continuer && reserve > 0 && <button type="button" className="bouton-dentele bouton-dentele--filet" onClick={() => void demarrer(null)}>Ouvrir le suivant ({reserve})</button>}
       </div>
     </>;
   }
 
   return createPortal(<>
-    <div className="ceremonie" data-phase={phase} data-gros-plan={grosPlan ? '' : undefined} role="dialog" aria-modal="true" aria-label="Ouverture d’un paquet"
+    <div className="ceremonie" data-phase={phase} data-gros-plan={grosPlan ? '' : undefined} data-fin={auResume ? '' : undefined} role="dialog" aria-modal="true" aria-label="Ouverture d’un paquet"
       style={{ '--masque-paquet': MASQUE_DU_PAQUET } as CSSProperties}>
       <div className="ceremonie__haut">
         <button type="button" className="c-icone" aria-pressed={!sons} aria-label={sons ? 'Couper le son' : 'Remettre le son'} onClick={() => onSons(!sons)}>
@@ -818,12 +863,6 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
         {avantLaSortie && <div className="c-emballage" ref={emballage} key={`paquet-${tentative}`}>
           <PaquetDeCeremonie modele={modelePaquet} className="cp--scene" />
         </div>}
-        {auResume && cartes && <div className={`c-eventail${apercu !== null ? ' c-eventail--estompe' : ''}`}>
-          {cartes.map((obtenue, i) => <button key={`${tentative}-${i}`} type="button" className="c-eventail__timbre" style={{ transform: eventail(i - milieu), '--i': i } as CSSProperties}
-            aria-label={`Admirer ${obtenue.carte.mot}`} tabIndex={apercu === null ? 0 : -1} onClick={() => montrerApercu(i)}>
-            <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere cliquable={false} reagir={false} />
-          </button>)}
-        </div>}
         {apercu !== null && cartes && <button type="button" ref={apercuDom} className="c-carte c-apercu" aria-label={`${cartes[apercu].carte.mot}, fermer l’aperçu`} onClick={() => setApercu(null)}>
           <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere cliquable={false} reagir={false} /></div></div>
         </button>}
@@ -831,12 +870,13 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
 
       <div className="ceremonie__infos" ref={infos} aria-live="polite">{info}</div>
 
-      <div className={`ceremonie__plateau${auResume ? ' ceremonie__plateau--fini' : ''}`}>
+      {/* Le plateau : les timbres rangés, dans l'ordre où ils y arrivent. À la fin, il s'agrandit et chaque timbre s'admire. */}
+      <div className={`ceremonie__plateau${apercu !== null ? ' ceremonie__plateau--estompe' : ''}`}>
         {Array.from({ length: n || 6 }, (_, k) => {
           const i = rangement[k];
           const pleine = i !== undefined && cartes;
-          return <button key={`${tentative}-${k}`} type="button" tabIndex={-1} ref={(el) => { cases.current[k] = el; }}
-            className={`c-case${pleine ? ' c-case--pleine' : ''}`} aria-label={pleine ? `Revoir ${cartes[i].carte.mot}` : `Emplacement ${k + 1}`}
+          return <button key={`${tentative}-${k}`} type="button" tabIndex={auResume && pleine && apercu === null ? 0 : -1} ref={(el) => { cases.current[k] = el; }}
+            className={`c-case${pleine ? ' c-case--pleine' : ''}`} aria-label={pleine ? `Admirer ${cartes[i].carte.mot}` : `Emplacement ${k + 1}`}
             onClick={() => { if (pleine) montrerApercu(i); }}>
             {pleine && <Timbre carte={cartes[i].carte} finition={cartes[i].finition} oblitere cliquable={false} reagir={false} />}
           </button>;

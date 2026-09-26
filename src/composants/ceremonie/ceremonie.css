@@ -125,19 +125,8 @@ body.ceremonie-ouverte { overflow: hidden; }
 @keyframes c-attente-holo { 0%, 100% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(255, 95, 143, .9)); } 33% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(107, 212, 255, .9)); } 66% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 20px rgba(125, 255, 176, .9)); } }
 @keyframes c-attente-grand { 0%, 100% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 10px rgba(255, 190, 90, .6)); translate: 0 0; } 25% { translate: 1px -1px; } 50% { filter: drop-shadow(0 24px 26px rgba(0, 0, 0, .55)) drop-shadow(0 0 32px rgba(255, 210, 120, 1)); translate: -1px 1px; } 75% { translate: 1px 1px; } }
 
-.c-apercu { position: relative; inset: auto; width: var(--sw); aspect-ratio: 30 / 38; z-index: 4; animation: c-apercu .42s cubic-bezier(.2, 1.3, .4, 1) both; }
+.c-apercu { position: relative; inset: auto; width: var(--sw); aspect-ratio: 30 / 38; z-index: 7; animation: c-apercu .42s cubic-bezier(.2, 1.3, .4, 1) both; }
 @keyframes c-apercu { from { translate: 0 30%; scale: .4; opacity: 0; } }
-.c-eventail { position: relative; width: var(--sw); aspect-ratio: 30 / 38; z-index: 2; transition: opacity .25s; }
-.c-eventail--estompe { opacity: 0; pointer-events: none; }
-.c-eventail__timbre {
-  position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer;
-  transition: transform .3s cubic-bezier(.2, .8, .2, 1), translate .25s;
-  filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .5));
-  animation: c-eventail .52s cubic-bezier(.2, 1.2, .4, 1) backwards; animation-delay: calc(var(--i) * 70ms);
-}
-@keyframes c-eventail { from { opacity: 0; translate: 0 60%; scale: .5; } }
-.c-eventail__timbre:hover, .c-eventail__timbre:focus-visible { translate: 0 -16px; z-index: 5; outline: none; }
-.c-eventail__timbre:focus-visible .tb { filter: drop-shadow(0 0 8px var(--c-cuivre-clair)); }
 .ceremonie__eclair { position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 42%, #fff, rgba(255, 240, 220, .6) 30%, rgba(255, 200, 200, 0) 70%); }
 
 /* ── Le texte sous la scène ────────────────────────────────────────────────── */
@@ -173,20 +162,32 @@ body.ceremonie-ouverte { overflow: hidden; }
 /* Sur un téléphone, deux boutons empilés sous la feuille ne doivent pas toucher le plateau. */
 @media (max-width: 479.98px) { .c-actions { gap: 10px; margin-top: 8px; } .c-actions .bouton-dentele { height: 50px; padding: 0 26px; font-size: 16px; } }
 
-/* ── Le plateau : cinq cases où se rangent les timbres révélés ─────────────── */
+/* ── Le plateau : une case par timbre, remplies dans l'ordre où les timbres y arrivent ──────────────────── */
 
-.ceremonie__plateau { position: relative; z-index: 6; display: flex; justify-content: center; gap: clamp(8px, 2vw, 16px); padding-top: 6px; }
-.ceremonie__plateau--fini { opacity: 0; pointer-events: none; transition: opacity .3s; }
+.ceremonie__plateau { position: relative; z-index: 6; display: flex; justify-content: center; gap: clamp(8px, 2vw, 16px); padding-top: 6px; transition: opacity .25s; }
+.ceremonie__plateau--estompe { opacity: 0; pointer-events: none; }
 .c-case {
   position: relative; width: clamp(40px, 10vw, 56px); aspect-ratio: 30 / 38; padding: 0; border: 0; cursor: default;
   background: rgba(233, 225, 208, .05);
   -webkit-mask: var(--perf) center / 100% 100% no-repeat; mask: var(--perf) center / 100% 100% no-repeat;
-  transition: width .45s cubic-bezier(.2, .8, .2, 1), translate .25s;
+  transition: translate .25s;
 }
 .c-case::before { content: ''; position: absolute; inset: 16%; border: 1px dashed rgba(233, 225, 208, .2); }
-.c-case--pleine { background: none; }
+/* Remplie, la case perd son masque dentelé : le timbre a le sien, et son envol ne doit pas être coupé par la case. */
+.c-case--pleine { background: none; -webkit-mask: none; mask: none; }
 .c-case--pleine::before { display: none; }
 .c-case .tb { position: absolute; inset: 0; }
+
+/* La fin : la feuille est partie, le plateau s'agrandit au milieu de la scène (une rangée sur ordinateur, deux rangées
+   de trois sur téléphone) ; chaque timbre s'admire. Les timbres ont leur dentelure : la case n'a plus besoin de masque. */
+.ceremonie[data-fin] .ceremonie__plateau {
+  grid-row: 2; grid-column: 1; align-self: end; justify-self: center; margin-bottom: clamp(8px, 4vh, 40px);
+  flex-wrap: wrap; max-width: min(100%, 1000px); gap: clamp(12px, 2vw, 18px); padding: 0;
+}
+.ceremonie[data-fin] .c-case { width: clamp(64px, calc((min(100vw, 1000px) - 72px) / 3), 150px); }
+.ceremonie[data-fin] .c-case--pleine { cursor: pointer; filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .45)); }
+.ceremonie[data-fin] .c-case--pleine:hover, .ceremonie[data-fin] .c-case--pleine:focus-visible { translate: 0 -10px; outline: none; }
+.ceremonie[data-fin] .c-case--pleine:focus-visible .tb { filter: drop-shadow(0 0 8px var(--c-cuivre-clair)); }
 
 .ceremonie__particules { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 70; pointer-events: none; }
 
@@ -194,4 +195,4 @@ body.ceremonie-ouverte { overflow: hidden; }
   .cp__indice, .c-carte--attente .c-inclinaison { animation: none !important; }
   .cp__indice { display: none !important; }
 }
-:root[data-animations-reduites] :is(.cp__indice, .c-carte--attente .c-inclinaison, .c-eventail__timbre, .c-apercu, .ceremonie) { animation: none !important; }
+:root[data-animations-reduites] :is(.cp__indice, .c-carte--attente .c-inclinaison, .c-apercu, .ceremonie) { animation: none !important; }
