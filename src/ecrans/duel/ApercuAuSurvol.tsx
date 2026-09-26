@@ -11,7 +11,7 @@ import type { CarteIndex, Finition } from '../../partage/types.ts';
 const DELAI = 1000;
 const MARGE = 14;
 
-export type Habillage = { carte: CarteIndex; finition: Finition; maitriseeLe: number | null };
+export type Habillage = { carte: CarteIndex; finition: Finition };
 type Apercu = Habillage & { secret: boolean; cadre: DOMRect };
 
 export function useApercuAuSurvol() {
@@ -70,7 +70,7 @@ function ApercuDuTimbre({ apercu }: { apercu: Apercu }) {
   const { carte } = apercu;
   return createPortal(
     <div className="apercu-timbre" ref={boite} aria-hidden="true" style={position ?? { left: -9999, top: 0 }}>
-      <div className="apercu-timbre__timbre"><Carte carte={carte} finition={apercu.finition} maitriseeLe={apercu.maitriseeLe} cliquable={false} /></div>
+      <div className="apercu-timbre__timbre"><Carte carte={carte} finition={apercu.finition} cliquable={false} /></div>
       <div className="apercu-timbre__texte">
         <p className="apercu-timbre__mot" lang="fr">{carte.mot}</p>
         <ul className="c-pastilles">

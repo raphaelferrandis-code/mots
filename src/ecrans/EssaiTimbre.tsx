@@ -24,7 +24,6 @@ import './essaiTimbre.css';
 
 const TAILLES = [{ nom: 'Cérémonie', largeur: 300 }, { nom: 'Deck', largeur: 160 }, { nom: 'Plateau', largeur: 56 }];
 const NATURES: Nature[] = ['Nom', 'Verbe', 'Adjectif', 'Adverbe'];
-const MAITRISE = new Date(2026, 8, 21).getTime();
 
 export function EssaiTimbre() {
   const edition = useChargement(chargerEdition, 'edition');
@@ -173,10 +172,6 @@ export function EssaiTimbre() {
           <Timbre carte={parMot(mot)} oblitere={oblitere} cliquable={false} />
           <figcaption>{mot}</figcaption>
         </figure>)}
-        <figure style={largeur(200)}>
-          <Timbre carte={aspects[0].carte} oblitere={oblitere} maitriseeLe={MAITRISE} cliquable={false} />
-          <figcaption>Mot maîtrisé</figcaption>
-        </figure>
       </div>
 
       <h2>Avant / après</h2>

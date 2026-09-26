@@ -18,7 +18,6 @@ export function preparerAccueil(sauvegarde: Sauvegarde, cartes: readonly CarteIn
       total: ordinaires.length,
       horsSeriePossedees: horsSerie.filter((c) => c.id in sauvegarde.cartes).length,
       horsSerieTotal: horsSerie.length,
-      maitrisees: possedees.filter((c) => sauvegarde.cartes[c.id].maitriseeLe !== null).length,
     },
   };
 }

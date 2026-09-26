@@ -78,13 +78,6 @@ export class SonsDuDuel extends SortieSonore {
     this.bruit(0.05, 900, force * 0.4, delai);
   }
 
-  // Un mot vient de recevoir son cachet « Maîtrisé ».
-  cachet(delai = 0): void {
-    this.bruit(0.08, 240, 0.8, delai);
-    this.note(1318.5, 0.25, 0.2, delai + 0.05);
-    this.note(1760, 0.45, 0.2, delai + 0.17);
-  }
-
   victoire(): void {
     [440, 554.4, 659.3, 880].forEach((frequence, i) => this.note(frequence, i === 3 ? 0.7 : 0.24, 0.3, i * 0.15));
   }

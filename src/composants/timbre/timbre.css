@@ -99,18 +99,7 @@ a.tb:focus-visible, button.tb:focus-visible { outline: 2px solid var(--focus, #f
 .tb__cachet-jour { font-size: 15px; font-weight: 600; }
 .tb__cachet-annee { font-size: 12px; }
 .tb[data-oblitere] .tb__cachet { opacity: .82; }
-/* Le premier timbre d'une grande rareté : l'oblitération du premier jour d'émission, à l'encre vermillon. Posée telle
-   quelle (sans « multiply ») : mélangée à l'impression bleue, elle tournait au brun, trop proche du cachet ordinaire. */
-.tb[data-premier-jour] .tb__cachet { color: #e04a2f; mix-blend-mode: normal; }
 
-/* Le cachet « Maîtrisé » (composant partagé avec l'ancienne carte), en em de l'échelle. */
-.tb .tim__maitrise { position: absolute; left: 1.4em; top: 11.5em; width: 14em; color: #4a2a8a; opacity: .85; mix-blend-mode: multiply; pointer-events: none; z-index: 4; }
-.tb .tampon__trait { fill: none; stroke: currentColor; stroke-width: 2.2; }
-.tb .tampon__trait--fin { stroke-width: .9; }
-.tb .tampon__trait--fort { stroke-width: 3; }
-.tb .tampon__maitrise, .tb .tampon__date { fill: currentColor; font-family: var(--police-etroite); font-weight: 600; }
-.tb .tampon__maitrise { font-size: 15px; letter-spacing: .08em; }
-.tb .tampon__date { font-size: 9.5px; }
 
 /* ── La rareté se voit au cadre : une teinte de papier et un filet ─────────────
    Choix de Raphaël (25 septembre 2026), après un cadre tout en métal jugé trop lourd : le papier est à peine teinté

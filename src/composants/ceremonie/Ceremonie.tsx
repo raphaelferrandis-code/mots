@@ -40,7 +40,6 @@ export type Envol = { cartes: CarteObtenue[]; places: DOMRect[] };
 
 type Props = {
   premier: Promise<CarteObtenue[]>; // le tirage lancé au clic (jamais depuis la cérémonie : un seul tirage par geste)
-  premiersJours?: ReadonlySet<string>; // les timbres qui inaugurent une rareté de l'album : cachet « Premier jour »
   tirer: () => Promise<CarteObtenue[]>; // tire (et enregistre) le paquet suivant sur le serveur
   continuer: boolean; // « Ouvrir le suivant » est proposé (paquets gratuits seulement)
   reserve: number; // paquets encore en réserve
@@ -59,9 +58,8 @@ type Props = {
 const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 const entre = (a: number, b: number): number => a + Math.random() * (b - a);
-const AUCUN: ReadonlySet<string> = new Set();
 
-export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
+export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
   useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
   // Au résumé, le niveau et les succès gagnés avec ce paquet s’y affichent (au lieu du bandeau, après coup).
@@ -935,7 +933,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
   const d = disposition(Math.max(1, n), feuilleEtroite);
   const avantLaSortie = phase === 'ouverture' || phase === 'dechirure' || phase === 'sortie';
   const auResume = phase === 'resume' || (phase === 'fermeture' && n > 0 && rangement.length >= n);
-  const feuille = (face: FaceDeLaFeuille, principale: boolean) => cartes && <Feuille cartes={cartes} face={face} etroite={feuilleEtroite} numero={numero} edition={EDITION} dos={dos} premiersJours={premiersJours}
+  const feuille = (face: FaceDeLaFeuille, principale: boolean) => cartes && <Feuille cartes={cartes} face={face} etroite={feuilleEtroite} numero={numero} edition={EDITION} dos={dos}
     detaches={detaches} reveles={reveles} reduire={reduit()} lueur={lueur} onCase={principale ? caseTouchee : undefined} />;
   const detail = grosPlan && cartes ? cartes[grosPlan.i] : null;
 
@@ -944,8 +942,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
       <div className="c-pastilles">
         <span className="c-pastille c-vignette" data-rarete={obtenue.carte.rarete}>{obtenue.carte.rarete}</span>
         {obtenue.finition !== 'Normale' && <span className="c-pastille c-dorure" data-finition={obtenue.finition}><span>{NOM_DE_LA_FINITION[obtenue.finition]}</span></span>}
-        {premiersJours.has(obtenue.carte.id) ? <span className="c-pastille c-tampon c-tampon--premier-jour">Premier jour</span>
-          : obtenue.nouvelle ? <span className="c-pastille c-tampon">Nouveau</span>
+        {obtenue.nouvelle ? <span className="c-pastille c-tampon">Nouveau</span>
           : obtenue.nouvelleFinition ? <span className="c-pastille c-tampon">Nouvelle finition</span>
             : <span className="c-pastille c-tampon c-tampon--doublon">Doublon{obtenue.encre > 0 ? ` · +${obtenue.encre} Encre` : ''}</span>}
       </div>
@@ -961,8 +958,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
   const ligneDuDernier = derniere && <p className="c-dernier">
     <span className="c-pastille c-vignette" data-rarete={derniere.carte.rarete}>{derniere.carte.rarete}</span>
     <span className="c-dernier__mot">{derniere.carte.mot}</span>
-    {premiersJours.has(derniere.carte.id) ? <span className="c-pastille c-tampon c-tampon--premier-jour">Premier jour</span>
-      : derniere.nouvelle && <span className="c-pastille c-tampon">Nouveau</span>}
+    {derniere.nouvelle && <span className="c-pastille c-tampon">Nouveau</span>}
   </p>;
   let info = null;
   if (phase === 'ouverture') info = <p className="c-sous">Préparation du paquet…</p>;
@@ -1021,7 +1017,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
           <PaquetDeCeremonie modele={modelePaquet} lueur={lueur ?? undefined} className="cp--scene" />
         </div>}
         {apercu !== null && cartes && <button type="button" ref={apercuDom} className="c-carte c-apercu" aria-label={`${cartes[apercu].carte.mot}, fermer l’aperçu`} onClick={() => setApercu(null)}>
-          <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere premierJour={premiersJours.has(cartes[apercu].carte.id)} cliquable={false} reagir={false} /></div></div>
+          <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere cliquable={false} reagir={false} /></div></div>
         </button>}
       </div>
 
@@ -1035,7 +1031,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
           return <button key={`${tentative}-${k}`} type="button" tabIndex={auResume && pleine && apercu === null ? 0 : -1} ref={(el) => { cases.current[k] = el; }}
             className={`c-case${pleine ? ' c-case--pleine' : ''}`} aria-label={pleine ? `Admirer ${cartes[i].carte.mot}` : `Emplacement ${k + 1}`}
             onClick={() => { if (pleine) montrerApercu(i); }}>
-            {pleine && <Timbre carte={cartes[i].carte} finition={cartes[i].finition} oblitere premierJour={premiersJours.has(cartes[i].carte.id)} cliquable={false} reagir={false} />}
+            {pleine && <Timbre carte={cartes[i].carte} finition={cartes[i].finition} oblitere cliquable={false} reagir={false} />}
           </button>;
         })}
       </div>
@@ -1044,7 +1040,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
         ref={(el) => { if (el) volantsDom.current.set(v.i, el); }}
         style={{ left: v.cadre.left, top: v.cadre.top, width: v.cadre.width, height: v.cadre.height }}>
         <div className="c-retourne">
-          <Timbre carte={cartes[v.i].carte} finition={cartes[v.i].finition} verso montrerVerso={v.face === 'verso'} dos={dos} oblitere={v.dejaRevele} premierJour={premiersJours.has(cartes[v.i].carte.id)} cliquable={false} reagir={false} />
+          <Timbre carte={cartes[v.i].carte} finition={cartes[v.i].finition} verso montrerVerso={v.face === 'verso'} dos={dos} oblitere={v.dejaRevele} cliquable={false} reagir={false} />
         </div>
       </div>)}
 
@@ -1054,7 +1050,7 @@ export function Ceremonie({ premier, premiersJours = AUCUN, tirer, continuer, re
         <button type="button" ref={grosPlanDom} className="c-gros-plan__timbre" onClick={() => void rangerLeTimbre()}
           aria-label={grosPlan.fiche ? `${detail.carte.mot}, ranger ce timbre` : 'Timbre détaché'}>
           <div className="c-inclinaison"><div className="c-retourne">
-            <Timbre carte={detail.carte} finition={detail.finition} verso montrerVerso={grosPlan.face === 'verso'} dos={dos} oblitere={grosPlan.dejaRevele} premierJour={premiersJours.has(detail.carte.id)} cliquable={false} reagir />
+            <Timbre carte={detail.carte} finition={detail.finition} verso montrerVerso={grosPlan.face === 'verso'} dos={dos} oblitere={grosPlan.dejaRevele} cliquable={false} reagir />
           </div></div>
         </button>
         <div ref={ficheDom} className={`c-gros-plan__fiche${grosPlan.fiche ? ' c-gros-plan__fiche--visible' : ''}`} aria-live="polite">

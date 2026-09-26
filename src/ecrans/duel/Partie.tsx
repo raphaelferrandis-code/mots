@@ -57,7 +57,7 @@ type Props = {
   duree: number | null; // secondes pour parer (null : sans limite)
   reduireAnimations: boolean;
   sons: SonsDuDuel;
-  bilan: ReactNode; // ce qu'il faut retenir de la manche (définition, maîtrise)
+  bilan: ReactNode; // ce qu'il faut retenir de la manche (la définition du mot adverse)
   fin: (jaillir: (element: Element | null, reglages: Jaillissement) => void) => ReactNode; // l'écran de fin
   pseudo: string; // le pseudonyme du joueur (vide s'il n'en a pas), pour l'intro
   abandon: { visible: boolean; arme: boolean; cliquer: () => void; desarmer: () => void };
@@ -111,9 +111,6 @@ export function Partie(p: Props) {
   const debutDeLaParade = useRef(0);
   if (etape.nom === 'parade') debutDeLaParade.current = etape.debut;
   const paradeOuverte = !p.incident && (etape.nom === 'parade' || (etape.nom === 'bilan' && enCorrection));
-  // Le mot adverse maîtrisé à cette manche : au récapitulatif, son cachet tombe sur le timbre, au coup de tampon qu'on
-  // entend (audit de finition du 26/09/2026 : ce n'était qu'un son et une ligne grise).
-  const maitriseLe = recap && etape.nom === 'bilan' && etape.parade.maitrise ? debutDeLaParade.current : null;
 
   // La souris posée une seconde sur un timbre le montre en grand ; l'aperçu se ferme à chaque changement d'étape.
   const { survoler, fermer: fermerLApercu, apercu } = useApercuAuSurvol();
@@ -145,7 +142,7 @@ export function Partie(p: Props) {
 
   const habiller = (carte: CarteIndex) => {
     const possedee = sauvegarde.cartes[carte.id];
-    return { carte, finition: possedee ? meilleureFinition(possedee) : 'Normale' as const, maitriseeLe: possedee?.maitriseeLe ?? null };
+    return { carte, finition: possedee ? meilleureFinition(possedee) : 'Normale' as const };
   };
 
   if (etape.nom === 'fin') {
@@ -239,8 +236,8 @@ export function Partie(p: Props) {
         style={{ '--secousse': `${Math.min(14, 2 + Math.max(manche?.joueur.infliges ?? 0, manche?.adversaire.infliges ?? 0) * 1.2)}px` } as CSSProperties}>
         <figure className="ring__place" data-camp="adversaire">
           <figcaption>Son mot</figcaption>
-          <div className="ring__timbre" {...(adverse && revele ? survoler({ carte: adverse, finition: 'Normale', maitriseeLe: null }, etape.nom !== 'bilan') : {})}>
-            {adverse && !intro ? <Timbre key={`${adverse.id}-${duel.manche}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} maitriseeLe={maitriseLe} /> : <span className="ring__vide" />}
+          <div className="ring__timbre" {...(adverse && revele ? survoler({ carte: adverse, finition: 'Normale' }, etape.nom !== 'bilan') : {})}>
+            {adverse && !intro ? <Timbre key={`${adverse.id}-${duel.manche}`} carte={adverse} oblitere cliquable={false} verso dosRenseigne montrerVerso={!revele} /> : <span className="ring__vide" />}
             {etape.nom === 'bilan' && manche && (temps === 'bouclier' || temps === 'elan' || temps === 'choc') && <Garde paree={manche.joueur.paree} />}
             {etape.nom === 'bilan' && manche && apresLeChoc && <DegatsVolants key={`lui-${manche.numero}`} attaque={manche.joueur} />}
           </div>

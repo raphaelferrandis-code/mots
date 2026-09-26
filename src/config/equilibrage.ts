@@ -170,7 +170,8 @@ export const EQUILIBRAGE = {
     victoiresPleinesParJour: 3,
     partDeLEncreEnsuite: 0.25,
 
-    // Un mot est « maîtrisé » après ce nombre de bonnes réponses en duel : son timbre reçoit un cachet daté.
+    // Un mot est « maîtrisé » après ce nombre de bonnes réponses en duel. Le serveur le note encore (succès « Un mot
+    // pour toujours ») ; le cachet « Maîtrisé » du timbre a été retiré le 26/09/2026.
     reussitesPourLaMaitrise: 5,
   },
 

@@ -31,14 +31,14 @@ describe('données de l’accueil', () => {
       record: possedee(), cachee: { ...possedee(), maitriseeLe: 123 }, ancienne: possedee(),
     };
     const { collection } = preparerAccueil(sauvegarde, [carte('ordinaire'), carte('manquante'), carte('record', { rarete: 'Hors-série' }), carte('cachee', { registre: ['Familier'] })]);
-    assert.deepEqual(collection, { possedees: 1, total: 2, horsSeriePossedees: 1, horsSerieTotal: 1, maitrisees: 1 });
+    assert.deepEqual(collection, { possedees: 1, total: 2, horsSeriePossedees: 1, horsSerieTotal: 1 });
   });
 
   it('garde un état vide cohérent pour un nouveau joueur ou une édition vide', () => {
     const vue = preparerAccueil(nouvelleSauvegarde(0, 3), []);
     assert.deepEqual(vue.deck, []);
     assert.deepEqual(vue.recentes, []);
-    assert.deepEqual(vue.collection, { possedees: 0, total: 0, horsSeriePossedees: 0, horsSerieTotal: 0, maitrisees: 0 });
+    assert.deepEqual(vue.collection, { possedees: 0, total: 0, horsSeriePossedees: 0, horsSerieTotal: 0 });
   });
 
   it('montre les six dernières acquisitions sans confondre finition et nouveau timbre', () => {

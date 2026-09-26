@@ -151,10 +151,10 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
           <li key={carte.id} className="panneau-deck__place" ref={(element) => { if (element) places.current.set(carte.id, element); else places.current.delete(carte.id); }}>
             {enEdition
               ? <button type="button" className="panneau-deck__timbre" onClick={() => retirer(carte)} aria-label={`Retirer « ${carte.mot} » du carnet`}>
-                <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id]?.maitriseeLe ?? null} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
+                <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
                 <span className="panneau-deck__pastille panneau-deck__pastille--retirer"><Moins /></span>
               </button>
-              : <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id]?.maitriseeLe ?? null} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />}
+              : <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />}
           </li>
         ))}
         {Array.from({ length: Math.max(0, TAILLE - deck.length) }, (_, i) => (
@@ -199,7 +199,7 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
               {disponibles.slice(0, pages * PAR_PAGE).map((carte) => (
                 <li key={carte.id}>
                   <button type="button" className="panneau-deck__timbre" data-secoue={plein === carte.id} onClick={(e) => ajouter(carte, e.currentTarget)} aria-label={`Ajouter « ${carte.mot} » au carnet`}>
-                    <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} maitriseeLe={sauvegarde.cartes[carte.id]?.maitriseeLe ?? null} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
+                    <Carte carte={carte} finition={meilleureFinition(sauvegarde.cartes[carte.id])} obtenuLe={sauvegarde.cartes[carte.id]?.obtenueLe ?? null} cliquable={false} />
                     <span className="panneau-deck__pastille panneau-deck__pastille--ajouter"><Plus /></span>
                   </button>
                 </li>

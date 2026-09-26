@@ -14,9 +14,6 @@ import { useChargement } from '../composants/useChargement.ts';
 import { FINITIONS, RARETES_ORDINAIRES } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 
-// Quelques timbres portent le cachet « Maîtrisé », pour le juger sur tous les papiers.
-const MAITRISE = new Date(2026, 8, 21).getTime();
-
 export function Galerie() {
   const [retournees, setRetournees] = useState<string[]>([]);
   const [recompenseEssai, setRecompenseEssai] = useState(0);
@@ -42,7 +39,7 @@ export function Galerie() {
       </div>
       <h2>Choix de finition · spécimen</h2>
       <div style={{ width: 'min(100%, 340px)', margin: '0 auto 24px' }}>
-        <TimbreManipulable carte={ordinaires[0]} finition={finitionComparee} maitriseeLe={null} />
+        <TimbreManipulable carte={ordinaires[0]} finition={finitionComparee} />
         <ChoixFinition finitions={{ Normale: 2, Brillante: 1, Holographique: 1 }} choisie={finitionComparee} onChoisir={setFinitionComparee} />
       </div>
       <h2>Matières d’impression</h2>
@@ -63,8 +60,8 @@ export function Galerie() {
           </li>
         ))}
       </ul>
-      <div className="galerie">{horsSerie.map((carte, i) => <Carte key={carte.id} carte={carte} maitriseeLe={i % 5 === 1 ? MAITRISE : null} />)}</div>
-      <div className="galerie">{ordinaires.map((carte, i) => <Carte key={carte.id} carte={carte} finition={FINITIONS[i % 7 === 3 ? 2 : i % 5 === 2 ? 1 : 0]} maitriseeLe={i % 3 === 0 ? MAITRISE : null} />)}</div>
+      <div className="galerie">{horsSerie.map((carte) => <Carte key={carte.id} carte={carte} />)}</div>
+      <div className="galerie">{ordinaires.map((carte, i) => <Carte key={carte.id} carte={carte} finition={FINITIONS[i % 7 === 3 ? 2 : i % 5 === 2 ? 1 : 0]} />)}</div>
     </main>
   );
 }

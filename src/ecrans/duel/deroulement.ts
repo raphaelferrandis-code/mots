@@ -45,7 +45,6 @@ export function useDeroulement({ etape, duel, reduit, sons, eclater, enAttente =
     const minuterie = window.setTimeout(() => {
       // Sans animation, les coups s'entendent quand même, au moment où le bilan s'affiche.
       if (reduit) { sons.coup(infliges); sons.coup(subis, 0.18); }
-      if (suivant === 'recap' && etape.parade.maitrise) sons.cachet(0.2);
       setVue((v) => (v.cle === cle ? { ...v, temps: suivant } : v));
     }, reduit ? 700 : DUREES[vue.temps]);
     return () => window.clearTimeout(minuterie);

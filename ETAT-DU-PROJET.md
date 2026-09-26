@@ -2,15 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **26 septembre 2026 (soir) — finitions, étape 2, lot C : les cachets « Maîtrisé » et « Premier jour ».** Le cachet
-> « Maîtrisé » tombe sur le timbre adverse au récapitulatif de la manche, au coup de tampon qu'on entend (0,2 s), avec
-> une phrase qui dit pourquoi et où le retrouver ; la carte de fin montre les timbres maîtrisés en miniature, leur cachet
-> tombant l'un après l'autre (`Partie.tsx`, `Duel.tsx`, `FinDuDuel.tsx`). Le cachet « Premier jour » (oblitération
-> du premier jour d'émission, encre vermillon posée sans « multiply ») marque le plus ancien timbre de chaque grande
-> rareté de l'album (Épique, Légendaire, Hors-série) : aucune donnée nouvelle, il se déduit des dates d'obtention
-> (`src/jeu/premierJour.ts`, testé). Pendant l'ouverture, il se pose sur le timbre qui inaugure une rareté (pastille
-> « Premier jour » au lieu de « Nouveau ») ; on le retrouve dans l'album, son aperçu, la fiche (« ton premier timbre
-> Épique ») et l'image de partage. Le coin daté du tout premier paquet porte « PREMIER JOUR ».
+> **26 septembre 2026 (soir) — les cachets « Maîtrisé » et « Premier jour » retirés (décision de Raphaël).** « On ne joue
+> plus la définition de notre mot en duel » (on retrouve celle du mot adverse), et le « Premier jour » ne l'intéresse
+> pas : le lot C de l'étape 2 (1d86ad1) est annulé, et l'ancien cachet « Maîtrisé » disparaît du timbre (album, fiche,
+> carnet, duel, image de partage), avec tout ce qui l'annonçait (compteur « Maîtrise : 3 / 5 » de la fiche et du
+> récapitulatif, règle du duel, bruit de tampon, note de fin de duel, « mots maîtrisés » de l'album). Le serveur garde
+> ses données (apprentissages, `maitriseeLe`) : aucun script à coller. Les succès « Un mot pour toujours » et « Le
+> savoir prend racine » restent (titres déjà gagnés), sans le mot « maîtriser » : « Retrouver 5 fois en duel la
+> définition d'un même mot de sa collection ».
 
 > **26 septembre 2026 (soir) — finitions, étape 2, lot B : les récompenses en vraies cartes.** Le niveau atteint et
 > les succès gagnés avec un paquet ou un duel s'affichent dans son écran de fin (résumé du paquet, carte de fin du duel),

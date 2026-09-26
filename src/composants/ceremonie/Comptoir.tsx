@@ -3,11 +3,10 @@
 // dit pas : quand arrive le prochain paquet, et dans combien de paquets tombe la Légendaire garantie.
 // Un clic tire le paquet sur le serveur et ouvre la cérémonie par-dessus la page.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { CarteObtenue } from '../../jeu/partie.ts';
-import { premiersJoursDuPaquet, rareteDansLEdition } from '../../jeu/premierJour.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
 import { profilVisible } from '../../jeu/personnalisation.ts';
 import { lien } from '../../navigation/routes.ts';
@@ -33,8 +32,7 @@ import './comptoir.css';
 
 // « avant » : la partie telle qu'elle était au clic. L'album la garde jusqu'au rangement, pour ne rien dévoiler.
 type Ouverture = { premier: Promise<CarteObtenue[]>; tirer: () => Promise<CarteObtenue[]>; continuer: boolean; depuis: DOMRect | null; avant: Sauvegarde };
-type Vol = Envol & { cachees: Set<string>; compte: number; premiers: ReadonlySet<string> };
-const AUCUN: ReadonlySet<string> = new Set();
+type Vol = Envol & { cachees: Set<string>; compte: number };
 
 const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, mouvementReduit() ? Math.min(ms, 40) : ms));
 
@@ -55,12 +53,6 @@ export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroc
   const toile = useRef<HTMLCanvasElement>(null);
   // Les récompenses (niveau, succès) attendent la fin de la cérémonie.
   useRecompensesSuspendues(ouverture !== null);
-  // Le cachet « Premier jour » : les timbres du paquet qui inaugurent une rareté de l'album (jeu/premierJour.ts).
-  const cartesDeLEdition = edition.etat === 'pret' ? edition.donnees.cartes : null;
-  const rareteDe = useMemo(() => (cartesDeLEdition ? rareteDansLEdition(cartesDeLEdition) : null), [cartesDeLEdition]);
-  const sauvegardeActuelle = partie.etat === 'prete' ? partie.sauvegarde : null;
-  const premiersJours = useMemo(() => (ouverture && sauvegardeActuelle && rareteDe ? premiersJoursDuPaquet(ouverture.avant.cartes, sauvegardeActuelle.cartes, rareteDe) : AUCUN),
-    [ouverture, sauvegardeActuelle, rareteDe]);
 
   // Le paquet s'incline doucement vers le pointeur, sauf quand la cérémonie occupe l'écran.
   useEffect(() => {
@@ -165,7 +157,7 @@ export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroc
     const collection = preparerAccueil(partie.sauvegarde, cartes).collection.possedees;
     const nouveaux = new Set(envol.cartes.filter((o) => o.nouvelle && o.carte.rarete !== 'Hors-série').map((o) => o.carte.id));
     enVol.current = true;
-    setVol({ ...envol, cachees: new Set(envol.cartes.filter((o) => o.nouvelle).map((o) => o.carte.id)), compte: Math.max(0, collection - nouveaux.size), premiers: premiersJours });
+    setVol({ ...envol, cachees: new Set(envol.cartes.filter((o) => o.nouvelle).map((o) => o.carte.id)), compte: Math.max(0, collection - nouveaux.size) });
   };
 
   return (<>
@@ -203,7 +195,7 @@ export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroc
       </div>
 
       {ouverture && <Ceremonie premier={ouverture.premier} tirer={ouverture.tirer} continuer={ouverture.continuer} reserve={stock} numero={partie.sauvegarde.paquets.ouverts} depuis={ouverture.depuis}
-        modelePaquet={profil.paquet} dos={profilVisible(profil, formule ?? null).dos} premiersJours={premiersJours} sons={reglages.sonsPaquets} onSons={(actifs) => changerUnReglage('sonsPaquets', actifs)}
+        modelePaquet={profil.paquet} dos={profilVisible(profil, formule ?? null).dos} sons={reglages.sonsPaquets} onSons={(actifs) => changerUnReglage('sonsPaquets', actifs)}
         reduire={reglages.reduireAnimations} onFermer={fermer} onRanger={ranger} onErreur={setErreur} />}
     </section>
 
@@ -219,7 +211,7 @@ export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroc
     {vol && createPortal(<div className="envol" aria-hidden="true">
       {vol.cartes.map((obtenue, i) => <div key={i} ref={(el) => { clones.current[i] = el; }} className="envol__timbre"
         style={{ left: vol.places[i].left, top: vol.places[i].top, width: vol.places[i].width }}>
-        <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere premierJour={vol.premiers.has(obtenue.carte.id)} cliquable={false} reagir={false} />
+        <Timbre carte={obtenue.carte} finition={obtenue.finition} oblitere cliquable={false} reagir={false} />
       </div>)}
       <canvas className="ceremonie__particules" ref={toile} />
     </div>, document.body)}

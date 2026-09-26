@@ -330,7 +330,6 @@ export function Preparation(props: Props) {
               <li><strong>Bonus :</strong> +{REGLES.bonusDeType} pour l’avantage de type (le nom bat l’adjectif, l’adjectif bat le verbe, le verbe bat le nom ; l’adverbe est neutre) ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
               <li><strong>Rareté :</strong> plus un timbre est rare, plus il frappe fort et mieux il se défend ; l’ordinateur a aussi plus de mal à parer les mots rares.</li>
               <li><strong>Victoire :</strong> l’adversaire tombe à 0. Sinon, les points de vie départagent après {REGLES.manchesMaximum} manches.</li>
-              <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes définitions d’un mot que tu possèdes lui donnent le cachet « Maîtrisé ».</li>
             </ul>
           </details>}
       </div>

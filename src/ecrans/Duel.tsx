@@ -48,8 +48,8 @@ export type Etape =
   // « nonEnregistree » : la joute est finie, mais le serveur qui tient le classement n'a pas répondu.
   | ({ nom: 'fin'; resultat: Resultat; nonEnregistree: boolean; interrompu?: boolean } & FinDeDuel);
 
-type Bilan = { attaques: number; attaquesReussies: number; parades: number; paradesReussies: number; maitrises: string[] };
-const BILAN_VIDE: Bilan = { attaques: 0, attaquesReussies: 0, parades: 0, paradesReussies: 0, maitrises: [] };
+type Bilan = { attaques: number; attaquesReussies: number; parades: number; paradesReussies: number };
+const BILAN_VIDE: Bilan = { attaques: 0, attaquesReussies: 0, parades: 0, paradesReussies: 0 };
 
 // Le temps accordé pour chaque épreuve, selon le réglage d'accessibilité du joueur (null = sans limite).
 function secondesPourRepondre(sauvegarde: Sauvegarde): number | null {
@@ -192,7 +192,7 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     noterLaParade(enCours.adverse.rarete, juste);
     // Seul le mot réellement reconnu progresse, s'il appartient à la collection.
     const parade: Reponse = { epreuve: enCours.epreuve, choisie, juste, maitrise: noterLaReponse(enCours.adverse.id, juste, false) };
-    setBilan((b) => ({ ...b, attaques: b.attaques + 1, attaquesReussies: b.attaquesReussies + 1, parades: b.parades + 1, paradesReussies: b.paradesReussies + Number(juste), maitrises: parade.maitrise ? [...b.maitrises, enCours.adverse.mot] : b.maitrises }));
+    setBilan((b) => ({ ...b, attaques: b.attaques + 1, attaquesReussies: b.attaquesReussies + 1, parades: b.parades + 1, paradesReussies: b.paradesReussies + Number(juste) }));
     const apres = reglerLaManche(terrain, duel, enCours.carte, enCours.adverse, juste);
     // Les coups et le cachet s'entendent pendant la résolution animée (duel/deroulement.ts).
     if (juste) sons.juste(); else sons.faux();
@@ -281,10 +281,8 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
   const tailles = terrain.tailles.size > 0 ? terrain.tailles : edition.etat === 'pret' ? taillesDesFactions(edition.donnees.cartes) : terrain.tailles;
   const enEpreuve = etape.nom === 'parade';
 
-  // Après la manche : la définition du mot adverse (la leçon, si la parade a manqué) et la progression de sa maîtrise.
+  // Après la manche : la définition du mot adverse (la leçon, si la parade a manqué).
   const aRetenir = etape.nom === 'bilan' && (() => {
-    const connue = sauvegarde.cartes[etape.adverse.id];
-    const reussites = connue?.reussites ?? 0;
     return (
       <section className="partie__retenir" aria-label="À retenir">
         {etape.parade.juste
@@ -293,12 +291,6 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
             <p className="entete__surtitre">À retenir — {etape.adverse.mot}</p>
             <Propositions epreuve={etape.parade.epreuve} reponse={etape.parade} seulementLUtile />
           </div>}
-        {connue && etape.parade.maitrise && <p className="partie__maitrise">
-          <b>Cachet « Maîtrisé »</b> : tu as trouvé {REGLES.reussitesPourLaMaitrise} fois la définition de « <span lang="fr">{etape.adverse.mot}</span> ». Ton timbre le porte maintenant dans l’album.
-        </p>}
-        {connue && !etape.parade.maitrise && <p className="texte-doux petit">
-          {connue.maitriseeLe !== null ? `« ${etape.adverse.mot} » : maîtrisé.` : `Maîtrise · ${etape.adverse.mot} : ${Math.min(reussites, REGLES.reussitesPourLaMaitrise)} / ${REGLES.reussitesPourLaMaitrise}`}
-        </p>}
       </section>
     );
   })();

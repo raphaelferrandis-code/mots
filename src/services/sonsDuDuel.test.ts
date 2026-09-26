@@ -31,7 +31,7 @@ describe('sons du duel', () => {
     assert.equal(t.sons.length, 0, 'pas de sortie audio avant un geste du joueur');
 
     t.duel.preparer();
-    for (const jouer of [() => t.duel.poser(), () => t.duel.juste(), () => t.duel.faux(), () => t.duel.tic(), () => t.duel.cachet(), () => t.duel.victoire(), () => t.duel.defaite(),
+    for (const jouer of [() => t.duel.poser(), () => t.duel.juste(), () => t.duel.faux(), () => t.duel.tic(), () => t.duel.victoire(), () => t.duel.defaite(),
       () => t.duel.selection(), () => t.duel.piocher(), () => t.duel.souffle(), () => t.duel.bouclier(), () => t.duel.fissure(), () => t.duel.choc(4), () => t.duel.frappe()]) {
       const avant = t.sons.length;
       jouer();

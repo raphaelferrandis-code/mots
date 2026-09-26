@@ -12,7 +12,7 @@ import './timbre.css';
 import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex, Finition } from '../../partage/types.ts';
-import { CachetDeMaitrise, Tampon } from './Tampon.tsx';
+import { Tampon } from './Tampon.tsx';
 import { NIVEAU, anneeDuCachet, encresDe, motifDuTimbre } from './decor.ts';
 import { VIGNETTES } from './vignettes.tsx';
 import { Timbre, VersoDuTimbre } from '../timbre/Timbre.tsx';
@@ -23,23 +23,21 @@ type Props = {
   specimen?: 'Nacrée' | 'Encre latente'; // Essais visuels uniquement, sans entrée dans les tirages ni la sauvegarde.
   cliquable?: boolean; // ouvre la fiche de la carte
   sansDefinition?: boolean; // en duel, la carte en main ne montre pas sa définition
-  maitriseeLe?: number | null; // date à laquelle le joueur a maîtrisé le mot : le timbre reçoit un second cachet
   onChoisir?: () => void; // la carte devient un bouton (choisir une carte du deck, jouer une carte de sa main)
   action?: string; // ce que fait ce bouton, pour les lecteurs d'écran : « ajouter au deck », « jouer »…
   obtenuLe?: number | null; // date d'obtention : c'est elle que porte le cachet (sinon, l'année d'attestation du mot)
-  premierJour?: boolean; // le premier timbre de sa rareté dans l'album : oblitération « Premier jour » (jeu/premierJour.ts)
 };
 
 // Depuis la refonte (maquette de la cérémonie), la carte du jeu est le nouveau timbre, partout.
 // Les spécimens de matière (galerie de contrôle) gardent l'ancienne gravure.
-export function Carte({ specimen, obtenuLe = null, premierJour = false, ...props }: Props) {
+export function Carte({ specimen, obtenuLe = null, ...props }: Props) {
   if (specimen) return <CarteClassique specimen={specimen} {...props} />;
-  const { carte, finition = 'Normale', cliquable = true, maitriseeLe = null, onChoisir, action } = props;
-  return <Timbre carte={carte} finition={finition} oblitere obtenuLe={obtenuLe} cliquable={cliquable} maitriseeLe={maitriseeLe} premierJour={premierJour} onChoisir={onChoisir} action={action} />;
+  const { carte, finition = 'Normale', cliquable = true, onChoisir, action } = props;
+  return <Timbre carte={carte} finition={finition} oblitere obtenuLe={obtenuLe} cliquable={cliquable} onChoisir={onChoisir} action={action} />;
 }
 
 // L'ancienne carte, avant la refonte.
-export function CarteClassique({ carte, finition = 'Normale', specimen, cliquable = true, sansDefinition = false, maitriseeLe = null, onChoisir, action }: Props) {
+export function CarteClassique({ carte, finition = 'Normale', specimen, cliquable = true, sansDefinition = false, onChoisir, action }: Props) {
   const timbre = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -99,11 +97,10 @@ export function CarteClassique({ carte, finition = 'Normale', specimen, cliquabl
         {aUnReflet && <div className="tim__reflet" aria-hidden="true" />}
       </div>
       <Tampon idCarte={carte.id} faction={carte.faction} date={date} />
-      {maitriseeLe !== null && <CachetDeMaitrise idCarte={carte.id} le={maitriseeLe} />}
     </div>
   );
 
-  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${specimen ? `, spécimen ${specimen.toLowerCase()}` : finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}${maitriseeLe !== null ? ', mot maîtrisé' : ''}`;
+  const description = `${carte.mot}, ${carte.type}, ${carte.rarete}${specimen ? `, spécimen ${specimen.toLowerCase()}` : finition === 'Normale' ? '' : `, finition ${finition.toLowerCase()}`}, ${carte.faction}, attaque ${attaqueEnJeu(carte.attaque, carte.rarete)}, défense ${defenseEnJeu(carte.defense, carte.rarete)}`;
   const commun = {
     className: 'tim',
     'data-nature': carte.type,
