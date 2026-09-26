@@ -8,7 +8,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { createServer } from 'vite';
-import { adressesDesPages, cartesAvecUnePage } from '../src/partage/pagesDesMots.ts';
+import { adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
@@ -28,7 +28,8 @@ const depart = Date.now();
 const edition = JSON.parse(lire('public', 'data', 'edition-1.index.json')) as IndexEdition;
 const lots = Array.from({ length: edition.meta.lots }, (_, lot) => JSON.parse(lire('public', 'data', 'details', nomDuLot(lot))) as Record<string, CarteDetails>);
 const textes = JSON.parse(lire('data', 'pages-des-mots.json')) as TextesDesPages;
-const cartes = cartesAvecUnePage(edition.cartes);
+// Tous les mots de l'édition, injurieux compris : ils font partie de la langue (décision de Raphaël, 26/09).
+const cartes = edition.cartes;
 const adresses = adressesDesPages(cartes);
 
 // Vite lit les composants du jeu (TSX, feuilles de style importées) comme il le fait pour le site.

@@ -4,7 +4,7 @@
 
 import { SITE } from '../config/site.ts';
 import { lotDeLaCarte, nomDuLot } from '../partage/lots.ts';
-import { adressesDesPages, cartesAvecUnePage, cheminDeLaPage } from '../partage/pagesDesMots.ts';
+import { adressesDesPages, cheminDeLaPage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../partage/types.ts';
 
 const EDITION = 1;
@@ -38,7 +38,7 @@ export async function chargerCarte(id: string): Promise<CarteIndex | undefined> 
 // L'adresse publique de la page d'un timbre (philamots.fr/mot/…/), calculée comme pour le site construit.
 let adresses: Promise<Map<string, string>> | undefined;
 export async function pageDuTimbre(id: string): Promise<string | undefined> {
-  adresses ??= chargerEdition().then((edition) => adressesDesPages(cartesAvecUnePage(edition.cartes)));
+  adresses ??= chargerEdition().then((edition) => adressesDesPages(edition.cartes));
   const adresse = (await adresses).get(id);
   return adresse ? `${SITE.adresse}${cheminDeLaPage(adresse)}` : undefined;
 }

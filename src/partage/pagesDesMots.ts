@@ -46,11 +46,5 @@ export function adressesDesPages(cartes: Pick<CarteIndex, 'id' | 'mot' | 'type'>
   return adresses;
 }
 
-// Les timbres étiquetés « injurieux » restent dans le jeu (masquables dans les Réglages), mais n'ont pas de page
-// publique : une page « à collectionner » sur une insulte, trouvée depuis Google, serait malvenue.
-export function cartesAvecUnePage<T extends Pick<CarteIndex, 'registre'>>(cartes: T[]): T[] {
-  return cartes.filter((c) => !c.registre.includes('Injurieux'));
-}
-
 // Le chemin d'une page, depuis la racine du site : « mot/zakouski/ ».
 export const cheminDeLaPage = (adresse: string): string => `mot/${adresse}/`;

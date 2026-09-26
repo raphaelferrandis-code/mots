@@ -9,7 +9,7 @@
 > ligne (`scripts/fabriquer-les-pages.ts`, à la suite de `vite build`) à partir des vrais composants du jeu ; elles
 > n'ont aucun code. Textes complets : `npm run pages:textes` (après `npm run sources`) écrit
 > `data/pages-des-mots.json`, sans toucher aux fichiers du jeu. Les guillochis ne restent que sur le grand timbre
-> (une page pèse environ 60 Ko). Les 10 timbres étiquetés « injurieux » n'ont pas de page (`cartesAvecUnePage`).
+> (une page pèse environ 60 Ko). Tous les timbres ont leur page, injurieux compris (décision de Raphaël : ils font partie de la langue).
 > Dans le jeu, la fiche d'un timbre mène à sa page (« Toutes les définitions ») et le partage d'un timbre donne
 > son lien. Rien à installer côté Supabase.
 

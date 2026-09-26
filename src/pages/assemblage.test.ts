@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { adresseDuMot, adressesDesPages, cartesAvecUnePage } from '../partage/pagesDesMots.ts';
+import { adresseDuMot, adressesDesPages } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
 import { adapterLeModele, allegerLesTimbres, descriptionDuMot, enteteDeLaPage, planDuSite, voisinsDe } from './assemblage.ts';
 
@@ -26,17 +26,12 @@ describe('adresses des pages', () => {
     assert.deepEqual([...adresses.values()], ['beau-adjectif', 'beau-nom', 'chique-nom', 'chique-nom-2', 'zakouski']);
   });
   it('donne une adresse unique et stable à chaque timbre de l’édition', () => {
-    const cartes = cartesAvecUnePage(edition.cartes);
+    const cartes = edition.cartes;
     const adresses = adressesDesPages(cartes);
     assert.equal(adresses.size, cartes.length);
     assert.equal(new Set(adresses.values()).size, cartes.length);
     for (const a of adresses.values()) assert.match(a, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     assert.equal(adresses.get('zakouski-nom'), 'zakouski');
-  });
-  it('ne fait pas de page aux timbres étiquetés injurieux', () => {
-    const avec = cartesAvecUnePage(edition.cartes);
-    assert.ok(avec.length < edition.cartes.length);
-    assert.ok(avec.every((c) => !c.registre.includes('Injurieux')));
   });
 });
 
@@ -62,7 +57,7 @@ describe('en-tête des pages', () => {
 
 describe('voisins et plan du site', () => {
   it('six voisins de la même faction, toujours les mêmes', () => {
-    const cartes = cartesAvecUnePage(edition.cartes);
+    const cartes = edition.cartes;
     const z = cartes.find((c) => c.id === 'zakouski-nom')!;
     const v = voisinsDe(z, cartes);
     assert.equal(v.length, 6);
