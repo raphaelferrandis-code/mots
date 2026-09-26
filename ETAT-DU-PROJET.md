@@ -11,7 +11,8 @@
 > dès l'arrivée du paquet, avant de le déchirer : une aura, de la lumière et des étincelles par la fente de la
 > languette ; puis la feuille sort avec une tranche dorée (Légendaires) ou irisée (Hors-série). Le jeu reconnaît ces
 > paquets à leur contenu (`paquetDException`, `lueurDuPaquet`) : rien à redéployer. Probabilités affichées dans les
-> Réglages. Essai en développement : `#/timbres`, « Paquet d'exception ». **Script 24 à coller** (étape 16).
+> Réglages. Essai en développement : `#/timbres`, « Paquet d'exception ». **Script 24 collé par Raphaël et vérifié le
+> 26/09** (`tirer_les_cartes` identique au dépôt). La dernière migration est désormais la 24.
 
 > **26 septembre 2026 — l'ouverture en feuille de timbres.** Brief du 26/09 (prototype-ouverture-feuille.html),
 > travail purement esthétique : la pile de timbres de la cérémonie devient une feuille de six timbres, côté gomme, qui

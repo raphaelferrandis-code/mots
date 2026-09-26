@@ -302,17 +302,17 @@ que le sixième timbre. **Aucune fonction à redéployer** ; le jeu affiche les 
 - [ ] Deux requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL : elles peuvent être
       supprimées.
 
-### Étape 16 — Coller le script 24 (les paquets d'exception)
+### Étape 16 — Coller le script 24 (les paquets d'exception) — FAIT le 26 septembre
 
 Ta décision du 26 septembre : 1 paquet ordinaire sur 10 000 ne contient que des Légendaires holographiques, 1 sur
 30 000 que des Hors-série. Jamais parmi les paquets de départ ni dans le paquet hebdomadaire. **Aucune fonction à
 redéployer** ; le jeu reconnaît ces paquets à leur contenu et peut être publié avant ou après le script.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/24-paquets-d-exception.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/24-paquets-d-exception.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned**.
-- [ ] Ouvrir un paquet : il reste ordinaire (un paquet d'exception n'arrive qu'une fois sur 7 500).
-- [ ] Demander à l'assistant de vérifier en lecture seule.
+- [x] Vérifié en lecture seule le 26 septembre : `tirer_les_cartes` identique au dépôt (empreinte égale, aux fins de
+      ligne Windows près) et paquets d'exception présents.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
