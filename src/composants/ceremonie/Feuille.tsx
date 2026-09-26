@@ -3,7 +3,7 @@
 // Un timbre détaché laisse un trou sur les deux faces. Les timbres sont ceux du jeu (Timbre), sans leur dentelure :
 // ce sont les perforations de la feuille qui dessinent leurs bords.
 
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, PointerEvent } from 'react';
 import type { CarteObtenue } from '../../jeu/partie.ts';
 import { Timbre, VersoDuTimbre } from '../timbre/Timbre.tsx';
@@ -43,7 +43,8 @@ const pourcent = (v: number, total: number): string => `${((v / total) * 100).to
 const placer = (r: Rectangle, d: Disposition): CSSProperties => ({ left: pourcent(r.x, d.largeur), top: pourcent(r.y, d.hauteur), width: pourcent(r.l, d.largeur), height: pourcent(r.h, d.hauteur) });
 const chiffres = (n: number, longueur: number): string => String(Math.max(0, n)).padStart(longueur, '0');
 
-export function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, onCase }: Props) {
+// Mémorisée : la feuille ne se redessine que si elle change (face, timbre détaché ou révélé), pas à chaque envol.
+export const Feuille = memo(function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme', detaches, reveles, reduire, onCase }: Props) {
   const d = useMemo(() => disposition(cartes.length, etroite), [cartes.length, etroite]);
   const verso = face === 'verso';
   const perforations = useMemo(() => trous(d, verso).map((t) => `M${t.x - 7} ${t.y}a7 7 0 1 0 14 0a7 7 0 1 0 -14 0`).join(''), [d, verso]);
@@ -81,10 +82,9 @@ export function Feuille({ cartes, face, etroite, numero, edition, dos = 'gomme',
       <svg className="fe__perforations" viewBox={`0 0 ${d.largeur} ${d.hauteur}`} aria-hidden="true"><path d={perforations} /></svg>
     </div>
   );
-}
+});
 
 const SEPIA = '#6b5236', MARINE = '#16284a', CUIVRE = '#c8914b';
-const REPERES = ['#16284a', '#a93b45', '#2f4f9e', '#2f6f5a', '#5e3f86', '#7a5230', '#c8914b'];
 
 // Un texte trop long pour la feuille (paquet d'un seul timbre) est resserré pour tenir entre les marges.
 function ajuste(texte: string, taille: number, espacement: number, place: number): { textLength?: number; lengthAdjust?: 'spacingAndGlyphs' } {
@@ -92,9 +92,9 @@ function ajuste(texte: string, taille: number, espacement: number, place: number
   return estimee > place ? { textLength: place, lengthAdjust: 'spacingAndGlyphs' } : {};
 }
 
-// Le recto : titre sur une bande guillochée, mention du paquet, repères de couleur, coin daté, mention d'imprimerie.
+// Le recto : titre sur une bande guillochée, mention du paquet, coin daté, mention d'imprimerie.
 function MargesDuRecto({ d, numero, edition }: { d: Disposition; numero: number; edition: number }) {
-  const { largeur: W, hauteur: H, gauche: L, haut: T } = d;
+  const { largeur: W, hauteur: H, gauche: L } = d;
   const large = d.colonnes > 2;
   const bande = useMemo(() => Array.from({ length: 12 }, (_, k) => {
     let chemin = '';
@@ -109,9 +109,6 @@ function MargesDuRecto({ d, numero, edition }: { d: Disposition; numero: number;
     {bande.map((chemin, k) => <path key={k} d={chemin} fill="none" stroke={CUIVRE} strokeWidth=".6" opacity=".4" />)}
     <text className="fe__titre" x={W / 2} y={large ? 72 : 70} textAnchor="middle" fontSize={titre} letterSpacing="10" fill={MARINE} stroke="#f5ecd6" strokeWidth="10" paintOrder="stroke" strokeLinejoin="round">PHILAMOTS</text>
     <text className="fe__etroit" x={W / 2} y={large ? 104 : 100} textAnchor="middle" fontSize={tailleMention} letterSpacing="4" fill={SEPIA} {...ajuste(mention, tailleMention, 4, W - 40)}>{mention}</text>
-    {REPERES.map((couleur, i) => large
-      ? <circle key={couleur} cx={L / 2} cy={T + 40 + i * 38} r="9" fill={couleur} />
-      : <circle key={couleur} cx={L + 14 + i * 30} cy={T - 22} r="7" fill={couleur} />)}
     <rect x={W - L - 150} y={H - 66} width="150" height="48" fill="none" stroke={SEPIA} strokeWidth="1.4" />
     <text className="fe__etroit" x={W - L - 75} y={H - 38} textAnchor="middle" fontWeight="600" fontSize="20" fill={MARINE}>{`${chiffres(date.getDate(), 2)}·${chiffres(date.getMonth() + 1, 2)}·${String(date.getFullYear()).slice(2)}`}</text>
     <text className="fe__etroit" x={W - L - 75} y={H - 24} textAnchor="middle" fontSize="9" letterSpacing="2" fill={SEPIA}>COIN DATÉ</text>

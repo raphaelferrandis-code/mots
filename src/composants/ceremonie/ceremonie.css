@@ -90,6 +90,15 @@ body.ceremonie-ouverte { overflow: hidden; }
 .c-arrachage__trait { fill: none; stroke: #0a1322; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
 .c-feuille__pivot > .fe .fe__case { transition: transform .12s ease-out; }
 
+/* Détaché d'un clic : le timbre se retourne à sa place, au-dessus de la feuille, puis file dans le plateau. */
+.c-volant { position: absolute; z-index: 6; pointer-events: none; perspective: 1100px; filter: drop-shadow(0 18px 20px rgba(0, 0, 0, .45)); }
+.c-volant .c-retourne { position: absolute; inset: 0; }
+.c-volant .c-retourne > .tb { position: absolute; inset: 0; }
+/* Le dernier timbre détaché d'un clic, sous la feuille : sa rareté, son mot, s'il est nouveau. */
+.c-dernier { margin: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; }
+.c-dernier__mot { font-family: var(--police-serif); font-weight: 900; font-size: clamp(22px, 3vw, 30px); line-height: 1.1; color: var(--c-papier); }
+.c-dernier__mot::first-letter { text-transform: uppercase; }
+
 /* Le timbre détaché, au premier plan : un fond assombri, le timbre, puis sa fiche. Consignes et plateau s'effacent. */
 .c-voile {
   position: absolute; inset: 0; z-index: 7; opacity: 0; pointer-events: none; transition: opacity .4s;

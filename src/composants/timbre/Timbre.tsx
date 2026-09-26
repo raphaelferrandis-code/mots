@@ -8,7 +8,7 @@
 // d'obtention (cachet) et le cachet « Maîtrisé ». La définition n'est plus imprimée sur le timbre : elle se lit
 // à côté (fiche, cérémonie).
 
-import { useId, useRef } from 'react';
+import { memo, useId, useRef } from 'react';
 import type { CSSProperties, PointerEvent, ReactNode, Ref } from 'react';
 import { attaqueEnJeu, defenseEnJeu } from '../../config/equilibrage.ts';
 import { ornement } from '../../jeu/personnalisation.ts';
@@ -51,7 +51,8 @@ type Props = {
   style?: CSSProperties;
 };
 
-export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
+// Mémorisé : un timbre ne se redessine que si ce qu'il montre change (la cérémonie en anime plusieurs à la fois).
+export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, maitriseeLe = null, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
   const racine = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -113,7 +114,7 @@ export function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe
   if (onChoisir) return <button type="button" {...commun} ref={racine as Ref<HTMLButtonElement>} onClick={onChoisir} aria-label={`${description} — ${action ?? 'choisir'}`}>{contenu}</button>;
   if (cliquable) return <a {...commun} ref={racine as Ref<HTMLAnchorElement>} href={lien({ ecran: 'carte', id: carte.id })} aria-label={`${description} — voir la fiche`}>{contenu}</a>;
   return <div {...commun} ref={racine as Ref<HTMLDivElement>} role="img" aria-label={montrerVerso ? (dosRenseigne ? `Timbre face cachée : ${carte.type}, attaque ${attaque}, défense ${defense}` : 'Timbre face cachée') : description}>{contenu}</div>;
-}
+});
 
 // La rosace guillochée, unique à chaque mot, avec l'initiale au centre. Les Hors-série ont leur dessin à eux.
 function VignetteDuTimbre({ carte }: { carte: CarteIndex }) {
