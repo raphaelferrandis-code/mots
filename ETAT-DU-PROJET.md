@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — six timbres par paquet (script 23).** Décision de Raphaël : le sixième timbre a les chances du
+> cinquième ; la Hors-série, la garantie et le paquet hebdomadaire ne touchent que le sixième ; la Légendaire est
+> garantie au plus tard au 20e paquet sans Légendaire (au lieu du 40e). **Script 23 collé par Raphaël et vérifié le
+> 26/09** (les deux fonctions identiques au dépôt, un paquet ouvert en production contient six timbres). La dernière
+> migration est désormais la 23. Simulation (joueur régulier) : collection complète en 6,1 mois au lieu de 9,4,
+> 20,9 Légendaires par semaine au lieu de 10,6. C'est le lot 0 de l'ouverture en feuille de timbres
+> (brief du 26/09, travail purement esthétique pour la suite).
+
 > **26 septembre 2026 — le défi contre un joueur simulé est vérifié (script 21).** Décision de Raphaël : le serveur
 > vérifie. `combat_creer` n'accepte plus qu'un joueur maison que le jeu peut proposer au joueur : une seule fonction
 > (`joueurs_simules_admissibles`) dit qui est admissible avec ses filtres, pour la liste comme pour la vérification,

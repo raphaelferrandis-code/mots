@@ -293,11 +293,14 @@ Ta décision du 26 septembre : six timbres par paquet (le sixième a les chances
 garantie au plus tard au 20e paquet sans Légendaire. La Hors-série, la garantie et le paquet hebdomadaire ne touchent
 que le sixième timbre. **Aucune fonction à redéployer** ; le jeu affiche les timbres que le serveur rend, cinq ou six.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/23-six-timbres.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/23-six-timbres.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
       attendue : **Success. No rows returned**.
-- [ ] Ouvrir un paquet : il contient six timbres.
-- [ ] Demander à l'assistant de vérifier en lecture seule.
+- [x] Ouvrir un paquet : il contient six timbres.
+- [x] Vérifié en lecture seule le 26 septembre : `tirer_les_cartes` et `importer_ma_collection` identiques au dépôt
+      (empreintes égales, aux fins de ligne Windows près, laissées par le collage).
+- [ ] Deux requêtes « Untitled query » de vérification (lecture seule) sont dans l'éditeur SQL : elles peuvent être
+      supprimées.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
