@@ -5,6 +5,7 @@
 import { SITE } from '../config/site.ts';
 import { lotDeLaCarte, nomDuLot } from '../partage/lots.ts';
 import { adressesDesPages, cheminDeLaPage } from '../partage/pagesDesMots.ts';
+import type { Devinettes } from '../jeu/devinette.ts';
 import type { CarteDetails, CarteIndex, Definition, IndexEdition } from '../partage/types.ts';
 
 const EDITION = 1;
@@ -33,6 +34,16 @@ export function chargerEdition(): Promise<IndexEdition> {
 export async function chargerCarte(id: string): Promise<CarteIndex | undefined> {
   const edition = await chargerEdition();
   return edition.cartes.find((carte) => carte.id === id);
+}
+
+// Les devinettes du jour (public/data/devinettes.json, fabriqué depuis le calendrier du mot du jour).
+let devinettes: Promise<Devinettes> | undefined;
+export function chargerLesDevinettes(): Promise<Devinettes> {
+  devinettes ??= lireJson<Devinettes>('devinettes.json').catch((erreur) => {
+    devinettes = undefined;
+    throw erreur;
+  });
+  return devinettes;
 }
 
 // L'adresse publique de la page d'un timbre (philamots.fr/mot/…/), calculée comme pour le site construit.

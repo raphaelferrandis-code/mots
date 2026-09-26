@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { adresseDuMot, adressesDesPages } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
-import { adapterLeModele, allegerLesTimbres, definitionDeLaCarte, descriptionDuMot, enteteDeLaPage, planDuSite, voisinsDe } from './assemblage.ts';
+import { adapterLeModele, allegerLesTimbres, descriptionDuMot, enteteDeLaPage, planDuSite, voisinsDe } from './assemblage.ts';
 
 const edition = JSON.parse(readFileSync(path.join(import.meta.dirname, '..', '..', 'public', 'data', 'edition-1.index.json'), 'utf8')) as IndexEdition;
 const carte = (mot: string, type: CarteIndex['type'], autres: Partial<CarteIndex> = {}): CarteIndex => ({
@@ -85,14 +85,5 @@ describe('fabrication', () => {
     assert.ok(allege.includes('d="M100 0 0 0 1.2 -0.6'), allege.slice(0, 80));
     assert.ok(allege.endsWith('<span></span>'));
     assert.ok(allege.length < html.length / 2);
-  });
-});
-
-describe('carte du mot du jour', () => {
-  it('prend la première définition qui tient sur la carte', () => {
-    const longue = { texte: 'x'.repeat(200) };
-    assert.equal(definitionDeLaCarte([longue, { texte: 'Courte.' }]), 'Courte.');
-    assert.equal(definitionDeLaCarte([longue]), longue.texte);
-    assert.equal(definitionDeLaCarte([]), '');
   });
 });

@@ -2,7 +2,8 @@
 // et ignore les feuilles de style importées par les composants).
 import { renderToStaticMarkup } from 'react-dom/server';
 import { allegerLesTimbres } from './assemblage.ts';
-import { CarteDePartage } from './CarteDePartage.tsx';
+import { CarteQuestion, CarteReponse } from './CarteDePartage.tsx';
+import type { Devinette } from '../jeu/devinette.ts';
 import { ListeDesMots, PageDuMot } from './PageDuMot.tsx';
 import type { Voisin } from './PageDuMot.tsx';
 import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
@@ -18,7 +19,11 @@ export function rendreListe(mots: { mot: string; adresse: string; type: CarteInd
   return renderToStaticMarkup(<ListeDesMots mots={mots} />);
 }
 
-// La carte du mot du jour : un seul timbre, qui garde ses guillochis (allégés au dixième).
-export function rendreCarte(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined): string {
-  return allegerLesTimbres(renderToStaticMarkup(<CarteDePartage carte={carte} details={details} texte={texte} />), '<h1 class="carte-partage__mot');
+// Les images de la devinette : un seul timbre, qui garde ses guillochis (allégés au dixième).
+export function rendreQuestion(carte: CarteIndex, devinette: Devinette): string {
+  return allegerLesTimbres(renderToStaticMarkup(<CarteQuestion carte={carte} devinette={devinette} />), 'carte-partage__consigne');
+}
+
+export function rendreReponse(carte: CarteIndex, details: CarteDetails, devinette: Devinette): string {
+  return allegerLesTimbres(renderToStaticMarkup(<CarteReponse carte={carte} details={details} devinette={devinette} />), 'carte-partage__mot');
 }

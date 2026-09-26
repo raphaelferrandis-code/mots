@@ -25,7 +25,8 @@
     "simulation:marche": "node simulateurs/marche.ts",
     "pages:textes": "node pipeline/pages.ts",
     "motdujour:choisir": "node pipeline/mot-du-jour.ts",
-    "motdujour:dater": "node pipeline/mot-du-jour-dater.ts"
+    "motdujour:dater": "node pipeline/mot-du-jour-dater.ts",
+    "motdujour:devinettes": "node pipeline/devinettes.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",

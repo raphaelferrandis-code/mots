@@ -2,6 +2,18 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 — la devinette du jour (réseaux sociaux et accueil), prête mais pas lancée.** Décisions de
+> Raphaël : un calendrier de 365 mots (`data/mot-du-jour.txt`, validé tel quel), qui ne démarre qu'une fois tout prêt
+> (`npm run motdujour:dater -- AAAA-MM-JJ` fixe le premier jour et repose Halloween, Noël… à leur date) ; chaque jour,
+> une devinette qui alterne « quelle définition ? » (quatre au choix, comme la parade) et « quel mot ? » (définition,
+> nombre de lettres, initiale, origine) ; réponse le lendemain sur les réseaux, tout de suite sur l'accueil du jeu,
+> avec une série de bonnes réponses. `public/data/devinettes.json` (`npm run motdujour:devinettes`, un test vérifie
+> qu'il suit le calendrier) ; `src/jeu/devinette.ts` ; `src/composants/accueil/DevinetteDuJour.tsx` (invisible tant
+> qu'il n'y a pas de premier jour ; en développement, `?devinette=N` dans l'adresse montre le jour N). Les images des
+> posts (1080 × 1350) : `partage/question/<mot>/` et `partage/reponse/<mot>/`, photographiées par
+> `scripts/photographier-les-cartes.ts` (Chrome installé, playwright-core). Photo de profil :
+> `public/identite/photo-profil.png`. Reste : le texte des posts et la publication automatique (Bluesky d'abord).
+
 > **26 septembre 2026 — une page par mot, pour Google (philamots.fr/mot/zakouski/).** Chaque timbre a désormais sa
 > page, lisible sans jouer : le timbre, toutes les définitions (jusqu'à 12, sans coupure), l'origine entière, la
 > prévalence et l'usage en jauges, un appel à ouvrir un paquet et six timbres de la même faction. Plus une liste de

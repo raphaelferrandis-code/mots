@@ -30,3 +30,34 @@
 @keyframes fil-defile { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .fil__piste { animation: none; } }
 :root[data-animations-reduites] .fil__piste { animation: none; }
+
+/* La devinette du jour (DevinetteDuJour.tsx) : sous le comptoir, dans le même bandeau à filet. */
+.devinette { display: block; }
+.devinette__tete { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.devinette__serie { margin: 0; font-family: var(--police-etroite); font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--c-texte-doux); }
+.devinette__serie b { margin-left: 6px; font-size: 22px; letter-spacing: 0; color: var(--c-cuivre); }
+.devinette__mot { margin: 22px 0 0; font-family: var(--police-serif); font-weight: 900; font-size: clamp(40px, 5vw, 60px); line-height: 1; color: var(--c-papier); }
+.devinette__consigne { margin: 10px 0 0; font-family: var(--police-serif); font-style: italic; font-size: 20px; color: var(--c-cuivre); }
+.devinette__propositions { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.devinette__proposition {
+  width: 100%; height: 100%; display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: center; padding: 14px 16px; text-align: left;
+  border: 1px solid var(--c-ligne); background: rgba(233, 225, 208, .03); color: var(--c-texte); font: inherit; font-size: 16px; line-height: 1.4; cursor: pointer; transition: border-color .2s, background .2s;
+}
+.devinette__proposition b { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--c-cuivre); border-radius: 50%; font-family: var(--police-etroite); font-weight: 500; color: var(--c-cuivre); }
+@media (hover: hover) { .devinette__proposition:not(:disabled):hover { border-color: var(--c-cuivre); background: rgba(216, 154, 92, .08); } }
+.devinette__proposition:disabled { cursor: default; }
+.devinette__proposition.juste { border-color: var(--c-cuivre); background: rgba(216, 154, 92, .14); color: var(--c-papier); }
+.devinette__proposition.juste b { background: var(--c-cuivre); color: #2a1605; }
+.devinette__proposition.faux { text-decoration: line-through; opacity: .7; }
+.devinette__proposition.eteint { opacity: .45; }
+.devinette__cases { margin: 24px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.devinette__cases i { width: 38px; height: 46px; display: grid; place-items: center; border-bottom: 2px solid var(--c-cuivre); background: rgba(233, 225, 208, .05); font-family: var(--police-serif); font-style: normal; font-weight: 700; font-size: 26px; color: var(--c-papier); }
+.devinette__indice { margin: 20px 0 0; max-width: 40em; font-family: var(--police-serif); font-style: italic; font-size: 22px; line-height: 1.4; color: var(--c-papier); }
+.devinette__aide { margin: 8px 0 0; color: var(--c-texte-doux); font-size: 15px; }
+.devinette__formulaire { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
+.devinette__formulaire input { width: min(320px, 100%); min-height: 48px; padding: 0 14px; border: 1px solid var(--filet-fort); border-radius: 4px; background: rgba(233, 225, 208, .04); color: var(--c-papier); font: inherit; font-size: 18px; }
+.devinette__formulaire .btn-secondary { min-height: 48px; }
+.devinette__essais { color: var(--c-texte-doux); font-size: 15px; }
+.devinette__verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; margin: 22px 0 0; color: var(--c-texte-doux); }
+.devinette__verdict span { color: var(--c-texte); }
+@media (max-width: 700px) { .devinette__propositions { grid-template-columns: 1fr; } .devinette__cases i { width: 30px; height: 40px; font-size: 22px; } }

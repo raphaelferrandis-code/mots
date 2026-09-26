@@ -1,3 +1,4 @@
+import { DevinetteDuJour } from '../composants/accueil/DevinetteDuJour.tsx';
 import { DuelsDuBureau } from '../composants/accueil/DuelsDuBureau.tsx';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
 import { FondAnime } from '../composants/accueil/FondAnime.tsx';
@@ -10,7 +11,7 @@ import '../composants/accueil/accueil.css';
 import '../composants/accueil/refonte.css';
 
 // L'accueil de la refonte (maquette de la cérémonie) : le comptoir des paquets, l'album en aperçu et les duels,
-// le fil d'activité des collectionneurs, sur le fond vivant.
+// la devinette du jour, le fil d'activité des collectionneurs, sur le fond vivant.
 export function Accueil() {
   const partie = usePartie();
 
@@ -27,6 +28,7 @@ export function Accueil() {
       <FondAnime />
       <NouvellesDuParrainage />
       <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} />
+      <DevinetteDuJour />
       <FilDActivite />
       {rappelerLExport && (
         <aside className="accueil__rappel">

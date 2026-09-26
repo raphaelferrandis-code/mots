@@ -2,8 +2,9 @@
 //   dist/mot/<adresse>/index.html  → une page par timbre de l'édition
 //   dist/mots/index.html           → la liste de tous les mots
 //   dist/sitemap.xml               → le plan du site pour Google, avec toutes ces pages
-//   dist/partage/carte/<adresse>/  → la carte du mot du jour de chaque mot du calendrier (data/mot-du-jour.txt), à
-//                                    photographier pour les réseaux sociaux (scripts/photographier-les-cartes.ts)
+//   dist/partage/question/<adresse>/ et dist/partage/reponse/<adresse>/
+//                                  → les images de la devinette du jour de chaque mot du calendrier, à photographier
+//                                    pour les réseaux sociaux (scripts/photographier-les-cartes.ts)
 // Les textes complets viennent de data/pages-des-mots.json (npm run pages:textes) ; un mot qui n'y serait pas garde les
 // textes du jeu.
 
@@ -14,7 +15,7 @@ import { adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
-import { lireCalendrier } from '../pipeline/etapes/motDuJour.ts';
+import type { Devinettes } from '../src/jeu/devinette.ts';
 import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -67,23 +68,26 @@ try {
     .replace('<!--tete-->', () => enteteDeLaListe(mots.length))
     .replace('<!--page-->', () => rendu.rendreListe(mots)));
 
-  // Les cartes du mot du jour : hors du plan du site, et « noindex » (ce sont des images à fabriquer, pas des pages).
+  // Les images de la devinette du jour : hors du plan du site, et « noindex » (ce sont des images à fabriquer, pas
+  // des pages). La question et la réponse de chaque mot du calendrier (public/data/devinettes.json).
   const pourUneCarte = adapterLeModele(modeleHtml, 3).replace('<html lang="fr">', '<html lang="fr" class="page-carte">');
-  const calendrier = lireCalendrier(lire('data', 'mot-du-jour.txt')).ids;
-  for (const id of calendrier) {
-    const carte = cartes.find((c) => c.id === id);
-    if (!carte) { console.warn(`    ⚠️ Mot du jour inconnu dans data/mot-du-jour.txt : ${id}`); continue; }
+  const { jours } = JSON.parse(lire('public', 'data', 'devinettes.json')) as Devinettes;
+  for (const devinette of jours) {
+    const carte = cartes.find((c) => c.id === devinette.id);
+    if (!carte) { console.warn(`    ⚠️ Devinette d'un mot inconnu : ${devinette.id}`); continue; }
     const details = lots[lotDeLaCarte(carte.id, edition.meta.lots)][carte.id];
-    const dossier = path.join(DIST, 'partage', 'carte', adresses.get(carte.id)!);
-    mkdirSync(dossier, { recursive: true });
-    writeFileSync(path.join(dossier, 'index.html'), pourUneCarte
-      .replace('<!--tete-->', () => `${enteteDeLaCarte(carte)}\n    ${textures}`)
-      .replace('<!--page-->', () => rendu.rendreCarte(carte, details, textes.mots[carte.id])));
+    for (const [genre, corps] of [['question', rendu.rendreQuestion(carte, devinette)], ['reponse', rendu.rendreReponse(carte, details, devinette)]] as const) {
+      const dossier = path.join(DIST, 'partage', genre, adresses.get(carte.id)!);
+      mkdirSync(dossier, { recursive: true });
+      writeFileSync(path.join(dossier, 'index.html'), pourUneCarte
+        .replace('<!--tete-->', () => `${enteteDeLaCarte(carte, genre)}\n    ${textures}`)
+        .replace('<!--page-->', () => corps));
+    }
   }
 
   writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), textes.version));
   rmSync(modele);
-  console.log(`${cartes.length} pages par mot et ${calendrier.length} cartes du mot du jour fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
+  console.log(`${cartes.length} pages par mot et ${jours.length} devinettes (question et réponse) fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
 } finally {
   await vite.close();
 }

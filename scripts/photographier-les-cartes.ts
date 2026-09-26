@@ -1,5 +1,6 @@
-// Prend en photo les cartes du mot du jour (dist/partage/carte/<adresse>/, fabriquées par fabriquer-les-pages.ts) :
-// une image JPEG de 1080 × 1350 par mot, prête pour Instagram, Facebook et Bluesky.
+// Prend en photo les images de la devinette du jour (dist/partage/question/<adresse>/ et dist/partage/reponse/<adresse>/,
+// fabriquées par fabriquer-les-pages.ts) : des JPEG de 1080 × 1350, prêts pour Instagram, Facebook et Bluesky.
+// Chaque mot donne <adresse>-question.jpg et <adresse>-reponse.jpg.
 //
 //   node scripts/photographier-les-cartes.ts --site https://philamots.fr/ --sortie images zakouski callipyge
 //   node scripts/photographier-les-cartes.ts --premiers 12      (les 12 premiers mots du calendrier, sur le site local)
@@ -35,11 +36,13 @@ const navigateur = await chromium.launch({ channel: 'chrome' });
 try {
   const page = await navigateur.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
   for (const adresse of voulues) {
-    const reponse = await page.goto(`${site}partage/carte/${adresse}/`, { waitUntil: 'networkidle' });
-    if (!reponse?.ok()) { console.warn(`    ⚠️ ${adresse} : pas de carte (${reponse?.status() ?? 'sans réponse'})`); continue; }
-    await page.evaluate(() => document.fonts.ready);
-    await page.locator('.carte-partage').screenshot({ path: path.join(sortie, `${adresse}.jpg`), type: 'jpeg', quality: 90 });
-    console.log(`    ${adresse}.jpg`);
+    for (const genre of ['question', 'reponse']) {
+      const reponse = await page.goto(`${site}partage/${genre}/${adresse}/`, { waitUntil: 'networkidle' });
+      if (!reponse?.ok()) { console.warn(`    ⚠️ ${adresse} (${genre}) : pas d'image (${reponse?.status() ?? 'sans réponse'})`); continue; }
+      await page.evaluate(() => document.fonts.ready);
+      await page.locator('.carte-partage').screenshot({ path: path.join(sortie, `${adresse}-${genre}.jpg`), type: 'jpeg', quality: 90 });
+      console.log(`    ${adresse}-${genre}.jpg`);
+    }
   }
 } finally {
   await navigateur.close();
