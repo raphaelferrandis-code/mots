@@ -1,6 +1,6 @@
 # Le mot du jour : un mot par ligne (son identifiant de carte), dans l'ordre des jours.
-# Premier jour : 2026-09-27. Retirer une ligne décale les suivants d'un jour ; en ajouter une, c'est l'inverse.
-# Fabriqué par « npm run motdujour:choisir », puis retouché à la main.
+# Premier jour : à fixer au lancement, avec « npm run motdujour:dater -- AAAA-MM-JJ ».
+# Les mots à date fixe (Halloween, Noël…) sont dans pipeline/etapes/motDuJour.ts.
 contempteur-nom
 abstrus-adj
 intercourse-nom

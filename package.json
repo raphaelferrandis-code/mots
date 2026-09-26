@@ -24,7 +24,8 @@
     "serveur:script": "node serveur/fabriquer-le-script.ts",
     "simulation:marche": "node simulateurs/marche.ts",
     "pages:textes": "node pipeline/pages.ts",
-    "motdujour:choisir": "node pipeline/mot-du-jour.ts"
+    "motdujour:choisir": "node pipeline/mot-du-jour.ts",
+    "motdujour:dater": "node pipeline/mot-du-jour-dater.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",

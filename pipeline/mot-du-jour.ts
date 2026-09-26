@@ -10,17 +10,16 @@ import path from 'node:path';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../src/partage/types.ts';
+import { MOTS_A_DATE_FIXE, dater, ecrireCalendrier } from './etapes/motDuJour.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const lire = (...morceaux: string[]): string => readFileSync(path.join(RACINE, ...morceaux), 'utf8');
 const SORTIE = path.join(RACINE, 'data', 'mot-du-jour.txt');
-const DEBUT = '2026-09-27';
 const JOURS = 365;
 
 // Des insultes, seules celles qu'un réseau social laisse passer : les autres (racistes, homophobes, sexistes) valent
 // un retrait de publication, voire du compte, même présentées comme un mot du dictionnaire.
 const INJURIEUX_ADMIS = new Set(['pignouf', 'conchier']);
-const DATES: Record<string, string> = { '10-31': 'fantasmagorie-nom', '02-14': 'amour-nom', '12-25': 'cadeau-nom', '10-09': 'pignouf-nom', '11-20': 'conchier-verbe' };
 
 if (existsSync(SORTIE) && !process.argv.includes('--refaire')) {
   console.error('data/mot-du-jour.txt existe déjà (et a peut-être été retouché). Pour le refaire : npm run motdujour:choisir -- --refaire');
@@ -56,32 +55,25 @@ const candidats = edition.cartes
   .filter((x): x is { c: CarteIndex; n: number } => x.n !== null)
   .sort((a, b) => b.n - a.n || a.c.id.localeCompare(b.c.id));
 
-const jour = (i: number): Date => new Date(Date.parse(`${DEBUT}T12:00:00Z`) + i * 86_400_000);
-const reserves = new Set(Object.values(DATES));
+const reserves = new Set(Object.values(MOTS_A_DATE_FIXE));
 const restants = candidats.filter((x) => !reserves.has(x.c.id)).slice(0, 700);
-const choisis: CarteIndex[] = [];
+const choisis: CarteIndex[] = edition.cartes.filter((c) => reserves.has(c.id));
 // Aucune origine ne dépasse un cinquième de l'année (le latin, à lui seul, en prendrait plus d'un tiers).
 const parFaction = new Map<string, number>();
 const plafond = Math.ceil(JOURS * 0.2);
-for (let i = 0; i < JOURS; i++) {
-  const date = jour(i).toISOString().slice(5, 10);
-  const impose = DATES[date] && edition.cartes.find((c) => c.id === DATES[date]);
-  if (impose) { choisis.push(impose); continue; }
-  const [avant, avantAvant] = [choisis.at(-1), choisis.at(-2)];
+const ordonnes: CarteIndex[] = [];
+while (ordonnes.length < JOURS - choisis.length) {
+  const [avant, avantAvant] = [ordonnes.at(-1), ordonnes.at(-2)];
   const rang = restants.findIndex(({ c }) => (parFaction.get(c.faction) ?? 0) < plafond
     && c.type !== avant?.type
     && !(c.faction === avant?.faction && c.faction === avantAvant?.faction)
     && c.mot[0] !== avant?.mot[0]);
   const choisi = restants.splice(Math.max(rang, 0), 1)[0].c;
   parFaction.set(choisi.faction, (parFaction.get(choisi.faction) ?? 0) + 1);
-  choisis.push(choisi);
+  ordonnes.push(choisi);
 }
-
-writeFileSync(SORTIE, [
-  '# Le mot du jour : un mot par ligne (son identifiant de carte), dans l\'ordre des jours.',
-  `# Premier jour : ${DEBUT}. Retirer une ligne décale les suivants d'un jour ; en ajouter une, c'est l'inverse.`,
-  '# Fabriqué par « npm run motdujour:choisir », puis retouché à la main.',
-  ...choisis.map((c) => c.id),
-  '',
-].join('\n'));
-console.log(`${choisis.length} mots écrits dans data/mot-du-jour.txt (${candidats.length} candidats).`);
+// Les mots à date fixe sont posés à leur date quand le premier jour est fixé (npm run motdujour:dater) ; en attendant,
+// ils sont placés comme si l'on commençait aujourd'hui.
+const ids = dater([...ordonnes, ...choisis].map((c) => c.id), new Date().toISOString().slice(0, 10));
+writeFileSync(SORTIE, ecrireCalendrier({ debut: null, ids }));
+console.log(`${ids.length} mots écrits dans data/mot-du-jour.txt (${candidats.length} candidats).`);

@@ -8,6 +8,7 @@ import { valeurDesLettres } from '../../src/partage/lettres.ts';
 import { lotDeLaCarte } from '../../src/partage/lots.ts';
 import type { CarteDetails } from '../../src/partage/types.ts';
 import { construireDefinitions, contientLeMot, couper, estRenvoi, estUneDefinitionVide, nettoyerTexte, sansReferences } from '../etapes/nettoyage.ts';
+import { dater, ecrireCalendrier, lireCalendrier } from '../etapes/motDuJour.ts';
 import { registresDeLaCarte, registresDuSens, sensActuelsDAbord } from '../etapes/registre.ts';
 
 describe('valeur des lettres', () => {
@@ -154,5 +155,19 @@ describe('textes des pages par mot', () => {
     const texte = 'par la racine *ǵeus (« goûter, apprécier »)Michiel de Vaan, Dictionary of Latin, Brill, série « Leiden », 2008, 825 pages, ISBN 978-90-04-16797-1, qui donne aussi l’anglais choose.';
     assert.equal(sansReferences(texte), 'par la racine *ǵeus (« goûter, apprécier ») qui donne aussi l’anglais choose.');
     assert.equal(sansReferences('Du latin (« fantôme »). Rien à retirer.'), 'Du latin (« fantôme »). Rien à retirer.');
+  });
+});
+
+describe('calendrier du mot du jour', () => {
+  const fixes = { '10-31': 'fantasmagorie', '12-25': 'cadeau' };
+  it('repose les mots à date fixe à leur date, sans changer l’ordre des autres', () => {
+    const ids = ['a', 'fantasmagorie', 'b', 'c', 'cadeau', 'd'];
+    assert.deepEqual(dater(ids, '2026-10-30', fixes), ['a', 'fantasmagorie', 'b', 'c', 'd', 'cadeau']);
+    assert.deepEqual(dater(ids, '2026-12-23', fixes), ['a', 'b', 'cadeau', 'c', 'd', 'fantasmagorie']);
+  });
+  it('garde la liste en relisant le fichier, avec ou sans premier jour', () => {
+    const ids = ['zakouski-nom', 'amour-nom'];
+    assert.deepEqual(lireCalendrier(ecrireCalendrier({ debut: null, ids })), { debut: null, ids });
+    assert.deepEqual(lireCalendrier(ecrireCalendrier({ debut: '2026-11-02', ids })), { debut: '2026-11-02', ids });
   });
 });
