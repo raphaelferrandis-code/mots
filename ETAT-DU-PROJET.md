@@ -2,6 +2,16 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (soir) — finitions, étape 3, lot B : des composants qui disent la même chose partout.** Un seul
+> champ de saisie (règle de base en `:where()` dans `styles.css` : 48 px, arrondi 3 px, fond de carte, contour
+> `--filet-fort`, focus cuivre ; les écrans ne gardent que la largeur, ou la police du nom d'équipe et du code). Onglets
+> soulignés de cuivre et boutons segmentés au fond cuivré partout (Profil, succès, compte). `.bouton--discret` et
+> `.bouton--danger` valables partout ; `.bouton-dentele` aligné sur `.btn-primary` (troisième masque, survol à la
+> souris) ; désactivé à 50 % au lieu du gris assombri. Messages aux couleurs de sens (`.message` et ses variantes,
+> `.bloc--alerte` en erreur, réponses juste et fausse, tampons, boutique, vestiaire). Fenêtre de confirmation à 8 px,
+> bouton cuivre ou rouge franc pour une action définitive. Arrondis : 3 px (papier, boutons, champs), 8 px (cartes,
+> fenêtres). La couleur de famille des succès s'appelle `--famille-succes` (`--succes` est la réussite).
+
 > **26 septembre 2026 (soir) — finitions, étape 3 « Un seul langage visuel », lot A : une seule palette.** Nuit, crème
 > et cuivre partout : `theme.css` porte les jetons de l'audit (`--nuit*`, `--texte-fort/texte/texte-doux/texte-discret`,
 > `--filet`, `--cuivre*`, couleurs de sens `--succes/--erreur/--avertissement/--info/--danger`), les anciens noms

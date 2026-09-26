@@ -61,7 +61,7 @@
 .devinette__indice { margin: 20px 0 0; max-width: 40em; font-family: var(--police-serif); font-style: italic; font-size: 22px; line-height: 1.4; color: var(--texte-fort); }
 .devinette__aide { margin: 8px 0 0; color: var(--texte-doux); font-size: 15px; }
 .devinette__formulaire { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
-.devinette__formulaire input { width: min(320px, 100%); min-height: 48px; padding: 0 14px; border: 1px solid var(--filet-fort); border-radius: 4px; background: rgba(233, 225, 208, .04); color: var(--texte-fort); font: inherit; font-size: 18px; }
+.devinette__formulaire input { width: min(320px, 100%); font-size: 18px; }
 .devinette__formulaire .btn-secondary { min-height: 48px; }
 .devinette__essais { color: var(--texte-doux); font-size: 15px; }
 .devinette__verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; margin: 22px 0 0; color: var(--texte-doux); }

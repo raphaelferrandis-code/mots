@@ -58,7 +58,7 @@
 
 .equipe__formulaire fieldset { display: flex; flex-direction: column; gap: 22px; }
 .equipe__nom { display: grid; gap: 8px; }
-.equipe__nom input { width: 100%; min-height: 52px; box-sizing: border-box; padding: 10px 14px; border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre); font: 700 1.25rem var(--police-serif); }
+.equipe__nom input { width: 100%; min-height: 52px; font: 700 1.25rem var(--police-serif); }
 .equipe .equipe__emblemes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .equipe__emblemes legend { margin-bottom: 12px; }
 .equipe__choix-embleme { position: relative; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px; box-sizing: border-box; border: 1.5px solid var(--filet); border-radius: 10px; cursor: pointer; }
@@ -71,7 +71,7 @@
 .panneau-equipe--edition .equipe__choix-embleme { flex-direction: column; gap: 6px; padding: 10px 4px 8px; font-size: 0.78rem; color: var(--encre-douce); }
 .equipe__inviter { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
 .equipe__inviter label { flex: 1; min-width: 180px; display: grid; gap: 8px; }
-.equipe__inviter select { width: 100%; min-height: 46px; padding: 10px; border: 1px solid var(--filet-fort); border-radius: 6px; background: var(--papier); color: var(--encre); font: inherit; }
+.equipe__inviter select { width: 100%; }
 
 /* Fonder une équipe : le formulaire et son aperçu. */
 .equipe__creation { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 36px; align-items: start; }

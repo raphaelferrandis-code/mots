@@ -63,21 +63,21 @@
 .vestiaire__action { width:100%; gap:24px; font-size:.85rem; }
 .vestiaire__annuler { padding:10px 16px; min-height:44px; margin-top:10px; font-size:.8rem; }
 .vestiaire__confirmation { display:grid; gap:10px; }
-.vestiaire__message { font-size:.75rem; color:#acd9c5; margin-top:12px; }
+.vestiaire__message { font-size:.85rem; color:var(--succes); margin-top:12px; }
 .vestiaire__message:empty { display:none; }
-.vestiaire__erreur { font-size:.8rem; color:#f0b1b1; margin-top:12px; }
+.vestiaire__erreur { font-size:.85rem; color:var(--erreur); margin-top:12px; }
 .vestiaire__collection { min-width:0; }
-.vestiaire__categories { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); border-bottom:1px solid #2a3a50; gap:8px; }
-.vestiaire__categories button { display:flex; flex-direction:column; align-items:center; gap:8px; background:none; border:0; border-bottom:2px solid transparent; color:#8198b1; padding:7px 2px 15px; font-size:.78rem; transition:color .2s; }
+.vestiaire__categories { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); border-bottom:1px solid var(--filet); gap:8px; }
+.vestiaire__categories button { display:flex; flex-direction:column; align-items:center; gap:8px; background:none; border:0; border-bottom:2px solid transparent; color:var(--texte-doux); padding:7px 2px 15px; font-size:.8rem; transition:color .2s; }
 .vestiaire__categories svg { width:25px; height:25px; }
-.vestiaire__categories button[aria-pressed=true] { color:#dce8f4; border-bottom-color:var(--selection); background:linear-gradient(0deg,color-mix(in srgb,var(--selection) 8%,transparent),transparent); }
-.vestiaire__categories button:hover { color:#ecf4ff; }
+.vestiaire__categories button[aria-pressed=true] { color:var(--texte-fort); border-bottom-color:var(--cuivre); background:linear-gradient(0deg,rgb(216 154 92 / 8%),transparent); }
+@media (hover: hover) { .vestiaire__categories button:hover { color:var(--texte-fort); } }
 .vestiaire__outils { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:24px 0 20px; }
 .vestiaire__outils h2 { font:500 1.15rem var(--police-serif); }
 .vestiaire__outils h2 small { margin-left:8px; color:#6e8ba9; font:.67rem var(--police-texte); }
 .vestiaire__outils [role=group] { display:flex; gap:4px; }
-.vestiaire__outils button { min-height:36px; padding:6px 10px; border:0; background:transparent; color:#899fb8; font-size:.71rem; border-radius:3px; }
-.vestiaire__outils button[aria-pressed=true] { color:#e2eaf6; background:#203248; }
+.vestiaire__outils button { min-height:40px; padding:6px 12px; border:1px solid transparent; background:transparent; color:var(--texte-doux); font-size:.8rem; border-radius:3px; }
+.vestiaire__outils button[aria-pressed=true] { color:var(--texte-fort); border-color:var(--cuivre); background:rgb(216 154 92 / 15%); }
 /* Chaque pièce a son propre logement ; la grille reste ouverte sur le fond du jeu. */
 .vestiaire__grille { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
 .cosmetique {
@@ -143,7 +143,7 @@
 .vestiaire__dialogue form { display:grid; gap:18px; }
 .vestiaire__dialogue .choix-pseudonyme { justify-items:stretch; }
 .vestiaire__dialogue .choix-pseudonyme .rangee-de-boutons { display:grid; }
-.vestiaire__dialogue input { width:100%; font:inherit; padding:12px; background:#0b1729; border:1px solid #58718b; color:#e3edfa; border-radius:3px; }
+.vestiaire__dialogue input { width:100%; }
 
 /* Les cadres et avatars s'animent eux-mêmes (SMIL) ; Gravures.tsx les fige hors sélection ou en animation réduite. */
 @keyframes eclat-grave { from { opacity:.55; filter:drop-shadow(0 0 0 transparent); } to { opacity:1; filter:drop-shadow(0 0 4px currentColor); } }

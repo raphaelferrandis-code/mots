@@ -22,7 +22,8 @@
 .btn-primary:not(:disabled):active { transform: translateY(1px); }
 /* Le masque dentelé rognerait un contour extérieur : le focus se dessine à l'intérieur. */
 .btn-primary:focus-visible { outline: none; filter: brightness(1.15); box-shadow: inset 0 0 0 3px var(--cuivre-encre); }
-.btn-primary:disabled, .btn-primary[aria-disabled='true'] { filter: grayscale(1) brightness(.55); cursor: not-allowed; transform: none; }
+/* Désactivé : à demi effacé, sans virer au gris (le gris assombri tombait à 2,9 pour 1, audit V14). */
+.btn-primary:disabled, .btn-primary[aria-disabled='true'] { opacity: .5; cursor: not-allowed; transform: none; }
 .btn-primary.sm { min-height: 48px; padding: 0 26px; font-size: 16px; }
 
 .btn-secondary {

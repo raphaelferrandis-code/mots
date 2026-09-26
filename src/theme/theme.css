@@ -66,8 +66,8 @@
   --police-mention: var(--police-etroite);
 
   /* Mesures */
-  --rayon: 12px;
-  --rayon-carte: 14px;
+  --rayon: 8px;                 /* cartes, fenêtres, menus (les boutons et les champs : 3 px, le papier) */
+  --rayon-carte: 8px;
   --marge: 16px;
   --largeur-jeu: 1200px;
   --largeur-collection: 1440px;

@@ -52,5 +52,5 @@
 .c-vignette[data-nature='Verbe'] { --losange: #b0404b; }
 .c-vignette[data-nature='Adjectif'] { --losange: #3c7a66; }
 .c-vignette[data-nature='Adverbe'] { --losange: #75519a; }
-.c-tampon--bon { color: #9ad9b2; rotate: -3deg; }
-.c-tampon--mauvais { color: #ff9b9b; rotate: 3deg; }
+.c-tampon--bon { color: var(--succes); rotate: -3deg; }
+.c-tampon--mauvais { color: var(--erreur); rotate: 3deg; }

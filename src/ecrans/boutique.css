@@ -6,8 +6,8 @@
 .boutique__reserve b { font-weight: 400; font-size: .9rem; white-space: nowrap; }
 .boutique__reserve strong { font: 700 1.6rem/1.1 var(--police-serif); color: var(--encre); font-variant-numeric: lining-nums tabular-nums; }
 
-.boutique__message { margin: 0 0 8px; padding: 10px 14px; border-left: 2px solid #9fdcb7; background: #132a2a66; color: #cdeedb; }
-.boutique__message--refus { border-color: #ff9d84; background: #3a1f1f55; color: #ffc8b8; }
+.boutique__message { margin: 0 0 8px; padding: 10px 14px; border-left: 3px solid var(--succes); background: rgb(111 212 154 / 8%); color: var(--texte-fort); }
+.boutique__message--refus { border-color: var(--erreur); background: rgb(255 123 123 / 8%); }
 
 .boutique__rubrique { display: grid; gap: 8px; }
 .boutique__rubrique h2 { margin: 0; }

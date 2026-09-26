@@ -247,10 +247,8 @@ button.carte-de-mode[aria-disabled='true']:not([aria-checked='true']) { opacity:
 .collection-deck { display: grid; gap: 12px; padding-top: 14px; border-top: 1px solid var(--filet); }
 .collection-deck h3 { margin: 0; font: 700 1.1rem var(--police-serif); color: var(--texte-fort); }
 .collection-deck__filtres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.collection-deck__filtres input, .collection-deck__filtres select {
-  min-height: 42px; min-width: 0; padding: 0 10px; border: 1px solid var(--filet-fort); border-radius: 4px;
-  background: #0f1c30; color: var(--texte-fort); font: inherit; font-size: 14.5px;
-}
+/* (Le champ du jeu, en plus compact dans le panneau du carnet.) */
+.collection-deck__filtres input, .collection-deck__filtres select { min-height: 44px; min-width: 0; padding: 0 12px; font-size: 15px; }
 .collection-deck__filtres input { grid-column: 1 / -1; }
 .collection-deck__grille { list-style: none; margin: 0; padding: 8px 8px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 14px 10px; }
 .collection-deck > .btn-secondary { justify-self: center; }

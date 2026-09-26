@@ -100,7 +100,7 @@
 .amis__fleche { margin-top: 30px; }
 .amis__choix { display: grid; gap: 16px; align-content: start; }
 .amis__choix label { display: grid; gap: 8px; }
-.amis__choix input, .amis__choix select { width: 100%; min-height: 44px; min-width: 0; padding: 10px; color: var(--encre); background: var(--papier); border: 1px solid var(--filet-fort); border-radius: 6px; font: inherit; }
+.amis__choix input, .amis__choix select { width: 100%; min-width: 0; }
 .amis__apercu { display: grid; justify-items: center; text-align: center; }
 .amis fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 

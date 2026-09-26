@@ -2,5 +2,5 @@
 .choix-pseudonyme h2 { font-size: 1.2rem; }
 .choix-pseudonyme p { max-width: 60ch; }
 .choix-pseudonyme label { display: grid; gap: 8px; width: min(100%, 420px); }
-.choix-pseudonyme input { width: 100%; min-width: 0; min-height: 44px; padding: 10px; color: var(--encre); background: var(--papier); border: 1px solid var(--filet-fort); border-radius: 6px; font: inherit; }
+.choix-pseudonyme input { width: 100%; min-width: 0; }
 .choix-pseudonyme__erreur { color: var(--erreur); }

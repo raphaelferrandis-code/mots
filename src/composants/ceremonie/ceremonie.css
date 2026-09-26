@@ -164,19 +164,20 @@ body.ceremonie-ouverte { overflow: hidden; }
 .c-lien:hover { color: var(--texte-fort); }
 .c-liens { display: flex; gap: 10px 22px; justify-content: center; flex-wrap: wrap; }
 
-/* Le bouton à bords dentelés de la maquette, et sa variante à filet. */
+/* Le bouton à bords dentelés de la maquette (le même que .btn-primary, boutons.css), et sa variante à filet. */
 .bouton-dentele {
   height: 58px; padding: 0 36px; display: inline-flex; align-items: center; justify-content: center;
   border: 0; cursor: pointer; font-family: var(--police-douce); font-weight: 600; font-size: 17px; letter-spacing: .01em; text-decoration: none;
   color: #2a1605; background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43);
-  -webkit-mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x;
-  mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x;
+  /* Deux rangées de dents et le milieu plein : sans lui, un trait pouvait apparaître au raccord (audit, V18). */
+  -webkit-mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x, linear-gradient(#000 0 0) 50% 50% / 100% calc(100% - 12px) no-repeat;
+  mask: radial-gradient(circle 4.5px at 50% 0, #0000 96%, #000) 50% 0 / 15px 51% repeat-x, radial-gradient(circle 4.5px at 50% 100%, #0000 96%, #000) 50% 100% / 15px 51% repeat-x, linear-gradient(#000 0 0) 50% 50% / 100% calc(100% - 12px) no-repeat;
   transition: transform .2s, filter .2s;
 }
-.bouton-dentele:hover { transform: translateY(-2px); filter: brightness(1.07); }
-.bouton-dentele:active { transform: translateY(1px); }
+@media (hover: hover) { .bouton-dentele:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.07); } }
+.bouton-dentele:not(:disabled):active { transform: translateY(1px); }
 .bouton-dentele:focus-visible { outline: none; filter: brightness(1.15); box-shadow: inset 0 0 0 3px #2a1605; }
-.bouton-dentele:disabled { filter: grayscale(1) brightness(.6); cursor: not-allowed; transform: none; }
+.bouton-dentele:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .bouton-dentele--filet { background: none; color: var(--cuivre-clair); -webkit-mask: none; mask: none; border: 1px solid rgba(216, 154, 92, .6); }
 .bouton-dentele--filet:focus-visible { outline: 2px solid var(--cuivre-clair); box-shadow: none; }
 /* Sur un téléphone, deux boutons empilés sous la feuille ne doivent pas toucher le plateau. */

@@ -1,7 +1,8 @@
-/* La fenêtre « Es-tu sûr ? » du jeu (Confirmation.tsx) : papier bleu nuit, bord dentelé comme un timbre, orange postal. */
+/* La fenêtre « Es-tu sûr ? » du jeu (Confirmation.tsx) : papier nuit, filet pointillé en haut comme une dentelure,
+   boutons du jeu (le cuivre pour confirmer ; le rouge de sens quand l'action détruit). */
 .confirmation {
   width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto;
-  border: 1px solid var(--filet); border-radius: 18px; background: var(--carte-fond); color: var(--encre);
+  border: 1px solid var(--filet); border-radius: 8px; background: var(--carte-fond); color: var(--encre);
   box-shadow: 0 28px 70px rgb(0 0 0 / 55%); font-family: var(--police-douce);
 }
 .confirmation::backdrop { background: rgb(3 8 16 / 72%); backdrop-filter: blur(4px); }
@@ -13,20 +14,19 @@
   background: linear-gradient(90deg, var(--filet) 55%, transparent 0) top / 8px 1px repeat-x;
 }
 .confirmation__surtitre { margin: 0 0 8px; font: 600 0.8rem/1.2 var(--police-mention); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
-.confirmation--danger .confirmation__surtitre { color: #ff9f8a; }
+.confirmation--danger .confirmation__surtitre { color: var(--danger); }
 .confirmation__titre { margin: 0 0 10px; font: italic 700 1.5rem/1.2 var(--police-serif); overflow-wrap: anywhere; }
 .confirmation__message { margin: 0 0 22px; color: var(--encre-douce); line-height: 1.5; }
 .confirmation__boutons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-.confirmation__bouton { min-height: 48px; padding: 0 20px; border-radius: 12px; font: 600 1rem/1.2 var(--police-douce); cursor: pointer; transition: background-color .15s, border-color .15s; }
-.confirmation__bouton--annuler { border: 1.5px solid var(--filet); background: none; color: var(--encre); }
-.confirmation__bouton--confirmer { border: 0; background: var(--accent); color: var(--accent-texte); box-shadow: 0 8px 22px rgb(216 154 92 / 35%); }
-.confirmation--danger .confirmation__bouton--confirmer { background: #ef7a62; box-shadow: 0 8px 22px rgb(239 122 98 / 30%); }
+.confirmation__bouton { min-height: 48px; padding: 0 22px; border-radius: 3px; font: 600 1rem/1.2 var(--police-douce); cursor: pointer; transition: background-color .15s, border-color .15s, filter .15s; }
+.confirmation__bouton--annuler { border: 1px solid rgb(233 225 208 / 28%); background: none; color: var(--texte-doux); }
+.confirmation__bouton--confirmer { border: 0; background: linear-gradient(180deg, #f6d3a2, #df9f63 52%, #c47d43); color: var(--cuivre-encre); }
+.confirmation--danger .confirmation__bouton--confirmer { background: var(--danger-arme); color: #fff; }
 .confirmation__bouton:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
 @media (hover: hover) {
-  .confirmation__bouton--annuler:hover { border-color: var(--filet-fort); background: var(--papier-fonce); }
-  .confirmation__bouton--confirmer:hover { background: var(--accent-survol); }
-  .confirmation--danger .confirmation__bouton--confirmer:hover { background: #ff9580; }
+  .confirmation__bouton--annuler:hover { border-color: rgb(233 225 208 / 45%); color: var(--texte-fort); }
+  .confirmation__bouton--confirmer:hover { filter: brightness(1.07); }
 }
 @media (prefers-reduced-motion: reduce) { .confirmation[open] { animation: none; } }
 [data-animations-reduites] .confirmation[open] { animation: none; }
