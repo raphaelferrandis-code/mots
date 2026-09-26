@@ -95,6 +95,16 @@ export function PanneauDuDeck({ sauvegarde, enEdition, onEdition }: { sauvegarde
   };
   const vider = useActionArmee(() => modifier([], 'Carnet vidé'));
 
+  // Le premier carnet se compose tout seul : un nouveau venu qui a ses dix timbres n'a pas à chercher « Composer pour
+  // moi » (il lisait « Il manque 10 timbres à ton carnet » avec 18 timbres en poche). Une seule fois, avant le premier
+  // duel ; « Annuler » le vide à nouveau (audit de finition du 26/09/2026).
+  const compose = useRef(false);
+  useEffect(() => {
+    if (compose.current || !cartes || deck.length > 0 || possedees.length < TAILLE || sauvegarde.duels.joues > 0) return;
+    compose.current = true;
+    modifier(meilleurDeck(possedees, REGLES).map((c) => c.id), 'Carnet composé avec tes timbres les plus forts');
+  }, [cartes, deck.length, possedees, sauvegarde.duels.joues]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Arrivé en édition (#/deck, « Modifier mon deck ») : sur téléphone, le deck est sous les réglages, on l'amène à l'écran.
   const amene = useRef(false);
   useEffect(() => {

@@ -37,6 +37,12 @@
   background: none; color: var(--prep-texte-doux); font: 500 15.5px var(--police-douce); cursor: pointer; white-space: nowrap;
 }
 .preparation__modes button[aria-selected='true'] { color: var(--prep-papier); border-bottom-color: var(--prep-cuivre); }
+/* Sur un téléphone, les quatre onglets passent sur deux lignes : « Défier un ami » était coupé à droite, sans que
+   rien ne signale qu'on pouvait faire défiler (audit de finition du 26/09/2026). */
+@media (max-width: 560px) {
+  .preparation__modes { display: grid; grid-template-columns: 1fr 1fr; overflow-x: visible; }
+  .preparation__modes button { padding-inline: 8px; }
+}
 @media (hover: hover) { .preparation__modes button:hover { color: var(--prep-papier); } }
 .preparation__modes button:focus-visible { outline: 2px solid var(--prep-cuivre-clair); outline-offset: -2px; }
 
@@ -65,6 +71,8 @@
 .adversaire[aria-checked='true'] .adversaire__sceau { border-color: var(--prep-cuivre); color: var(--prep-cuivre-clair); background: radial-gradient(circle, rgb(216 154 92 / 20%), transparent 70%); }
 .adversaire__texte { display: grid; gap: 6px; }
 .adversaire__nom { font: 700 1.3rem var(--police-serif); }
+/* « Conseillé pour débuter », sous « Facile », jusqu'à la première victoire. */
+.adversaire__conseil { display: block; margin-top: 4px; font: 600 11.5px/1.3 var(--police-douce); letter-spacing: .08em; text-transform: uppercase; color: var(--prep-cuivre); }
 .adversaire__phrase { color: var(--prep-texte-doux); font-size: 14px; line-height: 1.45; }
 .adversaire__gain { margin-top: auto; display: flex; align-items: baseline; gap: 6px; }
 .adversaire__gain b { font: 900 30px / 1 var(--police-serif); color: var(--prep-cuivre-clair); }

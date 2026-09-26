@@ -15,7 +15,8 @@ type Agir = (action: () => Promise<void>, message: string) => Promise<boolean>;
 const signe = signeGrave;
 const jourCourt = (le: number) => new Date(le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 const trait = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
-const ICONE_DEFI = <svg viewBox="0 0 24 24" aria-hidden="true" {...trait}><path d="m5 5 14 14M19 5 5 19" /></svg>;
+// Deux épées croisées, comme l’onglet Duel (une simple croix se lisait « fermer » : audit de finition du 26/09/2026).
+const ICONE_DEFI = <svg viewBox="0 0 24 24" aria-hidden="true" {...trait}><path d="m5 4 10 10M19 4 9 14M4 17l3 3M20 17l-3 3M6 15l3 3M18 15l-3 3" /></svg>;
 const ICONE_COURONNE = <svg viewBox="0 0 24 24" aria-hidden="true" {...trait}><path d="M3 18h18M4 15 3 6l5 4 4-6 4 6 5-4-1 9z" /></svg>;
 
 export function Equipe() {

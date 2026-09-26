@@ -30,5 +30,6 @@
 @keyframes recompense-entree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes recompense-sceau { from { opacity: 0; transform: scale(1.15) rotate(-12deg); } to { opacity: 1; transform: none; } }
 @keyframes recompense-gravure { from { clip-path: inset(0 100% 0 0); opacity: .3; } to { clip-path: inset(0); opacity: 1; } }
-@media (max-width: 600px) { .recompenses { bottom: calc(78px + env(safe-area-inset-bottom)); right: 12px; width: min(380px, calc(100% - 24px)); padding: 8px 6px 8px 10px; gap: 8px; } }
+/* Sous 768 px, la barre de navigation est en bas : la notification se pose au-dessus d’elle, jamais dessus. */
+@media (max-width: 767px) { .recompenses { bottom: calc(var(--hauteur-navigation, 64px) + 14px + env(safe-area-inset-bottom)); right: 12px; width: min(380px, calc(100% - 24px)); padding: 8px 6px 8px 10px; gap: 8px; } }
 @media (prefers-reduced-motion: reduce) { .recompenses, .recompense, .recompense *, .recompense *::before, .gain-duel * { animation: none !important; } }

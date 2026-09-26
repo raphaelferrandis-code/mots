@@ -72,6 +72,7 @@ fichiers. Ses consignes de travail sont en bas de cette page.
 | Points secondaires de l'audit : pas de doublon après une coupure de réseau, onglets reliés, confirmations aux couleurs du jeu, compteur d'Encre vers le marché, chargement 2,5 fois plus léger, marge de 1,5 s pour le réseau, sécurité (CSP), rangement | **En ligne** (étape 12 faite) |
 | Défi contre un joueur simulé : plus moyen de viser le plus faible (le serveur n'accepte que ceux qu'il propose) | **En ligne** (étape 13 faite) |
 | Finitions, chantier 1 « Dire vrai partout » (26 septembre) : « Protège ta collection » au lieu du faux rappel d'export, « Supprimer mon compte » dit enfin ce qu'il fait, Mon compte réunit connexion, code de secours et suppression, erreurs en français, plus de fausse annonce de succès, Confidentialité exacte, « Album » et « carnet » partout, définitions sans codes de couleur | **En ligne** ; étape 18 à faire (les définitions du serveur des duels) |
+| Finitions, fin de l'étape 1 (26 septembre) : les premiers pas (phrase d'accueil, carnet composé tout seul, premier duel en Facile, bouton visible sur téléphone), logo tout de suite au démarrage, fil d'activité en pause, formule « Écrin » | **En ligne** |
 
 ---
 

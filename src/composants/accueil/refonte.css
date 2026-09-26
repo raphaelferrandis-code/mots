@@ -18,18 +18,24 @@
 .duels-bureau .duels-bureau__ligue { margin: 14px 0 0; font-size: 14px; }
 .comptoir__lien--doux { color: var(--c-texte-doux); text-decoration-color: rgba(167, 177, 196, .45); }
 
-.fil {
-  position: relative; width: 100%; max-width: 100vw; overflow: hidden; border-top: 1px solid var(--c-ligne); padding: 15px 0 16px;
+.fil { position: relative; width: 100%; max-width: 100vw; display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--c-ligne); padding: 15px 0 16px; }
+.fil__fenetre {
+  flex: 1; min-width: 0; overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
+/* Le fil s’arrête au survol et au bouton « Pause », que l’on atteint au clavier (WCAG 2.2.2 ; il ne s’arrêtait jamais). */
+.fil:hover .fil__piste, .fil[data-pause="true"] .fil__piste { animation-play-state: paused; }
+.fil__pause { flex: none; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--c-texte-doux); font: 500 12.5px var(--police-douce); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.fil__pause:hover, .fil__pause[aria-pressed="true"] { color: var(--c-papier); }
 .fil__piste { display: flex; width: max-content; animation: fil-defile 80s linear infinite; }
 .fil__evenement { display: flex; align-items: center; }
 .fil__evenement > span { padding: 0 24px; white-space: nowrap; font-family: var(--police-serif); font-style: italic; font-size: 16px; color: var(--c-texte-doux); }
 .fil__evenement b { font-weight: 700; font-style: normal; color: var(--c-papier); }
 .fil__evenement i { font-style: normal; color: var(--c-cuivre); }
 @keyframes fil-defile { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .fil__piste { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .fil__piste { animation: none; } .fil__pause { display: none; } }
 :root[data-animations-reduites] .fil__piste { animation: none; }
+:root[data-animations-reduites] .fil__pause { display: none; }
 
 /* La devinette du jour (DevinetteDuJour.tsx) : sous le comptoir, dans le même bandeau à filet. */
 .devinette { display: block; }

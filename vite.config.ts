@@ -51,6 +51,24 @@ export default defineConfig(({ mode }) => {
     apply: 'build',
     transformIndexHtml: () => [{ tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: politiqueDeSecurite() }, injectTo: 'head-prepend' }],
   }, {
+    // L'écran d'attente d'index.html se peint tout de suite : les feuilles de style du jeu passent après lui, dans le
+    // <body>, à l'endroit marqué. Dans le <head>, elles empêchaient le navigateur de peindre quoi que ce soit (1,7 s
+    // d'écran blanc puis vide sur un téléphone en 4G : audit de finition du 26/09/2026). Le jeu, lui, attend toujours
+    // toutes les feuilles de la page avant de s'exécuter (un script de module attend les feuilles de style déjà lues) :
+    // jamais d'écran sans style.
+    name: 'attente-d-abord',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, contexte) {
+        const marque = '<!-- feuilles-du-jeu -->';
+        if (!contexte.filename.endsWith('index.html') || !html.includes(marque)) return html;
+        const feuilles = html.match(/<link rel="stylesheet"[^>]*>/g) ?? [];
+        const sansFeuilles = feuilles.reduce((page, feuille) => page.replace(feuille, ''), html);
+        return sansFeuilles.replace(marque, feuilles.join('\n    '));
+      },
+    },
+  }, {
     name: 'version-paiements',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'paiements-version.json', source: JSON.stringify({

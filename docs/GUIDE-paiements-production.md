@@ -17,6 +17,11 @@ mode production simulent Stripe : aucun débit réel n'a été effectué.
 Le serveur vérifie le mode, montant, devise, état actif et périodicité avant un nouveau
 Checkout. Les deux fiches de tarifs ont été vérifiées dans le Dashboard de production.
 
+**Depuis le 26/09/2026, l'offre « Mon album » s'appelle « Écrin » dans le jeu** (décision de Raphaël : l'onglet
+s'appelle désormais « Album »). Le paiement ne dépend que des identifiants ci-dessus. Avant d'ouvrir les achats :
+renommer aussi le produit dans le Dashboard Stripe (nom affiché sur la page de paiement et les reçus), et régénérer
+les quatre fonctions de paiement (leur paquet embarque encore l'ancien nom, sans effet sur le paiement).
+
 ## Isolation
 
 | Élément | Test (conservé) | Production |

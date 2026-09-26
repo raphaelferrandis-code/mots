@@ -33,7 +33,7 @@ export function PaiementsTest() {
     {retour === 'annule' && <p>Tu as quitté le paiement. Tu peux reprendre avec le même bouton.</p>}
     {paiementsDeTest && !pret && <p>Avant l’achat, confirme ton âge en cliquant sur « Acheter » dans une formule et <a href={lien({ ecran: 'compte' })}>crée ton code de secours dans Mon compte</a>.</p>}
     <div className="rangee-de-boutons">
-      {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || formule.achatUnique} onClick={() => void lancer('achat', 'necessaire')}>Tester Mon album · 5,99 €</button>}
+      {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || formule.achatUnique} onClick={() => void lancer('achat', 'necessaire')}>Tester Écrin · 5,99 €</button>}
       {paiementsDeTest && <button className="bouton" disabled={occupe || !pret || abonnementActif(formule)} onClick={() => void lancer('achat', 'collectionneur')}>Tester Collectionneur · 4,99 €/mois</button>}
       <button className="bouton" disabled={occupe} onClick={() => void lancer('portail')}>Gérer mon abonnement</button>
       <button className="bouton" disabled={occupe} onClick={() => void lancer('synchroniser')}>Vérifier mes avantages</button>

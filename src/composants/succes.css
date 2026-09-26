@@ -1,5 +1,5 @@
 .vestiaire__vues { display:flex; gap:1.5rem; align-self:stretch; align-items:center; }
-.vestiaire__vues button { padding:.7rem 0; border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--texte-secondaire); }
+.vestiaire__vues button { padding:.7rem 0; border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--encre-douce); } /* (« --texte-secondaire » n’existait pas : les deux onglets avaient la même couleur) */
 .vestiaire__vues button[aria-pressed="true"] { color:#e0e8f2; border-color:#b9d4de; }
 .vestiaire__vues small { margin-left:.5rem; font-size:.72rem; color:#9fb8ce; }
 .succes { --succes:#aacbce; padding-top:1rem; }

@@ -96,6 +96,8 @@ export function Preparation(props: Props) {
   const { sauvegarde, deck, mode, onMode, niveau, onNiveau, enPreparation, bloque, erreur, incident } = props;
   const [titre, sousTitre] = TITRES[mode];
   const manque = REGLES.tailleDuDeck - deck.length;
+  // Jusqu’à sa première victoire, le joueur est guidé : Facile conseillé, règles ouvertes (les trois premiers duels).
+  const debutant = sauvegarde.duels.gagnes === 0;
 
   // La récompense du jour : les victoires restantes à pleine récompense, puis la part réduite.
   const victoiresDuJour = sauvegarde.duels.jour === jourDe(Date.now()) ? sauvegarde.duels.victoiresDuJour : 0;
@@ -219,7 +221,7 @@ export function Preparation(props: Props) {
                 {NIVEAUX.map((n, rang) => (
                   <button key={n} type="button" role="radio" className="adversaire" aria-checked={niveau === n} tabIndex={niveau === n ? 0 : -1} onClick={() => onNiveau(n)}>
                     <span className="adversaire__sceau" aria-hidden="true">{Array.from({ length: rang + 1 }, (_, i) => <Plume key={i} />)}</span>
-                    <span className="adversaire__texte"><strong className="adversaire__nom">{n}</strong><span className="adversaire__phrase">{NIVEAUX_DECRITS[n]}</span></span>
+                    <span className="adversaire__texte"><strong className="adversaire__nom">{n}{n === 'Facile' && debutant && <small className="adversaire__conseil">Conseillé pour débuter</small>}</strong><span className="adversaire__phrase">{NIVEAUX_DECRITS[n]}</span></span>
                     <span className="adversaire__gain"><b>+{gain(REGLES.encreParVictoire[n])}</b><small>Encre</small></span>
                     <span className="adversaire__coche" aria-hidden="true"><Coche /></span>
                   </button>
@@ -318,14 +320,15 @@ export function Preparation(props: Props) {
           <p className="appel__legende" id="legende-preparation">{legende}</p>
         </div>
 
-        {(mode === 'entrainement' || mode === 'ami') && <details className="preparation__regles">
+        {(mode === 'entrainement' || mode === 'ami') && <details className="preparation__regles" open={sauvegarde.duels.joues < 3 || undefined}>
             <summary>Règles du duel</summary>
             <ul>
               <li><strong>Format :</strong> {REGLES.pointsDeVie} points de vie, {REGLES.tailleDuDeck} timbres, {REGLES.cartesEnMain} en main. Chaque timbre se joue une fois.</li>
               <li><strong>Manche :</strong> l’un pose son mot face cachée (nature, attaque, défense), l’autre lui oppose le sien ; le mot se retourne à la parade. En Facile, l’ordinateur pose le premier ; sinon, chacun son tour. Tu frappes le premier ; s’il survit, il riposte.</li>
               <li><strong>Parade :</strong> retrouve la définition de son mot pour diviser par deux les dégâts qu’il t’inflige.</li>
               <li><strong>Dégâts :</strong> attaque + bonus − moitié de la défense adverse (au moins {REGLES.degatsMinimum}).</li>
-              <li><strong>Bonus :</strong> +{REGLES.bonusDeType} pour l’avantage de type ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
+              <li><strong>Bonus :</strong> +{REGLES.bonusDeType} pour l’avantage de type (le nom bat l’adjectif, l’adjectif bat le verbe, le verbe bat le nom ; l’adverbe est neutre) ; +{REGLES.bonusDeFaction} pour deux mots de même origine à la suite (+{REGLES.bonusDePetiteFaction} pour une petite langue).</li>
+              <li><strong>Rareté :</strong> plus un timbre est rare, plus il frappe fort et mieux il se défend ; l’ordinateur a aussi plus de mal à parer les mots rares.</li>
               <li><strong>Victoire :</strong> l’adversaire tombe à 0. Sinon, les points de vie départagent après {REGLES.manchesMaximum} manches.</li>
               <li><strong>Maîtrise :</strong> {REGLES.reussitesPourLaMaitrise} bonnes définitions d’un mot que tu possèdes lui donnent le cachet « Maîtrisé ».</li>
             </ul>

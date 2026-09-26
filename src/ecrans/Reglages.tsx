@@ -82,6 +82,7 @@ export function Reglages() {
 
         <section className="rubrique">
           <h2>Les mots de ta collection</h2>
+          <p className="texte-doux petit">Tous les mots de la langue sont dans le jeu. Masqués, les mots familiers ou injurieux ne sortent plus des paquets et disparaissent de ton album et de tes duels.</p>
           {OPTIONS_CONTENU.map((option) => (
             <label key={option.cle} className="option">
               <input type="checkbox" checked={sauvegarde.reglages[option.cle]} onChange={(e) => changerUnReglage(option.cle, e.target.checked)} />

@@ -45,12 +45,18 @@ export function Accueil() {
     setReporteA(ouverts);
   };
   const deck = sauvegarde.deck.filter((id) => id in sauvegarde.cartes).length;
+  // Ce qu'est le jeu, dit au nouveau venu jusqu'à son premier duel ; et, dès l'arrivée, que tous les mots y sont
+  // (décisions de Raphaël du 26/09/2026 : les mots grossiers restent visibles par défaut, et le jeu le dit).
+  const accroche = sauvegarde.duels.joues === 0 && <>
+    <p>Chaque timbre est un vrai mot de la langue française. Ouvre tes paquets, complète ton album, et gagne des duels en retrouvant les définitions.</p>
+    <p>Tous les mots y sont, même familiers ou grossiers : tu peux les masquer dans les <a href={lien({ ecran: 'reglages' })}>Réglages</a>.</p>
+  </>;
 
   return (
     <main className="ecran ecran--large accueil-refonte">
       <FondAnime />
       <NouvellesDuParrainage />
-      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} />
+      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} />
       <DevinetteDuJour />
       <FilDActivite />
       {rappelerLExport && (

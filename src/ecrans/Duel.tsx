@@ -71,7 +71,9 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
 
   const xpAuDebut = useRef(0);
   const [mode, setMode] = useState<ModeDuSalon>('entrainement');
-  const [niveau, setNiveau] = useState<Niveau>('Normal');
+  // Jusqu'à sa première victoire, le joueur commence en Facile : l'ordinateur y joue au hasard, et le jeu montre les
+  // dégâts prévus (décision de Raphaël du 26/09/2026 ; Normal, sans ces aides, décourageait les débutants).
+  const [niveau, setNiveau] = useState<Niveau>(() => (sauvegarde && sauvegarde.duels.gagnes === 0 ? 'Facile' : 'Normal'));
   // #/deck ouvre la préparation avec le deck en édition (depuis la fin d'un duel, l'album, les amis…).
   const [deckEnEdition, setDeckEnEdition] = useState(editionDuDeck);
   const [terrain, setTerrain] = useState<Terrain | null>(null);

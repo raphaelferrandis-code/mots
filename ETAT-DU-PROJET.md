@@ -2,6 +2,23 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **26 septembre 2026 (nuit) — finitions, fin de l'étape 1 : les premiers pas.** Décisions de Raphaël : la formule
+> « Mon album » s'appelle **« Écrin »** (l'onglet est « Album » ; le paiement ne dépend que des identifiants Stripe :
+> renommer aussi le produit Stripe avant d'ouvrir les achats, voir docs/GUIDE-paiements-production.md) ; documents
+> internes hors du dépôt public : plus tard. Fait : sur l'accueil, tant que le joueur n'a joué aucun duel, **une phrase
+> dit ce qu'est le jeu**, et que **tous les mots y sont, même grossiers, masquables** dans les Réglages ; sur téléphone,
+> paquet et titre plus petits : **« Ouvrir un paquet » se voit sans défiler** (de 320 à 430 px ; sur un écran bas, la
+> présentation passe sous le bouton) ; **le premier carnet se compose tout seul** (`PanneauDuDeck`, une fois, avant le
+> premier duel, « Annuler » possible) ; **Facile présélectionné** jusqu'à la première victoire, avec « Conseillé pour
+> débuter » ; **30 s par définition** pour toute nouvelle sauvegarde ; règles ouvertes aux trois premiers duels, avec le
+> triangle des types et la rareté ; « Il a posé un nom. Quel timbre lui opposes-tu ? » (plus de « son nom » ambigu) ; le
+> bandeau de parrainage envoie d'abord aux paquets un nouveau venu sans timbres. Démarrage : les feuilles de style passent
+> après l'écran d'attente (greffon « attente-d-abord » de vite.config.ts) : **logo dès 0,4 s** au lieu de 1,7 s d'écran
+> blanc, et le jeu attend toujours ses styles ; **public/demarrage.js** propose « Recharger la page » au bout de 12 s si
+> le jeu ne démarre pas ; délai de 30 s et « Réessayer » pour le catalogue de l'accueil. Petits défauts : icône « Défier »
+> en épées croisées, onglets du Profil de deux couleurs, notification des récompenses au-dessus de la barre du bas
+> jusqu'à 767 px, **fil d'activité avec « Pause »** (et arrêt au survol), onglets du Duel en 2 × 2 sur téléphone.
+
 > **26 septembre 2026 (soir) — finitions, chantier 1 « Dire vrai partout ».** Suite de l'audit de finition du 26/09
 > (synthèse privée remise à Raphaël : 8 chantiers). Décisions de Raphaël : **« Album » partout** (onglet, adresse
 > `#/album`) ; **« carnet » au lieu de « deck »** à l'écran (adresse `#/carnet` ; `#/collection` et `#/deck` marchent

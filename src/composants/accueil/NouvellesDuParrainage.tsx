@@ -10,6 +10,8 @@ import { secoursEtParrainage } from '../../services/compte.ts';
 import { oublierLesFilleulsRecompenses } from '../../services/invitation.ts';
 import { lireMonParrainage } from '../../services/partie.ts';
 import { useChargement } from '../useChargement.ts';
+import { usePartie } from '../usePartie.ts';
+import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 
 const CLE_BIENVENUE = 'mots.bienvenue-vue';
 const CLE_AIDE = 'mots.aide-au-parrain-vue';
@@ -25,6 +27,8 @@ function texteDuLien(n: Nouvelle): string {
 
 export function NouvellesDuParrainage() {
   const parrainage = useChargement(() => (secoursEtParrainage ? lireMonParrainage() : Promise.resolve(null)), 'parrainage-accueil');
+  const partie = usePartie();
+  const pret = partie.etat === 'prete' && Object.keys(partie.sauvegarde.cartes).length >= EQUILIBRAGE.duel.tailleDuDeck;
   const [bienvenueVue, setBienvenueVue] = useState(() => dejaVue(CLE_BIENVENUE));
   const [aideVue, setAideVue] = useState(() => dejaVue(CLE_AIDE));
   const [merciVu, setMerciVu] = useState(false);
@@ -36,7 +40,7 @@ export function NouvellesDuParrainage() {
   };
   const donnees = merciVu ? { ...parrainage.donnees, nouveaux: [] } : parrainage.donnees;
   return <>
-    {nouvellesDuParrainage(donnees, bienvenueVue, aideVue).map((n) => (
+    {nouvellesDuParrainage(donnees, bienvenueVue, aideVue, pret).map((n) => (
       <aside key={n.cle} className="accueil__rappel" role="status">
         <div><h2>{n.titre}</h2><p>{n.texte}</p></div>
         <div className="rangee-de-boutons">

@@ -59,8 +59,8 @@ export const prixEnClair = (etage: Etage): string => `${etage.prix.toFixed(2).re
 // Même règle que le serveur de paiement (majeur, supabase/functions/_shared/paiements.ts).
 export const peutPayer = (f: Formule, maintenant = Date.now()): boolean => f.anneeDeNaissance !== null && f.moisDeNaissance !== null
   && Date.UTC(f.anneeDeNaissance + P.ageMinimumPourPayer, f.moisDeNaissance, 1) <= maintenant;
-// Ce qu'un joueur perdrait en effaçant son compte : ses achats (Mon album, un abonnement qui court encore).
+// Ce qu'un joueur perdrait en effaçant son compte : ses achats (Écrin, un abonnement qui court encore).
 export const achatsEnCours = (f: Formule, maintenant = Date.now()): boolean => f.achatUnique || abonnementActif(f, maintenant);
 export function nomDeLaFormule(f: Formule): string | null {
-  return [f.achatUnique ? 'Mon album' : '', abonnementActif(f) ? 'Collectionneur' : ''].filter(Boolean).join(' + ') || null;
+  return [f.achatUnique ? 'Écrin' : '', abonnementActif(f) ? 'Collectionneur' : ''].filter(Boolean).join(' + ') || null;
 }

@@ -238,7 +238,7 @@ var e = {
 		formules: [{
 			cle: "necessaire",
 			niveau: 1,
-			nom: "Mon album",
+			nom: "Écrin",
 			prix: 5.99,
 			parMois: !1
 		}, {

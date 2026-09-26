@@ -38,6 +38,10 @@ export type EtapeDePartie = Exclude<Etape, { nom: 'accueil' } | { nom: 'preparat
 
 const pluriel = (n: number, mot: string): string => `${n} ${mot}${n > 1 ? 's' : ''}`;
 const article = (nature: string): string => nature.toLowerCase();
+// « le nom adverse », « l’adjectif adverse » : jamais « son nom », qu’on lisait comme le nom de l’adversaire (audit du 26/09/2026).
+const leMot = (nature: string): string => (/^[aeiouy]/i.test(nature) ? `l’${article(nature)}` : `le ${article(nature)}`);
+const auMot = (nature: string): string => (/^[aeiouy]/i.test(nature) ? `à l’${article(nature)}` : `au ${article(nature)}`);
+const majuscule = (texte: string): string => texte.charAt(0).toUpperCase() + texte.slice(1);
 
 type Props = {
   sauvegarde: Sauvegarde;
@@ -150,12 +154,11 @@ export function Partie(p: Props) {
   if (etape.nom === 'choix' && adverse && !arrive) {
     phrase = <>{nomAdverse} pose son mot…</>;
   } else if (etape.nom === 'choix') {
-    const enFace = adverse && <>son <b>{article(adverse.type)}</b></>;
     if (!choisie) {
-      phrase = enFace ? <>À toi. Quel mot opposes-tu à {enFace} ?</> : <>À toi de poser le premier.</>;
+      phrase = adverse ? <>Il a posé un <b>{article(adverse.type)}</b>. Quel timbre lui opposes-tu ?</> : <>À toi de poser le premier.</>;
       bouton = <button type="button" className="btn-primary sm" disabled>Choisis un timbre dans ta main</button>;
     } else {
-      phrase = prevision ? <PhraseDePrevision prevision={prevision} /> : enFace ? <>Prêt à opposer <b>« {choisie.mot} »</b> à {enFace} ?</> : <>Prêt à poser <b>« {choisie.mot} »</b> ?</>;
+      phrase = prevision ? <PhraseDePrevision prevision={prevision} /> : adverse ? <>Prêt à opposer <b>« {choisie.mot} »</b> {auMot(adverse.type)} adverse ?</> : <>Prêt à poser <b>« {choisie.mot} »</b> ?</>;
       detail = prevision && <DetailDuCalcul carte={choisie} prevision={prevision} />;
       bouton = <button type="button" className="btn-primary sm" disabled={p.bloque} onClick={() => p.onJouer(choisie)}>Jouer « {choisie.mot} »</button>;
     }
@@ -177,14 +180,14 @@ export function Partie(p: Props) {
   if (aides && adverse && etape.nom === 'choix' && arrive) {
     if (choisie) {
       const rapport = rapportDeType(choisie.type, adverse.type);
-      indice = rapport === 'pour' ? <p className="ring__indice" data-ton="bon">Ton {article(choisie.type)} bat son {article(adverse.type)} : <b>+{REGLES.bonusDeType} pour toi</b></p>
-        : rapport === 'contre' ? <p className="ring__indice" data-ton="mauvais">Son {article(adverse.type)} bat ton {article(choisie.type)} : <b>+{REGLES.bonusDeType} pour lui</b></p>
+      indice = rapport === 'pour' ? <p className="ring__indice" data-ton="bon">Ton {article(choisie.type)} bat {leMot(adverse.type)} adverse : <b>+{REGLES.bonusDeType} pour toi</b></p>
+        : rapport === 'contre' ? <p className="ring__indice" data-ton="mauvais">{majuscule(leMot(adverse.type))} adverse bat ton {article(choisie.type)} : <b>+{REGLES.bonusDeType} pour lui</b></p>
         : <p className="ring__indice">Aucun avantage de type</p>;
     } else {
       const conseil = indiceSurLeMot(adverse.type);
       indice = conseil
-        ? <p className="ring__indice">Son {article(adverse.type)} est fort contre les {pluralDe(conseil.bat, 2)}. <b>Contre-le avec un {article(conseil.contre)}.</b></p>
-        : <p className="ring__indice">Son adverbe n’a aucun avantage de type.</p>;
+        ? <p className="ring__indice">{majuscule(leMot(adverse.type))} adverse est fort contre les {pluralDe(conseil.bat, 2)}. <b>Contre-le avec un {article(conseil.contre)}.</b></p>
+        : <p className="ring__indice">L’adverbe adverse n’a aucun avantage de type.</p>;
     }
   }
 

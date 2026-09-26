@@ -31,6 +31,11 @@ it('annonce les bonnes nouvelles, une fois', () => {
   const aucun = { confirme: false, manqueCompte: false, manqueJour: false, echu: false };
   const invite = { ...base, parrain: { pseudo: 'Raphaël', valide: false, verse: false, ...aucun } };
   assert.deepEqual(nouvellesDuParrainage(invite, false).map(n => [n.cle, n.texte]), [['invite', 'Raphaël t’a invité. Termine ton premier duel : vous recevrez chacun 3 paquets.']]);
+  // Sans ses dix timbres, le nouveau venu est d'abord envoyé à ses paquets : un duel lui serait impossible.
+  const [avantLesPaquets] = nouvellesDuParrainage(invite, false, false, false);
+  assert.equal(avantLesPaquets.lien, 'paquet');
+  assert.equal(avantLesPaquets.texte, 'Raphaël t’a invité. Ouvre tes paquets de départ, puis termine ton premier duel : vous recevrez chacun 3 paquets.');
+  assert.equal(nouvellesDuParrainage(invite, false, false, true)[0].lien, 'duel');
   const recompense = { ...base, parrain: { pseudo: 'Raphaël', valide: true, verse: true, ...aucun } };
   assert.equal(nouvellesDuParrainage(recompense, false)[0].cle, 'bienvenue');
   assert.deepEqual(nouvellesDuParrainage(recompense, true), [], 'fermée, l’annonce ne revient pas');

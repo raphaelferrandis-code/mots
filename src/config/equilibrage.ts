@@ -263,7 +263,7 @@ export const EQUILIBRAGE = {
     dernierEmplacementHebdomadaire: { 'Épique': 89, 'Légendaire': 10, 'Hors-série': 1 } as ChancesParRarete,
     // Deux offres indépendantes. Les niveaux servent au protocole des anciens comptes.
     formules: [
-      { cle: 'necessaire', niveau: 1, nom: 'Mon album', prix: 5.99, parMois: false },
+      { cle: 'necessaire', niveau: 1, nom: 'Écrin', prix: 5.99, parMois: false }, // « Mon album » jusqu’au 26/09/2026 : l’onglet s’appelle Album
       { cle: 'collectionneur', niveau: 2, nom: 'Collectionneur', prix: 4.99, parMois: true },
     ],
     // L'âge à partir duquel on peut payer (décision du 22/09/2026).

@@ -17,7 +17,10 @@ const VERSION: string = import.meta.env?.VITE_VERSION_DES_DONNEES ?? '';
 const DONNEES_ABSENTES = 'Les timbres n’ont pas pu être chargés. Vérifie ta connexion, puis recharge la page.';
 
 async function lireJson<T>(chemin: string): Promise<T> {
-  const reponse = await fetch(`${DOSSIER}${chemin}${VERSION ? `?v=${VERSION}` : ''}`);
+  // (30 s au plus : sans délai, un réseau qui ne répond plus laissait l'accueil sur « … » pour toujours.)
+  let reponse: Response;
+  try { reponse = await fetch(`${DOSSIER}${chemin}${VERSION ? `?v=${VERSION}` : ''}`, { signal: AbortSignal.timeout(30_000) }); }
+  catch (erreur) { console.error(chemin, erreur); throw new Error(DONNEES_ABSENTES); }
   if (!reponse.ok) {
     console.error(`Impossible de charger ${chemin} (erreur ${reponse.status})`);
     throw new Error(DONNEES_ABSENTES);

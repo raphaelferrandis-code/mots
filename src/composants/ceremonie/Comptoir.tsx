@@ -16,6 +16,7 @@ import { preparerAccueil } from '../accueil/modeleAccueil.ts';
 import { useRecompensesSuspendues } from '../Recompenses.tsx';
 import { Timbre } from '../timbre/Timbre.tsx';
 import { useChargement } from '../useChargement.ts';
+import { ErreurDeChargement } from '../ErreurDeChargement.tsx';
 import { mouvementReduit } from '../mouvement.ts';
 import { enMinutesEtSecondes, usePartie, useStockDePaquets } from '../usePartie.ts';
 import { ApercuDeLAlbum } from './ApercuDeLAlbum.tsx';
@@ -35,8 +36,9 @@ type Vol = Envol & { cachees: Set<string>; compte: number };
 
 const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, mouvementReduit() ? Math.min(ms, 40) : ms));
 
-// « aCote » : ce qui se range à droite de l'album (les duels, sur l'accueil).
-export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
+// « aCote » : ce qui se range à droite de l'album (les duels, sur l'accueil). « accroche » : quelques mots sous le
+// titre (sur l'accueil, ce qu'est le jeu, tant que le joueur débute).
+export function Comptoir({ aCote, accroche }: { aCote?: ReactNode; accroche?: ReactNode } = {}) {
   const partie = usePartie();
   const paquets = useStockDePaquets(partie);
   const edition = useChargement(chargerEdition, 'edition');
@@ -162,6 +164,7 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
     <section className="comptoir" aria-labelledby="titre-comptoir">
       <div className="comptoir__texte">
         <h1 id="titre-comptoir" className="comptoir__titre">{titreDuComptoir(stock)}</h1>
+        {accroche && <div className="comptoir__accroche">{accroche}</div>}
         <div className="comptoir__actions">
           <button type="button" className="bouton-dentele" disabled={stock <= 0 || ouverture !== null} onClick={() => ouvrir(ouvrirUnPaquet, true)}>Ouvrir un paquet</button>
           <a className="comptoir__lien" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a>
@@ -196,8 +199,11 @@ export function Comptoir({ aCote }: { aCote?: ReactNode } = {}) {
     </section>
 
     <div className={aCote ? 'comptoir-bas comptoir-bas--double' : 'comptoir-bas'}>
-      <ApercuDeLAlbum sauvegarde={ouverture?.avant ?? partie.sauvegarde} cartes={edition.etat === 'pret' ? edition.donnees.cartes : null}
-        cachees={vol?.cachees} compte={vol?.compte ?? null} refAlbum={album} />
+      {/* Le catalogue ne se charge pas : on le dit, avec « Réessayer » (l’aperçu restait sur « … » pour toujours). */}
+      {edition.etat === 'erreur'
+        ? <section className="album-apercu" aria-labelledby="titre-album-apercu"><h2 id="titre-album-apercu">Ta collection</h2><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></section>
+        : <ApercuDeLAlbum sauvegarde={ouverture?.avant ?? partie.sauvegarde} cartes={edition.etat === 'pret' ? edition.donnees.cartes : null}
+          cachees={vol?.cachees} compte={vol?.compte ?? null} refAlbum={album} />}
       {aCote}
     </div>
 

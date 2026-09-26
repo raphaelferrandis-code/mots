@@ -71,9 +71,10 @@ export function lireParrainage(brut: unknown): MonParrainage {
 
 // Les nouvelles de l'accueil, de la plus réjouissante à la plus pratique. « bienvenueVue » et « aideVue » : le joueur a
 // déjà fermé l'annonce de son cadeau de bienvenue, ou celle qui lui dit comment faire récompenser son parrain (retenu
-// sur l'appareil).
+// sur l'appareil). « pretPourUnDuel » : le nouveau venu a de quoi composer son carnet ; sinon, on l'envoie d'abord à
+// ses paquets (le lien « Jouer mon premier duel » menait à un duel impossible, audit de finition du 26/09/2026).
 export type Nouvelle = { cle: string; titre: string; texte: string; lien?: 'duel' | 'paquet' | 'compte'; fermable?: boolean };
-export function nouvellesDuParrainage(p: MonParrainage, bienvenueVue: boolean, aideVue = false): Nouvelle[] {
+export function nouvellesDuParrainage(p: MonParrainage, bienvenueVue: boolean, aideVue = false, pretPourUnDuel = true): Nouvelle[] {
   const nouvelles: Nouvelle[] = [];
   const paquets = (n: number) => `${n} paquet${n > 1 ? 's' : ''}`;
   if (p.nouveaux.length > 0) {
@@ -84,8 +85,8 @@ export function nouvellesDuParrainage(p: MonParrainage, bienvenueVue: boolean, a
       texte: `${qui} ${p.confirmation ? `confirmé ${leur} inscription` : `joué ${leur} premier duel`} : ${paquets(p.paquets * noms.length)} ajoutés à ta réserve.` });
   }
   if (p.parrain && !p.parrain.valide) {
-    nouvelles.push({ cle: 'invite', titre: 'Bienvenue !', lien: 'duel',
-      texte: `${p.parrain.pseudo ?? 'Un ami'} t’a invité. Termine ton premier duel : ${p.confirmation ? 'tu recevras' : 'vous recevrez chacun'} ${paquets(p.paquets)}.` });
+    nouvelles.push({ cle: 'invite', titre: 'Bienvenue !', lien: pretPourUnDuel ? 'duel' : 'paquet',
+      texte: `${p.parrain.pseudo ?? 'Un ami'} t’a invité. ${pretPourUnDuel ? 'Termine' : 'Ouvre tes paquets de départ, puis termine'} ton premier duel : ${p.confirmation ? 'tu recevras' : 'vous recevrez chacun'} ${paquets(p.paquets)}.` });
   } else if (p.parrain?.verse && !bienvenueVue) {
     nouvelles.push({ cle: 'bienvenue', titre: 'Cadeau de bienvenue', lien: 'paquet', fermable: true,
       texte: `${paquets(p.paquets)} ajoutés à ta réserve, grâce à l’invitation de ${p.parrain.pseudo ?? 'ton ami'}.` });

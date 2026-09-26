@@ -93,7 +93,9 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     duels: { joues: 0, gagnes: 0, jour: '', victoiresDuJour: 0 },
     parades: {},
     joutes: { pseudo: '', cote: null, jouees: 0, gagnees: 0, recents: [] },
-    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, tempsDeReponse: 'normal' },
+    // 30 s par définition pour commencer (audit de finition du 26/09/2026 : 15 s pour lire quatre définitions, c'était
+    // court pour un premier duel) ; le joueur passe à 15 s quand il veut. Une ancienne sauvegarde garde son réglage.
+    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, tempsDeReponse: 'double' },
     dernierExport: null,
   };
 }

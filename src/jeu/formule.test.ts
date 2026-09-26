@@ -34,8 +34,8 @@ describe('les formules payantes', () => {
 
   it('nomme la formule en cours', () => {
     assert.equal(nomDeLaFormule(FORMULE_GRATUITE), null);
-    assert.equal(nomDeLaFormule({ ...FORMULE_GRATUITE, achatUnique: true }), 'Mon album');
-    assert.equal(nomDeLaFormule({ ...FORMULE_GRATUITE, achatUnique: true, abonnement: 'collectionneur', jusquAu: Date.now() + 60000 }), 'Mon album + Collectionneur');
+    assert.equal(nomDeLaFormule({ ...FORMULE_GRATUITE, achatUnique: true }), 'Écrin');
+    assert.equal(nomDeLaFormule({ ...FORMULE_GRATUITE, achatUnique: true, abonnement: 'collectionneur', jusquAu: Date.now() + 60000 }), 'Écrin + Collectionneur');
   });
 
   it('décrit les deux offres indépendantes', () => {

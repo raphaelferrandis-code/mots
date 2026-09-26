@@ -25,7 +25,7 @@ export function SuppressionDuCompte() {
     // Un joueur qui a payé efface lui-même son compte (décision du 25/09/2026) : il doit savoir ce qu'il perd. Un
     // abonnement qui se renouvelle encore se résilie d'abord : le serveur le rappelle s'il le faut.
     const achats = partie.compte !== null && achatsEnCours(partie.compte.formule)
-      ? ' Tu perdras aussi ce que tu as acheté (« Mon album », ton abonnement).' : '';
+      ? ' Tu perdras aussi ce que tu as acheté (l’Écrin, ton abonnement).' : '';
     if (!(await demanderConfirmation(surLeServeur ? {
       titre: 'Supprimer définitivement ton compte ?',
       message: `Ta collection, ton Encre, tes paquets, ton pseudonyme, tes amis et ton équipe seront effacés du serveur, sur tous tes appareils, avec ta connexion Google ou e-mail. C’est définitif.${achats}`,
