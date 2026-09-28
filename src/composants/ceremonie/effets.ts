@@ -91,7 +91,10 @@ if (typeof window !== 'undefined') {
 // ── Les particules ──────────────────────────────────────────────────────────
 // La boucle s'arrête d'elle-même quand il n'y a plus rien à dessiner.
 
-type Genre = 'poussiere' | 'etincelle' | 'confetti' | 'fibre' | 'encre'; // « encre » : les éclats du choc, en duel
+// « encre » : les éclats du choc, en duel ; « or » (Légendaire) et « nacre » (Hors-série) : des paillettes qui volettent
+// lentement, tournent sur elles-mêmes et changent d'éclat en tournant (étape 5 des finitions, 28/09/2026).
+type Genre = 'poussiere' | 'etincelle' | 'confetti' | 'fibre' | 'encre' | 'or' | 'nacre';
+const IRISATION = ['#ffd3ea', '#dfcbff', '#c5eaff', '#cff6e2', '#ffeec4', '#ffffff'];
 type Particule = { x: number; y: number; vx: number; vy: number; g: number; frein: number; vie: number; duree: number; taille: number; couleur: string; genre: Genre; rot: number; vr: number };
 export type Jaillissement = { n?: number; genre?: Genre; couleurs?: string[]; vitesse?: [number, number]; taille?: [number, number]; g?: number; duree?: [number, number]; frein?: number; ouverture?: number; angle?: number };
 
@@ -157,6 +160,15 @@ export class Particules {
       } else if (p.genre === 'etincelle') {
         c.globalCompositeOperation = 'lighter'; c.strokeStyle = p.couleur; c.lineWidth = p.taille; c.lineCap = 'round';
         c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.vx * .035, p.y - p.vy * .035); c.stroke();
+      } else if (p.genre === 'or' || p.genre === 'nacre') {
+        // Une paillette qui volette : elle dérive de côté en tombant, et brille quand elle se présente de face.
+        p.x += Math.sin(p.rot * 1.3) * 22 * dt;
+        const face = Math.cos(p.rot * 1.7), t = p.taille;
+        c.globalCompositeOperation = 'source-over'; c.save(); c.translate(p.x, p.y); c.rotate(p.rot * .5); c.scale(1, face);
+        c.fillStyle = p.genre === 'nacre' ? IRISATION[Math.floor((face + 1) * 2.99) % IRISATION.length] : p.couleur;
+        c.beginPath(); c.moveTo(-t * .5, -t * .32); c.lineTo(t * .42, -t * .46); c.lineTo(t * .5, t * .28); c.lineTo(-t * .38, t * .42); c.closePath(); c.fill();
+        if (Math.abs(face) > .82) { c.globalCompositeOperation = 'lighter'; c.globalAlpha *= .55; c.fillStyle = p.genre === 'nacre' ? '#ffffff' : '#fff3c4'; c.fill(); }
+        c.restore();
       } else {
         c.globalCompositeOperation = 'source-over'; c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, Math.cos(p.rot * 1.7));
         c.fillStyle = p.couleur; c.fillRect(-p.taille / 2, -p.taille * .3, p.taille, p.taille * (p.genre === 'fibre' ? .35 : .6)); c.restore();

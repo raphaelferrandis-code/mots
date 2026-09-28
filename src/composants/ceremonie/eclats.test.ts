@@ -10,10 +10,11 @@ const obtenue = (rarete: CarteIndex['rarete'], finition: Finition = 'Normale', c
 });
 
 describe('les effets de la cérémonie', () => {
-  it('donne la grande révélation aux Légendaires et Hors-série, quelle que soit la finition', () => {
+  it('donne la grande révélation aux Légendaires, et place la Hors-série au-dessus, quelle que soit la finition', () => {
     assert.equal(eclatDe(obtenue('Légendaire')), 'grand');
-    assert.equal(eclatDe(obtenue('Hors-série')), 'grand');
     assert.equal(eclatDe(obtenue('Légendaire', 'Holographique')), 'grand');
+    assert.equal(eclatDe(obtenue('Hors-série')), 'exceptionnel');
+    assert.equal(eclatDe(obtenue('Hors-série', 'Holographique')), 'exceptionnel');
   });
   it('suit la finition, et dore les Épiques', () => {
     assert.equal(eclatDe(obtenue('Commune')), 'courant');
@@ -40,6 +41,11 @@ describe('les phrases de la cérémonie', () => {
     assert.equal(titreDuResume(paquet), 'Cinq timbres de plus.');
     assert.equal(bilanDuPaquet(paquet), '3 courants, 1 brillant et 1 holographique, dont 1 Épique et 1 Légendaire');
     assert.equal(titreDuResume([obtenue('Hors-série')]), 'Ta Hors-série.');
+  });
+  it('donne son titre au paquet d’exception', () => {
+    const legendaires = Array.from({ length: 6 }, () => obtenue('Légendaire', 'Holographique'));
+    assert.equal(titreDuResume(legendaires), 'Un paquet d’exception : six Légendaires holographiques.');
+    assert.equal(titreDuResume(Array.from({ length: 6 }, () => obtenue('Hors-série'))), 'Un paquet d’exception : six Hors-série.');
   });
   it('compte les paquets jusqu’à la Légendaire garantie', () => {
     assert.equal(phraseDeLaGarantie(0, 40), 'Une Légendaire garantie d’ici 40 paquets.');

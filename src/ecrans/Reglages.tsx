@@ -23,6 +23,7 @@ const OPTIONS_CONTENU: { cle: ReglageACocher; nom: string }[] = [
 ];
 const OPTIONS_CONFORT: typeof OPTIONS_CONTENU = [
   { cle: 'sonsPaquets', nom: 'Sons du jeu' }, // la clé garde son premier nom : les sauvegardes existantes restent valables
+  { cle: 'vibrations', nom: 'Vibrer aux grands moments (Android)' },
   { cle: 'reduireAnimations', nom: 'Réduire les animations' },
 ];
 

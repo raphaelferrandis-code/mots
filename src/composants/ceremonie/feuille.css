@@ -78,6 +78,13 @@
   background: radial-gradient(circle, rgba(214, 120, 70, .34), rgba(200, 145, 75, .16) 45%, transparent 70%);
   animation: fe-pouls 2.6s ease-in-out infinite;
 }
+/* Une Hors-série cachée : une lueur nacrée, plus vive que celle d'une Légendaire (étape 5 des finitions). */
+.fe__case[data-halo='exceptionnel'] .fe__halo { mix-blend-mode: soft-light; }
+.fe__case[data-halo='exceptionnel'] .fe__halo::before {
+  inset: 4%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .75), rgba(207, 174, 255, .5) 34%, rgba(191, 233, 255, .32) 54%, transparent 72%);
+  animation: fe-pouls 2.2s ease-in-out infinite;
+}
 @keyframes fe-balayage { 0%, 25% { transform: translateX(-34%); } 75%, 100% { transform: translateX(34%); } }
 @keyframes fe-tour { to { transform: rotate(1turn); } }
 @keyframes fe-pouls { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.04); } }

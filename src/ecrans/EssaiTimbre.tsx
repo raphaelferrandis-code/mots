@@ -83,7 +83,7 @@ export function EssaiTimbre() {
         <button type="button" className="bouton" onClick={() => setEssai(Promise.resolve(exceptionHorsSerie))}>Paquet d’exception : Hors-série</button>
       </div>
       {essai && <Ceremonie premier={essai} tirer={() => essai} continuer={false} numero={142} reserve={0} depuis={null} modelePaquet="original" dos="gomme"
-        sons={sons} onSons={setSons} reduire={false} onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
+        sons={sons} onSons={setSons} reduire={false} vibrations onFermer={() => setEssai(null)} onErreur={() => setEssai(null)} />}
 
       <h2>La feuille de timbres (lot 1)</h2>
       <p className="texte-doux">Un paquet tiré avec les vraies règles et les vraies cartes ; rien n’est enregistré.</p>

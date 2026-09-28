@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot E : l'échelle des révélations.** Décisions de Raphaël : la Hors-série
+> passe au-dessus de la Légendaire, des vibrations sur Android ; on garde l'éclair blanc, la secousse et le rythme du
+> duel. `eclats.ts` : niveau « exceptionnel » (4) pour la Hors-série. La Légendaire (3) : éclair, secousse, et la feuille
+> d'or à la place des confettis (paillettes dorées qui volettent, `effets.ts`, genre « or »). La Hors-série (4) : suspense
+> plus long, nacre irisée en deux vagues (genre « nacre »), lumière rasante qui traverse le timbre
+> (`.ceremonie__rasante`), lueur nacrée au dos de la feuille. Un paquet d'exception n'a plus qu'un grand moment, au
+> dernier timbre découvert (`rangDeLaFete`), et son titre : « Un paquet d'exception : six Légendaires holographiques. »
+> Vibrations : 20 ms pour une Légendaire, 20-70-30 pour une Hors-série (`navigator.vibrate`, rien sur iPhone), réglage
+> « Vibrer aux grands moments (Android) », oui par défaut (`reglages.vibrations`). Vérifié sur la page d'essai
+> (#/timbres) : rafales de captures, vibrations relevées. Le son de la Hors-série (cor de poste) viendra avec les sons.
+
 > **28 septembre 2026 — finitions, étape 5, lot D : le marché animé (script 26 à coller : étape 19).** Décision de
 > Raphaël (dosage « équilibré », `EQUILIBRAGE.marche.simules`) : tant que les vrais joueurs ont moins de 30 ventes
 > ouvertes, les joueurs maison tiennent 12 ventes (timbres neufs : Commune 45 %, Peu commune 30 %, Rare 17 %,

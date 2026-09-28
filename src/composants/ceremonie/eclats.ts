@@ -10,11 +10,15 @@ import type { CarteObtenue } from '../../jeu/partie.ts';
 import { FINITIONS, RARETES } from '../../partage/types.ts';
 import type { Nature } from '../../partage/types.ts';
 
-export type Eclat = 'courant' | 'dore' | 'holo' | 'grand';
-export const RANG_DE_L_ECLAT: Record<Eclat, number> = { courant: 0, dore: 1, holo: 2, grand: 3 };
+// L'échelle des grands moments (étape 5 des finitions, décision de Raphaël du 28/09/2026) : la Hors-série, cent fois
+// plus rare que la Légendaire, passe au-dessus d'elle (« exceptionnel » : nacre et lumière rasante) ; la Légendaire
+// garde l'éclair et la secousse, avec la feuille d'or à la place des confettis.
+export type Eclat = 'courant' | 'dore' | 'holo' | 'grand' | 'exceptionnel';
+export const RANG_DE_L_ECLAT: Record<Eclat, number> = { courant: 0, dore: 1, holo: 2, grand: 3, exceptionnel: 4 };
 
 export function eclatDe({ carte, finition }: Pick<CarteObtenue, 'carte' | 'finition'>): Eclat {
-  if (carte.rarete === 'Légendaire' || carte.rarete === 'Hors-série') return 'grand';
+  if (carte.rarete === 'Hors-série') return 'exceptionnel';
+  if (carte.rarete === 'Légendaire') return 'grand';
   if (finition === 'Holographique') return 'holo';
   if (finition === 'Brillante' || carte.rarete === 'Épique') return 'dore';
   return 'courant';
@@ -66,6 +70,9 @@ export function phraseDeLaGarantie(sansLegendaire: number, seuil: number): strin
 
 export function titreDuResume(cartes: readonly CarteObtenue[]): string {
   if (cartes.length === 1) return cartes[0].carte.rarete === 'Hors-série' ? 'Ta Hors-série.' : 'Un timbre de plus.';
+  // Un paquet d'exception a son titre, à la hauteur du souvenir (audit M10 : il finissait sur un titre ordinaire).
+  const lueur = lueurDuPaquet(cartes);
+  if (lueur) return `Un paquet d’exception : ${enLettres(cartes.length)} ${lueur === 'hors-serie' ? 'Hors-série' : 'Légendaires holographiques'}.`;
   return `${majuscule(enLettres(cartes.length))} timbres de plus.`;
 }
 

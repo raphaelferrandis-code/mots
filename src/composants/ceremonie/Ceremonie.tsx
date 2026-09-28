@@ -50,6 +50,7 @@ type Props = {
   sons: boolean;
   onSons: (actifs: boolean) => void;
   reduire: boolean; // réglage « Réduire les animations »
+  vibrations?: boolean; // réglage « Vibrer aux grands moments » (Android seulement : iPhone ne vibre pas sur le web)
   onFermer: () => void;
   onRanger?: (envol: Envol) => void; // « Ranger dans l'album » : la page prend le relais pour l'envol
   onErreur: (message: string) => void;
@@ -59,7 +60,7 @@ const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 const entre = (a: number, b: number): number => a + Math.random() * (b - a);
 
-export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, onFermer, onRanger, onErreur }: Props) {
+export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depuis, modelePaquet, dos, sons, onSons, reduire, vibrations = false, onFermer, onRanger, onErreur }: Props) {
   useRacineInerte();
   const [phase, setPhase] = useState<Phase>('ouverture');
   // Au résumé, le niveau et les succès gagnés avec ce paquet s’y affichent (au lieu du bandeau, après coup).
@@ -118,6 +119,52 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   const attendre = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, reduit() ? Math.min(ms, 40) : ms));
   const aller = (p: Phase): void => { phaseRef.current = p; setPhase(p); };
   const jaillir: Particules['jaillir'] = (x, y, options) => particules.current?.jaillir(x, y, options);
+  // ── Les grands moments (étape 5 des finitions, décision de Raphaël du 28/09/2026) : la Légendaire (3) garde l'éclair
+  // et la secousse, avec la feuille d'or ; la Hors-série (4) passe au-dessus : nacre en deux vagues, lumière rasante sur
+  // le timbre, suspense un peu plus long. Une courte vibration (Android, réglage « Vibrer aux grands moments »).
+  function vibrer(rang: number): void {
+    if (!vibrations || rang < 3) return;
+    try { navigator.vibrate?.(rang >= 4 ? [20, 70, 30] : 20); } catch { /* pas de vibreur */ }
+  }
+  function lumiereRasante(timbre: Element | null): void {
+    const recto = timbre?.querySelector<HTMLElement>('.tb__recto');
+    if (!recto || reduit()) return;
+    const rai = document.createElement('span');
+    rai.className = 'ceremonie__rasante';
+    recto.append(rai);
+    void rai.animate([{ transform: 'translateX(-140%) skewX(-16deg)', opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: 1, offset: .75 }, { transform: 'translateX(140%) skewX(-16deg)', opacity: 0 }],
+      { duration: 1400, easing: 'cubic-bezier(.45,0,.2,1)' }).finished.catch(() => undefined).then(() => rai.remove());
+  }
+  async function grandMoment(cx: number, cy: number, rang: number, timbre: Element | null, n = 1): Promise<void> {
+    const j = jeton.current;
+    vibrer(rang);
+    SONS.eclat();
+    if (rang >= 4) {
+      lumiereRasante(timbre);
+      jaillir(cx, cy, { n: Math.round(120 * n), genre: 'nacre', vitesse: [160, 560], g: 110, duree: [2.4, 3.8], taille: [5, 11], frein: .985 });
+      jaillir(cx, cy, { n: Math.round(50 * n), genre: 'etincelle', couleurs: ['#ffffff', '#e7d9ff', '#dcf4ff'], vitesse: [200, 680], duree: [.5, 1.1] });
+      await attendre(520);
+      if (j !== jeton.current) return;
+      jaillir(cx, cy - 40, { n: Math.round(60 * n), genre: 'nacre', vitesse: [80, 320], g: 90, duree: [2.2, 3.4], taille: [4, 9], frein: .985 });
+      SONS.carillon(3);
+      await attendre(420);
+      if (j !== jeton.current) return;
+      SONS.carillon(3);
+      return;
+    }
+    jaillir(cx, cy, { n: Math.round(90 * n), genre: 'or', couleurs: ['#f5d27a', '#e8b54a', '#fff0b8', '#c9942e'], vitesse: [160, 540], g: 150, duree: [2.2, 3.4], taille: [6, 12], frein: .985 });
+    jaillir(cx, cy, { n: Math.round(40 * n), genre: 'etincelle', couleurs: ['#ffd79a', '#ffffff'], vitesse: [220, 720], duree: [.5, 1.1] });
+    await attendre(420);
+    if (j !== jeton.current) return;
+    SONS.carillon(3);
+  }
+  // Un paquet d'exception (six Légendaires holographiques, ou six Hors-série) n'a qu'un grand moment, au dernier timbre
+  // découvert ; les autres brillent comme une belle pièce (audit M10 : six climax d'affilée, puis plus rien).
+  function rangDeLaFete(i: number, dejaVus: readonly boolean[] = etat.current.reveles): number {
+    const rang = RANG_DE_L_ECLAT[eclatDe(cartesRef.current[i])];
+    if (rang < 3 || !lueurDuPaquet(cartesRef.current)) return rang;
+    return cartesRef.current.some((_, k) => k !== i && !dejaVus[k]) ? 2 : rang;
+  }
   const dans = <T extends Element>(racine: Element | null | undefined, selecteur: string): T | null => racine?.querySelector<T>(selecteur) ?? null;
   const setFace = (f: FaceDeLaFeuille): void => { etat.current.face = f; setFaceEtat(f); };
   const setDetaches = (v: boolean[]): void => { etat.current.detaches = v; setDetachesEtat(v); };
@@ -424,16 +471,19 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const ordre = cartesRef.current.map((o, i) => ({ i, rang: RANG_DE_L_ECLAT[eclatDe(o)] }))
       .filter(({ i }) => !etat.current.detaches[i] && !etat.current.reveles[i])
       .sort((a, b) => a.rang - b.rang);
+    const vus = [...etat.current.reveles];
     await attendre(160);
-    for (const { i, rang } of ordre) {
+    for (const { i } of ordre) {
+      const rang = rangDeLaFete(i, vus);
+      vus[i] = true;
       if (j !== jeton.current) return;
       const cellule = caseDom(i), timbre = dans<HTMLElement>(cellule, '.tb');
       if (!cellule || !timbre) continue;
-      if (rang === 3) {
-        await attendre(260);
+      if (rang >= 3) {
+        await attendre(rang >= 4 ? 420 : 260);
         if (j !== jeton.current) return;
-        SONS.montee(1);
-        await timbre.animate(Array.from({ length: 12 }, (_, k) => ({ transform: `translate(${(entre(-1, 1) * k * .5).toFixed(1)}px,${(entre(-1, 1) * k * .5).toFixed(1)}px)` })), { duration: D(900), easing: 'ease-in' }).finished;
+        SONS.montee(rang >= 4 ? 1.3 : 1);
+        await timbre.animate(Array.from({ length: 12 }, (_, k) => ({ transform: `translate(${(entre(-1, 1) * k * .5).toFixed(1)}px,${(entre(-1, 1) * k * .5).toFixed(1)}px)` })), { duration: D(rang >= 4 ? 1200 : 900), easing: 'ease-in' }).finished;
         if (j !== jeton.current) return;
         eclairer();
       }
@@ -459,12 +509,9 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     } else if (rang === 2) {
       SONS.scintillement(); SONS.carillon(2);
       jaillir(cx, cy, { n: 50, genre: 'etincelle', couleurs: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], vitesse: [120, 460], duree: [.5, 1.1], taille: [1.2, 2.4] });
-    } else if (rang === 3) {
-      SONS.eclat();
-      jaillir(cx, cy, { n: 110, genre: 'confetti', couleurs: ['#f0c48f', '#d7263f', '#f6ecd6', '#3557a8'], vitesse: [200, 700], g: 700, duree: [1.3, 2.4], taille: [5, 10], frein: .97 });
-      await attendre(380);
+    } else if (rang >= 3) {
+      await grandMoment(cx, cy, rang, timbre, .85);
       if (j !== jeton.current) return;
-      SONS.carillon(3);
     }
   }
 
@@ -551,7 +598,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     // Le timbre quitte la feuille (un trou à sa place) et reste un instant là où il était.
     const r = el.getBoundingClientRect();
     const depuisLeVerso = etat.current.face === 'verso', dejaRevele = etat.current.reveles[i];
-    const rang = RANG_DE_L_ECLAT[eclatDe(cartesRef.current[i])];
+    const rang = rangDeLaFete(i);
     SONS.dechirure();
     arrachages.current.delete(i);
     el.style.transform = '';
@@ -576,7 +623,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
         await retourne.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], { duration: D(110), easing: 'cubic-bezier(.5,0,1,1)' }).finished;
         if (j !== jeton.current) return;
         flushSync(() => setVolants((v) => v.map((x) => (x.i === i ? { ...x, face: 'recto' } : x))));
-        if (rang === 3) eclairer();
+        if (rang >= 3) eclairer();
         await retourne.animate([{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], { duration: D(220), easing: 'cubic-bezier(.2,1.4,.4,1)' }).finished;
         if (j !== jeton.current) return;
       }
@@ -586,7 +633,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       setReveles(avec(etat.current.reveles, i));
     }
     setDernier(i);
-    await attendre(rang === 3 ? 700 : 420);
+    await attendre(rang >= 4 ? 1000 : rang === 3 ? 700 : 420);
     if (j !== jeton.current) return;
 
     // Puis il file dans la case suivante du plateau.
@@ -652,7 +699,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   // ── La révélation au premier plan : s'il vient du verso, le timbre (s'il est rare, après avoir tremblé) se retourne ;
   // puis le coup de tampon et l'effet de sa rareté ──
   function secousse(rang: number): Keyframe[] {
-    const images: Keyframe[] = [], n = 14, amplitude = rang === 3 ? 7 : 4;
+    const images: Keyframe[] = [], n = 14, amplitude = rang >= 4 ? 8 : rang === 3 ? 7 : 4;
     for (let i = 0; i <= n; i++) {
       const k = i / n, a = amplitude * k * (i === n ? 0 : 1);
       images.push({ transform: `translate(${entre(-a, a).toFixed(1)}px,${entre(-a, a).toFixed(1)}px) rotate(${entre(-a * .4, a * .4).toFixed(2)}deg) scale(${(1 + k * .04).toFixed(3)})` });
@@ -673,11 +720,11 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const j = jeton.current, obtenue = cartesRef.current[i], slot = grosPlanDom.current;
     const retourne = dans<HTMLElement>(slot, '.c-retourne');
     if (!obtenue || !slot || !retourne) return;
-    const rang = RANG_DE_L_ECLAT[eclatDe(obtenue)];
+    const rang = rangDeLaFete(i);
     if (retournement) {
       if (rang >= 2) {
-        SONS.montee(rang === 3 ? 1.1 : .7);
-        await retourne.animate(secousse(rang), { duration: D(rang === 3 ? 1100 : 700), easing: 'ease-in' }).finished;
+        SONS.montee(rang >= 4 ? 1.4 : rang === 3 ? 1.1 : .7);
+        await retourne.animate(secousse(rang), { duration: D(rang >= 4 ? 1400 : rang === 3 ? 1100 : 700), easing: 'ease-in' }).finished;
         if (j !== jeton.current) return;
       }
       SONS.souffle();
@@ -685,7 +732,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       if (j !== jeton.current) return;
       const g = etat.current.grosPlan;
       if (g) flushSync(() => setGrosPlan({ ...g, face: 'recto' }));
-      if (rang === 3) { eclairer(); secouerLaScene(); }
+      if (rang >= 3) { eclairer(); secouerLaScene(); }
       await retourne.animate([{ transform: 'rotateY(-90deg) scale(1.1)' }, { transform: 'rotateY(0deg) scale(1)' }], { duration: D(rang ? 440 : 300), easing: 'cubic-bezier(.2,1.4,.4,1)' }).finished;
       if (j !== jeton.current) return;
     }
@@ -702,13 +749,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     } else if (rang === 2) {
       SONS.scintillement(); SONS.carillon(2);
       jaillir(cx, cy, { n: 80, genre: 'etincelle', couleurs: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], vitesse: [140, 560], duree: [.6, 1.3], taille: [1.2, 2.6] });
-    } else if (rang === 3) {
-      SONS.eclat();
-      jaillir(cx, cy, { n: 130, genre: 'confetti', couleurs: ['#f0c48f', '#d7263f', '#f6ecd6', '#3557a8'], vitesse: [220, 760], g: 720, duree: [1.4, 2.6], taille: [5, 10], frein: .97 });
-      jaillir(cx, cy, { n: 60, genre: 'etincelle', couleurs: ['#ffd79a', '#ffffff'], vitesse: [220, 720], duree: [.5, 1.1] });
-      await attendre(460);
-      if (j !== jeton.current) return;
-      SONS.carillon(3);
+    } else if (rang >= 3) {
+      await grandMoment(cx, cy, rang, slot);
     }
   }
 
@@ -835,9 +877,9 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const r = scene.current?.getBoundingClientRect();
     if (!r) return;
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (rang === 3) {
-      eclairer(); SONS.eclat();
-      jaillir(cx, cy, { n: 130, genre: 'confetti', couleurs: ['#f0c48f', '#d7263f', '#f6ecd6', '#3557a8'], vitesse: [220, 760], g: 720, duree: [1.4, 2.6], taille: [5, 10], frein: .97 });
+    if (rang >= 3) {
+      eclairer();
+      void grandMoment(cx, cy, rang, null);
     } else if (rang === 2) {
       SONS.scintillement(); SONS.carillon(2);
       jaillir(cx, cy, { n: 80, genre: 'etincelle', couleurs: ['#ff7aa2', '#ffe07a', '#8dffc0', '#7fd8ff', '#c49bff'], vitesse: [140, 560], duree: [.6, 1.3], taille: [1.2, 2.6] });

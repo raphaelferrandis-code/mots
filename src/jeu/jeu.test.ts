@@ -281,13 +281,14 @@ describe('sauvegarde', () => {
     assert.deepEqual(reparee.cartes, { bon: { obtenueLe: 5, doublons: 1, finitions: { Brillante: 2 }, posees: 0, reussites: 0, maitriseeLe: null }, bizarre: { obtenueLe: T0, doublons: 0, finitions: { Normale: 1 }, posees: 0, reussites: 0, maitriseeLe: null } });
     assert.equal(reparee.paquets.stock, 0);
     assert.equal(reparee.paquets.reference, T0, 'une date future donnerait des paquets gratuits');
-    assert.deepEqual(reparee.reglages, { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, tempsDeReponse: 'normal' });
+    assert.deepEqual(reparee.reglages, { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, vibrations: true, tempsDeReponse: 'normal' });
   });
   it('conserve le choix du son après export et complète les anciennes sauvegardes', () => {
     const sauvegarde = nouvelleSauvegarde(T0, 3);
     sauvegarde.reglages.sonsPaquets = false;
     assert.equal(relireSauvegarde(JSON.parse(JSON.stringify(sauvegarde)), T0).reglages.sonsPaquets, false);
     assert.equal(relireSauvegarde({ version: 4, cartes: {}, reglages: {} }, T0).reglages.sonsPaquets, true);
+    assert.equal(relireSauvegarde({ version: 4, cartes: {}, reglages: { vibrations: false } }, T0).reglages.vibrations, false, 'le réglage « Vibrer aux grands moments » est gardé');
   });
   it('convertit une sauvegarde de la version 1 : toutes les cartes étaient alors en finition normale', () => {
     const ancienne = { version: 1, creeLe: T0, encre: 12, paquets: { stock: 2, reference: T0, ouverts: 9, sansLegendaire: 4 }, cartes: { 'callipyge-adj': { obtenueLe: T0, doublons: 2 }, 'amour-nom': { obtenueLe: T0, doublons: 0 } }, reglages: { masquerFamiliers: true }, dernierExport: null };

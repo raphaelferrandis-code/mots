@@ -38,6 +38,7 @@ export type ReglagesDuJoueur = {
   masquerInjurieux: boolean;
   reduireAnimations: boolean;
   sonsPaquets: boolean;
+  vibrations: boolean; // une courte vibration aux grands moments (Android), oui par défaut
   tempsDeReponse: TempsDeReponse;
 };
 
@@ -95,7 +96,7 @@ export function nouvelleSauvegarde(maintenant: number, paquetsDeDepart: number):
     joutes: { pseudo: '', cote: null, jouees: 0, gagnees: 0, recents: [] },
     // 30 s par définition pour commencer (audit de finition du 26/09/2026 : 15 s pour lire quatre définitions, c'était
     // court pour un premier duel) ; le joueur passe à 15 s quand il veut. Une ancienne sauvegarde garde son réglage.
-    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, tempsDeReponse: 'double' },
+    reglages: { masquerFamiliers: false, masquerInjurieux: false, reduireAnimations: false, sonsPaquets: true, vibrations: true, tempsDeReponse: 'double' },
     dernierExport: null,
   };
 }
@@ -209,6 +210,7 @@ export function relireSauvegarde(brut: unknown, maintenant: number): Sauvegarde 
       masquerInjurieux: reglages.masquerInjurieux === true,
       reduireAnimations: reglages.reduireAnimations === true,
       sonsPaquets: typeof reglages.sonsPaquets === 'boolean' ? reglages.sonsPaquets : true,
+      vibrations: typeof reglages.vibrations === 'boolean' ? reglages.vibrations : true,
       tempsDeReponse: TEMPS_DE_REPONSE.find((t) => t === reglages.tempsDeReponse) ?? 'normal',
     },
     dernierExport: exporte ? { le: entierPositif(exporte.le, maintenant), paquetsOuverts: entierPositif(exporte.paquetsOuverts, 0) } : null,
