@@ -2,6 +2,19 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot B : le marché plus clair.** Une phrase sous le titre (ce qu'est le
+> marché, la réserve d'Encre), « Comment ça marche ? » (la mise mise de côté et rendue si l'on est dépassé, la
+> commission, la prolongation, la vente, les limites, les comptes de moins de 3 jours), un bouton « Vendre un timbre »
+> (choix dans l'album, les doubles d'abord : `src/composants/ChoixDUnTimbre.tsx`, réutilisable pour l'échange ; puis le
+> formulaire de la fiche, `MiseEnVente`). « Tes enchères » en tête, un état en un mot (Dépassée, En tête, En vente,
+> Remportée, Vendue, Invendue, Perdue, Retirée : `statutDeMonEnchere`, `mesEncheresEnOrdre`, testés) et le geste qui va
+> avec (Surenchérir, Retirer, Voir le timbre). La salle des ventes en tuiles (le prix en grand, le temps restant en
+> pastille, la finition en badge ; une vente par ligne sur téléphone). Le résultat d'une mise s'affiche dans sa tuile ;
+> un achat s'annonce par une fenêtre « Adjugé ». Un compte neuf lira « Le marché s'ouvre pour toi le … » quand
+> `mes_encheres` rendra `ouvertLe` (script 26, avec les joueurs simulés). Fichiers : `src/ecrans/Marche.tsx`,
+> `src/ecrans/marche/` (Mise, TuileDEnchere, MesEncheres, VendreUnTimbre), `src/ecrans/marche.css` ; les anciennes
+> règles `.enchere*` retirées.
+
 > **28 septembre 2026 — finitions, étape 5 « Le courrier, le marché et les grands moments », lot A : « Ton courrier ».**
 > Décisions de Raphaël pour l'étape (AskUserQuestion) : joueurs simulés au marché, vendeurs et acheteurs de dernier
 > recours, la mention « Joueur simulé » seulement sur leur fiche (proposé en plus : une phrase générale dans

@@ -325,21 +325,9 @@ button.proposition:focus-visible { border-color: var(--accent); }
 .proposition[data-etat='fausse']::before { content: '✘ '; font-style: normal; color: var(--erreur); }
 .proposition[data-etat='autre'] { opacity: 0.55; }
 
-/* ── Marché : les enchères entre joueurs ─────────────────────────────────── */
+/* ── Marché : les enchères entre joueurs (l'écran : src/ecrans/marche.css) ── */
 
-.marche__message { margin: 0; color: var(--texte-fort); }
-.marche__encheres { gap: 0; }
-.marche__liste[aria-busy='true'] { opacity: .6; transition: opacity .2s .15s; }
-.enchere { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: start; padding-block: 14px; border-top: 1px solid var(--filet); }
-.enchere:first-child { border-top: 0; padding-top: 0; }
-.enchere__timbre > :is(.tim, .tb), .enchere__timbre > .deck__vide { width: 100%; }
-.enchere__corps { min-width: 0; display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
-.enchere__titre { font-size: 1.05rem; }
-.enchere__prix strong { font-family: var(--police-chiffres); font-size: 1.15rem; }
-.enchere__tete { color: var(--accent); font-weight: 700; }
-.enchere__mise { display: grid; gap: 8px; max-width: 340px; }
-.enchere__mise input, .vente input, .vente select { min-width: 0; width: 100%; }
-.enchere[data-etat='vendue'] .enchere__timbre, .enchere[data-etat='invendue'] .enchere__timbre, .enchere[data-etat='retiree'] .enchere__timbre { opacity: 0.6; }
+.vente input, .vente select { min-width: 0; width: 100%; }
 
 /* Le formulaire de vente, sur la fiche d'un timbre. */
 .vente { display: grid; gap: 12px; max-width: 560px; }

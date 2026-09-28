@@ -85,7 +85,36 @@ export function tempsRestant(fermeLe: number, maintenant: number): string {
   if (minutes < 60) return `${minutes} min`;
   const heures = Math.floor(minutes / 60);
   if (heures < 24) return `${heures} h ${String(minutes % 60).padStart(2, '0')} min`;
-  return `${Math.floor(heures / 24)} j ${heures % 24} h`;
+  return heures % 24 === 0 ? `${heures / 24} j` : `${Math.floor(heures / 24)} j ${heures % 24} h`;
+}
+
+// Où en est une de mes enchères (une vente à moi, ou une mise sur celle d'un autre), en un mot clair (audit de finition
+// du 26/09/2026, chantier 7 : « Mes enchères » en tête, avec des états nets). Le ton colore l'étiquette.
+export type StatutDEnchere = {
+  cle: 'depassee' | 'en-tete' | 'en-vente' | 'remportee' | 'vendue' | 'invendue' | 'perdue' | 'retiree' | 'annulee';
+  libelle: string; ton: 'alerte' | 'bon' | 'neutre' | 'fini';
+};
+export function statutDeMonEnchere(e: Enchere): StatutDEnchere {
+  if (e.mienne) {
+    if (e.etat === 'ouverte') return { cle: 'en-vente', libelle: 'En vente', ton: 'neutre' };
+    if (e.etat === 'vendue') return { cle: 'vendue', libelle: 'Vendue', ton: 'bon' };
+    if (e.etat === 'invendue') return { cle: 'invendue', libelle: 'Invendue', ton: 'fini' };
+    return { cle: 'retiree', libelle: 'Retirée', ton: 'fini' };
+  }
+  if (e.etat === 'ouverte') return e.enTete ? { cle: 'en-tete', libelle: 'En tête', ton: 'bon' } : { cle: 'depassee', libelle: 'Dépassée', ton: 'alerte' };
+  if (e.etat === 'vendue') return e.remportee ? { cle: 'remportee', libelle: 'Remportée', ton: 'bon' } : { cle: 'perdue', libelle: 'Perdue', ton: 'fini' };
+  return { cle: 'annulee', libelle: 'Annulée', ton: 'fini' };
+}
+
+// Mes enchères dans l'ordre où elles demandent de l'attention : dépassées, en cours, puis terminées (les plus récentes
+// d'abord). Une enchère ne paraît qu'une fois, même si elle figure dans mes ventes et dans mes mises.
+const ORDRE_DES_STATUTS: StatutDEnchere['cle'][] = ['depassee', 'en-tete', 'en-vente', 'remportee', 'vendue', 'invendue', 'perdue', 'retiree', 'annulee'];
+export function mesEncheresEnOrdre(ventes: readonly Enchere[], mises: readonly Enchere[]): Enchere[] {
+  const vues = new Set<number>();
+  const toutes = [...ventes, ...mises].filter((e) => (vues.has(e.id) ? false : (vues.add(e.id), true)));
+  const rang = (e: Enchere): number => ORDRE_DES_STATUTS.indexOf(statutDeMonEnchere(e).cle);
+  const quand = (e: Enchere): number => (e.etat === 'ouverte' ? e.fermeLe : -(e.clotureeLe ?? e.fermeLe));
+  return toutes.sort((a, b) => rang(a) - rang(b) || quand(a) - quand(b));
 }
 
 export type MiseEnVente = { rarete: Rarete; mise: number; achatImmediat: number | null; heures: number };

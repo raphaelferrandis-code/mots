@@ -30,3 +30,4 @@ import '../composants/carte/choixFinition.css';
 import '../ecrans/formules.css';
 import '../composants/ceremonie/feuille.css';
 import '../ecrans/boutique.css';
+import '../ecrans/marche.css';

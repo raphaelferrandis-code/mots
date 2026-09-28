@@ -15,7 +15,9 @@ import type { AvecUneDemande } from './demandes.ts';
 import type { ClientSupabase } from './supabase.ts';
 
 export type PageDuMarche = { encheres: Enchere[]; total: number; maintenant: number };
-export type MesEncheres = { ventes: Enchere[]; mises: Enchere[]; maintenant: number };
+// « ouvertLe » : quand le marché s'ouvre pour un compte neuf (trois jours après son arrivée) ; null si c'est déjà fait ou si le
+// serveur ne le dit pas encore (script 26).
+export type MesEncheres = { ventes: Enchere[]; mises: Enchere[]; maintenant: number; ouvertLe: number | null };
 export type ReponseDuMarche = { enchere: Enchere; etat: EtatDuCompte };
 
 export type ServeurDuMarche = {
@@ -51,7 +53,8 @@ export function serveurDuMarcheAvec(client: ClientSupabase, demandes: AvecUneDem
     mesEncheres: async () => {
       const lu = await client.appeler<unknown>('mes_encheres');
       const brut = estUnObjet(lu) ? lu : {};
-      return { ventes: lireDesEncheres(brut.ventes), mises: lireDesEncheres(brut.mises), maintenant: nombre(brut.maintenant) };
+      return { ventes: lireDesEncheres(brut.ventes), mises: lireDesEncheres(brut.mises), maintenant: nombre(brut.maintenant),
+        ouvertLe: typeof brut.ouvertLe === 'number' && Number.isFinite(brut.ouvertLe) ? brut.ouvertLe : null };
     },
     mettreEnVente: (carte, finition, mise, achatImmediat, heures) => chacunSonTour(async () => {
       const parametres = { p_carte: carte, p_finition: finition, p_mise: mise, p_achat_immediat: achatImmediat, p_heures: heures };

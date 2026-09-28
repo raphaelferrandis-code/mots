@@ -1,24 +1,23 @@
-// Le marché : les enchères entre joueurs (docs/BRIEF-marche.md). On y mise, on y achète tout de suite, on y suit ses
-// ventes et ses mises. Pour vendre un timbre, on passe par sa fiche (bouton « Vendre ce timbre »).
+// Le marché : les enchères entre joueurs (docs/BRIEF-marche.md). Il dit ce qu'il est et comment il marche, montre d'abord
+// « Tes enchères » (dépassées, en tête, vendues…), permet de vendre un timbre sans passer par sa fiche, puis la salle des
+// ventes en tuiles (audit de finition du 26/09/2026, chantier 7).
 // L'écran ne contient aucune règle : tout passe par src/services/partie.ts, et le serveur a le dernier mot.
 
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
-import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
-import { lien } from '../navigation/routes.ts';
 import { useChargement } from '../composants/useChargement.ts';
 import { useMaintenant, usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
-import { miseMinimale, prixActuel, tempsRestant, vendeurRecoit } from '../jeu/marche.ts';
 import type { Enchere } from '../jeu/marche.ts';
-import type { CarteIndex } from '../partage/types.ts';
+import { lien } from '../navigation/routes.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { marquerLeCourrierLu } from '../services/courrier.ts';
-import { decalageDuServeur, encherir, lireLeMarche, lireMesEncheres, retirerDeLaVente } from '../services/partie.ts';
 import type { PageDuMarche } from '../services/marche.ts';
-import { demanderConfirmation } from '../composants/Confirmation.tsx';
-import { messageDe } from '../partage/messages.ts';
+import { decalageDuServeur, lireLeMarche, lireMesEncheres } from '../services/partie.ts';
+import { MesEncheres } from './marche/MesEncheres.tsx';
+import { TuileDEnchere } from './marche/TuileDEnchere.tsx';
+import { VendreUnTimbre } from './marche/VendreUnTimbre.tsx';
+import './marche.css';
 
 const REGLES = EQUILIBRAGE.marche;
 const enToutesLettres = (date: number): string => new Date(date).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -36,7 +35,8 @@ export function Marche() {
   }, [recherche]);
   const [page, setPage] = useState(0);
   const [tour, setTour] = useState(0); // rechargé après chaque action
-  const [message, setMessage] = useState<string | null>(null);
+  const [vendre, setVendre] = useState(false);
+  const [annonce, setAnnonce] = useState<string | null>(null);
 
   const disponible = partie.etat === 'prete' && partie.serveur.etat !== 'appareil';
   const marche = useChargement(async () => (disponible ? lireLeMarche(cherche, page) : null), `marche:${disponible}:${cherche}:${page}:${tour}`);
@@ -51,126 +51,76 @@ export function Marche() {
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
-  const rafraichir = (texte: string | null = null): void => { setMessage(texte); setTour((t) => t + 1); };
-  const agir = async (action: () => Promise<string>): Promise<void> => {
-    try { rafraichir(await action()); } catch (erreur) { setMessage(messageDe(erreur)); }
+  const reserve = partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0);
+  // Un compte neuf regarde, mais ne mise ni ne vend avant trois jours (quand le serveur le dit : script 26).
+  const ouvertLe = miennes.etat === 'pret' ? miennes.donnees?.ouvertLe ?? null : null;
+  const ouvert = ouvertLe === null || ouvertLe <= maintenant;
+  const actualiser = (): void => setTour((t) => t + 1);
+  const vendu = (enchere: Enchere, mot: string): void => {
+    setVendre(false);
+    setAnnonce(`« ${mot} » est en vente jusqu’au ${enToutesLettres(enchere.fermeLe)}, à partir de ${enchere.miseDeDepart.toLocaleString('fr-FR')} Encre. Tu la suis dans « Tes enchères ».`);
+    actualiser();
   };
 
   return (
     <main className="ecran ecran--large marche">
-      <Entete titre="Le marché" actions={<a className="bouton outil" href={lien({ ecran: 'amis' })}>Échanger avec un ami</a>}>
-        Ta réserve pour enchérir : <strong>{(partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)).toLocaleString('fr-FR')}</strong> Encre.
+      <Entete titre="Le marché" actions={<>
+        {disponible && ouvert && <button type="button" className="bouton" aria-expanded={vendre} onClick={() => { setAnnonce(null); setVendre((v) => !v); }}>Vendre un timbre</button>}
+        <a className="bouton bouton--discret" href={lien({ ecran: 'amis' })}>Échanger avec un ami</a>
+      </>}>
+        Les collectionneurs y vendent leurs timbres aux enchères. Ta réserve : <strong>{reserve.toLocaleString('fr-FR')}</strong> Encre.
       </Entete>
 
       {!disponible ? (
         <section className="etat-vide"><h2>Marché indisponible</h2><p>Le marché nécessite une connexion au serveur du jeu.</p><a className="bouton" href={lien({ ecran: 'collection' })}>Ouvrir mon album</a></section>
       ) : (
         <>
-          <section className="outils-album" aria-label="Chercher un timbre en vente">
-            <input type="search" placeholder="Chercher un mot…" value={recherche} onChange={(e) => { setRecherche(e.target.value); setPage(0); }} aria-label="Chercher un mot" />
-            <button type="button" className="bouton outil" onClick={() => rafraichir()}>Actualiser</button>
+          <details className="marche__regles">
+            <summary>Comment ça marche ?</summary>
+            <ul>
+              <li><strong>Miser</strong> met ton Encre de côté. Si quelqu’un te dépasse, elle te revient aussitôt.</li>
+              <li>À la fin de l’enchère, le timbre va au meilleur enchérisseur ; le vendeur reçoit le prix moins {Math.round(REGLES.commission * 100)} % de commission. Une mise dans les {REGLES.prolongationEnMinutes} dernières minutes prolonge l’enchère de {REGLES.prolongationEnMinutes} minutes.</li>
+              <li><strong>Vendre</strong> : choisis un timbre de ton album, sa mise de départ et la durée ({REGLES.dureesEnHeures.join(', ')} heures). Il quitte ton album le temps de la vente, et y revient s’il ne trouve pas preneur.</li>
+              <li>Jusqu’à {REGLES.achatsParJourAuPlus} achats par jour et {REGLES.ventesEnCoursAuPlus} ventes en même temps. Un compte arrivé depuis moins de {EQUILIBRAGE.comptesNeufs.joursAvantLesEchanges} jours regarde, sans miser ni vendre.</li>
+            </ul>
+          </details>
+          {!ouvert && ouvertLe !== null && <p className="message message--info">Le marché s’ouvre pour toi le {enToutesLettres(ouvertLe)} : tu pourras alors miser et vendre. En attendant, regarde ce qui s’y vend.</p>}
+          {annonce && <p className="message message--succes" role="status">{annonce}</p>}
+          {vendre && cartes && <VendreUnTimbre sauvegarde={partie.sauvegarde} cartes={edition.etat === 'pret' ? edition.donnees.cartes : []} onVendu={vendu} onFermer={() => setVendre(false)} />}
+
+          {miennes.etat === 'pret' && miennes.donnees && (
+            <MesEncheres ventes={miennes.donnees.ventes} mises={miennes.donnees.mises} cartes={cartes} maintenant={maintenant} encre={reserve} ouvert={ouvert} onChange={actualiser} />
+          )}
+
+          <section className="rubrique salle-des-ventes" aria-labelledby="titre-salle">
+            <div className="salle-des-ventes__tete">
+              <h2 id="titre-salle">En vente</h2>
+              <div className="salle-des-ventes__outils">
+                <input type="search" placeholder="Chercher un mot…" value={recherche} onChange={(e) => { setRecherche(e.target.value); setPage(0); }} aria-label="Chercher un mot en vente" />
+                <button type="button" className="bouton outil" onClick={actualiser}>Actualiser</button>
+              </div>
+            </div>
+            {marche.etat === 'erreur' && <p className="message message--erreur" role="alert">{marche.message}</p>}
+            {marche.etat === 'en cours' && !affichee && <p className="texte-doux">Ouverture du marché…</p>}
+            {affichee && (
+              <div aria-busy={marche.etat === 'en cours'} className="salle-des-ventes__contenu">
+                {affichee.total === 0
+                  ? <div className="etat-vide"><h3>{cherche ? 'Aucun timbre trouvé' : 'Rien en vente pour l’instant'}</h3>{cherche ? <button className="bouton" onClick={() => { setRecherche(''); setCherche(''); setPage(0); }}>Effacer la recherche</button> : ouvert && <p>Sois le premier : « Vendre un timbre ».</p>}</div>
+                  : <p className="texte-doux petit">{affichee.total.toLocaleString('fr-FR')} enchère{affichee.total > 1 ? 's' : ''} en cours, les plus proches de la fin d’abord.</p>}
+                <ul className="salle-des-ventes__grille">
+                  {affichee.encheres.map((enchere) => (
+                    <TuileDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={reserve} ouvert={ouvert} onChange={actualiser} />
+                  ))}
+                </ul>
+                <div className="rangee-de-boutons">
+                  {page > 0 && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p - 1)}>Enchères précédentes</button>}
+                  {affichee.total > (page + 1) * REGLES.encheresParPage && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p + 1)}>Enchères suivantes</button>}
+                </div>
+              </div>
+            )}
           </section>
-          {message && <p role="status" className="petit marche__message">{message}</p>}
-
-          {marche.etat === 'erreur' && <p className="joute__refus" role="alert">{marche.message}</p>}
-          {marche.etat === 'en cours' && !affichee && <p className="texte-doux">Ouverture du marché…</p>}
-          {affichee && (
-            <section className="rubrique marche__liste" aria-label="Enchères en cours" aria-busy={marche.etat === 'en cours'}>
-              {affichee.total === 0 ? <div className="etat-vide"><h2>{cherche ? 'Aucun timbre trouvé' : 'Aucune enchère en cours'}</h2>{cherche && <button className="bouton" onClick={() => { setRecherche(''); setCherche(''); setPage(0); }}>Effacer la recherche</button>}</div> : <p className="texte-doux petit">{affichee.total} enchère{affichee.total > 1 ? 's' : ''} en cours.</p>}
-              <ul className="liste-nue marche__encheres">
-                {affichee.encheres.map((enchere) => (
-                  <LigneDEnchere key={enchere.id} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />
-                ))}
-              </ul>
-              {affichee.total > (page + 1) * REGLES.encheresParPage && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p + 1)}>Enchères suivantes</button>}
-              {page > 0 && <button type="button" className="bouton bouton--discret" onClick={() => setPage((p) => p - 1)}>Enchères précédentes</button>}
-            </section>
-          )}
-
-          {miennes.etat === 'pret' && miennes.donnees && (miennes.donnees.ventes.length > 0 || miennes.donnees.mises.length > 0) && (
-            <section className="rubrique" aria-label="Mes ventes et mes mises">
-              <h2>Mes ventes et mes mises</h2>
-              <ul className="liste-nue marche__encheres">
-                {miennes.donnees.ventes.map((enchere) => <LigneDEnchere key={`v${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />)}
-                {miennes.donnees.mises.filter((m) => !miennes.donnees!.ventes.some((v) => v.id === m.id)).map((enchere) => <LigneDEnchere key={`m${enchere.id}`} enchere={enchere} carte={cartes?.get(enchere.carte)} maintenant={maintenant} encre={partie.sauvegarde.encre + (partie.compte?.formule.encreAchetee ?? 0)} onAgir={agir} />)}
-              </ul>
-            </section>
-          )}
         </>
       )}
     </main>
-  );
-}
-
-// Une enchère : le timbre, son prix, le temps qui reste, et ce que l'on peut y faire.
-function LigneDEnchere({ enchere, carte, maintenant, encre, onAgir }: { enchere: Enchere; carte: CarteIndex | undefined; maintenant: number; encre: number; onAgir: (action: () => Promise<string>) => Promise<void> }) {
-  const [montant, setMontant] = useState<string>(String(miseMinimale(enchere, REGLES)));
-  const [ouvert, setOuvert] = useState(false);
-  const [occupe, setOccupe] = useState(false);
-  const minimum = miseMinimale(enchere, REGLES);
-  const enCours = enchere.etat === 'ouverte' && enchere.fermeLe > maintenant;
-
-  const lancer = (action: () => Promise<string>): void => {
-    setOccupe(true);
-    void onAgir(action).finally(() => setOccupe(false));
-  };
-  const miser = (evenement: FormEvent): void => {
-    evenement.preventDefault();
-    const valeur = Math.floor(Number(montant));
-    if (!Number.isFinite(valeur) || valeur < minimum) { void onAgir(async () => { throw new Error(`La mise doit être d'au moins ${minimum} Encre.`); }); return; }
-    const disponible = encre + (enchere.enTete ? enchere.meilleureMise ?? 0 : 0);
-    if (valeur > disponible) { void onAgir(async () => { throw new Error(`Il te manque ${valeur - disponible} Encre pour cette mise.`); }); return; }
-    lancer(async () => { const e = await encherir(enchere.id, valeur); return e.etat === 'vendue' ? `« ${carte?.mot ?? enchere.carte} » est à toi pour ${e.prixFinal} Encre.` : `Mise de ${valeur} Encre enregistrée : tu es en tête.`; });
-  };
-  const acheter = async (): Promise<void> => {
-    if (enchere.achatImmediat === null) return;
-    if (!(await demanderConfirmation({
-      titre: `Acheter « ${carte?.mot ?? enchere.carte} » ?`, message: `Tout de suite, pour ${enchere.achatImmediat} Encre : l’enchère s’arrête et le timbre entre dans ton album.`, confirmer: `Acheter pour ${enchere.achatImmediat} Encre`,
-    }))) return;
-    lancer(async () => { await encherir(enchere.id, enchere.achatImmediat!); return `« ${carte?.mot ?? enchere.carte} » est à toi pour ${enchere.achatImmediat} Encre.`; });
-  };
-  const retirer = async (): Promise<void> => {
-    if (!(await demanderConfirmation({ titre: 'Retirer cette vente ?', message: 'Le timbre revient dans ton album.', confirmer: 'Retirer la vente' }))) return;
-    lancer(async () => { await retirerDeLaVente(enchere.id); return 'Vente retirée : le timbre est revenu dans ton album.'; });
-  };
-
-  // Ce qu'est devenue une enchère terminée, vu de moi.
-  const bilan = enchere.etat === 'vendue'
-    ? (enchere.mienne ? `Vendue à ${enchere.acheteur ?? 'un collectionneur'} pour ${enchere.prixFinal} Encre (tu as reçu ${vendeurRecoit(enchere.prixFinal ?? 0, REGLES)}).` : enchere.remportee ? `Remportée pour ${enchere.prixFinal} Encre.` : `Vendue à ${enchere.acheteur ?? 'un autre collectionneur'} pour ${enchere.prixFinal} Encre.`)
-    : enchere.etat === 'invendue' ? 'Invendue : le timbre est revenu dans l’album.' : enchere.etat === 'retiree' ? 'Retirée.' : null;
-
-  return (
-    <li className="enchere" data-etat={enchere.etat}>
-      <div className="enchere__timbre">{carte ? <Carte carte={carte} finition={enchere.finition} /> : <div className="deck__vide" aria-hidden="true" />}</div>
-      <div className="enchere__corps">
-        <p className="enchere__titre"><strong>{carte?.mot ?? enchere.carte}</strong>{carte && <span className="texte-doux petit"> · {carte.rarete}{enchere.finition !== 'Normale' && ` · ${enchere.finition.toLowerCase()}`}</span>}</p>
-        <p className="texte-doux petit">{enchere.mienne ? 'Ta vente' : `Vendu par ${enchere.vendeur}`}{enchere.etat === 'ouverte' && ` · ${tempsRestant(enchere.fermeLe, maintenant)}`}{enCours && ` (fin le ${enToutesLettres(enchere.fermeLe)})`}</p>
-        {bilan ? <p className="petit">{bilan}</p> : (
-          <p className="enchere__prix">
-            {enchere.meilleureMise === null ? <>Mise de départ <strong>{enchere.miseDeDepart}</strong> Encre</> : <>Meilleure mise <strong>{prixActuel(enchere)}</strong> Encre{enchere.enTete && <span className="enchere__tete"> · tu es en tête</span>}</>}
-            {enchere.achatImmediat !== null && <span className="texte-doux petit"> · achat immédiat {enchere.achatImmediat} Encre</span>}
-            {enchere.cote !== null && <span className="texte-doux petit"> · cote {enchere.cote} Encre</span>}
-          </p>
-        )}
-        {enCours && !enchere.mienne && (
-          <div className="enchere__actions">
-            {!ouvert
-              ? <div className="rangee-de-boutons">
-                  {!enchere.enTete && <button type="button" className="bouton" disabled={occupe} onClick={() => { setMontant(String(minimum)); setOuvert(true); }}>Miser</button>}
-                  {enchere.achatImmediat !== null && <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => void acheter()}>Acheter {enchere.achatImmediat} Encre</button>}
-                </div>
-              : <form className="enchere__mise" onSubmit={miser}>
-                  <label htmlFor={`mise-${enchere.id}`} className="petit">Ta mise (au moins {minimum} Encre)</label>
-                  <input id={`mise-${enchere.id}`} type="number" inputMode="numeric" min={minimum} step={1} value={montant} onChange={(e) => setMontant(e.target.value)} />
-                  <div className="rangee-de-boutons">
-                    <button type="submit" className="bouton" disabled={occupe}>{occupe ? 'Envoi…' : 'Confirmer la mise'}</button>
-                    <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => setOuvert(false)}>Annuler</button>
-                  </div>
-                </form>}
-          </div>
-        )}
-        {enCours && enchere.mienne && enchere.meilleureMise === null && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" disabled={occupe} onClick={() => void retirer()}>Retirer de la vente</button></div>}
-      </div>
-    </li>
   );
 }
