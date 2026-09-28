@@ -380,16 +380,16 @@ n'est pas collé, le marché reste comme avant.
 ### Étape 20 — Réserver l'adresse ludophile.fr (le nom de ton futur studio)
 
 Ta décision du 28 septembre : Philamots sera vendu sous le nom **« Studio Ludophile »** (« Philamots, un jeu édité par
-Studio Ludophile »), et tes prochains jeux aussi. La forme juridique qui portera ce nom **reste à choisir**, avec
-l'assistant et un professionnel : en attendant, rien à déclarer, et les achats restent fermés.
+Studio Ludophile »), et tes prochains jeux aussi. Puis, le même jour : **d'abord lancer le jeu gratuit et voir s'il
+trouve son public** ; le payant viendra seulement si ça marche. D'ici là, rien à déclarer, et les achats restent fermés.
 
 - [x] **`ludophile.fr` réservé chez OVHcloud** le 28 septembre (vérifié au registre : enregistré jusqu'au
       28 septembre 2027). Vérifier dans OVHcloud que le **renouvellement automatique** est activé. `ludophile.com` est
       pris depuis 2005.
-- [ ] Envoyer au comptable l'e-mail préparé par l'assistant le 28 septembre, et attendre sa réponse.
-- [ ] Ensuite, faire la déclaration en ligne avec l'assistant, écran par écran : « Studio Ludophile » comme nom
-      commercial, avec une activité décrite largement, par exemple « conception et édition de jeux en ligne », pour que
-      tes prochains jeux soient couverts eux aussi.
+- **En pause jusqu'à ce que le jeu trouve son public.** Le chemin est prêt, il suffira de le redemander à
+  l'assistant : un e-mail au comptable (l'assistant le rédige), puis la déclaration en ligne, écran par écran, avec
+  « Studio Ludophile » comme nom commercial et une activité décrite largement (par exemple « conception et édition de
+  jeux en ligne »), pour que tes prochains jeux soient couverts eux aussi.
 - À savoir : le 28 septembre, aucune marque « Ludophile » n'était déposée à l'INPI et aucune entreprise ne portait ce
   nom (seulement une association et des clubs de joueurs). Comme c'est un mot courant chez les joueurs, il sera
   peut-être difficile à protéger comme marque : la marque à protéger en premier est **Philamots**.
