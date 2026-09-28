@@ -7,6 +7,7 @@ import { HoteDesConfirmations } from './composants/Confirmation.tsx';
 import { Navigation } from './composants/Navigation.tsx';
 import { usePartie } from './composants/usePartie.ts';
 import { usePresence } from './composants/usePresence.ts';
+import { useActualisationDuCourrier } from './composants/useCourrier.ts';
 import { Accueil } from './ecrans/Accueil.tsx';
 import { profilVisible } from './jeu/personnalisation.ts';
 import { useRoute } from './navigation/useRoute.ts';
@@ -132,6 +133,7 @@ export function App() {
   const partie = usePartie();
   const cle = route.ecran === 'carte' ? `carte/${route.id}` : route.ecran;
   usePresence();
+  useActualisationDuCourrier(); // le courrier se relit au retour du joueur (services/courrier.ts)
 
   // À chaque changement d'écran : on repart du haut de la page, l'onglet du navigateur change de titre, et le
   // clavier repart du titre du nouvel écran (sauf au tout premier affichage, où l'on ne dérange pas le navigateur).

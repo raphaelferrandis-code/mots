@@ -2,6 +2,21 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5 « Le courrier, le marché et les grands moments », lot A : « Ton courrier ».**
+> Décisions de Raphaël pour l'étape (AskUserQuestion) : joueurs simulés au marché, vendeurs et acheteurs de dernier
+> recours, la mention « Joueur simulé » seulement sur leur fiche (proposé en plus : une phrase générale dans
+> l'explication du marché) ; la Hors-série au-dessus de la Légendaire et des vibrations Android (on garde l'éclair, la
+> secousse et le rythme du duel) ; les sons jugés sur une page d'écoute ; la joute en direct (chantier 6) en fin
+> d'étape. Lot A : sous le bouton du comptoir, « Ton courrier » dit ce qui attend une réponse (demande d'ami, échange
+> proposé, invitation d'équipe, enchère dépassée, duel laissé en cours) et les nouvelles depuis la dernière lecture
+> (demande acceptée, échange accepté ou refusé, enchère remportée, vente conclue ou revenue). Pastilles : le nombre sur
+> l'avatar (amis, échanges, équipe) et sur la ligne Amis du menu, un point sur les onglets Marché et Duel. Aucun appel
+> nouveau au serveur : `mes_amis`, `mes_encheres` et `mon_equipe`, relus au retour sur l'onglet et toutes les 3 min
+> (au plus une fois par minute) ; le duel en cours est retenu par l'appareil. Ce qui est nouveau se décide par le
+> « relevé » de la dernière lecture (`src/jeu/courrier.ts`, testé ; `src/services/courrier.ts`) ; chaque lecture part
+> de son état présent la première fois (pas de vieilles nouvelles) ; l'accueil lit tout, les pages Amis, Équipe et
+> Marché lisent leur part.
+
 > **28 septembre 2026 — le bouton « Installer Philamots ».** Raphaël a essayé l'installation sur son téléphone :
 > Samsung Internet affichait « Appli non sécurisée bloquée » (Google Play Protect). Cause connue, chez Samsung : son
 > usine à applications (WebAPK) vise une vieille version d'Android (signalé en avril 2026, pas corrigé) ; Chrome

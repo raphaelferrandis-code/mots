@@ -8,6 +8,7 @@ import { demanderConfirmation } from './Confirmation.tsx';
 import { Icone } from './Icone.tsx';
 import { Portrait } from './Identite.tsx';
 import { useCompteur } from './ceremonie/compteurs.ts';
+import { useCourrier } from './useCourrier.ts';
 import { progressionDuNiveau } from '../jeu/personnalisation.ts';
 import { compteConnecte, deconnecter } from '../services/connexion.ts';
 import { conseilDInstallation, ecouterLInstallation, modeActuel, ouvrirDansChrome, ouvrirLaFenetre } from '../services/installation.ts';
@@ -131,6 +132,11 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
   };
 
   const encreEnClair = encre === null ? '…' : encre.toLocaleString('fr-FR');
+  // Les nouvelles du courrier (services/courrier.ts) : amis, échanges et équipe sur l'avatar, enchères et ventes sur le
+  // Marché, un duel laissé en cours sur le Duel.
+  const { nouvelles } = useCourrier();
+  const pastilleDe = (route: Route): number => (route.ecran === 'marche' ? nouvelles.marche : route.ecran === 'duel' ? nouvelles.duel : 0);
+  const enClair = (n: number): string => (n === 1 ? '1 nouvelle' : `${n} nouvelles`);
 
   return (
     <header className="entete-application">
@@ -145,6 +151,7 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
               <span className="navigation__icone" aria-hidden="true">{onglet.icone}</span>
               <span className="navigation__nom-long">{onglet.nom}</span>
               <span className="navigation__nom-court">{onglet.nomCourt ?? onglet.nom}</span>
+              {pastilleDe(onglet.route) > 0 && <span className="navigation__pastille"><span className="visuellement-cache"> ({enClair(pastilleDe(onglet.route))})</span></span>}
             </a>
           </li>)}
         </ul>
@@ -176,12 +183,13 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
 
         <div className="espace-joueur">
           <button type="button" className="bouton-joueur" aria-expanded={ouvert === 'profil'} aria-controls="menu-profil" onClick={() => basculer('profil')}
-            aria-label={`Mon espace${nom ? ` — ${nom}` : ''}${progression ? `, niveau ${progression.niveau}` : ''}`}
+            aria-label={`Mon espace${nom ? ` — ${nom}` : ''}${progression ? `, niveau ${progression.niveau}` : ''}${nouvelles.joueur > 0 ? `, ${enClair(nouvelles.joueur)}` : ''}`}
             aria-current={ESPACE_DU_JOUEUR.some((e) => e.actifPour.includes(ecran)) || ecran === 'formules' ? 'page' : undefined}>
             <span className="avatar" aria-hidden="true">
               {progression && <svg className="avatar__anneau" viewBox="0 0 46 46"><circle className="avatar__anneau-fond" cx="23" cy="23" r="21" /><circle key={progression.niveau} className="avatar__anneau-plein" cx="23" cy="23" r="21" strokeDasharray={TOUR.toFixed(2)} strokeDashoffset={(TOUR * (1 - progression.acquis / progression.requis)).toFixed(2)} /></svg>}
               {portrait ? <Portrait avatar={portrait.avatar} cadre={portrait.cadre} anime={false} /> : <span className="avatar__visage">{DESSINS.profil}</span>}
               {progression && <b key={progression.niveau} className="avatar__niveau" data-monte={niveauMonte || undefined}>{progression.niveau}</b>}
+              {nouvelles.joueur > 0 && <b className="avatar__courrier">{nouvelles.joueur > 9 ? '9+' : nouvelles.joueur}</b>}
             </span>
             <span className="bouton-joueur__chevron" aria-hidden="true">{DESSINS.chevron}</span>
           </button>
@@ -208,7 +216,9 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
                   <a href={lien(e.route)} aria-current={e.actifPour.includes(ecran) ? 'page' : undefined}>
                     <span className="menu-profil__icone" aria-hidden="true">{e.icone}</span>
                     <span className="menu-profil__nom">{e.nom}</span>
-                    <span className="menu-profil__detail">{e.detail}</span>
+                    {e.route.ecran === 'amis' && nouvelles.joueur > 0
+                      ? <span className="menu-profil__detail menu-profil__detail--nouvelles">{enClair(nouvelles.joueur)}</span>
+                      : <span className="menu-profil__detail">{e.detail}</span>}
                   </a>
                 </li>)}
                 {installation !== 'aucun' && <li>

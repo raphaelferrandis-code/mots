@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Courrier } from '../composants/accueil/Courrier.tsx';
 import { DevinetteDuJour } from '../composants/accueil/DevinetteDuJour.tsx';
 import { DuelsDuBureau } from '../composants/accueil/DuelsDuBureau.tsx';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
@@ -66,7 +67,7 @@ export function Accueil() {
     <main className="ecran ecran--large accueil-refonte">
       <FondAnime immobile />
       <NouvellesDuParrainage />
-      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} suite={<PremiersPas sauvegarde={sauvegarde} carnet={deck} />} />
+      <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} suite={<><PremiersPas sauvegarde={sauvegarde} carnet={deck} /><Courrier /></>} />
       <DevinetteDuJour />
       <FilDActivite />
       {rappelerLExport && (

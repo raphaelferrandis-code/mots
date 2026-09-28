@@ -14,6 +14,7 @@ import { miseMinimale, prixActuel, tempsRestant, vendeurRecoit } from '../jeu/ma
 import type { Enchere } from '../jeu/marche.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
+import { marquerLeCourrierLu } from '../services/courrier.ts';
 import { decalageDuServeur, encherir, lireLeMarche, lireMesEncheres, retirerDeLaVente } from '../services/partie.ts';
 import type { PageDuMarche } from '../services/marche.ts';
 import { demanderConfirmation } from '../composants/Confirmation.tsx';
@@ -44,6 +45,8 @@ export function Marche() {
   if (marche.etat === 'pret' && marche.donnees) derniere.current = marche.donnees;
   const affichee = marche.etat === 'pret' ? marche.donnees : marche.etat === 'en cours' ? derniere.current : null;
   const miennes = useChargement(async () => (disponible ? lireMesEncheres() : null), `miennes:${disponible}:${tour}`);
+  // Mes enchères et mes ventes sont lues ici : leur part du courrier aussi (services/courrier.ts).
+  useEffect(() => { if (miennes.etat === 'pret' && miennes.donnees) marquerLeCourrierLu(['enchere', 'vente'], { encheres: miennes.donnees }); }, [miennes]);
   const cartes = edition.etat === 'pret' ? new Map(edition.donnees.cartes.map((c) => [c.id, c])) : null;
 
   if (partie.etat !== 'prete') return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;

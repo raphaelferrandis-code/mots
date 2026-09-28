@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ActionCombat, ChoixCombat, CombatEnLigne, RequeteCombat, ReponseServeurCombat } from '../jeu/combat.ts';
 import { serveurDesCollections } from '../services/collections.ts';
+import { marquerLeCourrierLu, retenirLeDuel } from '../services/courrier.ts';
 import { commanderCombat } from '../services/partie.ts';
 import { ErreurDuServeur } from '../services/supabase.ts';
 import { messageDe } from '../partage/messages.ts';
@@ -29,6 +30,10 @@ export function useCombatServeur(pret: boolean, appliquer: (r: ReponseServeurCom
       const reponse = await commanderCombat(commande);
       attente.current = null;
       courant.current = reponse.combat;
+      // Un duel laissé en cours s'annonce dans le courrier (« Un duel t'attend ») ; ici, sur l'écran du duel, il est vu.
+      const enCours = reponse.combat && !reponse.combat.vue.termine ? reponse.combat : null;
+      retenirLeDuel(enCours && { id: enCours.id, expireLe: enCours.vue.expireLe });
+      marquerLeCourrierLu(['duel']);
       if (monte.current) {
         setCombat(reponse.combat); setRepris(true);
         reception.current(reponse);

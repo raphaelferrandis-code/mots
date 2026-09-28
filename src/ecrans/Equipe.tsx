@@ -6,6 +6,7 @@ import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { profilVisible } from '../jeu/personnalisation.ts';
 import { lien } from '../navigation/routes.ts';
 import { amisDisponibles } from '../services/amis.ts';
+import { marquerLeCourrierLu } from '../services/courrier.ts';
 import { EMBLEMES, serveurEquipes } from '../services/equipes.ts';
 import type { Embleme, Equipe as EquipeDonnees, MonEquipe } from '../services/equipes.ts';
 import { messageDe } from '../partage/messages.ts';
@@ -35,7 +36,7 @@ export function Equipe() {
     const charger = async () => {
       if (verrou.current) return;
       const version = ++generation.current;
-      try { const etat = await serveurEquipes().lire(); if (actif && version === generation.current) { setDonnees(etat); setErreur(''); } }
+      try { const etat = await serveurEquipes().lire(); if (actif && version === generation.current) { setDonnees(etat); setErreur(''); marquerLeCourrierLu(['equipe'], { equipe: etat }); } }
       catch (e) { if (actif && version === generation.current) setErreur(messageDe(e)); }
     };
     const actualiser = () => { if (document.visibilityState === 'visible') void charger(); };

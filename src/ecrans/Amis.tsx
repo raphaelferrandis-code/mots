@@ -18,6 +18,7 @@ import { serveurEquipes } from '../services/equipes.ts';
 import type { Equipe } from '../services/equipes.ts';
 import type { AlbumAmi, CarnetAmis, Echange, Relation, TimbreEchange } from '../services/amis.ts';
 import { chargerEdition } from '../services/cartes.ts';
+import { marquerLeCourrierLu } from '../services/courrier.ts';
 import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
 import { messageDe } from '../partage/messages.ts';
 import './amis.css';
@@ -45,7 +46,12 @@ export function Amis() {
   const equipe = useChargement(() => disponible ? serveurEquipes().lire() : Promise.resolve(null), `equipe:${disponible}:${tour}`);
   const monEquipe = equipe.etat === 'pret' ? equipe.donnees : null;
   const [dernierCarnet, setDernierCarnet] = useState<CarnetAmis | null>(null);
-  useEffect(() => { if (carnet.etat === 'pret') setDernierCarnet(carnet.donnees); }, [carnet]);
+  useEffect(() => {
+    if (carnet.etat !== 'pret') return;
+    setDernierCarnet(carnet.donnees);
+    // Les demandes et les échanges sont lus ici : leur part du courrier aussi (services/courrier.ts).
+    if (carnet.donnees) marquerLeCourrierLu(['ami', 'echange'], { amis: carnet.donnees });
+  }, [carnet]);
   const edition = useChargement(chargerEdition, 'edition');
   // Une actualisation en arrière-plan ne ferme pas les confirmations et ne vole pas le focus du formulaire.
   const donnees = carnet.etat === 'pret' ? carnet.donnees : dernierCarnet;

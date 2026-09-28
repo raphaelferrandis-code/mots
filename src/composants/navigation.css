@@ -26,6 +26,8 @@
   content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
   background: var(--accent);
 }
+/* Une nouvelle au courrier sur cet onglet (enchères et ventes au Marché, un duel laissé en cours au Duel). */
+.navigation__pastille { position: absolute; top: calc(50% - 17px); right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--cuivre-clair); box-shadow: 0 0 0 2px var(--nuit); pointer-events: none; }
 
 
 /* ── L’espace personnel : Encre, avatar ──────────────────────────────── */
@@ -65,6 +67,11 @@
 .avatar__niveau {
   position: absolute; right: -4px; bottom: -3px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 4px; border-radius: 9px;
   display: grid; place-items: center; background: #d89a5c; color: #2b1706; border: 2px solid var(--carte-fond); font: 600 10.5px/1 var(--police-douce);
+}
+/* Le nombre de nouvelles du courrier (amis, échanges, équipe), en haut à gauche : une petite étiquette crème. */
+.avatar__courrier {
+  position: absolute; left: -5px; top: -4px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 4px; border-radius: 9px;
+  display: grid; place-items: center; background: #f3e6cc; color: #172235; border: 2px solid var(--carte-fond); font: 700 10.5px/1 var(--police-douce);
 }
 
 /* ── Les menus ───────────────────────────────────────────────────────────── */
@@ -150,6 +157,7 @@
 .menu-profil__icone svg { width: 19px; height: 19px; }
 .menu-profil__nom { flex: 1; white-space: nowrap; }
 .menu-profil__detail { font-size: 0.78rem; color: var(--encre-douce); text-align: right; }
+.menu-profil__detail--nouvelles { color: var(--cuivre-clair); font-weight: 600; }
 .menu-profil__liens a[aria-current='page'] { background: rgb(216 154 92 / 10%); }
 .menu-profil__liens a[aria-current='page'] .menu-profil__icone { background: rgb(216 154 92 / 16%); color: var(--accent); }
 .menu-profil__formules {
@@ -216,7 +224,8 @@
   .reserve-encre svg { width: 17px; height: 17px; }
   .bouton-joueur__chevron { display: none; }
   .bouton-joueur { padding: 0; background: none; border-radius: 50%; }
-  .avatar__niveau { border-color: var(--papier); }
+  .avatar__niveau, .avatar__courrier { border-color: var(--papier); }
+  .navigation__pastille { top: 9px; right: auto; left: calc(50% + 8px); }
 
   .menu-encre { position: fixed; top: 72px; left: 16px; right: 16px; width: auto; }
   /* Le menu du joueur monte du bas de l'écran, à portée de pouce. */
