@@ -2,6 +2,18 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 4, lot C : retour instantané, hors ligne, installable (fin de l'étape 4).**
+> Un service worker (`scripts/sw.modele.js`, rempli à la construction par le greffon `service-worker` de
+> `vite.config.ts` et écrit en `dist/sw.js`) garde le jeu sur l'appareil : tous les scripts, styles et polices woff2,
+> l'index de l'édition, le logo et les icônes. Retour sur le jeu : 3 demandes au réseau au lieu d'une centaine (la
+> page, toujours demandée au réseau d'abord ; un fichier gardé à l'usage ; la vérification de mise à jour). Hors ligne,
+> le jeu s'affiche et dit « Tu es hors connexion » (au lieu de « le serveur ne répond pas ») ; au retour du réseau, la
+> partie se resynchronise seule. Jamais interceptés : Supabase, Turnstile, `paiements-version.json`, les pages par mot
+> (`/mot/`, `/mots/`, `/partage/`). Chaque construction a sa version (liste des fichiers + contenu de ceux qui n'ont pas
+> d'empreinte) : la nouvelle copie remplace l'ancienne, effacée. Un fichier listé mais absent arrête la construction.
+> Manifeste (`public/manifest.webmanifest`) et icônes 192, 512 et « masquable » : le jeu s'installe sur l'écran
+> d'accueil d'un téléphone. Pour couper le service worker un jour : la marche à suivre est en tête de `sw.modele.js`.
+
 > **28 septembre 2026 — finitions, étape 4, lot B : l'album des gros collectionneurs.** Rosaces des timbres d'album à
 > 48 points par boucle et une décimale (deux fois moins de données ; 24 et 36 crénelaient, comparé à l'œil), fines (90)
 > pour les grands timbres (`fin` : fiche, gros plan de la cérémonie, image de partage) ; souvenir des tracés plafonné à

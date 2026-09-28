@@ -150,6 +150,8 @@ export function demarrerLaPartie(): Promise<void> {
       enregistrer(sauvegarde);
       void chargerLesSucces().catch(() => { /* La page Succès proposera de réessayer. */ });
       if (serveurDesCollections.actif) void synchroniser();
+      // Le réseau revient (le jeu a pu s'ouvrir sans lui, grâce au service worker) : la partie se remet à jour seule.
+      globalThis.addEventListener?.('online', () => { if (partie.etat === 'prete' && partie.serveur.etat === 'hors ligne') void synchroniser(); });
       const durable = await demanderUnStockageDurable();
       if (partie.etat === 'prete') publier({ ...partie, stockageDurable: durable });
     } catch (erreur) {

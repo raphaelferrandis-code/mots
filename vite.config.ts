@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { choisirModePaiements } from './src/services/mode-paiements.ts';
 import { SERVEUR } from './src/config/serveur.ts';
@@ -68,7 +68,36 @@ export default defineConfig(({ mode }) => {
         return sansFeuilles.replace(marque, feuilles.join('\n    '));
       },
     },
-  }, {
+  }, (() => {
+    // Le service worker (scripts/sw.modele.js) : la liste des fichiers à garder sur l'appareil, et une version qui change
+    // avec eux (nouvelle copie à chaque construction qui change quelque chose). Les polices ne gardent que le woff2.
+    // En dernier : Vite retire de la liste, juste avant, le script vide des pages sans script (mot.html) ; un fichier
+    // listé mais absent ferait échouer toute l'installation (vérifié à l'écriture : la construction s'arrête).
+    let liste: string[] = [];
+    return {
+      name: 'service-worker',
+      apply: 'build',
+      enforce: 'post',
+      generateBundle(_options, bundle) {
+        const fichiers = Object.keys(bundle).filter((nom) => nom.startsWith('assets/') && /\.(js|css|woff2)$/.test(nom)).sort();
+        liste = ['./', 'demarrage.js', 'manifest.webmanifest', 'identite/favicon-site.svg', 'identite/icone-site-32.png', 'identite/icone-site-192.png',
+          'identite/philamots-clair.svg', ...fichiers, `data/edition-1.index.json?v=${process.env.VITE_VERSION_DES_DONNEES}`];
+        // Les fichiers sans empreinte dans leur nom (demarrage.js, le manifeste, identite/) comptent par leur contenu :
+        // sinon leur nouvelle version ne remplacerait jamais la copie gardée.
+        const hache = createHash('sha256').update(liste.join('\n'));
+        const publics = ['demarrage.js', 'manifest.webmanifest', ...readdirSync(path.join(process.cwd(), 'public', 'identite'), { withFileTypes: true })
+          .filter((entree) => entree.isFile()).map((entree) => `identite/${entree.name}`).sort()];
+        for (const nom of publics) hache.update(nom).update(readFileSync(path.join(process.cwd(), 'public', nom)));
+        const version = hache.digest('hex').slice(0, 12);
+        const modele = readFileSync(path.join(process.cwd(), 'scripts', 'sw.modele.js'), 'utf8');
+        this.emitFile({ type: 'asset', fileName: 'sw.js', source: modele.replace("'%VERSION%'", JSON.stringify(version)).replace("'%FICHIERS%'", JSON.stringify(liste)) });
+      },
+      writeBundle(_options, bundle) {
+        const absents = liste.filter((nom) => nom.startsWith('assets/') && !(nom in bundle));
+        if (absents.length) this.error(`service worker : fichiers listés mais absents du site construit : ${absents.join(', ')}`);
+      },
+    } satisfies Plugin;
+  })(), {
     name: 'version-paiements',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'paiements-version.json', source: JSON.stringify({

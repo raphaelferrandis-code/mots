@@ -1,0 +1,19 @@
+{
+  "name": "Philamots",
+  "short_name": "Philamots",
+  "description": "Collectionne les mots de la langue française, imprimés comme des timbres-poste, et affronte-toi en duels de définitions.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1729",
+  "theme_color": "#0b1729",
+  "categories": ["games", "education"],
+  "icons": [
+    { "src": "./identite/icone-site-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./identite/icone-site-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./identite/icone-site-masquable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

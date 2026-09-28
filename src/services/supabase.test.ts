@@ -203,6 +203,16 @@ describe('le client Supabase', () => {
     assert.equal(monde.session()?.renouvellement, 'renouvellement-0', 'la session gardée est intacte');
   });
 
+  it("une requête qui ne part pas dit « hors connexion » quand l'appareil n'a pas de réseau, sinon que le serveur ne répond pas", async () => {
+    const valable: Session = { acces: 'valable', renouvellement: 'r', expireLe: 9_999_999_999 };
+    const message = () => fauxMonde(() => 'panne', valable).client.appeler('mon_compte').then(() => '', (erreur: Error) => erreur.message);
+    assert.match(await message(), /ne répond pas/);
+    const reel = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true });
+    try { assert.match(await message(), /hors connexion/); }
+    finally { if (reel) Object.defineProperty(globalThis, 'navigator', reel); }
+  });
+
   it('transmet au joueur le refus motivé par une fonction de la base, et cache les autres erreurs derrière un message de panne', async () => {
     const refus = fauxMonde((appel) => (appel.adresse.includes('/signup') ? { statut: 200, corps: JETONS } : { statut: 400, corps: { code: 'P0001', message: 'Trop de joutes en peu de temps : fais une pause.' } }));
     await assert.rejects(refus.client.appeler('commencer_une_joute'), (erreur: unknown) => erreur instanceof ErreurDuServeur && erreur.refus && erreur.message.startsWith('Trop de joutes'));

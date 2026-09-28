@@ -20,3 +20,10 @@ async function demarrer() {
   createRoot(document.getElementById('racine')!).render(<StrictMode><FiletDErreur><App /></FiletDErreur></StrictMode>);
 }
 void demarrer();
+
+// Le « service worker » (dist/sw.js, fabriqué par la construction depuis scripts/sw.modele.js) : les fichiers du jeu gardés
+// sur l'appareil, pour des retours instantanés, la consultation hors ligne et l'installation sur l'écran d'accueil.
+// Seulement dans le site construit, et une fois la page chargée (il ne doit rien retarder).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { void navigator.serviceWorker.register('./sw.js').catch(() => undefined); });
+}

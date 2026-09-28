@@ -28,6 +28,9 @@ export class ErreurDuServeur extends Error {
 }
 
 const PANNE = 'Le serveur du jeu ne répond pas. Réessaie dans un instant.';
+// Sans réseau, le jeu s'ouvre quand même (service worker, scripts/sw.modele.js) : c'est la connexion qui manque, pas le serveur.
+const HORS_CONNEXION = 'Tu es hors connexion : réessaie quand le réseau sera revenu.';
+const injoignable = (): ErreurDuServeur => new ErreurDuServeur(globalThis.navigator?.onLine === false ? HORS_CONNEXION : PANNE, false);
 const SESSION_EXPIREE = 'Ta session a expiré. Reconnecte-toi depuis Mon compte, ou retrouve ta collection avec ton code de secours (dans ton profil).';
 const ANTI_ROBOT = "La vérification anti-robot n'a pas abouti. Recharge la page pour réessayer.";
 const MARGE_AVANT_EXPIRATION = 60_000;
@@ -40,7 +43,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
 
   async function demanderUneSession(chemin: string, corps: object): Promise<Session | 'refusee'> {
     let reponse: Response;
-    try { reponse = await exterieur.requete(`${base}/auth/v1/${chemin}`, { method: 'POST', headers: enTetes, body: JSON.stringify(corps), signal: AbortSignal.timeout(20_000) }); } catch { throw new ErreurDuServeur(PANNE, false); }
+    try { reponse = await exterieur.requete(`${base}/auth/v1/${chemin}`, { method: 'POST', headers: enTetes, body: JSON.stringify(corps), signal: AbortSignal.timeout(20_000) }); } catch { throw injoignable(); }
     if (reponse.status === 400 || reponse.status === 401 || reponse.status === 403 || reponse.status === 422) return 'refusee';
     if (!reponse.ok) throw new ErreurDuServeur(PANNE, false);
     const lue = await reponse.json().catch(() => null) as { access_token?: string; refresh_token?: string; expires_in?: number } | null;
@@ -87,7 +90,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     let reponse: Response;
     try {
       reponse = await exterieur.requete(`${base}/rest/v1/rpc/${fonction}`, { method: 'POST', headers: { ...enTetes, Authorization: `Bearer ${acces}` }, body: JSON.stringify(parametres), signal: AbortSignal.timeout(20_000) });
-    } catch { throw new ErreurDuServeur(PANNE, false); }
+    } catch { throw injoignable(); }
     if (reponse.status === 401 && rejete === null) return appeler<T>(fonction, parametres, acces);
     if (!reponse.ok) {
       const erreur = await reponse.json().catch(() => null) as { code?: string; message?: string } | null;
@@ -136,7 +139,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
         method: 'POST', headers: { ...enTetes, Authorization: `Bearer ${acces}` },
         body: JSON.stringify(corps), signal: AbortSignal.timeout(20_000),
       });
-    } catch { throw new ErreurDuServeur(PANNE, false); }
+    } catch { throw injoignable(); }
     if (reponse.status === 401 && rejete === null) return appelerCombat<T>(corps, acces);
     const resultat = await reponse.json().catch(() => null);
     if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Les duels sont momentanément indisponibles. Réessaie dans un instant.', reponse.status < 500, reponse.status);
@@ -151,7 +154,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
       reponse = await exterieur.requete(`${base}/functions/v1/joutes-direct`, {
         method:'POST', headers:{...enTetes,Authorization:`Bearer ${acces}`}, body:JSON.stringify(corps), signal:AbortSignal.timeout(20_000),
       });
-    } catch { throw new ErreurDuServeur(PANNE,false); }
+    } catch { throw injoignable(); }
     if (reponse.status === 401 && rejete === null) return appelerDirect<T>(corps,acces);
     const resultat = await reponse.json().catch(() => null);
     if (!reponse.ok) throw new ErreurDuServeur(resultat?.erreur ?? 'Les joutes en direct sont momentanément indisponibles. Réessaie dans un instant.',reponse.status<500,reponse.status);
@@ -164,7 +167,7 @@ export function creerLeClient(adresse: string, clePublique: string, exterieur: E
     let reponse: Response;
     try {
       reponse = await exterieur.requete(`${base}/rest/v1/rpc/${fonction}`, { method: 'POST', headers: enTetes, body: '{}', signal: AbortSignal.timeout(20_000) });
-    } catch { throw new ErreurDuServeur(PANNE, false); }
+    } catch { throw injoignable(); }
     if (!reponse.ok) throw new ErreurDuServeur(PANNE, false, reponse.status);
     try { return await reponse.json() as T; } catch { throw new ErreurDuServeur(PANNE, false); }
   }
