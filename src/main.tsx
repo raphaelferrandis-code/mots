@@ -5,6 +5,7 @@ import { FiletDErreur } from './composants/FiletDErreur.tsx';
 import { auCalme } from './services/auCalme.ts';
 import { chargerEdition } from './services/cartes.ts';
 import { surveillerConnexion, traiterRetourConnexion } from './services/connexion.ts';
+import { preparerLInstallation } from './services/installation.ts';
 import { retenirLInvitation } from './services/invitation.ts';
 import './theme/polices.ts';
 import './theme/theme.css';
@@ -40,3 +41,7 @@ void demarrer();
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   auCalme(() => { void navigator.serviceWorker.register('./sw.js').catch(() => undefined); });
 }
+
+// L'installation sur l'écran d'accueil : le manifeste (sauf pour Samsung Internet) et l'écoute du navigateur, pour le
+// bouton « Installer Philamots » du menu du joueur (src/services/installation.ts).
+preparerLInstallation();

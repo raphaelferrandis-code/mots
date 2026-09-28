@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — le bouton « Installer Philamots ».** Raphaël a essayé l'installation sur son téléphone :
+> Samsung Internet affichait « Appli non sécurisée bloquée » (Google Play Protect). Cause connue, chez Samsung : son
+> usine à applications (WebAPK) vise une vieille version d'Android (signalé en avril 2026, pas corrigé) ; Chrome
+> installe proprement. Décision de Raphaël : le manifeste n'est plus montré à Samsung Internet (plus de proposition
+> d'installer, donc plus ce message) et un bouton « Installer Philamots » entre dans le menu du joueur
+> (`src/services/installation.ts`, testé) : dans Chrome, la fenêtre du navigateur (sa bannière automatique est
+> retenue) ; dans Samsung Internet, le jeu s'ouvre dans Chrome ; sur iPhone, le geste expliqué. Une partie ne passe
+> pas d'un navigateur à l'autre : la fenêtre dit comment la retrouver (compte relié, code de secours) et envoie d'abord
+> l'invité sans code créer le sien. Le manifeste est posé par le jeu au démarrage (`main.tsx`), plus dans index.html.
+> Le mode avion, essayé par Raphaël : « nickel ».
+
 > **28 septembre 2026 — finitions, étape 4, lot D : la première visite (fin de l'étape 4).** Mesuré sur le site
 > construit, téléphone simulé en 4G lente (processeur ×4), avant → après : accueil 1,74 → 1,80 s ; grand titre dans sa
 > police 2,96 → 1,80 s (dès le premier affichage : il ne change plus de forme) ; compteur de l'album 4,20 → 3,37 s ;

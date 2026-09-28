@@ -140,10 +140,12 @@
 .menu-profil__jauge > span { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--accent), var(--cuivre-clair)); transition: width 1s cubic-bezier(.3, .8, .3, 1); }
 .menu-profil__xp { font-size: 0.78rem; color: var(--encre-douce); }
 .menu-profil__liens { list-style: none; margin: 0; padding: 10px 10px 4px; display: grid; gap: 2px; }
-.menu-profil__liens a {
+.menu-profil__liens :is(a, button) {
   display: flex; align-items: center; gap: 14px; min-height: 50px; padding: 0 12px; border-radius: var(--rayon);
   color: var(--encre); text-decoration: none; font-size: 0.97rem; transition: background-color .15s;
 }
+/* « Installer Philamots » : un bouton habillé comme les liens du menu. */
+.menu-profil__liens button { width: 100%; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
 .menu-profil__icone { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--rayon); background: rgb(173 195 218 / 8%); color: var(--encre-douce); }
 .menu-profil__icone svg { width: 19px; height: 19px; }
 .menu-profil__nom { flex: 1; white-space: nowrap; }
@@ -173,7 +175,7 @@
   .navigation__lien:hover { color: var(--accent-survol); }
   .reserve-encre:hover, .reserve-encre:hover .reserve-encre__nombre { color: var(--accent-survol); }
   .bouton-joueur:hover { color: var(--encre); }
-  .menu-profil__liens a:hover { background: rgb(173 195 218 / 7%); }
+  .menu-profil__liens :is(a, button):hover { background: rgb(173 195 218 / 7%); }
   .bouton-menu--trait:hover { border-color: var(--accent); }
   .menu-profil__sortie:not(:disabled):hover { color: var(--encre); background: rgb(173 195 218 / 7%); }
 }

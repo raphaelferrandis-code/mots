@@ -124,10 +124,12 @@ Détails : [docs/GUIDE-google.md](docs/GUIDE-google.md).
       son premier duel. Après l'étape 8, le parrain ne reçoit les siens que lorsque le proche a relié un compte Google
       ou e-mail **et** rejoué un autre jour.
 - [ ] Créer son **code de secours** (Profil → Ton compte), si ce n'est pas déjà fait.
-- [ ] **Installer Philamots sur son téléphone** (depuis le 28 septembre) : sur Android, Chrome → menu ⋮ → « Installer
-      l'application » (ou « Ajouter à l'écran d'accueil ») ; sur iPhone, Safari → bouton Partager → « Sur l'écran
-      d'accueil ». L'icône doit être le « p » du logo sur fond bleu nuit. Puis passer en **mode avion** et ouvrir le jeu :
-      l'accueil doit s'afficher avec « Tu es hors connexion » ; en quittant le mode avion, le message disparaît seul.
+- [x] **Mode avion** : le jeu s'ouvre et dit « Tu es hors connexion » — essayé par Raphaël le 28 septembre, « nickel ».
+- [ ] **Installer Philamots sur son téléphone** : menu du joueur (ton avatar) → « Installer Philamots ». Dans Chrome,
+      la fenêtre d'installation s'ouvre ; dans **Samsung Internet**, le jeu propose de passer par Chrome (Samsung
+      Internet fabrique une application que Google bloque : « Appli non sécurisée bloquée », vu par Raphaël le
+      28 septembre — ne pas choisir « Installer quand même ») ; sur iPhone, il explique le geste. L'icône doit être le
+      « p » du logo sur fond bleu nuit. Dans Chrome, retrouver sa collection par son compte ou son code de secours.
 
 ### Étape 6 — Redéployer les deux fonctions du serveur (mot adverse caché) — FAIT le 25 septembre
 

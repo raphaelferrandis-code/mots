@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { SITE } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import type { Route } from '../navigation/routes.ts';
+import { demanderConfirmation } from './Confirmation.tsx';
 import { Icone } from './Icone.tsx';
 import { Portrait } from './Identite.tsx';
 import { useCompteur } from './ceremonie/compteurs.ts';
 import { progressionDuNiveau } from '../jeu/personnalisation.ts';
 import { compteConnecte, deconnecter } from '../services/connexion.ts';
+import { conseilDInstallation, ecouterLInstallation, modeActuel, ouvrirDansChrome, ouvrirLaFenetre } from '../services/installation.ts';
 import { messageDe } from '../partage/messages.ts';
 import { ICONES_DUEL } from './SousOngletsDuel.tsx';
 import './navigation.css';
@@ -34,6 +36,7 @@ const DESSINS = {
   chevron: <svg viewBox="0 0 24 24" {...trait} strokeWidth={2}><path d="m6 9 6 6 6-6" /></svg>,
   suite: <svg viewBox="0 0 24 24" {...trait} strokeWidth={2}><path d="m9 6 6 6-6 6" /></svg>,
   sortie: <svg viewBox="0 0 24 24" {...trait}><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>,
+  installer: <svg viewBox="0 0 24 24" {...trait}><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5" /><path d="M5 19h14" /></svg>,
 };
 
 // L'étincelle des formules, avec ses couleurs à elle.
@@ -111,6 +114,20 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
     setSortie({ enCours: true, erreur: null });
     try { await deconnecter(); }
     catch (e) { setSortie({ enCours: false, erreur: messageDe(e) }); }
+  };
+
+  // Installer le jeu sur l'écran d'accueil (services/installation.ts) : la fenêtre du navigateur, ou d'abord quelques mots
+  // (Samsung Internet passe par Chrome ; sur iPhone, un geste à faire ; l'invité sans code crée d'abord le sien).
+  const installation = useSyncExternalStore(ecouterLInstallation, modeActuel, () => 'aucun' as const);
+  const installer = async () => {
+    setChoix(null);
+    if (installation === 'fenetre') { await ouvrirLaFenetre(); return; }
+    if (installation === 'aucun') return;
+    const conseil = conseilDInstallation(installation, connecte ? 'compte' : protegee ? 'code' : 'aucune');
+    const oui = await demanderConfirmation(conseil);
+    if (oui && conseil.suite === 'chrome') ouvrirDansChrome();
+    else if (oui && conseil.suite === 'compte') window.location.hash = lien({ ecran: 'compte' });
+    else document.querySelector<HTMLElement>('[aria-controls="menu-profil"]')?.focus();
   };
 
   const encreEnClair = encre === null ? '…' : encre.toLocaleString('fr-FR');
@@ -194,6 +211,13 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
                     <span className="menu-profil__detail">{e.detail}</span>
                   </a>
                 </li>)}
+                {installation !== 'aucun' && <li>
+                  <button type="button" onClick={() => void installer()}>
+                    <span className="menu-profil__icone" aria-hidden="true">{DESSINS.installer}</span>
+                    <span className="menu-profil__nom">Installer Philamots</span>
+                    <span className="menu-profil__detail">Comme une appli</span>
+                  </button>
+                </li>}
               </ul>
               <a className="menu-profil__formules" href={lien({ ecran: 'formules' })} aria-current={ecran === 'formules' ? 'page' : undefined}>
                 <Eclat id="eclat-profil" />

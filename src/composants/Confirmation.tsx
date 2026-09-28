@@ -5,7 +5,8 @@ import './confirmation.css';
 // Les questions « Es-tu sûr ? » du jeu, dans une fenêtre à ses couleurs plutôt que la boîte grise du navigateur
 // (window.confirm). Une vraie fenêtre modale : Échap ou un clic à côté répondent non, le reste de la page est inerte,
 // et le focus revient ensuite où il était. « danger » : une action définitive, le focus part alors sur « Annuler ».
-export type Question = { titre: string; message: string; confirmer: string; annuler?: string; danger?: boolean };
+// « seul » : une simple information, avec un seul bouton (« Compris »). « surtitre » : le petit mot au-dessus du titre.
+export type Question = { titre: string; message: string; confirmer: string; annuler?: string; danger?: boolean; seul?: boolean; surtitre?: string };
 type EnAttente = Question & { repondre: (oui: boolean) => void };
 
 let enAttente: EnAttente | null = null;
@@ -51,11 +52,11 @@ export function HoteDesConfirmations() {
       // Seul un clic sur le voile atteint la fenêtre elle-même : son contenu est dans le cadre intérieur.
       onClick={(evenement) => { if (evenement.target === evenement.currentTarget) question?.repondre(false); }}>
       {question && <div className="confirmation__cadre">
-        <p className="confirmation__surtitre">{question.danger ? 'Action définitive' : 'Confirmation'}</p>
+        <p className="confirmation__surtitre">{question.surtitre ?? (question.danger ? 'Action définitive' : question.seul ? 'Bon à savoir' : 'Confirmation')}</p>
         <h2 id="confirmation-titre" className="confirmation__titre">{question.titre}</h2>
         <p id="confirmation-message" className="confirmation__message">{question.message}</p>
         <div className="confirmation__boutons">
-          <button ref={annuler} type="button" className="confirmation__bouton confirmation__bouton--annuler" onClick={() => question.repondre(false)}>{question.annuler ?? 'Annuler'}</button>
+          {!question.seul && <button ref={annuler} type="button" className="confirmation__bouton confirmation__bouton--annuler" onClick={() => question.repondre(false)}>{question.annuler ?? 'Annuler'}</button>}
           <button ref={confirmer} type="button" className="confirmation__bouton confirmation__bouton--confirmer" onClick={() => question.repondre(true)}>{question.confirmer}</button>
         </div>
       </div>}
