@@ -441,10 +441,10 @@ Supabase. Ta décision du 28 septembre : **le bouton de Google dans le jeu**. C'
 se fait désormais sur philamots.fr même (rien de Google n'est chargé avant que le joueur touche « Continuer avec
 Google »). Il te reste, dans l'ordre :
 
-- [ ] **L'essai (5 minutes).** Sur ton téléphone, ouvrir philamots.fr dans une **fenêtre de navigation privée** (pour
+- [x] **L'essai (5 minutes).** Sur ton téléphone, ouvrir philamots.fr dans une **fenêtre de navigation privée** (pour
       être invité) → **Mon compte** → **Se connecter** → **Continuer avec Google** → toucher le bouton de Google qui
       apparaît. La fenêtre de Google doit maintenant parler de **philamots.fr**. Choisir ton compte : tu es connecté.
-      Dis-le à l'assistant, puis referme la fenêtre privée.
+      **Fait par Raphaël le 28 septembre : la fenêtre de Google dit bien philamots.fr.**
 - [ ] **Ensuite seulement**, Google Cloud (projet **philamots**) → **Google Auth Platform** :
       - **Clients** → « Philamots Web » → **URI de redirection autorisés** : retirer
         `https://cgubfyxyivgufslpwlld.supabase.co/auth/v1/callback` → **Enregistrer** (les origines JavaScript gardent
@@ -455,6 +455,9 @@ Google »). Il te reste, dans l'ordre :
       - **Centre de validation** (Verification Center) → demander la **vérification de la marque**. Google vérifie
         que tu possèdes philamots.fr avec la Search Console, où le site est déjà vérifié (même compte Google). Quelques
         minutes, parfois deux ou trois jours ouvrés. Après : l'écran de Google dit « Philamots », avec le logo.
+      - À savoir : une fois l'adresse de retour de Supabase retirée, l'ancienne connexion Google (le secours du code,
+        `SERVEUR.clientGoogle` vide) ne marche plus ; en cas de panne du bouton de Google, reste la connexion par e-mail.
+        Si Google répond que philamots.fr n'est pas vérifié, le dire à l'assistant (vérification par le DNS chez OVH).
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
   `contact@philamots.fr` à la place, il faut un compte Google créé avec cette adresse et ajouté comme propriétaire du
   projet (l'assistant peut te guider).
