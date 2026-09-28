@@ -1,0 +1,8 @@
+/* Le bandeau du navigateur d'une application (BandeauNavigateurIntegre.tsx) : sous la barre du haut, dans la largeur
+   des écrans, avec son bouton « Compris » à droite (en dessous sur téléphone). */
+.bandeau-navigateur { display: flex; align-items: center; gap: 12px 16px; width: min(100% - 32px, 1120px); margin: 12px auto 0; }
+.bandeau-navigateur p { flex: 1; margin: 0; font-size: 14px; line-height: 1.5; }
+.bandeau-navigateur .bouton { flex: none; }
+@media (max-width: 600px) {
+  .bandeau-navigateur { flex-direction: column; align-items: stretch; }
+}

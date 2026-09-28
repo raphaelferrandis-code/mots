@@ -6,7 +6,7 @@ import { Entete } from '../composants/Entete.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { TexteConfidentialite } from '../composants/legal/TexteConfidentialite.tsx';
 import { SERVEUR } from '../config/serveur.ts';
-import { SITE } from '../config/site.ts';
+import { SITE, dateEnToutesLettres } from '../config/site.ts';
 import { lien } from '../navigation/routes.ts';
 import { serveurDesCollections } from '../services/collections.ts';
 import { supprimerMonProfilDeJoute } from '../services/joutes.ts';
@@ -49,7 +49,7 @@ export function Confidentialite() {
   return (
     <main className="ecran confidentialite">
       <Entete titre="Confidentialité" actions={<a className="bouton outil" href={lien({ ecran: 'reglages' })}>Retour aux réglages</a>} />
-      <p className="texte-doux petit confidentialite__date">Mise à jour le {SITE.textesLegauxDu}</p>
+      <p className="texte-doux petit confidentialite__date">Mise à jour le {dateEnToutesLettres(SITE.textesLegauxLe)}</p>
       <TexteConfidentialite enLigne={serveurDesCollections.actif} antiRobot={!!SERVEUR.cleAntiRobot} parrainage={!!SERVEUR.secoursEtParrainage}
         liens={{ compte: lien({ ecran: 'compte' }), reglages: lien({ ecran: 'reglages' }) }} effacer={effacer} />
     </main>

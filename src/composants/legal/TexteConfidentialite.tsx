@@ -1,7 +1,7 @@
 // Le texte de la Confidentialité, un seul pour deux endroits : l'écran du jeu (ecrans/Confidentialite.tsx, avec ses
 // boutons) et la page fixe /confidentialite/ (pages/PageLegale.tsx), lisible sans lancer le jeu (audit de finition du
 // 26/09/2026, E17 et E19). Il décrit ce que font réellement src/services/stockage.ts (l'appareil) et les scripts de
-// serveur/ (le serveur du jeu) : le tenir à jour avec eux, et changer SITE.textesLegauxDu à chaque modification.
+// serveur/ (le serveur du jeu) : le tenir à jour avec eux, et changer SITE.textesLegauxLe à chaque modification.
 // À faire relire par un juriste (voir A-FAIRE-RAPHAEL.md).
 
 import type { ReactNode } from 'react';

@@ -9,11 +9,14 @@ qu'il existe, pour qu'il apparaisse quand quelqu'un cherche « Philamots » ou �
   apparaît avec le logo et trois timbres (`public/identite/vignette-partage.jpg`). Pour la refaire :
   `npm run dev`, puis `node scripts/fabriquer-la-vignette.mjs`.
 - **Le titre et la description** que Google affiche : « Philamots — collectionne les mots de la langue française ».
-- **Le plan du site** (`public/sitemap.xml`) et les règles pour les robots des moteurs (`public/robots.txt`).
+- **Le plan du site** (`sitemap.xml`, refait à chaque mise en ligne par `scripts/fabriquer-les-pages.ts`) et les
+  règles pour les robots des moteurs (`public/robots.txt`).
 - **La fiche du jeu** lisible par les moteurs (nom, gratuit, en français), dans `index.html`.
 
-Les écrans du jeu vivent après le « # » de l'adresse (`philamots.fr/#/collection`). Les moteurs ne les
-distinguent pas : seule la page d'accueil apparaîtra dans les résultats. C'est normal pour un jeu.
+Les écrans du jeu vivent après le « # » de l'adresse (`philamots.fr/#/collection`) : les moteurs ne les
+distinguent pas. En revanche, chaque mot a sa propre page, fabriquée d'avance à chaque mise en ligne
+(`philamots.fr/mot/amour/`), comme la liste de tous les mots (`/mots/`) et les pages légales : elles apparaissent dans
+les résultats, et le plan du site fabriqué avec elles (`sitemap.xml`) les déclare toutes.
 
 ## Ce que Raphaël doit faire : Google Search Console (10 minutes)
 

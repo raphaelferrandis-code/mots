@@ -34,3 +34,4 @@ import '../ecrans/marche.css';
 import '../composants/choixDUnTimbre.css';
 import '../composants/piedDePage.css';
 import '../composants/legal/legal.css';
+import '../composants/bandeauNavigateurIntegre.css';

@@ -5,7 +5,7 @@
 import { TexteConditions } from '../composants/legal/TexteConditions.tsx';
 import { TexteConfidentialite } from '../composants/legal/TexteConfidentialite.tsx';
 import { TexteMentionsLegales } from '../composants/legal/TexteMentionsLegales.tsx';
-import { SITE } from '../config/site.ts';
+import { SITE, dateEnToutesLettres } from '../config/site.ts';
 import { Bandeau, Pied } from './Cadre.tsx';
 
 export const PAGES_LEGALES = ['mentions-legales', 'confidentialite', 'conditions'] as const;
@@ -28,7 +28,7 @@ export function PageLegale({ page }: { page: PageLegaleFixe }) {
       <Bandeau racine={racine} />
       <main className="page-mot__corps page-legale__corps">
         <h1>{TITRES_DES_PAGES_LEGALES[page]}</h1>
-        <p className="page-legale__date">Mise à jour le {SITE.textesLegauxDu}</p>
+        <p className="page-legale__date">Mise à jour le {dateEnToutesLettres(SITE.textesLegauxLe)}</p>
         {page === 'mentions-legales' && <TexteMentionsLegales confidentialite={`${racine}confidentialite/`} />}
         {page === 'conditions' && <TexteConditions liens={{ confidentialite: `${racine}confidentialite/`, mentions: `${racine}mentions-legales/` }} />}
         {/* Le site en ligne : collection sur le serveur, contrôle anti-robot et parrainage allumés. */}

@@ -2,11 +2,13 @@
 // Google les lit sans lancer le jeu. Aucun code ne tourne dans le navigateur ; les liens mènent au jeu.
 // Chemins relatifs : une page vit dans mot/<adresse>/, la liste dans mots/, le jeu deux niveaux plus haut.
 
+import { Fragment } from 'react';
 import { NIVEAU } from '../composants/carte/decor.ts';
 import { Timbre } from '../composants/timbre/Timbre.tsx';
 import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
+import { attestationEnClair, avecLesRenvois } from './assemblage.ts';
 import { Bandeau, Pied } from './Cadre.tsx';
 
 const NATURE: Record<CarteIndex['type'], string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adjectif', Adverbe: 'adverbe' };
@@ -26,11 +28,22 @@ function Jauge({ allumes }: { allumes: number }) {
 
 export type Voisin = { carte: CarteIndex; adresse: string };
 
-export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteIndex; details: CarteDetails; texte: TexteDUnePage | undefined; voisins: Voisin[] }) {
+// Un texte du Wiktionnaire, dont les renvois (« → voir babiller ») mènent aux pages des mots qui en ont une — sauf à
+// la page même (« soi »).
+function Texte({ texte, liens, soi }: { texte: string; liens: ReadonlyMap<string, string>; soi: string }) {
+  return <>{avecLesRenvois(texte, liens).map((m, i) => m.adresse && m.adresse !== soi ? <a key={i} href={`../${m.adresse}/`}>{m.texte}</a> : <Fragment key={i}>{m.texte}</Fragment>)}</>;
+}
+
+// adresse : celle de la page ; homographes : les autres pages du même mot, ou d'un mot qui s'écrit pareil sans accent
+// (« beau » nom et adjectif, « sale » et « salé ») ; liens : un mot → l'adresse de sa page, pour les renvois.
+export function PageDuMot({ carte, details, texte, voisins, adresse = '', homographes = [], liens = new Map() }: {
+  carte: CarteIndex; details: CarteDetails; texte: TexteDUnePage | undefined; voisins: Voisin[]; adresse?: string; homographes?: Voisin[]; liens?: ReadonlyMap<string, string>;
+}) {
   const racine = '../../';
   const definitions = texte?.definitions ?? details.definitions;
   const etymologies = texte?.etymologies.length ? texte.etymologies : details.etymologie ? [details.etymologie] : [];
   const wiktionnaire = `https://fr.wiktionary.org/wiki/${encodeURIComponent(carte.mot)}`;
+  const attestation = attestationEnClair(details.attestation);
   return (
     <div className="page-mot">
       <Bandeau racine={racine} />
@@ -41,13 +54,17 @@ export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteInde
           <div className="page-mot__texte">
             <h1>{carte.mot}</h1>
             <p className="page-mot__nature">
-              {NATURE[carte.type]}{details.langueOrigine ? ` · ${details.langueOrigine}` : ''}{details.attestation ? ` · ${details.attestation}` : ''}
+              {NATURE[carte.type]}{details.langueOrigine ? ` · ${details.langueOrigine}` : ''}{attestation ? ` · ${attestation}` : ''}
             </p>
+            {homographes.length > 0 && <p className="page-mot__aussi">
+              Voir aussi : {homographes.map((h, i) => <Fragment key={h.carte.id}>{i > 0 ? ', ' : ''}<a href={`../${h.adresse}/`}>{h.carte.mot}</a> ({NATURE[h.carte.type]})</Fragment>)}
+            </p>}
+            <p className="page-mot__jeu">Un timbre de <a href={racine}>Philamots</a>, le jeu gratuit des mots à collectionner.</p>
 
             <h2>Définition{definitions.length > 1 ? 's' : ''}</h2>
             <ol className="page-mot__definitions">
               {definitions.map((d, i) => <li key={i}>
-                {d.registre?.length ? <span className="page-mot__registre">{d.registre.join(', ')}. </span> : null}{d.texte}
+                {d.registre?.length ? <span className="page-mot__registre">{d.registre.join(', ')}. </span> : null}<Texte texte={d.texte} liens={liens} soi={adresse} />
               </li>)}
             </ol>
             {texte && texte.sens > definitions.length && <p className="page-mot__suite">
@@ -56,13 +73,13 @@ export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteInde
 
             {etymologies.length > 0 && <>
               <h2>Origine</h2>
-              {etymologies.map((e, i) => <p key={i} className="page-mot__origine">{e}</p>)}
+              {etymologies.map((e, i) => <p key={i} className="page-mot__origine"><Texte texte={e} liens={liens} soi={adresse} /></p>)}
             </>}
 
             <dl className="page-mot__releve">
               {details.prevalence !== null && <div>
                 <dt>Connu de</dt>
-                <dd>{details.prevalence} % des francophones</dd>
+                <dd>{details.prevalence} % des gens interrogés</dd>
                 <Jauge allumes={details.prevalence / 10} />
               </div>}
               <div>
@@ -73,7 +90,7 @@ export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteInde
               <div>
                 <dt>Timbre</dt>
                 <dd><span className="page-mot__rang" aria-hidden="true">{carte.rarete === 'Hors-série' ? '✦' : '◆'.repeat(NIVEAU[carte.rarete])}</span> {carte.rarete}</dd>
-                <p>Att. {attaqueEnJeu(carte.attaque, carte.rarete)} · Déf. {defenseEnJeu(carte.defense, carte.rarete)}</p>
+                <p>Attaque {attaqueEnJeu(carte.attaque, carte.rarete)} · Défense {defenseEnJeu(carte.defense, carte.rarete)} en duel</p>
               </div>
             </dl>
           </div>
@@ -84,7 +101,13 @@ export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteInde
             {voisins.slice(0, 2).map((v) => <span key={v.carte.id} className="page-mot__vignette"><Timbre carte={v.carte} cliquable={false} reagir={false} /></span>)}
             <span className="page-mot__vignette"><Timbre carte={carte} cliquable={false} reagir={false} /></span>
           </div>
-          <p>Ce mot est un timbre à collectionner.</p>
+          <div className="page-mot__invitation">
+            <p className="page-mot__accroche">Ce mot est un timbre à collectionner.</p>
+            <p>
+              Philamots est un jeu gratuit, sans inscription : plus de 3 000 vrais mots de la langue française, imprimés comme
+              des timbres. Ouvre des paquets, complète ton album et défie d’autres joueurs en duels de définitions.
+            </p>
+          </div>
           <a className="btn-primary" href={`${racine}#/paquet`}>Ouvrir un paquet</a>
         </section>
 
@@ -93,7 +116,8 @@ export function PageDuMot({ carte, details, texte, voisins }: { carte: CarteInde
           <ul>
             {voisins.map((v) => <li key={v.carte.id}>
               <a href={`../${v.adresse}/`}>
-                <span className="page-mot__vignette"><Timbre carte={v.carte} cliquable={false} reagir={false} /></span>
+                {/* La légende nomme le timbre : le dessin, que les lecteurs d'écran liraient en double, se tait. */}
+                <span className="page-mot__vignette" aria-hidden="true"><Timbre carte={v.carte} cliquable={false} reagir={false} /></span>
                 <span className="page-mot__legende">{v.carte.mot}</span>
               </a>
             </li>)}

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { adresseDuMot, adressesDesPages } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
-import { adapterLeModele, allegerLesTimbres, descriptionDuMot, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from './assemblage.ts';
+import { adapterLeModele, allegerLesTimbres, attestationEnClair, avecLesRenvois, descriptionDuMot, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from './assemblage.ts';
 
 const edition = JSON.parse(readFileSync(path.join(import.meta.dirname, '..', '..', 'public', 'data', 'edition-1.index.json'), 'utf8')) as IndexEdition;
 const carte = (mot: string, type: CarteIndex['type'], autres: Partial<CarteIndex> = {}): CarteIndex => ({
@@ -52,6 +52,21 @@ describe('en-tête des pages', () => {
     const donnees = JSON.parse(tete.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1]);
     assert.equal(donnees.name, 'zakouski');
     assert.equal(donnees.description, 'Des « guillemets » et </script><b>');
+    assert.equal(donnees.inLanguage, 'fr');
+  });
+  it('met la nature dans le titre quand deux timbres portent le même mot, et donne le fil d’Ariane', () => {
+    assert.match(enteteDeLaPage(carte('beau', 'Adjectif'), details, undefined, 'beau-adjectif', true), /<title>Beau \(adjectif\) : définition et origine — Philamots<\/title>/);
+    const seul = enteteDeLaPage(carte('zakouski', 'Nom'), details, undefined, 'zakouski');
+    assert.match(seul, /<title>Zakouski : définition et origine — Philamots<\/title>/);
+    assert.match(seul, /<meta property="og:image:alt" content="[^"]+" \/>/);
+    const fil = [...seul.matchAll(/<script type="application\/ld\+json">(.*)<\/script>/g)].map((m) => JSON.parse(m[1])).find((d) => d['@type'] === 'BreadcrumbList');
+    assert.deepEqual(fil.itemListElement.map((e: { name: string; item: string }) => `${e.name} ${e.item}`),
+      ['Philamots https://philamots.fr/', 'Tous les mots https://philamots.fr/mots/', 'zakouski https://philamots.fr/mot/zakouski/']);
+  });
+  it('la liste des mots a un aperçu complet quand on la partage', () => {
+    const tete = enteteDeLaListe(3016);
+    for (const balise of ['og:type', 'og:url', 'og:description', 'og:image:alt']) assert.ok(tete.includes(`property="${balise}"`), balise);
+    assert.ok(tete.includes('<meta name="twitter:card" content="summary_large_image" />'));
   });
 });
 
@@ -64,17 +79,48 @@ describe('voisins et plan du site', () => {
     assert.ok(v.every((c) => c.faction === z.faction && c.id !== z.id));
     assert.deepEqual(voisinsDe(z, cartes).map((c) => c.id), v.map((c) => c.id));
   });
+  const jours = { mots: '2026-09-23', site: '2026-09-30', legales: '2026-09-28' };
   it('le plan du site déclare l’accueil, la liste et chaque page', () => {
-    const plan = planDuSite(['zakouski', 'beau-nom'], '2026-09-23');
+    const plan = planDuSite(['zakouski', 'beau-nom'], jours);
     assert.equal(plan.match(/<url>/g)?.length, 4);
     assert.ok(plan.includes('<loc>https://philamots.fr/mot/beau-nom/</loc>'));
-    assert.ok(plan.includes('<lastmod>2026-09-23</lastmod>'));
+    assert.ok(!plan.includes('<!--'), 'pas de commentaire de travail');
   });
   it('le plan du site déclare aussi les pages légales, après la liste', () => {
-    const plan = planDuSite(['zakouski'], '2026-09-28', ['mentions-legales', 'confidentialite', 'conditions']);
+    const plan = planDuSite(['zakouski'], jours, ['mentions-legales', 'confidentialite', 'conditions']);
     assert.equal(plan.match(/<url>/g)?.length, 6);
     const ordre = ['mots/', 'mentions-legales/', 'confidentialite/', 'conditions/', 'mot/zakouski/'].map((c) => plan.indexOf(`<loc>https://philamots.fr/${c}</loc>`));
     assert.ok(ordre.every((position, i) => position > (ordre[i - 1] ?? 0)), ordre.join(', '));
+  });
+  it('le plan du site date chaque page de son dernier vrai changement', () => {
+    const plan = planDuSite(['zakouski'], jours, ['conditions']);
+    const date = (chemin: string) => new RegExp(`<loc>https://philamots\\.fr/${chemin}</loc>\\s*<lastmod>([^<]+)</lastmod>`).exec(plan)?.[1];
+    assert.equal(date(''), '2026-09-30', 'l’accueil : le jour de la mise en ligne');
+    assert.equal(date('mots/'), '2026-09-30');
+    assert.equal(date('conditions/'), '2026-09-28', 'une page légale : la date de ses textes');
+    assert.equal(date('mot/zakouski/'), '2026-09-23', 'un mot : la version de ses textes');
+  });
+});
+
+describe('le texte des pages des mots', () => {
+  it('dit l’attestation en clair', () => {
+    const cas: [string | null, string | null][] = [
+      ['842', 'attesté en 842'], ['1840-1850', 'attesté en 1840-1850'], ['1552, forme picarde', 'attesté en 1552, forme picarde'],
+      ['XVIᵉ siècle', 'attesté au XVIᵉ siècle'], ['XVIIIe', 'attesté au XVIIIe'], ['Vers 1540', 'attesté vers 1540'], ['c. 1200', 'attesté vers 1200'],
+      ['Ca 1300', 'attesté vers 1300'], ['Avant 1500', 'attesté avant 1500'], ['Années 1960', 'attesté dans les années 1960'],
+      ['Attesté en 1840', 'attesté en 1840'], ['12 avril 1832', 'attesté le 12 avril 1832'], ['Fin XIXᵉ siècle', 'attesté : fin XIXᵉ siècle'],
+      ['à déterminer', null], [null, null], ['', null],
+    ];
+    for (const [brut, attendu] of cas) assert.equal(attestationEnClair(brut), attendu, String(brut));
+  });
+  it('fait des renvois du Wiktionnaire des liens vers les pages qui existent', () => {
+    const liens = new Map([['babiller', 'babiller'], ['babine', 'babine'], ['arabe', 'arabe-nom']]);
+    assert.deepEqual(avecLesRenvois('De l’ancien français → voir babiller et babine.', liens), [
+      { texte: 'De l’ancien français → voir ' }, { texte: 'babiller', adresse: 'babiller' }, { texte: ' et ' }, { texte: 'babine', adresse: 'babine' }, { texte: '.' },
+    ]);
+    assert.deepEqual(avecLesRenvois('Mot savant → voir al- et khôl pour les étymons.', liens), [{ texte: 'Mot savant → voir al- et khôl pour les étymons.' }], 'sans page, du texte');
+    assert.deepEqual(avecLesRenvois('Emprunt → voir Arabe.', liens), [{ texte: 'Emprunt → voir ' }, { texte: 'Arabe', adresse: 'arabe-nom' }, { texte: '.' }]);
+    assert.deepEqual(avecLesRenvois('Sans renvoi.', liens), [{ texte: 'Sans renvoi.' }]);
   });
 });
 

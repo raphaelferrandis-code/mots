@@ -2,6 +2,7 @@ import './theme/stylesDesEcrans.ts'; // en premier : l'ordre des feuilles de sty
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 import { Recompenses } from './composants/Recompenses.tsx';
+import { BandeauNavigateurIntegre } from './composants/BandeauNavigateurIntegre.tsx';
 import { FiletDErreur } from './composants/FiletDErreur.tsx';
 import { HoteDesConfirmations } from './composants/Confirmation.tsx';
 import { Navigation } from './composants/Navigation.tsx';
@@ -156,13 +157,17 @@ export function App() {
   // Le réglage « réduire les animations » s'applique à tout le site (voir la fin de styles.css).
   const animationsReduites = partie.etat === 'prete' && partie.sauvegarde.reglages.reduireAnimations;
   useEffect(() => { document.documentElement.toggleAttribute('data-animations-reduites', animationsReduites); }, [animationsReduites]);
+  // La collection a un code de secours (ou l'on ne sait pas encore) : le menu du joueur et le bandeau du navigateur
+  // d'une application ne proposent pas d'en créer un.
+  const protegee = partie.etat !== 'prete' || partie.serveur.etat === 'appareil' || partie.compte === null || partie.compte.codeDeSecoursLe !== null;
 
   return (
     <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null} repere={repereDesRecompenses()}><div className="application">
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null}
         pseudo={partie.etat === 'prete' ? pseudoDuJoueur(partie.sauvegarde) : ''} portrait={partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null) : null}
-        protegee={partie.etat !== 'prete' || partie.serveur.etat === 'appareil' || partie.compte === null || partie.compte.codeDeSecoursLe !== null} />
+        protegee={protegee} />
+      <BandeauNavigateurIntegre protegee={protegee} />
       {partie.etat === 'erreur' ? <PartieIllisible message={partie.message} /> : <FiletDErreur key={cle}><Suspense fallback={<EcranEnChargement />}><Ecran route={route} /></Suspense></FiletDErreur>}
       <HoteDesConfirmations />
     </div></Recompenses>

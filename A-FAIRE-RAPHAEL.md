@@ -430,6 +430,22 @@ collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être re
       **philamots-comptes-inactifs**, **23 3 \* \* \***.
 - [ ] Dis-le à l'assistant : il vérifie de l'extérieur que la nouvelle fonction est en place et fermée au public.
 
+### Étape 23 — Faire reconnaître Philamots par Google, et protéger le nom
+
+Maintenant que les pages légales existent, Google peut afficher « Philamots » (et non une adresse en
+`…supabase.co`) quand un joueur se connecte avec son compte Google.
+
+- [ ] Google Cloud (projet **philamots**) → **Google Auth Platform** → **Branding** : remplacer la page de
+      confidentialité par **https://philamots.fr/confidentialite/** (l'ancienne adresse, avec `#/`, ouvre le jeu),
+      ajouter les conditions **https://philamots.fr/conditions/**, ajouter le logo (`public/identite/icone-site-512.png`),
+      puis demander la **vérification de la marque** (gratuite, quelques jours).
+- [ ] Ensuite, essayer « Continuer avec Google » sur ton téléphone : l'écran de Google doit dire « Philamots ».
+- [ ] Le nom **Philamots** : chercher s'il est libre sur https://data.inpi.fr et https://www.tmdn.org/tmview (classes 9
+      logiciels de jeu, 28 jeux, 41 divertissement), puis le déposer à l'INPI (environ 190 € pour une classe, 40 € par
+      classe en plus). Vérifier aussi à qui appartient `philamots.com`.
+- [ ] Search Console → **Inspection de l'URL** → `https://philamots.fr/` → **Tester l'URL en direct** → **Afficher la
+      page testée** : vérifier que Google voit bien l'accueil du jeu (et pas un message d'erreur du contrôle anti-robot).
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de

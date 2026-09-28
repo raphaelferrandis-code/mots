@@ -19,20 +19,36 @@ export function descriptionDuMot(carte: CarteIndex, premiere: string): string {
   return `${debut}${coupe.slice(0, Math.max(coupe.lastIndexOf(' '), place * 0.6)).replace(/[,;:\s]+$/, '')}…`;
 }
 
-// Ce qui va dans <head>, à la place de <!--tete--> dans mot.html.
-export function enteteDeLaPage(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined, adresse: string): string {
+const IMAGE_DE_PARTAGE_ALT = 'Philamots, le jeu des mots de la langue française imprimés comme des timbres';
+// Des données pour Google, dans une balise qu'une définition ne peut pas refermer (« < » échappé).
+const donneesStructurees = (donnees: object): string => `<script type="application/ld+json">${JSON.stringify(donnees).replace(/</g, '\\u003c')}</script>`;
+
+// Ce qui va dans <head>, à la place de <!--tete--> dans mot.html. « homonyme » : un autre timbre porte le même mot
+// (« beau » nom et adjectif) ; la nature entre alors dans le titre, pour que les deux pages ne se confondent pas.
+export function enteteDeLaPage(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined, adresse: string, homonyme = false): string {
   const url = `${ADRESSE_DU_SITE}mot/${adresse}/`;
-  const titre = `${majuscule(carte.mot)} : définition et origine — Philamots`;
+  const titre = `${majuscule(carte.mot)}${homonyme ? ` (${NATURE[carte.type]})` : ''} : définition et origine — Philamots`;
   const premiere = (texte?.definitions[0] ?? details.definitions[0])?.texte ?? carte.definition;
   const description = descriptionDuMot(carte, premiere);
   // Un terme défini, dans un ensemble : ce que Google sait lire d'une page de dictionnaire.
-  const donnees = {
+  const terme = {
     '@context': 'https://schema.org',
     '@type': 'DefinedTerm',
     name: carte.mot,
     description: premiere,
+    inLanguage: 'fr',
     url,
     inDefinedTermSet: { '@type': 'DefinedTermSet', name: 'Philamots — Édition 1', url: `${ADRESSE_DU_SITE}mots/` },
+  };
+  // Le fil d'Ariane : Philamots › Tous les mots › le mot.
+  const fil = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Philamots', item: ADRESSE_DU_SITE },
+      { '@type': 'ListItem', position: 2, name: 'Tous les mots', item: `${ADRESSE_DU_SITE}mots/` },
+      { '@type': 'ListItem', position: 3, name: carte.mot, item: url },
+    ],
   };
   return [
     `<title>${echapper(titre)}</title>`,
@@ -47,9 +63,10 @@ export function enteteDeLaPage(carte: CarteIndex, details: CarteDetails, texte: 
     `<meta property="og:image" content="${ADRESSE_DU_SITE}identite/vignette-partage.jpg" />`,
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
+    `<meta property="og:image:alt" content="${IMAGE_DE_PARTAGE_ALT}" />`,
     '<meta name="twitter:card" content="summary_large_image" />',
-    // « < » échappé : une définition ne peut pas refermer la balise.
-    `<script type="application/ld+json">${JSON.stringify(donnees).replace(/</g, '\\u003c')}</script>`,
+    donneesStructurees(terme),
+    donneesStructurees(fil),
   ].join('\n    ');
 }
 
@@ -60,12 +77,22 @@ export function enteteDeLaCarte(carte: CarteIndex, genre: 'question' | 'reponse'
 export function enteteDeLaListe(nombre: number): string {
   const titre = 'Tous les mots de Philamots';
   const description = `Les ${nombre.toLocaleString('fr-FR')} mots de la langue française du jeu Philamots, de A à Z, avec leur définition et leur origine.`;
+  const url = `${ADRESSE_DU_SITE}mots/`;
   return [
     `<title>${titre}</title>`,
     `<meta name="description" content="${echapper(description)}" />`,
-    `<link rel="canonical" href="${ADRESSE_DU_SITE}mots/" />`,
+    `<link rel="canonical" href="${url}" />`,
+    '<meta property="og:type" content="website" />',
+    '<meta property="og:site_name" content="Philamots" />',
+    '<meta property="og:locale" content="fr_FR" />',
+    `<meta property="og:url" content="${url}" />`,
     `<meta property="og:title" content="${titre}" />`,
+    `<meta property="og:description" content="${echapper(description)}" />`,
     `<meta property="og:image" content="${ADRESSE_DU_SITE}identite/vignette-partage.jpg" />`,
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    `<meta property="og:image:alt" content="${IMAGE_DE_PARTAGE_ALT}" />`,
+    '<meta name="twitter:card" content="summary_large_image" />',
   ].join('\n    ');
 }
 
@@ -105,20 +132,61 @@ export function voisinsDe<T extends Pick<CarteIndex, 'id' | 'faction'>>(carte: T
     .map(({ c }) => c);
 }
 
-// pagesFixes : les pages légales (« mentions-legales », « confidentialite », « conditions »).
-export function planDuSite(adresses: string[], jour: string, pagesFixes: readonly string[] = []): string {
-  const url = (chemin: string): string => `  <url>\n    <loc>${ADRESSE_DU_SITE}${chemin}</loc>\n    <lastmod>${jour}</lastmod>\n  </url>`;
+// Des dates que Google peut croire (audit de finition, E07) : l'accueil et la liste changent à chaque mise en ligne
+// (« site », le jour de la fabrication) ; les pages des mots, avec leurs textes (« mots », la version des textes) ;
+// les pages légales, avec leur contenu (« legales »).
+export function planDuSite(adresses: string[], jours: { mots: string; site: string; legales: string }, pagesFixes: readonly string[] = []): string {
+  const url = (chemin: string, jour: string): string => `  <url>\n    <loc>${ADRESSE_DU_SITE}${chemin}</loc>\n    <lastmod>${jour}</lastmod>\n  </url>`;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<!-- Fabriqué par scripts/fabriquer-les-pages.ts : l\'accueil, la liste des mots, les pages légales et une page par mot. -->',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    url(''),
-    url('mots/'),
-    ...pagesFixes.map((p) => url(`${p}/`)),
-    ...adresses.map((a) => url(`mot/${a}/`)),
+    url('', jours.site),
+    url('mots/', jours.site),
+    ...pagesFixes.map((p) => url(`${p}/`, jours.legales)),
+    ...adresses.map((a) => url(`mot/${a}/`, jours.mots)),
     '</urlset>',
     '',
   ].join('\n');
+}
+
+// L'année d'attestation, dite en clair (« 842 » seul ne se comprend pas) : « attesté en 842 », « attesté au XVIᵉ
+// siècle », « attesté vers 1540 ». Rien pour une date « à déterminer ».
+export function attestationEnClair(brut: string | null | undefined): string | null {
+  const a = brut?.trim() ?? '';
+  if (!a || /^à déterminer$/i.test(a)) return null;
+  if (/^attesté/i.test(a)) return `a${a.slice(1)}`;
+  if (/^\d{3,4}(?:-\d{2,4})?(?:,.*)?$/.test(a)) return `attesté en ${a}`;
+  if (/^\d{1,2}(?:er)? \p{L}+ \d{3,4}$/u.test(a)) return `attesté le ${a}`;
+  const vers = /^(?:vers|v\.|c\.|ca)\s*(\d{3,4})$/i.exec(a);
+  if (vers) return `attesté vers ${vers[1]}`;
+  if (/^(?:avant|depuis) \d/i.test(a)) return `attesté ${a.charAt(0).toLowerCase()}${a.slice(1)}`;
+  if (/^années \d/i.test(a)) return `attesté dans les ${a.charAt(0).toLowerCase()}${a.slice(1)}`;
+  if (/^[IVXLC]+(?:ᵉ|e)(?: siècle)?$/.test(a)) return `attesté au ${a}`;
+  return `attesté : ${a.charAt(0).toLowerCase()}${a.slice(1)}`;
+}
+
+// Les renvois du Wiktionnaire (« → voir babiller et babine ») : chaque mot renvoyé qui a sa page chez Philamots
+// devient un lien ; le reste reste du texte. « liens » : un mot → l'adresse de sa page.
+export type MorceauDeTexte = { texte: string; adresse?: string };
+export function avecLesRenvois(texte: string, liens: ReadonlyMap<string, string>): MorceauDeTexte[] {
+  const morceaux: MorceauDeTexte[] = [];
+  let reste = 0;
+  const pousser = (t: string, adresse?: string) => { if (t) morceaux.push(adresse ? { texte: t, adresse } : { texte: t }); };
+  for (const renvoi of texte.matchAll(/→ voir ((?:[\p{L}’'-]+)(?:(?:, | et )[\p{L}’'-]+)*)/gu)) {
+    const debut = renvoi.index + renvoi[0].length - renvoi[1].length;
+    pousser(texte.slice(reste, debut));
+    for (const partie of renvoi[1].split(/(, | et )/)) {
+      pousser(partie, /^(?:, | et )$/.test(partie) ? undefined : liens.get(partie) ?? liens.get(partie.toLowerCase()));
+    }
+    reste = renvoi.index + renvoi[0].length;
+  }
+  pousser(texte.slice(reste));
+  // Les morceaux de texte voisins se rejoignent.
+  return morceaux.reduce<MorceauDeTexte[]>((tous, m) => {
+    const dernier = tous[tous.length - 1];
+    if (dernier && !dernier.adresse && !m.adresse) dernier.texte += m.texte; else tous.push({ ...m });
+    return tous;
+  }, []);
 }
 
 // Les guillochis (rosaces de milliers de points) pèsent jusqu'à 30 Ko chacun : sur neuf timbres, une page en ferait

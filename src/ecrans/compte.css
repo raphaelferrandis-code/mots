@@ -5,7 +5,7 @@
 .compte__modes button { flex: 1; min-height: 44px; padding: 10px 8px; border: 1px solid transparent; border-radius: 2px; background: transparent; color: var(--texte-doux); font-size: .9rem; }
 .compte__modes button[aria-pressed="true"] { border-color: var(--cuivre); background: rgb(216 154 92 / 15%); color: var(--texte-fort); }
 .compte__google { background: var(--encre); color: var(--papier); border-color: var(--encre); gap: 12px; }
-.compte__google span { font: bold 22px var(--police-texte); }
+.compte__logo-google { width: 20px; height: 20px; flex: none; }
 .compte__separation { display: flex; align-items: center; gap: 12px; font-size: .85rem; color: var(--encre-douce); }
 .compte__separation::before, .compte__separation::after { content: ''; height: 1px; background: var(--filet); flex: 1; }
 .compte__formulaire { display: grid; gap: 12px; }

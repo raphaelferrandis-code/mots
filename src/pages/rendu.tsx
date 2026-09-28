@@ -13,8 +13,9 @@ import type { CarteDetails, CarteIndex } from '../partage/types.ts';
 
 export { TEXTURES_DU_TIMBRE } from '../composants/timbre/dessins.ts';
 
-export function rendrePage(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined, voisins: Voisin[]): string {
-  return allegerLesTimbres(renderToStaticMarkup(<PageDuMot carte={carte} details={details} texte={texte} voisins={voisins} />), '<div class="page-mot__texte">');
+export function rendrePage(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined, voisins: Voisin[],
+  lieux: { adresse: string; homographes: Voisin[]; liens: ReadonlyMap<string, string> } = { adresse: '', homographes: [], liens: new Map() }): string {
+  return allegerLesTimbres(renderToStaticMarkup(<PageDuMot carte={carte} details={details} texte={texte} voisins={voisins} {...lieux} />), '<div class="page-mot__texte">');
 }
 
 export function rendreListe(mots: { mot: string; adresse: string; type: CarteIndex['type'] }[]): string {

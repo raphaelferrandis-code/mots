@@ -853,6 +853,10 @@ function composerLImage(timbre: HTMLCanvasElement, carte: CarteIndex, echelle: n
     ctx.fillText(ligne, milieu, y);
   }
 
+  // La source de la définition et sa licence, que la licence demande à chaque reprise (audit de finition, E24).
+  ctx.fillStyle = '#7f98b3';
+  ctx.font = `400 ${e(18)}px ${SANS}`;
+  ctx.fillText(SITE.creditDesDefinitions, milieu, toile.height - e(84));
   ctx.fillStyle = '#adc3da';
   ctx.font = `400 ${e(22)}px ${SANS}`;
   ctx.fillText(SITE.adresseCourte, milieu, toile.height - e(48));

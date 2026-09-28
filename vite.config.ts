@@ -92,6 +92,16 @@ export default defineConfig(({ mode }) => {
         ];
       },
     },
+  }, {
+    // Les commentaires de travail restent dans le dépôt, pas dans les pages en ligne (audit de finition du 26/09/2026,
+    // E32). En dernier parmi les transformations des pages : « attente-d-abord » a déjà consommé son repère. Restent
+    // les deux repères du modèle des pages par mot (<!--tete-->, <!--page-->), remplis ensuite.
+    name: 'sans-commentaires',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html) => html.replace(/[ \t]*<!--(?!tete-->|page-->)[\s\S]*?-->[ \t]*(?:\r?\n)?/g, ''),
+    },
   }, (() => {
     // Le service worker (scripts/sw.modele.js) : la liste des fichiers à garder sur l'appareil, et une version qui change
     // avec eux (nouvelle copie à chaque construction qui change quelque chose). Les polices ne gardent que le woff2.

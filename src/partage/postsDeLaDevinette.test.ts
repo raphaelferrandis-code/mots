@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Devinettes } from '../jeu/devinette.ts';
 import { adressesDesPages } from './pagesDesMots.ts';
-import { LIMITE_BLUESKY, descriptionDeLaQuestion, facettes, graphemes, texteDeLaReponse, texteDuPost } from './postsDeLaDevinette.ts';
+import { LIMITE_BLUESKY, descriptionDeLaQuestion, descriptionDeLaReponse, facettes, graphemes, texteDeLaReponse, texteDuPost } from './postsDeLaDevinette.ts';
 import type { IndexEdition } from './types.ts';
 
 const racine = path.join(import.meta.dirname, '..', '..');
@@ -38,6 +38,13 @@ describe('posts de la devinette', () => {
   it('décrit toute l’image de la question', () => {
     const d = jours.find((j) => j.format === 'definition')!;
     if (d.format === 'definition') for (const p of d.propositions) assert.ok(descriptionDeLaQuestion(d).includes(p));
+  });
+  it('cite le Wiktionnaire et sa licence partout où une définition part sur les réseaux', () => {
+    for (const d of jours.slice(0, 20)) {
+      assert.match(texteDeLaReponse(d, adresses.get(d.id)!), /Wiktionnaire \(CC BY-SA\)\nphilamots\.fr\/mot\//, d.id);
+      assert.match(descriptionDeLaQuestion(d), /Wiktionnaire, licence CC BY-SA 4\.0\.$/, d.id);
+      assert.match(descriptionDeLaReponse(d), /Wiktionnaire, licence CC BY-SA 4\.0\.$/, d.id);
+    }
   });
   it('repère liens et mots-dièse à l’octet près, accents compris', () => {
     const texte = 'Hier, c’était « épiphane » : philamots.fr/mot/epiphane/\n#languefrançaise';

@@ -9,6 +9,10 @@ export const SITE_DES_POSTS = 'philamots.fr';
 export const LIMITE_BLUESKY = 300; // en caractères visibles (graphèmes)
 const LETTRES = ['A', 'B', 'C', 'D'];
 const MOTS_DIESE = '#devinette #motdujour #languefrançaise';
+// La source des définitions et leur licence : courte dans un post (300 caractères), entière dans la description des
+// images (sur les images elles-mêmes : SITE.creditDesDefinitions, comme sur l'image d'un timbre).
+const CREDIT_COURT = 'Déf. : Wiktionnaire (CC BY-SA)';
+const CREDIT_LONG = 'Définitions adaptées du Wiktionnaire, licence CC BY-SA 4.0';
 
 export const graphemes = (texte: string): number => [...new Intl.Segmenter('fr', { granularity: 'grapheme' }).segment(texte)].length;
 const pageDuMot = (adresse: string): string => `${SITE_DES_POSTS}/mot/${adresse}/`;
@@ -33,22 +37,23 @@ export function texteDuPost(aujourdhui: Devinette, hier: { devinette: Devinette;
   ].join('\n');
 }
 
-// La réponse, publiée sous le post de la veille : ceux qui ont répondu en sont prévenus.
+// La réponse, publiée sous le post de la veille : ceux qui ont répondu en sont prévenus. La définition vient du
+// Wiktionnaire : la source et la licence la suivent (audit de finition, E24).
 export function texteDeLaReponse(devinette: Devinette, adresse: string): string {
   const tete = devinette.format === 'definition' ? `Réponse ${LETTRES[devinette.bonne]} : « ${devinette.mot} »` : `Réponse : « ${devinette.mot} »`;
-  const lien = `\n${pageDuMot(adresse)}`;
-  return `${couper(`${tete}, ${bonneDefinition(devinette).replace(/^\p{Lu}/u, (l) => l.toLowerCase())}`, LIMITE_BLUESKY - graphemes(lien))}${lien}`;
+  const fin = `\n${CREDIT_COURT}\n${pageDuMot(adresse)}`;
+  return `${couper(`${tete}, ${bonneDefinition(devinette).replace(/^\p{Lu}/u, (l) => l.toLowerCase())}`, LIMITE_BLUESKY - graphemes(fin))}${fin}`;
 }
 
 // Les descriptions des images (texte alternatif) : tout ce que l'image dit, pour qui ne la voit pas.
 export function descriptionDeLaQuestion(d: Devinette): string {
-  return d.format === 'definition'
+  return `${d.format === 'definition'
     ? `La devinette du jour. Que veut dire « ${d.mot} » ? ${d.propositions.map((p, i) => `${LETTRES[i]} : ${p}`).join(' ')}`
-    : `La devinette du jour. Quel est ce mot de ${d.lettres} lettres, qui commence par ${d.initiale} ? Définition : « ${d.definition} »`;
+    : `La devinette du jour. Quel est ce mot de ${d.lettres} lettres, qui commence par ${d.initiale} ? Définition : « ${d.definition} »`} ${CREDIT_LONG}.`;
 }
 
 export function descriptionDeLaReponse(d: Devinette): string {
-  return `La réponse d'hier : « ${d.mot} ». ${bonneDefinition(d)}`;
+  return `La réponse d'hier : « ${d.mot} ». ${bonneDefinition(d)} ${CREDIT_LONG}.`;
 }
 
 // Les liens et mots-dièse d'un texte, repérés en octets (UTF-8), comme Bluesky les attend.

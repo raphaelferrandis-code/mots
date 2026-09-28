@@ -17,6 +17,7 @@ import { createServer } from 'vite';
 import { adresseDuMot, adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
+import { SITE } from '../src/config/site.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
 import type { Devinettes } from '../src/jeu/devinette.ts';
 import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
@@ -48,16 +49,27 @@ try {
   const pourUnePage = adapterLeModele(modeleHtml, 2);
   const pourLaListe = adapterLeModele(modeleHtml, 1);
 
+  // Les mots qui s'écrivent pareil sans accent (« beau » nom et adjectif, « sale » et « salé ») : chaque page nomme les
+  // autres (« Voir aussi »), et la page introuvable les propose. Deux timbres du même mot mettent leur nature dans le
+  // titre (E03). Les renvois du Wiktionnaire (« → voir babiller ») mènent à la première page du mot renvoyé.
+  const parAdresse = new Map<string, typeof cartes>();
+  for (const carte of cartes) parAdresse.set(adresseDuMot(carte.mot), [...(parAdresse.get(adresseDuMot(carte.mot)) ?? []), carte]);
+  const nombreDePages = new Map<string, number>();
+  for (const carte of cartes) nombreDePages.set(carte.mot, (nombreDePages.get(carte.mot) ?? 0) + 1);
+  const liens = new Map<string, string>();
+  for (const carte of cartes) if (!liens.has(carte.mot)) liens.set(carte.mot, adresses.get(carte.id)!);
+
   let octets = 0;
   for (const carte of cartes) {
     const details = lots[lotDeLaCarte(carte.id, edition.meta.lots)][carte.id];
     const adresse = adresses.get(carte.id)!;
     const texte = textes.mots[carte.id];
     const voisins = voisinsDe(carte, cartes).map((c) => ({ carte: c, adresse: adresses.get(c.id)! }));
+    const homographes = parAdresse.get(adresseDuMot(carte.mot))!.filter((c) => c.id !== carte.id).map((c) => ({ carte: c, adresse: adresses.get(c.id)! }));
     // Remplacements par une fonction : un « $ » dans une définition ne serait pas lu comme un motif.
     const html = pourUnePage
-      .replace('<!--tete-->', () => `${enteteDeLaPage(carte, details, texte, adresse)}\n    ${textures}`)
-      .replace('<!--page-->', () => rendu.rendrePage(carte, details, texte, voisins));
+      .replace('<!--tete-->', () => `${enteteDeLaPage(carte, details, texte, adresse, nombreDePages.get(carte.mot)! > 1)}\n    ${textures}`)
+      .replace('<!--page-->', () => rendu.rendrePage(carte, details, texte, voisins, { adresse, homographes, liens }));
     const dossier = path.join(DIST, 'mot', adresse);
     mkdirSync(dossier, { recursive: true });
     writeFileSync(path.join(dossier, 'index.html'), html);
@@ -83,8 +95,6 @@ try {
 
   // La page introuvable : l'hébergeur (GitHub Pages) sert dist/404.html pour toute adresse inconnue (E13). Elle connaît
   // les mots à plusieurs pages (« beau » nom et adjectif) pour les proposer.
-  const parAdresse = new Map<string, typeof cartes>();
-  for (const carte of cartes) parAdresse.set(adresseDuMot(carte.mot), [...(parAdresse.get(adresseDuMot(carte.mot)) ?? []), carte]);
   const homographes = Object.fromEntries([...parAdresse].filter(([, groupe]) => groupe.length > 1)
     .map(([base, groupe]) => [base, groupe.map((c) => ({ adresse: adresses.get(c.id)!, nature: c.type.toLowerCase(), mot: c.mot }))]));
   writeFileSync(path.join(DIST, '404.html'), adapterLeModele(modeleHtml, 'absolu')
@@ -108,7 +118,8 @@ try {
     }
   }
 
-  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), textes.version, rendu.PAGES_LEGALES));
+  const dates = { mots: textes.version, site: new Date().toISOString().slice(0, 10), legales: SITE.textesLegauxLe };
+  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), dates, rendu.PAGES_LEGALES));
   rmSync(modele);
   console.log(`${cartes.length} pages par mot et ${jours.length} devinettes (question et réponse) fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
 } finally {

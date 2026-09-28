@@ -22,7 +22,7 @@ export function Pied({ racine, wiktionnaire, credits = true, actuelle }: { racin
     <footer className="page-mot__pied">
       {credits && <p>
         Définitions et étymologies adaptées du{' '}
-        <a href={wiktionnaire ?? 'https://fr.wiktionary.org/'}>Wiktionnaire</a>, fréquences de Lexique 4, sous licence{' '}
+        <a href={wiktionnaire ?? 'https://fr.wiktionary.org/'}>Wiktionnaire</a>, fréquences de <a href="http://www.lexique.org">Lexique 4</a>, sous licence{' '}
         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a> : ces textes sont réutilisables
         sous la même licence. Le dessin des timbres et la marque Philamots ne le sont pas.
       </p>}

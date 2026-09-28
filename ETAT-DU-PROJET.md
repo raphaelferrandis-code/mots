@@ -2,6 +2,24 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape « Confiance », lot C : les petits points de la vitrine.** Pages des mots : la
+> nature dans le titre quand deux timbres portent le même mot (plus aucun titre en double sur 3 016), « Voir aussi »
+> vers les autres pages d'un mot, une ligne qui présente le jeu sous le titre et deux phrases dans l'appel à jouer,
+> l'attestation dite en clair (`attestationEnClair` : « attesté en 842 »), « des gens interrogés », « Attaque 12 ·
+> Défense 10 en duel », les renvois du Wiktionnaire (« → voir babiller ») en liens quand le mot a sa page
+> (`avecLesRenvois`), les mots longs coupés proprement, la liste `/mots/` sur deux colonnes dès 320 px, les vignettes
+> voisines muettes pour les lecteurs d'écran ; fil d'Ariane, `inLanguage` et `og:image:alt` ; aperçu complet de
+> `/mots/`. Plan du site : l'accueil et la liste datés du jour de la mise en ligne, les pages légales de leurs textes
+> (`SITE.textesLegauxLe`), les mots de leurs textes. Accueil : description de 152 caractères, données `WebSite`,
+> plus d'`og:url` (Facebook y aurait envoyé le clic sans le `?parrain=`), icônes de 48 et 192 px déclarées,
+> `favicon.ico` à la racine, icône iPhone sans coins transparents. Commentaires de travail retirés des pages en ligne
+> (greffon `sans-commentaires` de vite.config.ts). Le Wiktionnaire et sa licence cités sur l'image d'un timbre partagé,
+> sur les images et dans les textes de la devinette (`SITE.creditDesDefinitions`) ; lien Lexique 4 au pied des pages ;
+> `NOTICE.md` (droits et licences) ; README à jour. Un bandeau prévient qui joue dans le navigateur d'Instagram,
+> Facebook, Messenger, TikTok… (`services/navigateurIntegre.ts`, « Compris » le range). Le « G » officiel de Google sur
+> « Continuer avec Google ». 591 tests. **Pour Raphaël : étape 23 d'A-FAIRE-RAPHAEL** (reconnaissance de Philamots par
+> Google, dépôt du nom).
+
 > **28 septembre 2026 — finitions, étape « Confiance », lot B : la suppression des comptes inactifs (script 27).**
 > Ce que promettent les pages légales (`SITE.conservation`) : un invité sans visite depuis 12 mois est supprimé, un
 > compte relié après 3 ans. `comptes.dernier_passage` (défaut : l'heure du collage, personne n'est supprimé plus tôt

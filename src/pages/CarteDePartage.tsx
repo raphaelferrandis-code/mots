@@ -4,6 +4,7 @@
 // Chaque jour, un post : la question du jour, et la réponse de celle de la veille.
 
 import { Timbre } from '../composants/timbre/Timbre.tsx';
+import { SITE } from '../config/site.ts';
 import type { Devinette } from '../jeu/devinette.ts';
 import { bonneDefinition, venuDe } from '../jeu/devinette.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
@@ -14,6 +15,8 @@ function Pied({ invitation }: { invitation?: boolean }) {
   return <>
     {invitation && <p className="carte-partage__invitation">Ta réponse en commentaire · solution demain, ou tout de suite sur philamots.fr</p>}
     <p className="carte-partage__pied"><img src="../../../identite/philamots-clair.svg" alt="Philamots" width="190" height="45" /><span>philamots.fr</span></p>
+    {/* Les définitions viennent du Wiktionnaire : la licence demande de le dire à chaque reprise (audit de finition, E24). */}
+    <p className="carte-partage__credit">{SITE.creditDesDefinitions.replace('Définition adaptée', 'Définitions adaptées')}</p>
   </>;
 }
 
