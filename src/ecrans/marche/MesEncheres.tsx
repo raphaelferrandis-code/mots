@@ -12,6 +12,7 @@ import { messageDe } from '../../partage/messages.ts';
 import type { CarteIndex } from '../../partage/types.ts';
 import { retirerDeLaVente } from '../../services/partie.ts';
 import { FormulaireDeMise } from './Mise.tsx';
+import { NomDuJoueur } from './NomDuJoueur.tsx';
 import type { Retour } from './Mise.tsx';
 
 const REGLES = EQUILIBRAGE.marche;
@@ -25,7 +26,7 @@ function detail(e: Enchere, maintenant: number): string {
     case 'en-tete': return `Ta mise : ${encre(prixActuel(e))}, mis de côté · ${temps}`;
     case 'en-vente': return `${e.meilleureMise === null ? 'Mise de départ' : 'Meilleure mise'} : ${encre(prixActuel(e))} · ${temps}`;
     case 'remportee': return `Pour ${encre(e.prixFinal)} : il est dans ton album`;
-    case 'vendue': return `${encre(e.prixFinal)}, dont ${encre(vendeurRecoit(e.prixFinal ?? 0, REGLES))} pour toi${e.acheteur ? ` · à ${e.acheteur}` : ''}`;
+    case 'vendue': return `${encre(e.prixFinal)}, dont ${encre(vendeurRecoit(e.prixFinal ?? 0, REGLES))} pour toi`;
     case 'invendue': return 'Sans preneur : revenu dans ton album';
     case 'perdue': return `Parti à ${encre(e.prixFinal)} : ton Encre t’est revenue`;
     case 'retiree': return 'Revenu dans ton album';
@@ -71,7 +72,7 @@ function MonEnchere({ enchere, carte, maintenant, encre: reserve, ouvert, onChan
       <div className="mon-enchere__timbre">{carte ? <Carte carte={carte} finition={enchere.finition} /> : <div className="deck__vide" aria-hidden="true" />}</div>
       <div className="mon-enchere__corps">
         <p className="mon-enchere__titre"><strong>{mot}</strong><span className="etiquette-enchere" data-ton={statut.ton}>{statut.libelle}</span></p>
-        <p className="mon-enchere__detail">{detail(enchere, maintenant)}</p>
+        <p className="mon-enchere__detail">{detail(enchere, maintenant)}{statut.cle === 'vendue' && enchere.acheteur && <> · à <NomDuJoueur pseudo={enchere.acheteur} simule={enchere.acheteurSimule} /></>}</p>
         {retour && <p className={`message message--${retour.ton} petit`} role={retour.ton === 'erreur' ? 'alert' : 'status'}>{retour.texte}</p>}
         {statut.cle === 'depassee' && enCours && ouvert && (miser
           ? <FormulaireDeMise enchere={enchere} mot={mot} encre={reserve} onFini={fini} onAnnuler={() => setMiser(false)} />

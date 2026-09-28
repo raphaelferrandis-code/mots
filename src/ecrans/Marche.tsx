@@ -81,6 +81,7 @@ export function Marche() {
               <li><strong>Miser</strong> met ton Encre de côté. Si quelqu’un te dépasse, elle te revient aussitôt.</li>
               <li>À la fin de l’enchère, le timbre va au meilleur enchérisseur ; le vendeur reçoit le prix moins {Math.round(REGLES.commission * 100)} % de commission. Une mise dans les {REGLES.prolongationEnMinutes} dernières minutes prolonge l’enchère de {REGLES.prolongationEnMinutes} minutes.</li>
               <li><strong>Vendre</strong> : choisis un timbre de ton album, sa mise de départ et la durée ({REGLES.dureesEnHeures.join(', ')} heures). Il quitte ton album le temps de la vente, et y revient s’il ne trouve pas preneur.</li>
+              {affichee?.animation && <li>Des joueurs simulés animent aussi le marché tant qu’il y a peu de monde : ils vendent des timbres neufs, et rachètent parfois une vente restée sans mise. Leurs ventes ne comptent pas dans la cote.</li>}
               <li>Jusqu’à {REGLES.achatsParJourAuPlus} achats par jour et {REGLES.ventesEnCoursAuPlus} ventes en même temps. Un compte arrivé depuis moins de {EQUILIBRAGE.comptesNeufs.joursAvantLesEchanges} jours regarde, sans miser ni vendre.</li>
             </ul>
           </details>

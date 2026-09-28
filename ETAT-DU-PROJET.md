@@ -2,6 +2,20 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot D : le marché animé (script 26 à coller : étape 19).** Décision de
+> Raphaël (dosage « équilibré », `EQUILIBRAGE.marche.simules`) : tant que les vrais joueurs ont moins de 30 ventes
+> ouvertes, les joueurs maison tiennent 12 ventes (timbres neufs : Commune 45 %, Peu commune 30 %, Rare 17 %,
+> Épique 8 % ; 1,5 × le plancher, achat immédiat 3 ×) et rachètent une vraie vente restée sans mise (1 par vendeur et par
+> jour de Paris, jusqu'à 2 × le plancher ; le vendeur reçoit la mise moins la commission, le timbre quitte le jeu).
+> Jamais de surenchère ; leurs ventes et rachats hors de la cote ; une vente simulée achetée : l'Encre disparaît (aucun
+> vendeur). Serveur (`serveur/marche.ts`) : colonnes `simulee`, `vendeur_maison`, `acheteur_maison`, fonctions
+> `animer_le_marche` (au passage de `cloturer_les_encheres`, sans tâche planifiée), `racheteur_pour`,
+> `pseudonyme_maison` ; `mes_encheres` rend `ouvertLe` (compte de moins de 3 jours), `marche` rend `animation`. 6 tests
+> (`serveur/marche-anime.test.ts`) ; ancienne base + script 26 joué deux fois = nouvelle base (instantanés PGlite
+> identiques). Jeu : le nom d'un vendeur ou d'un acheteur ouvre sa fiche (« Joueur simulé » pour eux :
+> `src/ecrans/marche/NomDuJoueur.tsx`), une phrase dans « Comment ça marche ? ». Vérifié sur le banc : 12 ventes
+> simulées à côté des 13 vraies, fiche, rachat vu dans « Tes enchères ».
+
 > **28 septembre 2026 — finitions, étape 5, lot C : l'échange en timbres.** On composait un échange avec deux listes
 > déroulantes de texte (audit S33). Désormais (`src/ecrans/amis/ComposerEchange.tsx`) : d'abord « Tu reçois », la
 > collection de l'ami en grille, ce qui manque à la sienne en tête (badge « Nouveau ») ; puis « Tu donnes », son album,

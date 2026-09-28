@@ -15,7 +15,7 @@ import { fabriquerLesJoueursMaison } from '../src/jeu/joueursMaison.ts';
 import { LONGUEUR_DU_PSEUDO } from '../src/jeu/pseudo.ts';
 import type { IndexEdition } from '../src/partage/types.ts';
 import { APPARENCE_SQL, DEMANDES_TRAITEES_SQL, FONCTIONS_DES_COLLECTIONS, FONCTIONS_INTERNES, INDEX_DU_CODE_SQL, cartes, collections, migrationPersonnalisation } from './collections.ts';
-import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, VENDEUR_FACULTATIF_SQL, marche } from './marche.ts';
+import { FONCTIONS_DU_MARCHE, FONCTIONS_INTERNES_DU_MARCHE, MARCHE_ANIME_SQL, VENDEUR_FACULTATIF_SQL, marche } from './marche.ts';
 import { FONCTIONS_DE_RECUPERATION, FONCTIONS_INTERNES_DE_RECUPERATION, recuperation } from './recuperation.ts';
 import { combats } from './combats.ts';
 import { amis } from './amis.ts';
@@ -586,6 +586,21 @@ export function migrationBoutique(): string {
     + boutique() + '\ncommit;\n';
 }
 
+// Script 26 : les joueurs simulés au marché (décision de Raphaël du 28/09/2026, dosage « équilibré ») — leurs ventes, le
+// rachat d'une vente restée sans mise, la cote qui les ignore — et le jour où le marché s'ouvre pour un compte neuf.
+// Après 25-boutique.sql. Aucune fonction Edge à redéployer : le jeu peut être publié avant ou après ce script.
+export function migrationMarcheAnime(): string {
+  const S = EQUILIBRAGE.marche.simules;
+  return `-- Le marché animé : ${S.ventesEnCours} ventes des joueurs simulés, le rachat d'une vente sans mise (${S.rachatsParJour} par jour), leur retrait dès ${S.retraitDes} vraies ventes. Après 25-boutique.sql.\n`
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\n'
+    + '-- Pour couper l’animation un jour : EQUILIBRAGE.marche.simules.actif = false, « npm run serveur:script », recoller ce script.\nbegin;\n'
+    + MARCHE_ANIME_SQL + '\n\n'
+    + ['pseudonyme_maison', 'enchere_en_json', 'racheteur_pour', 'cloturer_une_enchere', 'animer_le_marche', 'cloturer_les_encheres', 'calculer_les_cotes',
+      'solder_compte_supprime', 'marche', 'mes_encheres', 'historique_de_la_cote'].map((nom) => reprise(marche(), nom)).join('\n\n') + '\n\n'
+    + 'revoke execute on function public.pseudonyme_maison(uuid), public.racheteur_pour(public.encheres), public.animer_le_marche() from public, anon, authenticated;\n'
+    + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -628,5 +643,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '23-six-timbres.sql'), migrationSixTimbres());
   writeFileSync(path.join(RACINE, 'serveur', '24-paquets-d-exception.sql'), migrationPaquetsDException());
   writeFileSync(path.join(RACINE, 'serveur', '25-boutique.sql'), migrationBoutique());
+  writeFileSync(path.join(RACINE, 'serveur', '26-marche-anime.sql'), migrationMarcheAnime());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }

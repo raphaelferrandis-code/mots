@@ -15,6 +15,7 @@ export type Enchere = {
   carte: string;
   finition: Finition;
   vendeur: string; // le pseudonyme du vendeur
+  vendeurSimule: boolean; // un joueur simulé (serveur/marche.ts, script 26)
   mienne: boolean; // c'est ma vente
   miseDeDepart: number;
   achatImmediat: number | null;
@@ -24,6 +25,7 @@ export type Enchere = {
   etat: EtatDEnchere;
   prixFinal: number | null;
   acheteur: string | null; // le pseudonyme de l'acheteur, une fois vendue
+  acheteurSimule: boolean; // racheté par un joueur simulé
   remportee: boolean; // c'est moi qui l'ai remportée
   cote: number | null; // la cote du jour du timbre dans cette finition (décision n° 38), s'il en a une
   clotureeLe: number | null;
@@ -44,6 +46,7 @@ export function lireEnchere(brut: unknown): Enchere | null {
     carte: brut.carte,
     finition,
     vendeur: typeof brut.vendeur === 'string' ? brut.vendeur : 'Un collectionneur',
+    vendeurSimule: brut.vendeurSimule === true,
     mienne: brut.mienne === true,
     miseDeDepart: nombre(brut.miseDeDepart),
     achatImmediat: nombreOuNull(brut.achatImmediat),
@@ -53,6 +56,7 @@ export function lireEnchere(brut: unknown): Enchere | null {
     etat,
     prixFinal: nombreOuNull(brut.prixFinal),
     acheteur: typeof brut.acheteur === 'string' ? brut.acheteur : null,
+    acheteurSimule: brut.acheteurSimule === true,
     remportee: brut.remportee === true,
     cote: nombreOuNull(brut.cote),
     clotureeLe: nombreOuNull(brut.cloturee_le ?? brut.clotureeLe),

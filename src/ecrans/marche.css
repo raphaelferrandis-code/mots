@@ -72,3 +72,7 @@
   .vendre__formulaire { grid-template-columns: minmax(0, 1fr); }
   .vendre__timbre { width: 140px; }
 }
+
+/* Le nom d'un joueur (NomDuJoueur.tsx) : un lien discret vers sa fiche. */
+.nom-du-joueur { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-decoration-color: rgb(173 195 218 / 45%); text-underline-offset: 3px; cursor: pointer; }
+@media (hover: hover) { .nom-du-joueur:hover { color: var(--texte-fort); text-decoration-color: var(--cuivre-clair); } }

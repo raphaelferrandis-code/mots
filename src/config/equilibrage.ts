@@ -236,6 +236,21 @@ export const EQUILIBRAGE = {
     // La cote d'un timbre (décision n° 38) : la médiane des prix de ses ventes des derniers jours, par finition, calculée
     // une fois par jour et gardée jour après jour (l'historique de la version payante).
     cote: { fenetreEnJours: 30, historiqueEnJours: 90, ventesMontrees: 30, conservationEnJours: 400 },
+    // Les joueurs simulés animent le marché tant qu'il y a peu de monde (décision de Raphaël du 28/09/2026, dosage
+    // « équilibré ») : ils vendent des timbres neufs, et rachètent une vente restée sans mise ; jamais ils ne surenchérissent
+    // sur un vrai joueur, et leurs ventes ne comptent pas dans la cote. « actif » : l'interrupteur (script serveur à
+    // recoller). La mention « Joueur simulé » est sur leur fiche (en touchant leur nom), et une phrase le dit au marché.
+    simules: {
+      actif: true,
+      ventesEnCours: 12, // leurs ventes ouvertes en même temps
+      retraitDes: 30, // ventes ouvertes des vrais joueurs à partir desquelles ils ne vendent ni ne rachètent plus
+      raretes: { 'Commune': 45, 'Peu commune': 30, 'Rare': 17, 'Épique': 8 } satisfies ChancesParRarete, // chances, en %
+      finitions: { 'Normale': 90, 'Brillante': 9, 'Holographique': 1 } satisfies Record<Finition, number>, // en %
+      miseDeDepart: 1.5, // × le plancher de la rareté
+      achatImmediat: 3, // × le plancher
+      rachatsParJour: 1, // par vendeur, jour de Paris
+      rachatJusqua: 2, // × le plancher : une vente plus chère n'est pas rachetée
+    },
   },
 
   // ── La boutique de l'Encre (décision de Raphaël du 26/09/2026) ───────────────

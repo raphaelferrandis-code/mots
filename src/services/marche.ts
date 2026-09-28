@@ -14,7 +14,8 @@ import { appelerAvecUneDemande, avecUneDemande } from './demandes.ts';
 import type { AvecUneDemande } from './demandes.ts';
 import type { ClientSupabase } from './supabase.ts';
 
-export type PageDuMarche = { encheres: Enchere[]; total: number; maintenant: number };
+// « animation » : des joueurs simulés animent le marché (script 26) ; le jeu le dit.
+export type PageDuMarche = { encheres: Enchere[]; total: number; maintenant: number; animation: boolean };
 // « ouvertLe » : quand le marché s'ouvre pour un compte neuf (trois jours après son arrivée) ; null si c'est déjà fait ou si le
 // serveur ne le dit pas encore (script 26).
 export type MesEncheres = { ventes: Enchere[]; mises: Enchere[]; maintenant: number; ouvertLe: number | null };
@@ -48,7 +49,7 @@ export function serveurDuMarcheAvec(client: ClientSupabase, demandes: AvecUneDem
     marche: async (recherche, page) => {
       const lu = await client.appeler<unknown>('marche', { p_recherche: recherche, p_page: page });
       const brut = estUnObjet(lu) ? lu : {};
-      return { encheres: lireDesEncheres(brut.encheres), total: nombre(brut.total), maintenant: nombre(brut.maintenant) };
+      return { encheres: lireDesEncheres(brut.encheres), total: nombre(brut.total), maintenant: nombre(brut.maintenant), animation: brut.animation === true };
     },
     mesEncheres: async () => {
       const lu = await client.appeler<unknown>('mes_encheres');

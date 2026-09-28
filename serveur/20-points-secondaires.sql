@@ -272,6 +272,9 @@ begin
                from public.encheres e where e.vendeur = moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
     'mises', (select coalesce(jsonb_agg(public.enchere_en_json(e) order by e.etat = 'ouverte' desc, coalesce(e.cloturee_le, e.ferme_le) desc), '[]'::jsonb)
               from public.encheres e where e.id in (select m.enchere from public.mises m where m.encherisseur = moi) and e.vendeur is distinct from moi and (e.etat = 'ouverte' or e.cloturee_le > now() - interval '7 days')),
+    -- Un compte neuf regarde sans miser ni vendre : le jour où le marché s'ouvre pour lui (null une fois ouvert).
+    'ouvertLe', (select public.en_millisecondes(c.cree_le + interval '3 days') from public.comptes c
+                 where c.utilisateur = moi and c.cree_le + interval '3 days' > now()),
     'maintenant', public.en_millisecondes(now())
   );
 end $$;
@@ -291,10 +294,10 @@ begin
     'serie', (select coalesce(jsonb_agg(jsonb_build_object('jour', c.jour, 'finition', c.finition, 'cote', c.cote, 'ventes', c.ventes) order by c.jour, c.finition), '[]'::jsonb)
               from public.cotes c where c.carte = p_carte and c.jour > current_date - 90),
     'ventes', (select coalesce(jsonb_agg(jsonb_build_object('quand', public.en_millisecondes(e.cloturee_le), 'finition', e.finition, 'prix', e.prix_final) order by e.cloturee_le desc), '[]'::jsonb)
-               from (select * from public.encheres v where v.carte = p_carte and v.etat = 'vendue' order by v.cloturee_le desc limit 30) e),
+               from (select * from public.encheres v where v.carte = p_carte and v.etat = 'vendue' and not v.simulee and v.acheteur_maison is null order by v.cloturee_le desc limit 30) e),
     'stats', (select coalesce(jsonb_agg(s.stat order by s.finition), '[]'::jsonb)
               from (select e.finition, jsonb_build_object('finition', e.finition, 'mini', min(e.prix_final), 'maxi', max(e.prix_final), 'nombre', count(*)) as stat
-                    from public.encheres e where e.carte = p_carte and e.etat = 'vendue' and e.cloturee_le > now() - make_interval(days => 90)
+                    from public.encheres e where e.carte = p_carte and e.etat = 'vendue' and not e.simulee and e.acheteur_maison is null and e.cloturee_le > now() - make_interval(days => 90)
                     group by e.finition) s),
     'maintenant', public.en_millisecondes(now())
   );

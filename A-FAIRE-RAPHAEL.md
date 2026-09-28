@@ -356,6 +356,23 @@ aussi trois messages rares, qui disent désormais « carnet » et « timbre ».
       connecté à Supabase. À savoir : les paquets ont été refaits le soir même pour le nom « Écrin » (commit 489e5f9) ;
       un déploiement copié avant cette heure-là ne diffère du dépôt que par ce nom, qui ne sert pas aux duels.
 
+### Étape 19 — Coller le script 26 (le marché animé)
+
+Ta décision du 28 septembre (dosage « équilibré ») : tant que le marché a moins de 30 ventes de vrais joueurs, les
+joueurs simulés y tiennent une douzaine de ventes (des timbres neufs, Communes à Épiques, 1,5 fois le prix minimum), et
+rachètent une fois par jour et par vendeur une vente restée sans mise (jusqu'à 2 fois le prix minimum). Ils ne
+surenchérissent jamais sur un vrai joueur, et leurs ventes ne comptent pas dans la cote. La mention « Joueur simulé »
+est sur leur fiche (en touchant leur nom), et « Comment ça marche ? » le dit. Le même script donne aussi au jeu le jour
+où le marché s'ouvre pour un compte neuf. **Aucune fonction à redéployer.** Le jeu est déjà publié : tant que le script
+n'est pas collé, le marché reste comme avant.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/26-marche-anime.sql → **Copy raw file** →
+      Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
+      attendue : **Success. No rows returned**.
+- [ ] Dis-le à l'assistant : il vérifie de l'extérieur (sans compte) que les nouvelles fonctions sont en place et fermées
+      au public. Au premier passage d'un joueur, une douzaine de ventes apparaissent au marché.
+- Pour couper l'animation un jour : le demander à l'assistant (un interrupteur, puis ce même script à recoller).
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de

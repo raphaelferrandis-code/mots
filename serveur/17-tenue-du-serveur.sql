@@ -580,7 +580,8 @@ begin
       perform public.cloturer_une_enchere(e.id);
     end loop;
   end if;
-  -- Au passage, les cotes du jour (une fois par jour).
+  -- Au passage, les joueurs simulés remplacent leurs ventes terminées, et les cotes du jour (une fois par jour).
+  perform public.animer_le_marche();
   perform public.calculer_les_cotes();
 end $$;
 

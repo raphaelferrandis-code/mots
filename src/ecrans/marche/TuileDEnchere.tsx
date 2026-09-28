@@ -7,6 +7,7 @@ import { prixActuel, tempsRestant } from '../../jeu/marche.ts';
 import type { Enchere } from '../../jeu/marche.ts';
 import type { CarteIndex } from '../../partage/types.ts';
 import { FormulaireDeMise, acheterToutDeSuite } from './Mise.tsx';
+import { NomDuJoueur } from './NomDuJoueur.tsx';
 import type { Retour } from './Mise.tsx';
 
 const HORLOGE = <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>;
@@ -44,7 +45,7 @@ export function TuileDEnchere({ enchere, carte, maintenant, encre, ouvert, onCha
         </p>
         <p className="tuile-enchere__infos">
           <span className="tuile-enchere__temps" data-urgent={(enCours && reste < UNE_HEURE) || undefined}>{HORLOGE}{tempsRestant(enchere.fermeLe, maintenant)}</span>
-          <span>{enchere.mienne ? 'ta vente' : `par ${enchere.vendeur}`}</span>
+          <span>{enchere.mienne ? 'ta vente' : <>par <NomDuJoueur pseudo={enchere.vendeur} simule={enchere.vendeurSimule} /></>}</span>
         </p>
         {(enchere.achatImmediat !== null || enchere.cote !== null) && (
           <p className="tuile-enchere__details">
