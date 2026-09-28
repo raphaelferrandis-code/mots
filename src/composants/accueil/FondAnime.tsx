@@ -10,11 +10,14 @@ import { useEffect, useRef } from 'react';
 import { rosace } from '../timbre/dessins.ts';
 import { mouvementReduit } from '../mouvement.ts';
 
+// Le centre d'une rosace, un rond sombre cerné de clair, reste hors de l'écran (décision de Raphaël du 29/09/2026 : on
+// aurait dit des endroits où cliquer). « x », « y » : un bord de la fenêtre ; « dx », « dy » : le pas de plus, en
+// fraction de sa plus grande dimension comme la taille « s », d'environ trois fois le rayon de ce centre.
 const ROSACES = [
-  { x: .08, y: .24, s: .62, R: 96, r: 35, d: 56, couleur: 'rgba(216,154,92,.17)', vitesse: .035, profondeur: 26 },
-  { x: .92, y: .82, s: .95, R: 120, r: 47, d: 68, couleur: 'rgba(126,164,226,.13)', vitesse: -.025, profondeur: 46 },
-  { x: .62, y: .06, s: .42, R: 84, r: 29, d: 50, couleur: 'rgba(233,225,208,.09)', vitesse: .05, profondeur: 16 },
-  { x: .3, y: 1.02, s: .55, R: 70, r: 23, d: 43, couleur: 'rgba(216,154,92,.11)', vitesse: -.04, profondeur: 22 },
+  { x: 0, dx: -.04, y: .24, dy: 0, s: .62, R: 96, r: 35, d: 56, couleur: 'rgba(216,154,92,.17)', vitesse: .035, profondeur: 26 },
+  { x: 1, dx: .055, y: .82, dy: 0, s: .95, R: 120, r: 47, d: 68, couleur: 'rgba(126,164,226,.13)', vitesse: -.025, profondeur: 46 },
+  { x: .62, dx: 0, y: 0, dy: -.035, s: .42, R: 84, r: 29, d: 50, couleur: 'rgba(233,225,208,.09)', vitesse: .05, profondeur: 16 },
+  { x: .3, dx: 0, y: 1, dy: .04, s: .55, R: 70, r: 23, d: 43, couleur: 'rgba(216,154,92,.11)', vitesse: -.04, profondeur: 22 },
 ];
 type Rosace = typeof ROSACES[number] & { taille: number; trace: Path2D; image: HTMLCanvasElement | null };
 
@@ -36,7 +39,7 @@ export function FondAnime({ immobile = false }: { immobile?: boolean } = {}) {
     if (!cv || !c) return;
     const anime = !immobile && !mouvementReduit();
     const pointeur = { nx: .5, ny: .4 };
-    let W = 0, H = 0, dpr = 1, px = 0, py = 0, cadre = 0, minuterie = 0;
+    let W = 0, H = 0, base = 0, dpr = 1, px = 0, py = 0, cadre = 0, minuterie = 0;
     let rosaces: Rosace[] = [];
     let grains: { x: number; y: number; z: number; ph: number }[] = [];
     const t0 = performance.now();
@@ -49,7 +52,7 @@ export function FondAnime({ immobile = false }: { immobile?: boolean } = {}) {
       dpr = densite(); W = window.innerWidth; H = memeLargeur ? Math.max(H, window.innerHeight) : window.innerHeight;
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       cv.style.width = `${W}px`; cv.style.height = `${H}px`;
-      const base = Math.max(W, H);
+      base = Math.max(W, H);
       rosaces = ROSACES.map((o) => {
         const taille = Math.round(base * o.s);
         // Une fenêtre de taille nulle (onglet caché, cadre pas encore mesuré) : rien à dessiner, et « arc » refuserait un rayon négatif.
@@ -70,7 +73,7 @@ export function FondAnime({ immobile = false }: { immobile?: boolean } = {}) {
       c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
       for (const r of rosaces) {
         if (r.taille <= 12) continue; // rosace vide (voir « construire ») : « drawImage » refuse un canevas de largeur nulle
-        c.save(); c.translate(r.x * W - px * r.profondeur, r.y * H - py * r.profondeur);
+        c.save(); c.translate(r.x * W + r.dx * base - px * r.profondeur, r.y * H + r.dy * base - py * r.profondeur);
         if (r.image) { c.rotate(t * r.vitesse); c.drawImage(r.image, -r.taille / 2, -r.taille / 2, r.taille, r.taille); }
         else peindre(c, r);
         c.restore();
