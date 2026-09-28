@@ -7,7 +7,7 @@ html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; } /* la page ne
 
 body {
   margin: 0;
-  background: var(--papier);
+  background: var(--papier); /* sur body, jamais sur html : il recouvrirait les rosaces du fond (voir index.html) */
   color: var(--encre);
   font-family: var(--police-texte);
   font-size: 17px;

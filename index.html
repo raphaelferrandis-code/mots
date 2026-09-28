@@ -58,9 +58,11 @@
 
     <!-- L'attente, avant que le jeu ne se charge (sinon, une page vide 1 à 3 s sur un réseau lent). Le jeu la remplace
          dès qu'il démarre ; elle n'apparaît qu'au bout d'un instant, pour ne pas clignoter quand tout va vite. Les
-         feuilles de style du jeu sont placées après elle (vite.config.ts, « attente-d-abord ») : elle se peint aussitôt. -->
+         feuilles de style du jeu sont placées après elle (vite.config.ts, « attente-d-abord ») : elle se peint aussitôt.
+         Le fond sur body seulement, jamais sur html : le navigateur l'étend alors à toute la fenêtre, SOUS les rosaces
+         de l'accueil et du duel (FondAnime, calques en z-index -1). Posé aussi sur html, il les recouvrait (25-28/09/2026). -->
     <style>
-      html, body { background: #0b1729; }
+      body { background: #0b1729; }
       .attente-initiale { min-height: 100vh; min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 18px;
         color: #adc3da; font: 15px/1.4 'Segoe UI', system-ui, sans-serif; text-align: center; padding: 0 16px; opacity: 0; animation: attente-apparait .3s ease-out .15s forwards; }
       .attente-initiale img { width: 180px; height: auto; animation: attente-respire 2.4s ease-in-out infinite; }
