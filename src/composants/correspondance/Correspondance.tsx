@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { ornement, profilVisible, progressionDuNiveau } from '../../jeu/personnalisation.ts';
 import { presence } from '../../jeu/presence.ts';
-import { lien } from '../../navigation/routes.ts';
+import { SALON_DE_L_EQUIPE, lien } from '../../navigation/routes.ts';
 import type { CarteIndex } from '../../partage/types.ts';
 import type { Apparence, TimbreEchange } from '../../services/amis.ts';
 import { EMBLEMES } from '../../services/equipes.ts';
@@ -17,7 +17,7 @@ import './correspondance.css';
 
 // L'adresse de la section Échanges de la page Amis (la route reste « amis »), et celle des joutes, mode 2v2 équipe choisi.
 export const LIEN_ECHANGES = `${lien({ ecran: 'amis' })}/echanges`;
-export const LIEN_EQUIPE_2V2 = `${lien({ ecran: 'joutes' })}/duo_equipe`;
+export const LIEN_EQUIPE_2V2 = SALON_DE_L_EQUIPE; // le salon du 2 contre 2 en équipe, dans la préparation du duel
 
 /** Le signe d'un emblème, forcé en caractère d'imprimerie (sans quoi ✒ ou ☼ s'affichent en emoji). */
 export const signeGrave = (embleme: Embleme): string => `${EMBLEMES.find(e => e.id === embleme)?.signe ?? ''}︎`;

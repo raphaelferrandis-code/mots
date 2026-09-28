@@ -4,6 +4,9 @@ export const MODES_DIRECTS = ['solo', 'duo_solo', 'duo_equipe'] as const;
 export type ModeDirect = typeof MODES_DIRECTS[number];
 export const NOMS_DIRECTS: Record<ModeDirect, string> = { solo: 'Solo', duo_solo: '2v2 solo', duo_equipe: '2v2 équipe' };
 export const TEMPS_DIRECT = { pose: 8_000, reponses: 30_000, arbitrage: 5_000, bilan: 4_000 };
+// Les règles du 2 contre 2 en trois phrases (audit de finition du 26/09/2026 : elles étaient écrites comme du code,
+// « Ordre A1 → B1 → B2 → A2 »). Montrées dans la préparation du duel et sur l'écran de l'équipe.
+export const REGLES_DU_2V2 = 'Chaque équipe partage une barre de vie, et tu vois la main de ton partenaire. Vous posez chacun votre tour, un timbre face à un timbre adverse, puis vous cherchez ensemble la définition des deux mots adverses. Si vous n’êtes pas d’accord, le dernier de vous deux à avoir posé tranche.';
 export type PhaseDirect = 'pose' | 'reponses' | 'arbitrage' | 'bilan' | 'fin';
 export type ActionDirect =
   | { type: 'poser'; carte: string; voie: number }

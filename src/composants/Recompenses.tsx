@@ -37,7 +37,7 @@ function Medaille({ motif = 'plume' }: { motif?: string }) {
 export function GainDuDuel({ resultat, encre, xp }: { resultat: Resultat; encre: number; xp: number }) {
   return <div className="gain-duel" data-resultat={resultat}>
     <Medaille motif={resultat === 'victoire' ? 'phenix' : 'plume'} />
-    <h2>{resultat === 'victoire' ? 'Victoire' : resultat === 'nul' ? 'Match nul' : 'Défaite'}</h2>
+    <h2>{resultat === 'victoire' ? 'Victoire' : resultat === 'nul' ? 'Égalité' : 'Défaite'}</h2>
     <div className="gain-duel__gains"><span><b>+{encre}</b> Encre</span><span><b>+{xp}</b> XP</span></div>
   </div>;
 }

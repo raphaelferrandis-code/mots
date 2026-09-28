@@ -11,7 +11,7 @@ import { choisirAuxFleches } from '../composants/fleches.ts';
 import { clientDuServeur, serveurUtilise } from '../services/compte.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import type { ClassementDirect, ModeDirect } from '../jeu/direct.ts';
-import { lien } from '../navigation/routes.ts';
+import { SALON_DES_JOUTES, lien } from '../navigation/routes.ts';
 import './classement.css';
 
 function Podium({ lignes, libelleMoi = 'C’est toi' }: { lignes: LigneDeClassement[]; libelleMoi?: string }) {
@@ -67,7 +67,7 @@ export function Classement() {
     <a className="btn-tertiary palmares__retour" href={lien({ ecran: 'duel' })}>← Retour aux duels</a>
     <Entete titre="Les classements" actions={<>
       {pret && <button type="button" className="btn-secondary sm" onClick={() => setTour(t=>t+1)}>Actualiser</button>}
-      <a className="btn-primary sm" href={lien({ecran:'joutes'})}>Jouer en direct</a>
+      <a className="btn-primary sm" href={SALON_DES_JOUTES}>Jouer en direct</a>
     </>} />
     <div className="modes" role="tablist" aria-label="Classement" onKeyDown={choisirAuxFleches([...MODES_DIRECTS],mode,setMode)}>{MODES_DIRECTS.map(m => <button type="button" key={m} role="tab" id={`classement-${m}`} aria-controls="classement-contenu" aria-selected={mode===m} tabIndex={mode===m ? 0 : -1} onClick={() => setMode(m)}>{NOMS_DIRECTS[m]}</button>)}</div>
     <section className="palmares__contenu" role="tabpanel" id="classement-contenu" aria-labelledby={`classement-${mode}`}>

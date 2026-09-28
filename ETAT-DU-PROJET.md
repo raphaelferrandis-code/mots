@@ -2,6 +2,23 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot G (chantier 6) : la joute en direct au niveau du duel.** La partie
+> (`src/ecrans/direct/PartieDirecte.tsx`) reprend les pièces du duel : barres de vie des deux camps (le double de points
+> pour une équipe de deux, `BarreDeVie.maximum`), face-à-face autour du médaillon (deux en 2 contre 2, côte à côte sur
+> ordinateur), barre d'action avec le temps de la pose, main et pioche, parade plein écran au minuteur circulaire
+> (`ParadeDirecte.tsx` : deux mots en 2 contre 2, la proposition du partenaire affichée, l'arbitrage, puis la bonne
+> réponse), dégâts qui s'envolent, bouclier, éclats d'encre, sons du duel (tic-tac, sonnette, choc, cloche de la
+> victoire), et la carte de fin du duel (`CarteDeFin`, tirée de `FinDuDuel.tsx`) avec la cote avant et après, les
+> parades, les dégâts et le meilleur coup. « Match nul » devient « Égalité ». Quitter une partie en cours se confirme
+> (`useGardeDeSortie.ts` : lien du menu, bouton Retour, fermeture de l'onglet). Le salon : chercher, accepter et attendre
+> se font dans la préparation du duel — « Joutes classées », et désormais « Mon équipe » pour le 2 contre 2 en équipe ;
+> l'écran #/joutes ne montre plus que la partie (les anciennes adresses y mènent). Pendant l'attente : « Si personne
+> n'arrive d'ici 30 secondes, tu pourras jouer contre un joueur simulé. » Les règles du 2 contre 2 en trois phrases
+> (`REGLES_DU_2V2`), dans la préparation et sur l'écran de l'équipe. Un joueur qui revient au salon pendant sa partie y
+> trouve « Reprendre la partie ». Calculs de la vue testés (`src/jeu/vueDirecte.ts`) ; vérifié sur le banc avec de vraies
+> parties : solo (ordinateur contre téléphone), 2 contre 2 (deux navigateurs, deux joueurs pilotés), garde de sortie,
+> abandon (`scratchpad/chantier1/verif-joute*.mjs`). 568 tests.
+
 > **28 septembre 2026 — finitions, étape 5, lot F : les sons.** Raphaël a choisi à l'oreille, son par son, sur une page
 > d'écoute privée (https://claude.ai/artifact/9WYfGETfkAMYP7imvtCevi : 18 moments, le son d'aujourd'hui et le son
 > proposé ; ses choix sont enregistrés dans la base de la page). Une seule banque de sons,

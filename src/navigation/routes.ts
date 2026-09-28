@@ -67,3 +67,8 @@ export function lien(route: Route): string {
   if (route.ecran === 'carte') return `#/carte/${encodeURIComponent(route.id)}`;
   return `#/${ADRESSES[route.ecran] ?? route.ecran}`;
 }
+
+// Les salons des joutes en direct, dans la préparation du duel (Duel.tsx lit la fin de l'adresse) : les joutes classées
+// (solo, 2 contre 2 solo) et « Mon équipe » (2 contre 2 en équipe). L'écran #/joutes ne montre plus que la partie.
+export const SALON_DES_JOUTES = `${lien({ ecran: 'duel' })}/joutes`;
+export const SALON_DE_L_EQUIPE = `${lien({ ecran: 'duel' })}/equipe`;

@@ -4,10 +4,11 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 
-const MAXIMUM = EQUILIBRAGE.duel.pointsDeVie;
 const CRITIQUE = 5; // à partir de combien de points restants la barre clignote
 
-export function BarreDeVie({ nom, detail, pv, camp }: { nom: ReactNode; detail?: ReactNode; pv: number; camp: 'adversaire' | 'joueur' }) {
+// « maximum » : les points de vie de départ (ceux du duel ; deux fois plus pour une équipe de deux en joute en direct).
+export function BarreDeVie({ nom, detail, pv, camp, maximum = EQUILIBRAGE.duel.pointsDeVie }: { nom: ReactNode; detail?: ReactNode; pv: number; camp: 'adversaire' | 'joueur'; maximum?: number }) {
+  const MAXIMUM = maximum;
   const part = `${(Math.max(0, pv) / MAXIMUM) * 100}%`;
   const libelle = typeof nom === 'string' ? nom : camp === 'joueur' ? 'Toi' : 'Ton adversaire';
   return (

@@ -28,9 +28,15 @@ export function useRechercheEnDirect(sauvegarde: Sauvegarde, ouvert: boolean, on
   const proposition = direct.etat?.proposition ?? null;
   useEffect(() => { setSuivie(!!attente || !!proposition); }, [attente, proposition]);
 
-  // La partie a commencé : elle se joue sur l'écran des joutes en direct.
+  // La partie commence : elle se joue sur l'écran des joutes en direct. (Seulement au moment où elle commence : un
+  // joueur qui a quitté sa partie en cours pour revenir ici y trouve « Reprendre la partie », sans y être renvoyé.)
   const partieEnCours = !!direct.etat?.partie && direct.etat.partie.vue.phase !== 'fin';
-  useEffect(() => { if (partieEnCours) window.location.hash = lien({ ecran: 'joutes' }); }, [partieEnCours]);
+  const vuSansPartie = useRef(false);
+  useEffect(() => {
+    if (!direct.etat) return;
+    if (!partieEnCours) vuSansPartie.current = true;
+    else if (vuSansPartie.current) { vuSansPartie.current = false; window.location.hash = lien({ ecran: 'joutes' }); }
+  }, [partieEnCours, direct.etat]);
 
   // La sonnette : prête dans le geste du joueur, elle retentit même onglet caché.
   const [sons] = useState(() => new SonsDuDirect());

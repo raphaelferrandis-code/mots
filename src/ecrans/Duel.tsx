@@ -70,8 +70,19 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
   const edition = useChargement(chargerEdition, 'edition');
 
   const xpAuDebut = useRef(0);
-  // #/duel/joutes ouvre directement l'onglet des joutes classées (lien des premiers pas, sur l'accueil).
-  const [mode, setMode] = useState<ModeDuSalon>(() => (typeof window !== 'undefined' && window.location.hash.endsWith('/joutes') ? 'joutes' : 'entrainement'));
+  // #/duel/joutes ouvre directement l'onglet des joutes classées (lien des premiers pas, sur l'accueil), et #/duel/equipe
+  // celui de l'équipe (« Jouer en 2 contre 2 », depuis l'écran de l'équipe et chez les amis).
+  const [mode, setMode] = useState<ModeDuSalon>(() => (typeof window === 'undefined' ? 'entrainement'
+    : window.location.hash.endsWith('/joutes') ? 'joutes' : window.location.hash.endsWith('/equipe') ? 'equipe' : 'entrainement'));
+  // Un lien vers l'un de ces onglets, suivi alors que l'écran du duel est déjà ouvert, change aussi d'onglet.
+  useEffect(() => {
+    const suivre = (): void => {
+      const adresse = window.location.hash;
+      if (adresse.endsWith('/joutes')) setMode('joutes'); else if (adresse.endsWith('/equipe')) setMode('equipe');
+    };
+    window.addEventListener('hashchange', suivre);
+    return () => window.removeEventListener('hashchange', suivre);
+  }, []);
   // Jusqu'à sa première victoire, le joueur commence en Facile : l'ordinateur y joue au hasard, et le jeu montre les
   // dégâts prévus (décision de Raphaël du 26/09/2026 ; Normal, sans ces aides, décourageait les débutants).
   const [niveau, setNiveau] = useState<Niveau>(() => (sauvegarde && sauvegarde.duels.gagnes === 0 ? 'Facile' : 'Normal'));

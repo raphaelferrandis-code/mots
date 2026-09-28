@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { Cachet, EnteteCorrespondance, LIEN_EQUIPE_2V2, PortraitAmi, Presence, TimbreEmbleme, signeGrave } from '../composants/correspondance/Correspondance.tsx';
 import { usePartie } from '../composants/usePartie.ts';
+import { REGLES_DU_2V2 } from '../jeu/direct.ts';
 import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { profilVisible } from '../jeu/personnalisation.ts';
 import { lien } from '../navigation/routes.ts';
@@ -154,8 +155,8 @@ function GestionEquipe({ equipe, moi, amis, agir, occupe }: { equipe: EquipeDonn
           <PortraitAmi apparence={m} taille={40} sansNiveau />
           <div><strong>{m.pseudo}</strong><span className="texte-doux petit">{m.id === moi ? 'Toi' : m.vu_le ? <Presence vuLe={m.vu_le} /> : 'Partenaire'}</span></div>
         </div>)}</div>
-        <a className="bouton bouton--accent" href={LIEN_EQUIPE_2V2}>Je suis prêt avec mon équipe</a>
-        <details className="panneau-equipe__regles"><summary>Les règles du 2v2</summary><p>PV communs, mains personnelles visibles entre partenaires. 8 s pour poser une carte, 30 s pour les deux définitions adverses. Les attaques sont simultanées. Les deux membres ouvrent « 2v2 équipe » et se déclarent prêts ; vos résultats ne font évoluer que la cote de l’équipe.</p></details>
+        <a className="bouton bouton--accent" href={LIEN_EQUIPE_2V2}>Jouer en 2 contre 2</a>
+        <details className="panneau-equipe__regles"><summary>Les règles du 2 contre 2</summary><p>{REGLES_DU_2V2}</p><p>Pour jouer, pressez tous les deux « Jouer en 2 contre 2 » ; vos résultats ne font évoluer que la cote de l’équipe.</p></details>
       </section>
       : <section className="panneau-equipe" aria-labelledby="titre-partenaire">
         <span className="mention mention--cuivre">Une place libre</span>

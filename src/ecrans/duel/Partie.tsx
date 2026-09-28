@@ -328,8 +328,8 @@ function DegatsVolants({ attaque, subis = false }: { attaque: Attaque; subis?: b
   );
 }
 
-// Sur son timbre, avant le choc : un bouclier s'il pare ton mot, une fissure sinon.
-function Garde({ paree }: { paree: boolean }) {
+// Sur son timbre, avant le choc : un bouclier s'il pare ton mot, une fissure sinon. (Reprise par la joute en direct.)
+export function Garde({ paree }: { paree: boolean }) {
   return (
     <span className="garde" data-paree={paree} aria-hidden="true">
       <svg viewBox="0 0 100 120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round">

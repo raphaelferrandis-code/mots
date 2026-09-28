@@ -98,8 +98,9 @@ export function Parade({ epreuve, nature, debut, secondes, correction, bloque, o
   );
 }
 
-// Le temps qui reste : un anneau qui se vide, les secondes au centre ; rouge et un bip doux par seconde à la fin.
-function Minuteur({ debut, secondes, arrete, onTic }: { debut: number; secondes: number; arrete: boolean; onTic: (restantes: number) => void }) {
+// Le temps qui reste : un anneau qui se vide, les secondes au centre ; rouge et un tic-tac par seconde à la fin.
+// (Repris par la joute en direct, ecrans/direct/ParadeDirecte.tsx.)
+export function Minuteur({ debut, secondes, arrete, onTic }: { debut: number; secondes: number; arrete: boolean; onTic: (restantes: number) => void }) {
   const maintenant = useMaintenant(100);
   const [figee, setFigee] = useState<number | null>(null);
   useEffect(() => { if (arrete && figee === null) setFigee(Date.now()); }, [arrete, figee]);

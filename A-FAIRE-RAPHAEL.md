@@ -130,6 +130,9 @@ Détails : [docs/GUIDE-google.md](docs/GUIDE-google.md).
       Internet fabrique une application que Google bloque : « Appli non sécurisée bloquée », vu par Raphaël le
       28 septembre — ne pas choisir « Installer quand même ») ; sur iPhone, il explique le geste. L'icône doit être le
       « p » du logo sur fond bleu nuit. Dans Chrome, retrouver sa collection par son compte ou son code de secours.
+- [ ] **Une joute en direct avec un proche**, chacun sur son appareil (Duel → Joutes classées → Chercher un
+      adversaire) : depuis le 28 septembre, la partie ressemble au duel (face-à-face, parade, carte de fin avec la
+      cote). En pleine partie, essayer le bouton Retour : le jeu demande s'il faut vraiment quitter.
 
 ### Étape 6 — Redéployer les deux fonctions du serveur (mot adverse caché) — FAIT le 25 septembre
 

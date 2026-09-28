@@ -12,7 +12,7 @@ import { choisirAuxFleches } from '../../composants/fleches.ts';
 import { useChargement } from '../../composants/useChargement.ts';
 import { useMaintenant } from '../../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
-import { NOMS_DIRECTS } from '../../jeu/direct.ts';
+import { NOMS_DIRECTS, REGLES_DU_2V2, TEMPS_DIRECT } from '../../jeu/direct.ts';
 import type { ClassementDirect, ModeDirect } from '../../jeu/direct.ts';
 import { NIVEAUX } from '../../jeu/duel.ts';
 import type { Niveau } from '../../jeu/duel.ts';
@@ -24,7 +24,7 @@ import { lien } from '../../navigation/routes.ts';
 import type { CarteIndex } from '../../partage/types.ts';
 import { amisDisponibles } from '../../services/amis.ts';
 import type { Relation } from '../../services/amis.ts';
-import { clientDuServeur, serveurUtilise } from '../../services/compte.ts';
+import { clientDuServeur, secoursEtParrainage, serveurUtilise } from '../../services/compte.ts';
 import { serveurEquipes } from '../../services/equipes.ts';
 import { changerUnReglage, lireMesAmis } from '../../services/partie.ts';
 import { PanneauDuDeck } from './PanneauDuDeck.tsx';
@@ -123,19 +123,25 @@ export function Preparation(props: Props) {
     return { solo, duo_solo: duo };
   }, `cotes:${mode === 'joutes'}`);
 
-  // La joute à chercher, puis la recherche elle-même (file d'attente, match à accepter, adversaire de secours).
+  // La joute à chercher, puis la recherche elle-même (file d'attente, match à accepter, adversaire de secours). Le 2
+  // contre 2 en équipe se cherche de l'onglet « Mon équipe » ; la partie, elle, se joue sur l'écran #/joutes.
   const [jouteChoisie, setJouteChoisie] = useState<JouteChoisie>('solo');
-  const recherche = useRechercheEnDirect(sauvegarde, mode === 'joutes', props.onDuelDeSecours);
+  const salonDesJoutes = mode === 'joutes' || mode === 'equipe';
+  const recherche = useRechercheEnDirect(sauvegarde, salonDesJoutes, props.onDuelDeSecours);
   const { attente, proposition } = recherche;
   const rechercheEnCours = !!attente || !!proposition || recherche.partieEnCours;
-  // Un adversaire trouvé pendant que le joueur regarde un autre onglet : on le ramène aux joutes pour accepter.
-  useEffect(() => { if (proposition && mode !== 'joutes') onMode('joutes'); }, [proposition?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Un adversaire trouvé pendant que le joueur regarde un autre onglet : on le ramène au salon de cette joute pour accepter.
+  useEffect(() => {
+    if (!proposition) return;
+    const salon: ModeDuSalon = proposition.mode === 'duo_equipe' ? 'equipe' : 'joutes';
+    if (mode !== salon) onMode(salon);
+  }, [proposition?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const jouteAffichee: ModeDirect = attente?.mode ?? proposition?.mode ?? jouteChoisie;
 
   // ── Le bouton principal et sa légende, selon le mode ──
   let appel: ReactNode;
   let legende: ReactNode;
-  if (mode === 'joutes' && rechercheEnCours) {
+  if (salonDesJoutes && rechercheEnCours) {
     // La recherche passe avant le deck : il a été relevé par le serveur au moment de chercher.
     const r = recherche;
     if (proposition) {
@@ -156,10 +162,14 @@ export function Preparation(props: Props) {
       </>;
       legende = <>
         <b>{nomDeLaJoute(attente.mode)}</b> · recherche en cours{r.debutAttente !== null && <> · <Chrono depuis={r.debutAttente} /></>}
-        {attente.mode === 'duo_equipe' && !attente.partenairePret ? <><br />Ton partenaire doit aussi se déclarer prêt.</>
-          : r.secoursPropose && <><br />Personne n’est libre. Le joueur simulé ne compte pas pour le classement.</>}
+        {attente.mode === 'duo_equipe' ? (!attente.partenairePret && <><br />Ton coéquipier doit aussi presser « Jouer en 2 contre 2 ».</>)
+          : r.secoursPropose ? <><br />Personne n’est libre. Le joueur simulé ne compte pas pour le classement.</>
+          : secoursEtParrainage && <><br />Si personne n’arrive d’ici {EQUILIBRAGE.secours.attenteAvantDeProposerEnSecondes} secondes, tu pourras jouer contre un joueur simulé.</>}
         {r.secours.etat === 'erreur' && <><br /><span data-manque="true" role="alert">{r.secours.message}</span></>}
       </>;
+    } else if (r.partieEnCours) {
+      appel = <a className="btn-primary" href={lien({ ecran: 'joutes' })} aria-describedby="legende-preparation">Reprendre la partie</a>;
+      legende = 'Ta joute en direct continue sans toi : à chaque tour, ta première carte part toute seule.';
     } else {
       appel = <button type="button" className="btn-primary" disabled aria-busy="true" aria-describedby="legende-preparation">Chercher un adversaire</button>;
       legende = 'Ouverture de la joute…';
@@ -185,12 +195,14 @@ export function Preparation(props: Props) {
   } else {
     const donnees = equipe.etat === 'pret' ? equipe.donnees : null;
     const complete = (donnees?.equipe?.membres.length ?? 0) === 2;
+    const pret = serveurUtilise && recherche.inscrit && !!recherche.direct.etat;
     appel = !serveurUtilise || equipe.etat === 'en cours' ? <button type="button" className="btn-primary" disabled aria-describedby="legende-preparation">Jouer en 2 contre 2</button>
-      : complete ? <a className="btn-primary" href={`${lien({ ecran: 'joutes' })}/duo_equipe`} aria-describedby="legende-preparation">Jouer en 2 contre 2</a>
+      : complete ? <button type="button" className="btn-primary" aria-busy={recherche.direct.occupe} aria-describedby="legende-preparation" disabled={!pret || recherche.bloque} onClick={() => void recherche.chercher('duo_equipe')}>Jouer en 2 contre 2</button>
       : <a className="btn-primary" href={lien({ ecran: 'equipe' })} aria-describedby="legende-preparation">{donnees?.equipe ? 'Inviter un coéquipier' : 'Former mon équipe'}</a>;
     legende = !serveurUtilise ? <span data-manque="true">Les équipes demandent une connexion au serveur du jeu.</span>
       : equipe.etat === 'en cours' ? 'Chargement de ton équipe…'
-      : complete ? 'En direct, avec ton coéquipier' : donnees?.equipe ? 'Il faut deux joueurs pour jouer en équipe.' : 'Forme un duo avec un ami pour les joutes en équipe.';
+      : complete ? <>{recherche.avis ? <span data-manque="true">{recherche.avis}</span> : 'En direct, avec ton coéquipier : il presse aussi « Jouer en 2 contre 2 ».'}<br />Jusqu’à <b>+{gain(EQUILIBRAGE.joute.encreParVictoire)} Encre</b></>
+      : donnees?.equipe ? 'Il faut deux joueurs pour jouer en équipe.' : 'Forme un duo avec un ami pour les joutes en équipe.';
   }
 
   return (
@@ -290,6 +302,10 @@ export function Preparation(props: Props) {
                   <a className="btn-secondary sm" href={lien({ ecran: 'equipe' })}>Voir mon équipe</a>
                 </section>
             )}
+            {mode === 'equipe' && recherche.direct.erreur && <div className="bloc bloc--alerte" role="alert">
+              <p>{recherche.direct.erreur}</p>
+              <button type="button" className="btn-secondary sm" disabled={recherche.direct.occupe} onClick={() => void recherche.direct.retenter()}>Réessayer</button>
+            </div>}
 
             {(mode === 'entrainement' || mode === 'ami') && <>
               <fieldset className="preparation__reglage">
@@ -332,12 +348,21 @@ export function Preparation(props: Props) {
               <li><strong>Victoire :</strong> l’adversaire tombe à 0. Sinon, les points de vie départagent après {REGLES.manchesMaximum} manches.</li>
             </ul>
           </details>}
+        {salonDesJoutes && <details className="preparation__regles" open={sauvegarde.duels.joues < 3 || undefined}>
+            <summary>Règles des joutes en direct</summary>
+            <ul>
+              <li><strong>En direct :</strong> les règles du duel, contre de vrais joueurs. Tu as {TEMPS_DIRECT.pose / 1000} secondes pour poser ton timbre, puis {TEMPS_DIRECT.reponses / 1000} pour retrouver la définition du mot adverse.</li>
+              <li><strong>En 2 contre 2 :</strong> {REGLES_DU_2V2}</li>
+              <li><strong>Absence :</strong> sans pose à temps, ta première carte part toute seule ; deux tours sans jouer font perdre ton camp.</li>
+              <li><strong>Cote :</strong> elle monte avec une victoire et descend avec une défaite. Contre les mêmes adversaires, seules les {EQUILIBRAGE.joute.rencontresClasseesParJour} premières joutes du jour comptent.</li>
+            </ul>
+          </details>}
       </div>
     </main>
   );
 }
 
-const nomDeLaJoute = (m: ModeDirect): string => JOUTES.find((j) => j.mode === m)?.nom ?? NOMS_DIRECTS[m];
+const nomDeLaJoute = (m: ModeDirect): string => (m === 'duo_equipe' ? '2 contre 2 en équipe' : JOUTES.find((j) => j.mode === m)?.nom ?? NOMS_DIRECTS[m]);
 
 // ── Les horloges de la recherche : elles seules se redessinent chaque seconde ──
 function Decompte({ jusqua, decalage }: { jusqua: number; decalage: number }) {
