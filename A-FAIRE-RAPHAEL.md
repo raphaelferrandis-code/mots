@@ -382,12 +382,13 @@ Ta décision du 28 septembre : Philamots sera vendu sous le nom **« Studio Ludo
 Studio Ludophile »), et tes prochains jeux aussi. La forme juridique qui portera ce nom **reste à choisir**, avec
 l'assistant et un professionnel : en attendant, rien à déclarer, et les achats restent fermés.
 
-- [ ] OVHcloud (là où est déjà `philamots.fr`) → commander **`ludophile.fr`**. Commande annoncée le 28 septembre, mais
-      l'adresse n'apparaissait pas encore au registre le jour même : vérifier dans OVHcloud → **Commandes** qu'elle est
-      « terminée ». Inutile de chercher `ludophile.com` : il est pris depuis 2005.
-- [ ] Choisir la forme juridique qui vendra Philamots (l'assistant accompagne). Ensuite seulement, déclarer « Studio
-      Ludophile » comme nom commercial ou comme nom de société, avec une activité décrite largement, par exemple
-      « conception et édition de jeux en ligne », pour que tes prochains jeux soient couverts eux aussi.
+- [x] **`ludophile.fr` réservé chez OVHcloud** le 28 septembre (vérifié au registre : enregistré jusqu'au
+      28 septembre 2027). Vérifier dans OVHcloud que le **renouvellement automatique** est activé. `ludophile.com` est
+      pris depuis 2005.
+- [ ] Envoyer au comptable l'e-mail préparé par l'assistant le 28 septembre, et attendre sa réponse.
+- [ ] Ensuite, faire la déclaration en ligne avec l'assistant, écran par écran : « Studio Ludophile » comme nom
+      commercial, avec une activité décrite largement, par exemple « conception et édition de jeux en ligne », pour que
+      tes prochains jeux soient couverts eux aussi.
 - À savoir : le 28 septembre, aucune marque « Ludophile » n'était déposée à l'INPI et aucune entreprise ne portait ce
   nom (seulement une association et des clubs de joueurs). Comme c'est un mot courant chez les joueurs, il sera
   peut-être difficile à protéger comme marque : la marque à protéger en premier est **Philamots**.
