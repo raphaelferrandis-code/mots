@@ -113,7 +113,8 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
       // Les coups et le cachet s'entendent pendant la résolution animée (duel/deroulement.ts).
     }
     if (precedente.nom === 'bilan' && e.nom === 'fin') {
-      if (e.resultat === 'victoire') sons.victoire(); else if (e.resultat === 'defaite') sons.defaite();
+      if (e.resultat === 'victoire') sons.victoire(vue.adversaire.type === 'joute' && !vue.adversaire.amical);
+      else if (e.resultat === 'defaite') sons.defaite(); else sons.egalite();
     }
     if (e.nom === 'fin') {
       changerDEtape({nom:'fin',resultat:e.resultat,nonEnregistree:false,interrompu:e.abandonne || e.expire,...(combat.recompense ?? {encre:0,reduite:false,cote:null})});
@@ -187,6 +188,7 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     const enCours = etapeActuelle.current;
     if (!terrain || !duel || enCours.nom !== 'parade') return;
     if (choisie !== null && Date.now() - enCours.debut < 500) return;
+    sons.preparer(); // un duel repris après un rechargement n'a pas encore de sortie audio
     if (enLigne.actif) { void enLigne.agir({type:'repondre',choisie}); return; }
     const juste = choisie === enCours.epreuve.bonne;
     noterLaParade(enCours.adverse.rarete, juste);
@@ -212,6 +214,7 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
 
   // Après le bilan d'une manche : le duel est fini, ou la manche suivante commence.
   const continuer = async (apres: EtatDuDuel): Promise<void> => {
+    sons.preparer(); // dans le geste du joueur (« Manche suivante », « Voir le résultat ») : le son de la fin s'entend
     if (enLigne.actif) { await enLigne.agir({type:'continuer'}); return; }
     if (!terrain || !sauvegarde || enregistrementEnCours.current) return;
     setDuel(apres);
@@ -223,7 +226,8 @@ export function Duel({ editionDuDeck = false }: { editionDuDeck?: boolean } = {}
     setErreur(null);
     try {
       const fin = await finirLeDuel(terrain.adversaire, resultat);
-      if (resultat === 'victoire') sons.victoire(); else if (resultat === 'defaite') sons.defaite();
+      if (resultat === 'victoire') sons.victoire(terrain.adversaire.type === 'joute' && !terrain.adversaire.amical);
+      else if (resultat === 'defaite') sons.defaite(); else sons.egalite();
       changerDEtape({ nom: 'fin', resultat, nonEnregistree: false, ...fin });
     } catch (e) {
       setErreur(`${messageDe(e)} Ton résultat reste affiché : réessaie avec « Voir le résultat ».`);

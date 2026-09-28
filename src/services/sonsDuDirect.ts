@@ -6,10 +6,8 @@ import { SortieSonore } from './sons.ts';
 export class SonsDuDirect extends SortieSonore {
   protected override seTaitEnArrierePlan = false;
 
-  // Trois notes qui montent, comme une sonnette de guichet.
+  // La cloche du bureau, sol-do-mi : la signature sonore du jeu (banque commune, choisie par Raphaël le 28/09/2026).
   adversaireTrouve(): void {
-    this.note(784, 0.28, 0.3);
-    this.note(1046.5, 0.36, 0.3, 0.16);
-    this.note(1318.5, 0.5, 0.24, 0.32);
+    this.banqueCommune((banque, t) => banque.cloche(t, 2, 3));
   }
 }

@@ -1,10 +1,16 @@
 // La sortie sonore du jeu. Tous les sons sont fabriqués sur place (souffles filtrés et notes brèves) : aucun
 // fichier à charger. Le contexte audio est créé ou repris dans un geste du joueur, jamais au chargement
-// (les navigateurs l'exigent). Les familles de sons en héritent : sonsPaquets.ts, sonsDuDuel.ts.
+// (les navigateurs l'exigent). Les familles de sons en héritent : sonsDuDuel.ts, sonsDuDirect.ts. Elles puisent aussi
+// dans la banque commune du jeu (banqueDeSons.ts), celle de la cérémonie des paquets.
+import { creerBanque } from './banqueDeSons.ts';
+import type { Banque } from './banqueDeSons.ts';
+
 export class SortieSonore {
   private fabriquerContexte: () => AudioContext;
   private contexte: AudioContext | null = null;
   private sortie: GainNode | null = null;
+  private banque: Banque | null = null;
+  private sortieDeLaBanque: GainNode | null = null;
   private sources = new Set<AudioScheduledSourceNode>();
   private actif = true;
   // Onglet caché : silence, sauf pour une alerte qui doit justement faire revenir le joueur (sonsDuDirect.ts).
@@ -84,9 +90,26 @@ export class SortieSonore {
     this.jouer(source, [gain], debut, duree);
   }
 
+  // Un son de la banque commune, « delai » secondes plus tard, avec les mêmes silences que les autres (son coupé, onglet
+  // caché, audio indisponible). La banque a sa propre sortie, branchée au premier de ses sons.
+  protected banqueCommune(jouer: (banque: Banque, debut: number) => void, delai = 0): void {
+    const pret = this.pret();
+    if (!pret) return;
+    if (!this.banque) {
+      const sortie = pret.contexte.createGain();
+      sortie.connect(pret.contexte.destination);
+      this.sortieDeLaBanque = sortie;
+      this.banque = creerBanque(pret.contexte, sortie);
+    }
+    jouer(this.banque, pret.contexte.currentTime + delai);
+  }
+
   arreter(): void {
     for (const source of this.sources) { try { source.stop(); } catch { /* Déjà terminé. */ } }
     this.sources.clear();
+    // Débrancher la sortie de la banque fait taire ses sons en cours ; elle sera rebranchée au prochain.
+    this.sortieDeLaBanque?.disconnect();
+    this.sortieDeLaBanque = null; this.banque = null;
   }
 
   fermer(): void {

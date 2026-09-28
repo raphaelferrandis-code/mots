@@ -2,6 +2,21 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot F : les sons.** Raphaël a choisi à l'oreille, son par son, sur une page
+> d'écoute privée (https://claude.ai/artifact/9WYfGETfkAMYP7imvtCevi : 18 moments, le son d'aujourd'hui et le son
+> proposé ; ses choix sont enregistrés dans la base de la page). Une seule banque de sons,
+> `src/services/banqueDeSons.ts` (tests), partagée par la cérémonie (`effets.ts`) et le duel (`sons.ts`) : quatre voies
+> par niveau de moment, volumes réglés par la mesure (niveau perçu sur un haut-parleur de téléphone). **Pris** : le
+> tampon léger d'un timbre courant (aussi dans « Tout détacher »), le glissé à la place de la « bulle », toute la
+> Hors-série (papier froissé, tampon lourd, cloche grave, cor de poste sol-do-mi), le tampon de « Duel », la sonnette
+> pour une bonne définition, le tic-tac des cinq dernières secondes, la cloche de la victoire (sol-do ; sol-do-mi en
+> joute classée), la quinte de l'égalité (muette jusqu'ici), la cloche d'« Adversaire trouvé », la plume puis le sceau
+> pour un titre gagné. **Gardés** : la Brillante, l'Holographique et la Légendaire (coup, carillons, éclat), l'annonce
+> du paquet d'exception, les six coups de l'envol vers l'album, le choc du duel et la mauvaise définition. Au passage :
+> après un rechargement en plein duel, « Manche suivante », « Voir le résultat » et les réponses ouvrent la sortie
+> audio (la fin restait muette). Vérifié dans un vrai navigateur sur le banc, chaque son relevé à sa fréquence
+> (`scratchpad/chantier1/verif-sons.mjs`, `verif-sons-duel.mjs`). 562 tests.
+
 > **28 septembre 2026 — finitions, étape 5, lot E : l'échelle des révélations.** Décisions de Raphaël : la Hors-série
 > passe au-dessus de la Légendaire, des vibrations sur Android ; on garde l'éclair blanc, la secousse et le rythme du
 > duel. `eclats.ts` : niveau « exceptionnel » (4) pour la Hors-série. La Légendaire (3) : éclair, secousse, et la feuille

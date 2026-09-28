@@ -1,8 +1,13 @@
 // Les effets partagés de la cérémonie, repris de la maquette : sons synthétisés (aucun fichier) et particules
 // dessinées sur un canevas (poussière, étincelles, confettis, fibres de papier).
+import { creerBanque } from '../../services/banqueDeSons.ts';
+import type { Banque } from '../../services/banqueDeSons.ts';
 
 // ── Les sons ─────────────────────────────────────────────────────────────────
 // L'AudioContext se débloque au premier geste du joueur. « muet » suit le réglage « Sons du jeu ».
+// Deux familles : les sons d'origine de la cérémonie (ci-dessous), et ceux de la banque commune (services/banqueDeSons.ts)
+// que Raphaël a choisis sur la page d'écoute du 28/09/2026 : le tampon d'un timbre courant, le glissé dans la case, et
+// toute la Hors-série (papier froissé, tampon lourd, cloche grave, cor de poste).
 
 type Rafale = { t?: number; duree?: number; type?: BiquadFilterType; f?: number; f2?: number | null; q?: number; crete?: number; a?: number };
 type Note = { t?: number; f?: number; f2?: number | null; type?: OscillatorType; crete?: number; a?: number; dec?: number };
@@ -11,6 +16,8 @@ class SonsDeLaCeremonie {
   private ctx: AudioContext | null = null;
   private maitre: GainNode | null = null;
   private bruit: AudioBuffer | null = null;
+  private banque: Banque | null = null;
+  private sortieDeLaBanque: GainNode | null = null;
   private coupe = false;
 
   preparer(): void {
@@ -28,13 +35,19 @@ class SonsDeLaCeremonie {
       const bruit = ctx.createBuffer(1, longueur, ctx.sampleRate);
       const canal = bruit.getChannelData(0);
       for (let i = 0; i < longueur; i++) canal[i] = Math.random() * 2 - 1;
+      // La banque commune a son propre volume ; elle se tait avec le reste.
+      const sortieDeLaBanque = ctx.createGain();
+      sortieDeLaBanque.gain.value = this.coupe ? 0 : 1;
+      sortieDeLaBanque.connect(ctx.destination);
       this.ctx = ctx; this.maitre = maitre; this.bruit = bruit;
+      this.banque = creerBanque(ctx, sortieDeLaBanque); this.sortieDeLaBanque = sortieDeLaBanque;
     } catch { this.ctx = null; }
   }
 
   set muet(m: boolean) {
     this.coupe = m;
     if (this.ctx && this.maitre) this.maitre.gain.setTargetAtTime(m ? 0 : .55, this.ctx.currentTime, .02);
+    if (this.ctx && this.sortieDeLaBanque) this.sortieDeLaBanque.gain.setTargetAtTime(m ? 0 : 1, this.ctx.currentTime, .02);
   }
   get muet(): boolean { return this.coupe; }
 
@@ -79,7 +92,22 @@ class SonsDeLaCeremonie {
     this.note({ f: 90, f2: 28, crete: 1, dec: 1.1 }); this.rafale({ duree: .9, type: 'lowpass', f: 900, f2: 120, crete: .45 });
     [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => this.note({ t: .14 + i * .07, f, type: 'triangle', crete: .11, dec: 1.6 }));
   }
-  bulle(): void { this.note({ f: 520, f2: 880, type: 'triangle', crete: .1, dec: .09 }); }
+
+  // ── La banque commune ──
+  private avecLaBanque(jouer: (banque: Banque, maintenant: number) => void): void {
+    if (this.pret() && this.ctx && this.banque) jouer(this.banque, this.ctx.currentTime);
+  }
+  // Le cachet d'un timbre courant (Commune, Peu commune, Rare) : un tampon léger, avec un « corps » de bois qu'on
+  // entend aussi sur téléphone. Les belles pièces et la Légendaire gardent le coup d'origine (coup()).
+  tampon(): void { this.avecLaBanque((b, t) => b.tampon(t, 1, 0)); }
+  // Un timbre qui glisse dans sa case, comme dans une pochette (à la place de la « bulle »).
+  glisse(): void { this.avecLaBanque((b, t) => b.glisse(t, 1)); }
+  // Le suspense d'une Hors-série : du papier froissé de plus en plus fort, pendant « d » secondes.
+  froisse(d: number): void { this.avecLaBanque((b, t) => b.froisse(t, 4, d)); }
+  // La révélation d'une Hors-série : le tampon lourd sur une cloche grave, puis le cor de poste (sol, do, mi).
+  horsSerie(): void { this.avecLaBanque((b, t) => { b.tampon(t, 4, 1); b.glas(t, 4); b.cor(t + .35, 4); }); }
+  // Un titre gagné : la plume grave, puis le sceau.
+  titre(delai = 0): void { this.avecLaBanque((b, t) => { b.plume(t + delai, 3); b.tampon(t + delai + .62, 3, .6); }); }
 }
 
 export const SONS = new SonsDeLaCeremonie();

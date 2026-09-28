@@ -138,26 +138,28 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   async function grandMoment(cx: number, cy: number, rang: number, timbre: Element | null, n = 1): Promise<void> {
     const j = jeton.current;
     vibrer(rang);
-    SONS.eclat();
     if (rang >= 4) {
+      SONS.horsSerie();
       lumiereRasante(timbre);
       jaillir(cx, cy, { n: Math.round(120 * n), genre: 'nacre', vitesse: [160, 560], g: 110, duree: [2.4, 3.8], taille: [5, 11], frein: .985 });
       jaillir(cx, cy, { n: Math.round(50 * n), genre: 'etincelle', couleurs: ['#ffffff', '#e7d9ff', '#dcf4ff'], vitesse: [200, 680], duree: [.5, 1.1] });
       await attendre(520);
       if (j !== jeton.current) return;
       jaillir(cx, cy - 40, { n: Math.round(60 * n), genre: 'nacre', vitesse: [80, 320], g: 90, duree: [2.2, 3.4], taille: [4, 9], frein: .985 });
-      SONS.carillon(3);
-      await attendre(420);
-      if (j !== jeton.current) return;
-      SONS.carillon(3);
       return;
     }
+    SONS.eclat();
     jaillir(cx, cy, { n: Math.round(90 * n), genre: 'or', couleurs: ['#f5d27a', '#e8b54a', '#fff0b8', '#c9942e'], vitesse: [160, 540], g: 150, duree: [2.2, 3.4], taille: [6, 12], frein: .985 });
     jaillir(cx, cy, { n: Math.round(40 * n), genre: 'etincelle', couleurs: ['#ffd79a', '#ffffff'], vitesse: [220, 720], duree: [.5, 1.1] });
     await attendre(420);
     if (j !== jeton.current) return;
     SONS.carillon(3);
   }
+  // Les sons choisis par Raphaël sur la page d'écoute du 28/09/2026 : un tampon léger pour le cachet d'un timbre courant,
+  // le coup d'origine pour une belle pièce ou une Légendaire ; la Hors-série a le sien, dans son grand moment (tampon
+  // lourd, cloche grave, cor de poste), et son suspense se fait au papier froissé.
+  function sonDuCachet(rang: number): void { if (rang === 0) SONS.tampon(); else if (rang < 4) SONS.coup(); }
+  function sonDuSuspense(rang: number, duree: number): void { if (rang >= 4) SONS.froisse(duree); else SONS.montee(duree); }
   // Un paquet d'exception (six Légendaires holographiques, ou six Hors-série) n'a qu'un grand moment, au dernier timbre
   // découvert ; les autres brillent comme une belle pièce (audit M10 : six climax d'affilée, puis plus rien).
   function rangDeLaFete(i: number, dejaVus: readonly boolean[] = etat.current.reveles): number {
@@ -482,7 +484,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       if (rang >= 3) {
         await attendre(rang >= 4 ? 420 : 260);
         if (j !== jeton.current) return;
-        SONS.montee(rang >= 4 ? 1.3 : 1);
+        sonDuSuspense(rang, rang >= 4 ? 1.3 : 1);
         await timbre.animate(Array.from({ length: 12 }, (_, k) => ({ transform: `translate(${(entre(-1, 1) * k * .5).toFixed(1)}px,${(entre(-1, 1) * k * .5).toFixed(1)}px)` })), { duration: D(rang >= 4 ? 1200 : 900), easing: 'ease-in' }).finished;
         if (j !== jeton.current) return;
         eclairer();
@@ -500,7 +502,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const j = jeton.current;
     const r = timbre.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     tamponner(dans(timbre, '.tb__recto .tb__cachet'));
-    SONS.coup();
+    sonDuCachet(rang);
     timbre.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)' }, { transform: 'scale(1)' }], { duration: D(220) });
     if (rang === 1) {
       SONS.carillon(1);
@@ -646,7 +648,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     volantsDom.current.delete(i);
     const vignette = dans<HTMLElement>(cases.current[k], '.tb');
     if (vignette && de) {
-      SONS.bulle();
+      SONS.glisse();
       const vers = vignette.getBoundingClientRect();
       vignette.style.transformOrigin = '0 0';
       await vignette.animate([{ transform: `translate(${de.left - vers.left}px,${de.top - vers.top}px) scale(${de.width / vers.width})` }, { transform: 'none' }], { duration: D(460), easing: 'cubic-bezier(.3,.9,.3,1)' }).finished;
@@ -723,7 +725,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     const rang = rangDeLaFete(i);
     if (retournement) {
       if (rang >= 2) {
-        SONS.montee(rang >= 4 ? 1.4 : rang === 3 ? 1.1 : .7);
+        sonDuSuspense(rang, rang >= 4 ? 1.4 : rang === 3 ? 1.1 : .7);
         await retourne.animate(secousse(rang), { duration: D(rang >= 4 ? 1400 : rang === 3 ? 1100 : 700), easing: 'ease-in' }).finished;
         if (j !== jeton.current) return;
       }
@@ -738,7 +740,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     }
     await attendre(90);
     if (j !== jeton.current) return;
-    tamponner(dans(slot, '.tb__recto .tb__cachet')); SONS.coup();
+    tamponner(dans(slot, '.tb__recto .tb__cachet')); sonDuCachet(rang);
     setReveles(avec(etat.current.reveles, i));
     retourne.animate([{ transform: 'scale(1)' }, { transform: 'scale(.965) translateY(3px)' }, { transform: 'scale(1)' }], { duration: D(230) });
     const r = slot.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -765,7 +767,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
     flushSync(() => { setRangement([...etat.current.rangement, g.i]); setGrosPlan(null); });
     const vignette = dans<HTMLElement>(cases.current[k], '.tb');
     if (vignette && source) {
-      SONS.bulle();
+      SONS.glisse();
       const vers = vignette.getBoundingClientRect();
       vignette.style.transformOrigin = '0 0';
       await vignette.animate([{ transform: `translate(${source.left - vers.left}px,${source.top - vers.top}px) scale(${source.width / vers.width})` }, { transform: 'none' }], { duration: D(560), easing: 'cubic-bezier(.3,.9,.3,1)' }).finished;
@@ -903,7 +905,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
   function montrerApercu(i: number): void {
     if (phaseRef.current !== 'resume') return;
     setApercu(i);
-    SONS.bulle();
+    SONS.glisse();
     if (eclatDe(cartesRef.current[i]) === 'holo') SONS.scintillement();
   }
   function fermer(immediat = false): void {

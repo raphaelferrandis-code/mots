@@ -1,5 +1,7 @@
 // Les bruitages du duel, dans la même famille que ceux des paquets : du papier, un coup de tampon, et quelques
 // notes brèves pour dire « juste », « faux », « gagné », « perdu ». Rien d'agressif : on joue souvent sans casque.
+// La sonnette, le tic-tac, le tampon de « Duel », la cloche de la victoire et la quinte de l'égalité viennent de la
+// banque commune (banqueDeSons.ts) : Raphaël les a choisis sur la page d'écoute du 28/09/2026 ; il a gardé les autres.
 import { SortieSonore } from './sons.ts';
 
 export class SonsDuDuel extends SortieSonore {
@@ -9,11 +11,9 @@ export class SonsDuDuel extends SortieSonore {
     this.bruit(0.07, 260, 0.7, 0.085);
   }
 
-  // Bonne définition : un coup de tampon, et deux notes qui montent.
+  // Bonne définition : la sonnette du guichet.
   juste(): void {
-    this.bruit(0.07, 220, 0.75);
-    this.note(659.3, 0.2, 0.32, 0.03);
-    this.note(880, 0.32, 0.32, 0.13);
+    this.banqueCommune((banque, t) => banque.sonnette(t, 1));
   }
 
   // Mauvaise définition, ou temps écoulé : un choc mat, et deux notes qui descendent.
@@ -23,15 +23,15 @@ export class SonsDuDuel extends SortieSonore {
     this.note(146.8, 0.34, 0.3, 0.17);
   }
 
-  // Les cinq dernières secondes d'une question : un bip doux par seconde, un peu plus aigu à mesure que le temps file.
+  // Les cinq dernières secondes d'une question : le tic-tac d'une horloge, un peu plus fort à mesure que le temps file.
   tic(restantes = 5): void {
-    this.note(740 + (5 - Math.min(5, Math.max(1, restantes))) * 45, 0.16, 0.1);
+    const r = Math.min(5, Math.max(1, restantes));
+    this.banqueCommune((banque, t) => banque.tic(t, 1, r % 2 === 0, (5 - r) / 4));
   }
 
-  // « Duel » tombe au centre de l'écran comme un coup de tampon.
+  // « Duel » tombe au centre de l'écran : le tampon du jeu, le même que celui des paquets.
   frappe(): void {
-    this.bruit(0.14, 170, 0.75);
-    this.bruit(0.05, 1300, 0.3, 0.01);
+    this.banqueCommune((banque, t) => banque.tampon(t, 1, 0.5));
   }
 
   // Toucher un timbre de la main : un petit claquement de papier.
@@ -78,8 +78,14 @@ export class SonsDuDuel extends SortieSonore {
     this.bruit(0.05, 900, force * 0.4, delai);
   }
 
-  victoire(): void {
-    [440, 554.4, 659.3, 880].forEach((frequence, i) => this.note(frequence, i === 3 ? 0.7 : 0.24, 0.3, i * 0.15));
+  // La victoire : la cloche du bureau, deux notes (sol, do) ; la troisième (mi) est gardée pour une joute classée.
+  victoire(classee = false): void {
+    this.banqueCommune((banque, t) => banque.cloche(t, 2, classee ? 3 : 2));
+  }
+
+  // L'égalité : deux notes ensemble, à la quinte, ni joyeuses ni tristes.
+  egalite(): void {
+    this.banqueCommune((banque, t) => banque.quinte(t, 1));
   }
 
   defaite(): void {

@@ -9,6 +9,7 @@ import type { Ornement, ProfilPersonnel } from '../jeu/personnalisation.ts';
 import type { Resultat } from '../jeu/progression.ts';
 import { lien } from '../navigation/routes.ts';
 import { personnaliser } from '../services/partie.ts';
+import { SONS } from './ceremonie/effets.ts';
 import { Motif } from './cosmetiques/Gravures.tsx';
 import { usePartie } from './usePartie.ts';
 import './recompenses.css';
@@ -67,6 +68,17 @@ export function CarteRecompense({ recompense, pseudo, equipe, onEquiper }: { rec
 // un petit téléphone.
 export function MomentsDeProgres({ recompenses }: { recompenses: readonly Recompense[] }) {
   const partie = usePartie();
+  // Un titre gagné s'entend : la plume grave, puis le sceau (choisi par Raphaël sur la page d'écoute du 28/09/2026).
+  // Une fois par écran de fin, même pour plusieurs succès, un peu après le son du résultat (carillon, cloche).
+  const titres = recompenses.flatMap((r) => (r.type === 'titre' ? [r.succes.id] : [])).join('|');
+  const sonsActifs = partie.etat === 'prete' && partie.sauvegarde.reglages.sonsPaquets;
+  const titresEntendus = useRef('');
+  useEffect(() => {
+    if (!titres || titresEntendus.current === titres) return;
+    titresEntendus.current = titres;
+    if (!sonsActifs) return;
+    SONS.muet = false; SONS.preparer(); SONS.titre(.9);
+  }, [titres, sonsActifs]);
   if (recompenses.length === 0 || partie.etat !== 'prete') return null;
   const profil = partie.sauvegarde.profil;
   const niveaux = recompenses.flatMap((r) => (r.type === 'niveau' ? [r] : []));
