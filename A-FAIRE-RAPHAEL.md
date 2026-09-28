@@ -359,7 +359,7 @@ aussi trois messages rares, qui disent désormais « carnet » et « timbre ».
       connecté à Supabase. À savoir : les paquets ont été refaits le soir même pour le nom « Écrin » (commit 489e5f9) ;
       un déploiement copié avant cette heure-là ne diffère du dépôt que par ce nom, qui ne sert pas aux duels.
 
-### Étape 19 — Coller le script 26 (le marché animé)
+### Étape 19 — Coller le script 26 (le marché animé) — FAIT le 28 septembre
 
 Ta décision du 28 septembre (dosage « équilibré ») : tant que le marché a moins de 30 ventes de vrais joueurs, les
 joueurs simulés y tiennent une douzaine de ventes (des timbres neufs, Communes à Épiques, 1,5 fois le prix minimum), et
@@ -369,11 +369,12 @@ est sur leur fiche (en touchant leur nom), et « Comment ça marche ? » le dit.
 où le marché s'ouvre pour un compte neuf. **Aucune fonction à redéployer.** Le jeu est déjà publié : tant que le script
 n'est pas collé, le marché reste comme avant.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/26-marche-anime.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/26-marche-anime.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
-      attendue : **Success. No rows returned**.
-- [ ] Dis-le à l'assistant : il vérifie de l'extérieur (sans compte) que les nouvelles fonctions sont en place et fermées
-      au public. Au premier passage d'un joueur, une douzaine de ventes apparaissent au marché.
+      attendue : **Success. No rows returned**. Collé par Raphaël le 28 septembre.
+- [x] Vérifié par l'assistant le 28 septembre, de l'extérieur et sans compte : `animer_le_marche` et `pseudonyme_maison`
+      existent et refusent un visiteur sans compte ; les colonnes `simulee`, `vendeur_maison` et `acheteur_maison` des
+      enchères existent. Au premier passage d'un joueur au marché, une douzaine de ventes des joueurs simulés apparaissent.
 - Pour couper l'animation un jour : le demander à l'assistant (un interrupteur, puis ce même script à recoller).
 
 ### Étape 20 — Réserver l'adresse ludophile.fr (le nom de ton futur studio)
@@ -412,7 +413,7 @@ jeu : https://philamots.fr/mentions-legales/, https://philamots.fr/confidentiali
 - Avant d'ouvrir les achats : ajouter l'adresse et le numéro d'entreprise du vendeur aux mentions légales (l'assistant
   le fera quand la forme juridique sera choisie, étape 20).
 
-### Étape 22 — Coller le script 27 (la suppression des comptes inactifs)
+### Étape 22 — Coller le script 27 (la suppression des comptes inactifs) — FAIT le 28 septembre
 
 Ce que tes pages légales promettent : un compte invité sans visite depuis 12 mois est supprimé, un compte relié à Google
 ou à une adresse e-mail après 3 ans. Le serveur note désormais le dernier passage de chaque compte (à chaque ouverture
@@ -421,15 +422,15 @@ mon compte » : au marché, les mises des autres joueurs leur sont rendues. Un c
 d'office. Personne ne peut être supprimé avant septembre 2027 : pour les comptes existants, le décompte part du jour du
 collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être republié.
 
-- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/27-comptes-inactifs.sql → **Copy raw file** →
+- [x] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/27-comptes-inactifs.sql → **Copy raw file** →
       Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
-      attendue : **Success. No rows returned**.
-- [ ] Si la réponse parle de **pg_cron** (le programmateur de tâches de Supabase) : Supabase → **Database** →
-      **Extensions** → chercher « pg_cron » → l'activer, puis recoller le script.
-- [ ] Vérifier que la tâche de la nuit existe : dans une nouvelle requête, coller
+      attendue : **Success. No rows returned**. Collé par Raphaël le 28 septembre.
+- [x] Vérifié par l'assistant le 28 septembre, de l'extérieur et sans compte : `purger_les_comptes_inactifs` existe et
+      refuse un visiteur sans compte ; la colonne `dernier_passage` des comptes existe. Le script s'installe d'un seul
+      bloc : s'il n'avait pas pu planifier la tâche de la nuit, rien de tout cela n'existerait.
+- [ ] Pour voir la tâche de la nuit de tes yeux : dans une nouvelle requête, coller
       `select jobname, schedule from cron.job;` → **Run**. Réponse attendue : une ligne
       **philamots-comptes-inactifs**, **23 3 \* \* \***.
-- [ ] Dis-le à l'assistant : il vérifie de l'extérieur que la nouvelle fonction est en place et fermée au public.
 
 ### Étape 23 — Faire reconnaître Philamots par Google, et protéger le nom
 

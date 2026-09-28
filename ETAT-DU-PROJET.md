@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 (soir) — scripts 26 et 27 collés par Raphaël, vérifiés de l'extérieur.** Avec la clé publique du
+> jeu, sans compte : `animer_le_marche`, `pseudonyme_maison` et `purger_les_comptes_inactifs` existent et refusent un
+> visiteur (42501, et non « fonction introuvable ») ; les colonnes `encheres.simulee`, `vendeur_maison`,
+> `acheteur_maison` et `comptes.dernier_passage` existent (une colonne absente répond 42703 ; témoins contrôlés)
+> (`scratchpad/confiance/verif-scripts-26-27.mjs` de la session). Le script 27 s'installe d'un bloc : sa présence
+> implique la tâche pg_cron `philamots-comptes-inactifs` (Raphaël peut la voir par `select jobname, schedule from
+> cron.job;`). **La dernière migration est désormais la 27.**
+
 > **28 septembre 2026 — finitions, étape « Confiance », lot C : les petits points de la vitrine.** Pages des mots : la
 > nature dans le titre quand deux timbres portent le même mot (plus aucun titre en double sur 3 016), « Voir aussi »
 > vers les autres pages d'un mot, une ligne qui présente le jeu sous le titre et deux phrases dans l'appel à jouer,
