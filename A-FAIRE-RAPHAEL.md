@@ -434,19 +434,48 @@ collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être re
 
 ### Étape 23 — Faire reconnaître Philamots par Google, et protéger le nom
 
-Maintenant que les pages légales existent, Google peut afficher « Philamots » (et non une adresse en
-`…supabase.co`) quand un joueur se connecte avec son compte Google.
+**A. Le nom affiché par Google à la connexion (en attente de ta décision).** Aujourd'hui, l'écran de Google dit
+« … pour continuer vers `cgubfyxyivgufslpwlld.supabase.co` ». Google n'affiche le nom d'une application qu'après la
+« vérification de la marque », et cette vérification exige de prouver qu'on possède **chaque** domaine utilisé par la
+connexion ; or le retour de Google passe par le domaine de Supabase, `supabase.co`, qui ne peut pas être le tien. Ajouter
+le logo et demander la vérification, dans l'état actuel, ne suffirait donc pas. Trois voies :
+
+- **Le bouton de Google dans le jeu (gratuit, recommandé)** : l'assistant change la connexion Google du jeu pour
+  qu'elle se fasse sur philamots.fr même, sans passer par Supabase. L'écran de Google dira alors « philamots.fr »
+  tout de suite, puis « Philamots » avec le logo une fois la marque vérifiée. Il te restera trois réglages (Google Cloud
+  et Supabase, écran par écran) et un essai avec ton compte Google.
+- **Un domaine à ton nom chez Supabase** (`auth.philamots.fr`) : sans changer le jeu, mais il faut l'offre Pro de
+  Supabase (25 $ par mois) et l'option « Custom domain » (10 $ par mois).
+- **Ne rien changer pour l'instant** : la connexion marche, seule l'adresse affichée n'inspire pas confiance.
+
+Dans tous les cas, dès maintenant et sans risque :
 
 - [ ] Google Cloud (projet **philamots**) → **Google Auth Platform** → **Branding** : remplacer la page de
-      confidentialité par **https://philamots.fr/confidentialite/** (l'ancienne adresse, avec `#/`, ouvre le jeu),
-      ajouter les conditions **https://philamots.fr/conditions/**, ajouter le logo (`public/identite/icone-site-512.png`),
-      puis demander la **vérification de la marque** (gratuite, quelques jours).
-- [ ] Ensuite, essayer « Continuer avec Google » sur ton téléphone : l'écran de Google doit dire « Philamots ».
-- [ ] Le nom **Philamots** : chercher s'il est libre sur https://data.inpi.fr et https://www.tmdn.org/tmview (classes 9
-      logiciels de jeu, 28 jeux, 41 divertissement), puis le déposer à l'INPI (environ 190 € pour une classe, 40 € par
-      classe en plus). Vérifier aussi à qui appartient `philamots.com`.
+      confidentialité par **https://philamots.fr/confidentialite/** (l'ancienne adresse, avec `#/`, ouvre le jeu) et
+      ajouter les conditions **https://philamots.fr/conditions/**. Ne pas ajouter le logo avant d'avoir choisi une voie.
 - [ ] Search Console → **Inspection de l'URL** → `https://philamots.fr/` → **Tester l'URL en direct** → **Afficher la
       page testée** : vérifier que Google voit bien l'accueil du jeu (et pas un message d'erreur du contrôle anti-robot).
+
+**B. Déposer le nom Philamots à l'INPI (à faire toi-même, environ 30 minutes, 230 € pour deux classes).**
+
+- [ ] **Vérifier que le nom est libre.** Sur https://data.inpi.fr, chercher « Philamots » puis des noms proches
+      (« Philamot », « Filamots », « Philamo ») parmi les marques ; faire de même sur https://www.tmdn.org/tmview, qui
+      couvre les marques européennes. Une marque proche déjà déposée pour des jeux ou des logiciels serait un obstacle :
+      dans ce cas, en parler avant de déposer.
+- [ ] **Choisir les classes** (chaque produit ou service relève d'une classe) : **41** (services de jeux proposés en
+      ligne, divertissement) et **9** (logiciels de jeux, applications téléchargeables). Ajouter la **28** (jeux, cartes
+      à jouer) seulement si des objets Philamots sont prévus un jour. Prix : 190 € pour une classe, 40 € par classe en
+      plus (230 € pour deux, 270 € pour trois).
+- [ ] **Déposer en ligne** sur https://procedures.inpi.fr : créer ton compte, choisir « Marques », puis « Déposer une
+      marque » ; marque **verbale** « PHILAMOTS » ; les produits et services choisis dans la liste proposée par l'INPI
+      (moins de risques de refus qu'un texte libre) ; payer en ligne.
+- À savoir : depuis le 2 juillet 2026, l'INPI ne publie plus l'adresse d'un déposant particulier, seulement ses nom,
+  prénoms, commune et pays. La demande paraît au Bulletin officiel (le BOPI) environ six semaines après le dépôt ;
+  les tiers ont ensuite deux mois pour s'y opposer ; sans incident, la marque est enregistrée en quelques mois, pour
+  dix ans renouvelables. Elle protège en France ; une marque de l'Union européenne se dépose à part, auprès de l'EUIPO.
+- Au nom de qui : tu peux déposer à ton nom dès maintenant, puis la transférer à ta future structure (une inscription
+  au registre de l'INPI) ; à voir avec ton comptable.
+- [ ] Vérifier aussi à qui appartient `philamots.com`.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
