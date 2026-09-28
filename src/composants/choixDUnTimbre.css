@@ -1,0 +1,14 @@
+/* Choisir un timbre dans une collection (ChoixDUnTimbre.tsx) : la recherche, la grille, le badge de ce qui passe en tête,
+   le timbre choisi entouré de cuivre. */
+.choix-timbre { display: grid; gap: 10px; }
+.choix-timbre input[type='search'] { width: 100%; max-width: 520px; }
+.choix-timbre p { margin: 0; }
+.choix-timbre > .bouton { justify-self: start; }
+.choix-timbre__grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; margin: 0; padding: 4px 4px 0 0; list-style: none; }
+.choix-timbre__grille li { position: relative; border-radius: 4px; }
+.choix-timbre__grille li > :is(.tim, .tb) { width: 100%; }
+.choix-timbre__grille li[data-choisie] { outline: 2px solid var(--cuivre); outline-offset: 4px; }
+.choix-timbre__badge { position: absolute; top: -6px; right: -4px; padding: 1px 6px; border-radius: 999px; background: var(--cuivre); color: #172235; font: 700 .72rem var(--police-douce); white-space: nowrap; pointer-events: none; }
+@media (max-width: 520px) {
+  .choix-timbre__grille { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px 8px; }
+}

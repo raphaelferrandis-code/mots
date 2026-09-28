@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { CarteLegendee } from '../composants/carte/CarteLegendee.tsx';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { Cachet, EnteteCorrespondance, LIEN_EQUIPE_2V2, PortraitAmi, Presence, TimbreEmbleme, Vitrine, signeGrave } from '../composants/correspondance/Correspondance.tsx';
 import { InviterDesAmis } from '../composants/InviterDesAmis.tsx';
@@ -11,16 +10,16 @@ import { EQUILIBRAGE } from '../config/equilibrage.ts';
 import { profilVisible } from '../jeu/personnalisation.ts';
 import { registresMasques } from '../jeu/partie.ts';
 import { lien } from '../navigation/routes.ts';
-import { FINITIONS } from '../partage/types.ts';
 import type { CarteIndex } from '../partage/types.ts';
 import { amisDisponibles } from '../services/amis.ts';
 import { serveurEquipes } from '../services/equipes.ts';
 import type { Equipe } from '../services/equipes.ts';
-import type { AlbumAmi, CarnetAmis, Echange, Relation, TimbreEchange } from '../services/amis.ts';
+import type { CarnetAmis, Echange, Relation, TimbreEchange } from '../services/amis.ts';
 import { chargerEdition } from '../services/cartes.ts';
 import { marquerLeCourrierLu } from '../services/courrier.ts';
-import { commanderCombat, demanderUnAmi, lireAlbumAmi, lireMesAmis, proposerUnEchange, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
+import { commanderCombat, demanderUnAmi, lireMesAmis, repondreAUnAmi, repondreAUnEchange } from '../services/partie.ts';
 import { messageDe } from '../partage/messages.ts';
+import { ComposerEchange } from './amis/ComposerEchange.tsx';
 import './amis.css';
 
 type Agir = (action: () => Promise<void>, message: string) => Promise<boolean>;
@@ -307,45 +306,4 @@ function CarteEchange({ e, ami, cartes, occupe, agir, editionPrete }: { e: Echan
       <div className="rangee-de-boutons"><button className="bouton bouton--accent" disabled={occupe} onClick={() => void agir(() => repondreAUnEchange(e.id, 'accepter'), 'Échange effectué. Ta collection est à jour.').then(ok => { if (ok) setExaminer(false); })}>Confirmer l’échange</button><button className="bouton bouton--discret" disabled={occupe} onClick={() => setExaminer(false)}>Fermer</button></div>
     </div>}
   </li>;
-}
-
-function ApercuTimbre({ titre, timbre, cartes }: { titre: string; timbre: TimbreEchange; cartes: Map<string, CarteIndex> }) {
-  const carte = cartes.get(timbre.carte);
-  return <div className="amis__apercu"><h3>{titre}</h3>{carte && <CarteLegendee carte={carte} finition={timbre.finition} />}<p>{timbre.finition}</p></div>;
-}
-
-function ChoixTimbre({ titre, album, cartes, choix, choisir }: { titre: string; album: AlbumAmi; cartes: Map<string, CarteIndex>; choix: TimbreEchange | null; choisir: (t: TimbreEchange | null) => void }) {
-  const [recherche, setRecherche] = useState('');
-  const options = album.flatMap(p => FINITIONS.filter(f => (p.finitions[f] ?? 0) > 0).map(finition => ({ carte: p.carte, finition })))
-    .filter(t => cartes.has(t.carte) && (cartes.get(t.carte)!.mot.toLocaleLowerCase('fr').includes(recherche.trim().toLocaleLowerCase('fr')) || t.carte === choix?.carte))
-    .sort((a, b) => cartes.get(a.carte)!.mot.localeCompare(cartes.get(b.carte)!.mot, 'fr'));
-  return <div className="amis__choix"><label>Rechercher — {titre.toLowerCase()}<input type="search" value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Un mot…" /></label>
-    <label>{titre}<select required aria-label={titre} value={choix ? JSON.stringify(choix) : ''} onChange={e => choisir(options.find(t => JSON.stringify(t) === e.target.value) ?? null)}><option value="">Choisir un timbre ({options.length})</option>{options.map(t => <option key={JSON.stringify(t)} value={JSON.stringify(t)}>{cartes.get(t.carte)!.mot} · {t.finition} · {cartes.get(t.carte)!.rarete}</option>)}</select></label>
-    {choix && <ApercuTimbre titre={titre} timbre={choix} cartes={cartes} />}
-  </div>;
-}
-
-function ComposerEchange({ ami, monAlbum, cartes, occupe, agir, fermer }: { ami: Relation; monAlbum: AlbumAmi; cartes: Map<string, CarteIndex>; occupe: boolean; agir: Agir; fermer: () => void }) {
-  const [tour, setTour] = useState(0);
-  const album = useChargement(() => lireAlbumAmi(ami.id), `${ami.id}:${tour}`);
-  const [offerte, setOfferte] = useState<TimbreEchange | null>(null);
-  const [demandee, setDemandee] = useState<TimbreEchange | null>(null);
-  const requete = useRef({ signature: '', id: '' });
-  const panneau = useRef<HTMLElement>(null);
-  useEffect(() => { panneau.current?.scrollIntoView({ block: 'start' }); panneau.current?.focus({ preventScroll: true }); }, []);
-  return <section className="amis__composition" ref={panneau} tabIndex={-1} aria-label={`Échange avec ${ami.pseudo}`}>
-    <div className="amis__composition-tete"><PortraitAmi apparence={ami} taille={46} sansNiveau /><div><h2>Échanger avec {ami.pseudo}</h2><p className="texte-doux">Choisis les deux timbres. Proposition valable 7 jours.</p></div></div>
-    {album.etat === 'en cours' && <p role="status">Lecture de sa collection…</p>}
-    {album.etat === 'erreur' && <p role="alert">{album.message} <button className="bouton" onClick={() => setTour(t => t + 1)}>Réessayer</button></p>}
-    {album.etat === 'pret' && <form onSubmit={e => { e.preventDefault(); if (!offerte || !demandee) return;
-      const signature = JSON.stringify([ami.id, offerte, demandee]);
-      if (requete.current.signature !== signature) requete.current = { signature, id: crypto.randomUUID() };
-      void agir(() => proposerUnEchange(requete.current.id, ami.id, offerte, demandee), 'Proposition envoyée. Tes timbres restent dans ta collection jusqu’à l’acceptation.').then(ok => { if (ok) fermer(); });
-    }}><fieldset disabled={occupe}><div className="amis__timbres"><ChoixTimbre titre="Tu donnes" album={monAlbum} cartes={cartes} choix={offerte} choisir={setOfferte} /><span className="echange__fleche amis__fleche">{ICONE_ECHANGE}</span><ChoixTimbre titre="Tu reçois" album={album.donnees} cartes={cartes} choix={demandee} choisir={setDemandee} /></div>
-      {album.donnees.length === 0 && <p>Ton ami ne possède pas encore de timbres.</p>}
-      <p className="texte-doux petit">Si tu échanges ton dernier exemplaire d’un mot, il sera retiré de ton carnet à l’acceptation. Tes apprentissages restent acquis.</p>
-      <div className="rangee-de-boutons"><button className="bouton bouton--accent" disabled={!offerte || !demandee || JSON.stringify(offerte) === JSON.stringify(demandee)}>Envoyer la proposition</button>
-        <button type="button" className="bouton bouton--discret" disabled={occupe} onClick={fermer}>Fermer</button></div></fieldset></form>}
-    {album.etat !== 'pret' && <button className="bouton bouton--discret" disabled={occupe} onClick={fermer}>Fermer la proposition</button>}
-  </section>;
 }

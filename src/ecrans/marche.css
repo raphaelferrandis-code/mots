@@ -60,15 +60,7 @@
 .vendre__formulaire { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; align-items: start; }
 .vendre__timbre > :is(.tim, .tb) { width: 100%; }
 .vendre__reglages { display: grid; gap: 12px; }
-.vendre__reglages > .bouton, .choix-timbre > .bouton { justify-self: start; }
-
-.choix-timbre { display: grid; gap: 10px; }
-.choix-timbre input[type='search'] { width: 100%; max-width: 520px; }
-.choix-timbre p { margin: 0; }
-.choix-timbre__grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; margin: 0; padding: 0; list-style: none; }
-.choix-timbre__grille li { position: relative; }
-.choix-timbre__grille li > :is(.tim, .tb) { width: 100%; }
-.choix-timbre__double { position: absolute; top: -6px; right: -4px; padding: 1px 6px; border-radius: 999px; background: var(--cuivre); color: #172235; font: 700 .72rem var(--police-douce); pointer-events: none; }
+.vendre__reglages > .bouton { justify-self: start; }
 
 @media (max-width: 767px) {
   /* Sur téléphone, une vente par ligne : le timbre à gauche, le reste à droite. */

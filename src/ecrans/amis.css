@@ -96,12 +96,20 @@
 .amis__composition { display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: var(--rayon-carte); border: 1px solid var(--accent); background: var(--carte-fond); scroll-margin-top: 140px; }
 .amis__composition-tete { display: flex; align-items: center; gap: 16px; }
 .amis__composition-tete p { margin: 6px 0 0; }
-.amis__timbres { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; margin-bottom: 20px; }
-.amis__fleche { margin-top: 30px; }
-.amis__choix { display: grid; gap: 16px; align-content: start; }
-.amis__choix label { display: grid; gap: 8px; }
-.amis__choix input, .amis__choix select { width: 100%; min-width: 0; }
-.amis__apercu { display: grid; justify-items: center; text-align: center; }
+/* Le résumé « Tu reçois ⇄ Tu donnes » (ecrans/amis/ComposerEchange.tsx) : deux places, la choisie entourée de cuivre. */
+.composition-echange__resume { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; }
+.emplacement-echange { display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px dashed var(--filet-fort); border-radius: var(--rayon); text-align: center; }
+.emplacement-echange[data-actif] { border-style: solid; border-color: var(--cuivre); background: rgb(216 154 92 / 6%); }
+.emplacement-echange__titre { margin: 0; color: var(--cuivre); font: 600 .75rem var(--police-mention); letter-spacing: .12em; text-transform: uppercase; }
+.emplacement-echange__timbre, .emplacement-echange__vide { width: 110px; }
+.emplacement-echange__timbre > :is(.tim, .tb) { width: 100%; }
+.emplacement-echange__vide { aspect-ratio: 4 / 5; border: 1px dashed var(--filet); border-radius: 4px; }
+.emplacement-echange__mot { margin: 0; font: 600 1rem var(--police-serif); overflow-wrap: anywhere; }
+.emplacement-echange__finitions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.emplacement-echange__finitions button { min-height: 32px; padding: 4px 10px; border: 1px solid var(--filet-fort); border-radius: 999px; background: none; color: var(--texte-doux); font: inherit; font-size: .8rem; cursor: pointer; }
+.emplacement-echange__finitions button[aria-checked='true'] { border-color: var(--cuivre); background: rgb(216 154 92 / 14%); color: var(--texte-fort); }
+.emplacement-echange__choisir { align-self: end; }
+.composition-echange__etape { margin: 8px 0 0; font: 600 1.05rem var(--police-serif); }
 .amis fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
 /* Le premier pas : un carnet encore vierge. */
@@ -151,8 +159,9 @@
   .amis .fiches-amis { grid-template-columns: minmax(0, 1fr); }
   .ajout-ami, .ajout-ami--compact { width: 100%; }
   .ajout-ami--compact label { width: auto; flex: 1; }
-  .amis__timbres { grid-template-columns: minmax(0, 1fr); }
-  .amis__fleche { margin: 0 auto; transform: rotate(90deg); }
+  .composition-echange__resume { gap: 6px; }
+  .emplacement-echange { padding: 10px 6px; }
+  .emplacement-echange__timbre, .emplacement-echange__vide { width: 84px; }
   .premier-pas__album { gap: 8px; padding: 16px; justify-content: center; }
   .premier-pas__moi, .premier-pas__case { width: 64px; height: 80px; }
   .premier-pas__case--3 { display: none; }

@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 5, lot C : l'échange en timbres.** On composait un échange avec deux listes
+> déroulantes de texte (audit S33). Désormais (`src/ecrans/amis/ComposerEchange.tsx`) : d'abord « Tu reçois », la
+> collection de l'ami en grille, ce qui manque à la sienne en tête (badge « Nouveau ») ; puis « Tu donnes », son album,
+> ses doubles en tête (badge « ×2 ») ; un résumé « Tu reçois ⇄ Tu donnes » reste en haut, avec le choix de la finition
+> quand il y en a plusieurs (on reçoit d'abord la plus belle, on donne d'abord la plus simple). Le sélecteur de timbre
+> est commun au marché et à l'échange (`src/composants/ChoixDUnTimbre.tsx` et `choixDUnTimbre.css`, 3 timbres par
+> rangée sur téléphone). Vérifié sur le banc : proposition envoyée, sur ordinateur et téléphone.
+
 > **28 septembre 2026 — finitions, étape 5, lot B : le marché plus clair.** Une phrase sous le titre (ce qu'est le
 > marché, la réserve d'Encre), « Comment ça marche ? » (la mise mise de côté et rendue si l'on est dépassé, la
 > commission, la prolongation, la vente, les limites, les comptes de moins de 3 jours), un bouton « Vendre un timbre »

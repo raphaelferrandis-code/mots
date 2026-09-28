@@ -2,9 +2,9 @@
 // du timbre, et rien ne le disait) : choisir dans son album, les doubles d'abord, puis fixer la vente (MiseEnVente, le
 // même formulaire que sur la fiche). Les acheteurs voient le pseudonyme du vendeur : sans lui, on le choisit d'abord.
 
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Carte } from '../../composants/carte/Carte.tsx';
-import { ChoixDUnTimbre } from '../../composants/ChoixDUnTimbre.tsx';
+import { ChoixDUnTimbre, nombreDExemplaires } from '../../composants/ChoixDUnTimbre.tsx';
 import { ChoixDuPseudonyme } from '../../composants/ChoixDuPseudonyme.tsx';
 import { MiseEnVente } from '../../composants/MiseEnVente.tsx';
 import { useChargement } from '../../composants/useChargement.ts';
@@ -22,6 +22,9 @@ export function VendreUnTimbre({ sauvegarde, cartes, onVendu, onFermer }: {
   const cotes = useChargement(async () => (choisie ? lireLesCotes(choisie.id) : null), `cotes-vente:${choisie?.id ?? ''}`);
   const possedee = choisie ? sauvegarde.cartes[choisie.id] : undefined;
   const avecPseudonyme = pseudoDuJoueur(sauvegarde) !== '';
+  const collection = useMemo(() => new Map(Object.entries(sauvegarde.cartes).map(([id, p]) => [id, p.finitions])), [sauvegarde.cartes]);
+  const dates = useMemo(() => new Map(Object.entries(sauvegarde.cartes).map(([id, p]) => [id, p.obtenueLe])), [sauvegarde.cartes]);
+  const double = useCallback((c: CarteIndex) => { const n = nombreDExemplaires(collection.get(c.id)); return n > 1 ? `×${n}` : null; }, [collection]);
 
   return (
     <section className="rubrique vendre" aria-labelledby="titre-vendre">
@@ -32,7 +35,8 @@ export function VendreUnTimbre({ sauvegarde, cartes, onVendu, onFermer }: {
       {!avecPseudonyme ? (
         <ChoixDuPseudonyme titre="Les acheteurs verront ton pseudonyme : choisis-le d’abord" onValide={() => undefined} />
       ) : !choisie || !possedee ? (
-        <ChoixDUnTimbre cartes={cartes} possedees={sauvegarde.cartes} action="vendre" onChoisir={setChoisie} />
+        <ChoixDUnTimbre cartes={cartes} collection={collection} dates={dates} action="vendre" recherche="Chercher un mot de ton album…" avant={double}
+          legende={(total, doubles) => `${total.toLocaleString('fr-FR')} timbre${total > 1 ? 's' : ''}${doubles > 0 ? `, tes doubles d’abord (${doubles})` : ''}.`} onChoisir={setChoisie} />
       ) : (
         <div className="vendre__formulaire">
           <div className="vendre__timbre"><Carte carte={choisie} finition={meilleureFinition(possedee)} obtenuLe={possedee.obtenueLe} cliquable={false} /></div>
