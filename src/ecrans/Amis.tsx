@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { Cachet, EnteteCorrespondance, LIEN_EQUIPE_2V2, PortraitAmi, Presence, TimbreEmbleme, Vitrine, signeGrave } from '../composants/correspondance/Correspondance.tsx';
 import { InviterDesAmis } from '../composants/InviterDesAmis.tsx';
+import { lienDeSignalement } from '../composants/legal/signalement.ts';
 import { Timbre } from '../composants/timbre/Timbre.tsx';
 import { secoursEtParrainage } from '../services/compte.ts';
 import { useChargement } from '../composants/useChargement.ts';
@@ -124,6 +125,7 @@ export function Amis() {
                     <div className="rangee-de-boutons">
                       {a.etat === 'recue' && <button className="bouton bouton--accent" disabled={occupe} onClick={() => void agir(() => repondreAUnAmi(a.id, 'accepter'), `${a.pseudo} fait maintenant partie de tes amis.`)}>Accepter</button>}
                       <button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(() => repondreAUnAmi(a.id, a.etat === 'recue' ? 'refuser' : 'annuler'), 'Demande retirée.')}>{a.etat === 'recue' ? 'Refuser' : 'Annuler'}</button>
+                      {a.etat === 'recue' && <a className="lien-signaler" href={lienDeSignalement({ genre: 'joueur', nom: a.pseudo })}>Signaler</a>}
                     </div>
                   </li>)}
                 </ul>
@@ -195,7 +197,10 @@ function FicheAmi({ ami, cartes, pret, occupe, agir, equipier, echanger, defier,
         <button type="button" className="bouton bouton--discret bouton--icone" aria-label={`Plus d’actions pour ${ami.pseudo}`} aria-expanded={menu} onClick={() => setMenu(!menu)}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" /></svg>
         </button>
-        {menu && <div className="fiche-ami__options"><button type="button" className="outil" onClick={() => { setMenu(false); setConfirmer(true); }}>Retirer de mes amis</button></div>}
+        {menu && <div className="fiche-ami__options">
+          <button type="button" className="outil" onClick={() => { setMenu(false); setConfirmer(true); }}>Retirer de mes amis</button>
+          <a className="outil" href={lienDeSignalement({ genre: 'joueur', nom: ami.pseudo })} onClick={() => setMenu(false)}>Signaler ce pseudonyme</a>
+        </div>}
       </div>
     </div>
     {ami.vitrine && <Vitrine timbres={ami.vitrine} nombre={ami.timbres ?? 0} cartes={cartes} />}

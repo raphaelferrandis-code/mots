@@ -94,6 +94,7 @@ export function Compte() {
               <input id="connexion-email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required maxLength={254} value={email} disabled={occupe} onChange={e => setEmail(e.target.value)} placeholder="toi@exemple.fr" />
               <button className="bouton" type="submit" disabled={occupe}>{occupe ? 'Connexion en cours…' : 'Recevoir mon code'}</button>
             </form>
+            {mode === 'creation' && <p className="petit texte-doux">En créant un compte, tu acceptes les <a href="./conditions/">conditions d’utilisation</a>. Ce que le jeu garde est décrit dans la page <a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a>. Moins de 15 ans : demande d’abord à un parent.</p>}
           </> : <form className="compte__formulaire" onSubmit={e => { e.preventDefault(); void agir(verifier); }}>
             <p>Code envoyé à <strong>{attente.email}</strong>.</p>
             <label htmlFor="connexion-code">Code de vérification</label>
@@ -119,6 +120,6 @@ export function Compte() {
       <p className="petit">Ta collection, ton Encre, ton pseudonyme, tes amis et ton équipe sont effacés du serveur, sur tous tes appareils. C’est définitif.</p>
       <SuppressionDuCompte />
     </section>}
-    <p className="petit texte-doux compte__pied"><a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a> · <a href={lien({ ecran: 'accueil' })}>Revenir au jeu</a></p>
+    <p className="petit texte-doux compte__pied"><a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a> · <a href="./conditions/">Conditions d’utilisation</a> · <a href={lien({ ecran: 'accueil' })}>Revenir au jeu</a></p>
   </main>;
 }

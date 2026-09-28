@@ -5,4 +5,5 @@ import '../theme/theme.css';
 import '../theme/styles.css';
 import '../theme/boutons.css';
 import '../composants/timbre/timbre.css';
+import '../composants/legal/legal.css';
 import './pageDuMot.css';

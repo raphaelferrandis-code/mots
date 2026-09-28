@@ -69,6 +69,26 @@ export function enteteDeLaListe(nombre: number): string {
   ].join('\n    ');
 }
 
+// Une page légale fixe (/mentions-legales/, /confidentialite/, /conditions/).
+export function enteteDeLaPageLegale(chemin: string, titre: string, description: string): string {
+  const url = `${ADRESSE_DU_SITE}${chemin}/`;
+  return [
+    `<title>${echapper(titre)} — Philamots</title>`,
+    `<meta name="description" content="${echapper(description)}" />`,
+    `<link rel="canonical" href="${url}" />`,
+    '<meta property="og:site_name" content="Philamots" />',
+    '<meta property="og:locale" content="fr_FR" />',
+    `<meta property="og:url" content="${url}" />`,
+    `<meta property="og:title" content="${echapper(titre)} — Philamots" />`,
+    `<meta property="og:description" content="${echapper(description)}" />`,
+  ].join('\n    ');
+}
+
+// La page introuvable : hors des résultats de recherche.
+export function enteteDeLaPageIntrouvable(): string {
+  return ['<title>Page introuvable — Philamots</title>', '<meta name="robots" content="noindex" />'].join('\n    ');
+}
+
 // Un ordre mélangé, mais toujours le même pour un mot donné : les pages ne changent pas d'une mise en ligne à l'autre.
 function melange(texte: string): number {
   let h = 2166136261;
@@ -85,14 +105,16 @@ export function voisinsDe<T extends Pick<CarteIndex, 'id' | 'faction'>>(carte: T
     .map(({ c }) => c);
 }
 
-export function planDuSite(adresses: string[], jour: string): string {
+// pagesFixes : les pages légales (« mentions-legales », « confidentialite », « conditions »).
+export function planDuSite(adresses: string[], jour: string, pagesFixes: readonly string[] = []): string {
   const url = (chemin: string): string => `  <url>\n    <loc>${ADRESSE_DU_SITE}${chemin}</loc>\n    <lastmod>${jour}</lastmod>\n  </url>`;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<!-- Fabriqué par scripts/fabriquer-les-pages.ts : l\'accueil, la liste des mots et une page par mot. -->',
+    '<!-- Fabriqué par scripts/fabriquer-les-pages.ts : l\'accueil, la liste des mots, les pages légales et une page par mot. -->',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     url(''),
     url('mots/'),
+    ...pagesFixes.map((p) => url(`${p}/`)),
     ...adresses.map((a) => url(`mot/${a}/`)),
     '</urlset>',
     '',
@@ -114,8 +136,9 @@ export function allegerLesTimbres(html: string, finDuGrandTimbre: string): strin
 
 // Le modèle construit par Vite (dist/mot.html) vit à la racine ; les pages, deux niveaux plus bas (ou un seul pour la
 // liste). Le script du modèle n'apporte que les feuilles de style : on le retire, les pages n'ont aucun code.
-export function adapterLeModele(modele: string, profondeur: number): string {
-  const remonter = '../'.repeat(profondeur);
+// « absolu » : pour la page introuvable, que l'hébergeur sert à n'importe quelle profondeur (chemins depuis « / »).
+export function adapterLeModele(modele: string, profondeur: number | 'absolu'): string {
+  const remonter = profondeur === 'absolu' ? '/' : '../'.repeat(profondeur);
   return modele
     .replace(/<script type="module"[^>]*><\/script>\s*/g, '')
     .replace(/<link rel="modulepreload"[^>]*>\s*/g, '')

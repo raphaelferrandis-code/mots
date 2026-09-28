@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChoixDuPseudonyme } from '../composants/ChoixDuPseudonyme.tsx';
 import { Cachet, EnteteCorrespondance, LIEN_EQUIPE_2V2, PortraitAmi, Presence, TimbreEmbleme, signeGrave } from '../composants/correspondance/Correspondance.tsx';
 import { usePartie } from '../composants/usePartie.ts';
+import { lienDeSignalement } from '../composants/legal/signalement.ts';
 import { REGLES_DU_2V2 } from '../jeu/direct.ts';
 import { LONGUEUR_DU_PSEUDO } from '../jeu/pseudo.ts';
 import { profilVisible } from '../jeu/personnalisation.ts';
@@ -73,7 +74,7 @@ export function Equipe() {
             <div className="invitation-equipe__texte"><span className="mention mention--vive">Invitation reçue</span><h2>{i.nom}</h2><p className="texte-doux">{i.capitaine}, capitaine, te propose la place libre.</p></div>
             <Cachet haut="Jusqu’au" bas={jourCourt(i.expire_le)} incline={-9} />
             <span className="visuellement-cache">Valable jusqu’au {new Date(i.expire_le).toLocaleDateString('fr-FR')}</span>
-            <div className="invitation-equipe__actions"><button className="bouton bouton--accent" disabled={occupe} onClick={() => void agir(() => serveurEquipes().repondre(i.id, 'accepter'), 'Équipe rejointe.')}>Rejoindre</button><button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(() => serveurEquipes().repondre(i.id, 'refuser'), 'Invitation refusée.')}>Refuser</button></div>
+            <div className="invitation-equipe__actions"><button className="bouton bouton--accent" disabled={occupe} onClick={() => void agir(() => serveurEquipes().repondre(i.id, 'accepter'), 'Équipe rejointe.')}>Rejoindre</button><button className="bouton bouton--discret" disabled={occupe} onClick={() => void agir(() => serveurEquipes().repondre(i.id, 'refuser'), 'Invitation refusée.')}>Refuser</button><a className="lien-signaler" href={lienDeSignalement({ genre: 'equipe', nom: i.nom })}>Signaler</a></div>
           </li>)}
         </ul></section>}
         <section className="equipe__section equipe__fonder" aria-labelledby="titre-fonder"><h2 id="titre-fonder">Fonder ton équipe</h2><IdentiteEquipe occupe={occupe} agir={agir} pseudo={pseudo ?? ''} nombreDAmis={donnees.amis.length} /></section>

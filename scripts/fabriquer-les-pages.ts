@@ -1,6 +1,9 @@
 // Fabrique les pages par mot dans dist/, après « vite build » (npm run build) :
 //   dist/mot/<adresse>/index.html  → une page par timbre de l'édition
 //   dist/mots/index.html           → la liste de tous les mots
+//   dist/mentions-legales/, dist/confidentialite/, dist/conditions/
+//                                  → les pages légales, lisibles sans lancer le jeu
+//   dist/404.html                  → la page introuvable, que l'hébergeur sert pour toute adresse inconnue
 //   dist/sitemap.xml               → le plan du site pour Google, avec toutes ces pages
 //   dist/partage/question/<adresse>/ et dist/partage/reponse/<adresse>/
 //                                  → les images de la devinette du jour de chaque mot du calendrier, à photographier
@@ -11,12 +14,12 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { createServer } from 'vite';
-import { adressesDesPages } from '../src/partage/pagesDesMots.ts';
+import { adresseDuMot, adressesDesPages } from '../src/partage/pagesDesMots.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
 import type { Devinettes } from '../src/jeu/devinette.ts';
-import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
+import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const DIST = path.join(RACINE, 'dist');
@@ -68,6 +71,26 @@ try {
     .replace('<!--tete-->', () => enteteDeLaListe(mots.length))
     .replace('<!--page-->', () => rendu.rendreListe(mots)));
 
+  // Les pages légales fixes (/mentions-legales/, /confidentialite/, /conditions/) : lisibles sans lancer le jeu, donc
+  // sans ouvrir de compte (audit de finition du 26/09/2026, E19).
+  const pourUnePageFixe = adapterLeModele(modeleHtml, 1);
+  for (const page of rendu.PAGES_LEGALES) {
+    mkdirSync(path.join(DIST, page), { recursive: true });
+    writeFileSync(path.join(DIST, page, 'index.html'), pourUnePageFixe
+      .replace('<!--tete-->', () => enteteDeLaPageLegale(page, rendu.TITRES_DES_PAGES_LEGALES[page], rendu.DESCRIPTIONS_DES_PAGES_LEGALES[page]))
+      .replace('<!--page-->', () => rendu.rendrePageLegale(page)));
+  }
+
+  // La page introuvable : l'hébergeur (GitHub Pages) sert dist/404.html pour toute adresse inconnue (E13). Elle connaît
+  // les mots à plusieurs pages (« beau » nom et adjectif) pour les proposer.
+  const parAdresse = new Map<string, typeof cartes>();
+  for (const carte of cartes) parAdresse.set(adresseDuMot(carte.mot), [...(parAdresse.get(adresseDuMot(carte.mot)) ?? []), carte]);
+  const homographes = Object.fromEntries([...parAdresse].filter(([, groupe]) => groupe.length > 1)
+    .map(([base, groupe]) => [base, groupe.map((c) => ({ adresse: adresses.get(c.id)!, nature: c.type.toLowerCase(), mot: c.mot }))]));
+  writeFileSync(path.join(DIST, '404.html'), adapterLeModele(modeleHtml, 'absolu')
+    .replace('<!--tete-->', () => enteteDeLaPageIntrouvable())
+    .replace('<!--page-->', () => rendu.rendrePageIntrouvable(homographes)));
+
   // Les images de la devinette du jour : hors du plan du site, et « noindex » (ce sont des images à fabriquer, pas
   // des pages). La question et la réponse de chaque mot du calendrier (public/data/devinettes.json).
   const pourUneCarte = adapterLeModele(modeleHtml, 3).replace('<html lang="fr">', '<html lang="fr" class="page-carte">');
@@ -85,7 +108,7 @@ try {
     }
   }
 
-  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), textes.version));
+  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), textes.version, rendu.PAGES_LEGALES));
   rmSync(modele);
   console.log(`${cartes.length} pages par mot et ${jours.length} devinettes (question et réponse) fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
 } finally {

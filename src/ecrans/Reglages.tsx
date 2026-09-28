@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { Entete } from '../composants/Entete.tsx';
+import { PiedDePage } from '../composants/PiedDePage.tsx';
 import { SuppressionDuCompte } from '../composants/SuppressionDuCompte.tsx';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -189,9 +190,11 @@ export function Reglages() {
             Les données des timbres du jeu, tirées de ces deux sources, sont elles aussi sous licence CC BY-SA 4.0.
             Ce jeu n’utilise ni publicité ni outil de mesure d’audience ; ce qu’il garde est décrit à la page{' '}
             <a href={lien({ ecran: 'confidentialite' })}>Confidentialité</a>.
+            Polices : Playfair Display, Jost et Oswald, sous licence SIL Open Font License 1.1.
           </p>
         </details>
       </div>
+      <PiedDePage />
     </main>
   );
 }

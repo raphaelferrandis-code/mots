@@ -12,6 +12,7 @@ import { clientDuServeur, serveurUtilise } from '../services/compte.ts';
 import { MODES_DIRECTS, NOMS_DIRECTS } from '../jeu/direct.ts';
 import type { ClassementDirect, ModeDirect } from '../jeu/direct.ts';
 import { SALON_DES_JOUTES, lien } from '../navigation/routes.ts';
+import { lienDeSignalementDansLeClassement } from '../composants/legal/signalement.ts';
 import './classement.css';
 
 function Podium({ lignes, libelleMoi = 'C’est toi' }: { lignes: LigneDeClassement[]; libelleMoi?: string }) {
@@ -89,6 +90,7 @@ export function Classement() {
             <div className="palmares__identite"><strong className="palmares__pseudo">{l.nom}{l.moi && <small> · {equipes ? 'ton équipe' : 'toi'}</small>}</strong><span className="palmares__ligue">{accord(l.gagnees, 'victoire', 'victoires')} · {accord(l.jouees, 'partie', 'parties')}</span></div>
             <strong className="palmares__cote">{l.cote.toLocaleString('fr-FR')}<span className="visuellement-cache"> de cote</span></strong>
           </li>)}</ol>}
+          <p className="signalement-discret">Un nom déplacé ? <a href={lienDeSignalementDansLeClassement()}>Signale-le</a>.</p>
         </div>
       </>)}
     </section>

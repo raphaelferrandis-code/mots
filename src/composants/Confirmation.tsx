@@ -6,7 +6,8 @@ import './confirmation.css';
 // (window.confirm). Une vraie fenêtre modale : Échap ou un clic à côté répondent non, le reste de la page est inerte,
 // et le focus revient ensuite où il était. « danger » : une action définitive, le focus part alors sur « Annuler ».
 // « seul » : une simple information, avec un seul bouton (« Compris »). « surtitre » : le petit mot au-dessus du titre.
-export type Question = { titre: string; message: string; confirmer: string; annuler?: string; danger?: boolean; seul?: boolean; surtitre?: string };
+// « lien » : un lien discret sous le message (par exemple « Signaler ce pseudonyme », sur la fiche d'un joueur).
+export type Question = { titre: string; message: string; confirmer: string; annuler?: string; danger?: boolean; seul?: boolean; surtitre?: string; lien?: { texte: string; href: string } };
 type EnAttente = Question & { repondre: (oui: boolean) => void };
 
 let enAttente: EnAttente | null = null;
@@ -55,6 +56,7 @@ export function HoteDesConfirmations() {
         <p className="confirmation__surtitre">{question.surtitre ?? (question.danger ? 'Action définitive' : question.seul ? 'Bon à savoir' : 'Confirmation')}</p>
         <h2 id="confirmation-titre" className="confirmation__titre">{question.titre}</h2>
         <p id="confirmation-message" className="confirmation__message">{question.message}</p>
+        {question.lien && <p className="confirmation__lien"><a href={question.lien.href}>{question.lien.texte}</a></p>}
         <div className="confirmation__boutons">
           {!question.seul && <button ref={annuler} type="button" className="confirmation__bouton confirmation__bouton--annuler" onClick={() => question.repondre(false)}>{question.annuler ?? 'Annuler'}</button>}
           <button ref={confirmer} type="button" className="confirmation__bouton confirmation__bouton--confirmer" onClick={() => question.repondre(true)}>{question.confirmer}</button>

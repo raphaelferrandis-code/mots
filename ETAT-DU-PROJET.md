@@ -2,6 +2,25 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape « Confiance » (chantier 8), lot A : les pages légales et « Signaler ».**
+> Décisions de Raphaël : éditeur « Raphaël Ferrandis » avec `contact@philamots.fr` (adresse et numéro d'entreprise
+> avant tout achat) ; compte invité supprimé après 12 mois sans visite, compte relié après 3 ans (`SITE.conservation`,
+> purge au lot B) ; signalement par un lien « Signaler » ; région Supabase eu-west-2 (Londres). **Pages fixes**,
+> fabriquées comme les pages des mots (`src/pages/PageLegale.tsx`, `scripts/fabriquer-les-pages.ts`) et lisibles sans
+> ouvrir le jeu : `/mentions-legales/`, `/confidentialite/`, `/conditions/` (au plan du site), et une vraie page
+> introuvable `404.html` (chemins absolus, sans indexation) dont le petit script `public/introuvable.js` corrige une
+> adresse de mot mal tapée (majuscules, accents, `/mot/` → `/mots/`) et propose les pages d'un mot à plusieurs natures.
+> Les textes vivent dans `src/composants/legal/` et servent aussi dans le jeu : Confidentialité complétée (durées,
+> stockage du navigateur, « L'essentiel juridique » : responsable, finalités avec base et durée, droits, CNIL,
+> prestataires), mentions légales (hébergeurs, crédits Wiktionnaire / wiktextract / Lexique 4 / polices OFL),
+> conditions d'utilisation en dix points. Pied de page commun (`src/pages/Cadre.tsx`) sur toutes les pages fixes, et
+> pied du jeu (`PiedDePage.tsx`) sur l'accueil et les réglages. Mon compte : « En créant un compte, tu acceptes les
+> conditions… Moins de 15 ans : demande d'abord à un parent. » **Signaler** (`signalement.ts`, un e-mail prérempli) :
+> demande d'ami reçue, menu d'un ami, fiche d'un vrai joueur au marché (pas d'un joueur simulé), invitation d'équipe,
+> bas du classement, fin d'une joute en direct. Vérifié : pages servies comme GitHub Pages et photographiées
+> (ordinateur, téléphone, 404 à toute profondeur), et dans le jeu sur le banc (`scratchpad/confiance/verif-*.mjs`).
+> 577 tests. **Reste à Raphaël** : faire relire les trois textes par un juriste (étape 21 d'A-FAIRE-RAPHAEL).
+
 > **28 septembre 2026 — finitions, étape 5, lot G (chantier 6) : la joute en direct au niveau du duel.** La partie
 > (`src/ecrans/direct/PartieDirecte.tsx`) reprend les pièces du duel : barres de vie des deux camps (le double de points
 > pour une équipe de deux, `BarreDeVie.maximum`), face-à-face autour du médaillon (deux en 2 contre 2, côte à côte sur

@@ -7,6 +7,7 @@ import { Timbre } from '../composants/timbre/Timbre.tsx';
 import { attaqueEnJeu, defenseEnJeu } from '../config/equilibrage.ts';
 import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
+import { Bandeau, Pied } from './Cadre.tsx';
 
 const NATURE: Record<CarteIndex['type'], string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adjectif', Adverbe: 'adverbe' };
 
@@ -21,28 +22,6 @@ function usage(frequence: number): string {
 function Jauge({ allumes }: { allumes: number }) {
   const n = Math.max(1, Math.min(10, Math.round(allumes)));
   return <span className="page-mot__jauge" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i key={i} className={i < n ? 'allume' : undefined} />)}</span>;
-}
-
-function Bandeau({ racine }: { racine: string }) {
-  return (
-    <header className="page-mot__bandeau">
-      <a className="page-mot__marque" href={racine}><img src={`${racine}identite/philamots-clair.svg`} alt="Philamots" width="150" height="36" /></a>
-      <a className="btn-secondary page-mot__jouer" href={racine}>Jouer</a>
-    </header>
-  );
-}
-
-function Pied({ racine, wiktionnaire }: { racine: string; wiktionnaire?: string }) {
-  return (
-    <footer className="page-mot__pied">
-      <p>
-        Définitions et étymologies adaptées du{' '}
-        <a href={wiktionnaire ?? 'https://fr.wiktionary.org/'}>Wiktionnaire</a>{' '}
-        (<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a>) · fréquences de Lexique 4
-      </p>
-      <p><a href={`${racine}mots/`}>Tous les mots</a></p>
-    </footer>
-  );
 }
 
 export type Voisin = { carte: CarteIndex; adresse: string };
@@ -154,7 +133,7 @@ export function ListeDesMots({ mots }: { mots: { mot: string; adresse: string; t
           </ul>
         </section>)}
       </main>
-      <Pied racine={racine} />
+      <Pied racine={racine} actuelle="mots" />
     </div>
   );
 }

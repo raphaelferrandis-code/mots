@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { adresseDuMot, adressesDesPages } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
-import { adapterLeModele, allegerLesTimbres, descriptionDuMot, enteteDeLaPage, planDuSite, voisinsDe } from './assemblage.ts';
+import { adapterLeModele, allegerLesTimbres, descriptionDuMot, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from './assemblage.ts';
 
 const edition = JSON.parse(readFileSync(path.join(import.meta.dirname, '..', '..', 'public', 'data', 'edition-1.index.json'), 'utf8')) as IndexEdition;
 const carte = (mot: string, type: CarteIndex['type'], autres: Partial<CarteIndex> = {}): CarteIndex => ({
@@ -69,6 +69,28 @@ describe('voisins et plan du site', () => {
     assert.equal(plan.match(/<url>/g)?.length, 4);
     assert.ok(plan.includes('<loc>https://philamots.fr/mot/beau-nom/</loc>'));
     assert.ok(plan.includes('<lastmod>2026-09-23</lastmod>'));
+  });
+  it('le plan du site déclare aussi les pages légales, après la liste', () => {
+    const plan = planDuSite(['zakouski'], '2026-09-28', ['mentions-legales', 'confidentialite', 'conditions']);
+    assert.equal(plan.match(/<url>/g)?.length, 6);
+    const ordre = ['mots/', 'mentions-legales/', 'confidentialite/', 'conditions/', 'mot/zakouski/'].map((c) => plan.indexOf(`<loc>https://philamots.fr/${c}</loc>`));
+    assert.ok(ordre.every((position, i) => position > (ordre[i - 1] ?? 0)), ordre.join(', '));
+  });
+});
+
+describe('pages légales et page introuvable', () => {
+  it('une page légale a son adresse canonique et ses textes échappés', () => {
+    const tete = enteteDeLaPageLegale('conditions', 'Conditions d’utilisation', 'Les règles « du jeu » & de la maison');
+    assert.ok(tete.includes('<title>Conditions d’utilisation — Philamots</title>'));
+    assert.ok(tete.includes('<link rel="canonical" href="https://philamots.fr/conditions/" />'));
+    assert.ok(tete.includes('content="Les règles « du jeu » &amp; de la maison"'));
+  });
+  it('la page introuvable reste hors des résultats de recherche', () => {
+    assert.match(enteteDeLaPageIntrouvable(), /<meta name="robots" content="noindex" \/>/);
+  });
+  it('la page introuvable prend ses chemins depuis la racine, à n’importe quelle profondeur', () => {
+    const modele = '<link rel="stylesheet" href="./assets/mot.css"><script type="module" crossorigin src="./assets/mot.js"></script><img src="./identite/x.svg">';
+    assert.equal(adapterLeModele(modele, 'absolu'), '<link rel="stylesheet" href="/assets/mot.css"><img src="/identite/x.svg">');
   });
 });
 

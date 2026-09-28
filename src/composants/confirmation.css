@@ -17,6 +17,9 @@
 .confirmation--danger .confirmation__surtitre { color: var(--danger); }
 .confirmation__titre { margin: 0 0 10px; font: italic 700 1.5rem/1.2 var(--police-serif); overflow-wrap: anywhere; }
 .confirmation__message { margin: 0 0 22px; color: var(--encre-douce); line-height: 1.5; }
+/* Un lien discret sous le message (« Signaler ce pseudonyme ») : le message garde sa marge, le lien se glisse dessous. */
+.confirmation__lien { margin: -12px 0 20px; font-size: 14px; }
+.confirmation__lien a { color: var(--texte-doux); text-underline-offset: 3px; }
 .confirmation__boutons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .confirmation__bouton { min-height: 48px; padding: 0 22px; border-radius: 3px; font: 600 1rem/1.2 var(--police-douce); cursor: pointer; transition: background-color .15s, border-color .15s, filter .15s; }
 .confirmation__bouton--annuler { border: 1px solid rgb(233 225 208 / 28%); background: none; color: var(--texte-doux); }

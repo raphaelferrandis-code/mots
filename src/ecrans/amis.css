@@ -34,7 +34,8 @@
 .fiche-ami__nom > span { font-size: 0.82rem; }
 .fiche-ami__menu { position: relative; align-self: flex-start; }
 .fiche-ami__menu svg { width: 18px; height: 18px; fill: currentColor; }
-.fiche-ami__options { position: absolute; right: 0; top: calc(100% + 6px); z-index: 2; padding: 6px; border-radius: var(--rayon); border: 1px solid var(--filet-fort); background: var(--papier-fonce); box-shadow: var(--ombre); white-space: nowrap; }
+.fiche-ami__options { display: grid; position: absolute; right: 0; top: calc(100% + 6px); z-index: 2; padding: 6px; border-radius: var(--rayon); border: 1px solid var(--filet-fort); background: var(--papier-fonce); box-shadow: var(--ombre); white-space: nowrap; }
+.fiche-ami__options .outil { justify-content: flex-start; }
 .fiche-ami__actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px; }
 .fiche-ami__actions .bouton { flex: 1 1 auto; padding-inline: 12px; white-space: nowrap; }
 .fiche-ami__confirmation { padding: 14px; border: 1px solid var(--accent); border-radius: var(--rayon); }

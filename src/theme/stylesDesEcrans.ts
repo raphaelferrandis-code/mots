@@ -32,3 +32,5 @@ import '../composants/ceremonie/feuille.css';
 import '../ecrans/boutique.css';
 import '../ecrans/marche.css';
 import '../composants/choixDUnTimbre.css';
+import '../composants/piedDePage.css';
+import '../composants/legal/legal.css';

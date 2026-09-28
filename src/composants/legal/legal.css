@@ -1,0 +1,15 @@
+/* Les textes légaux (composants/legal/), dans le jeu comme sur les pages fixes : le tableau « pourquoi, sur quelle base,
+   combien de temps » de la Confidentialité, en fiches qui s'empilent sur téléphone. */
+.texte-legal__finalites { margin: 0; display: grid; gap: 10px; }
+.texte-legal__finalites > div { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--filet); border-radius: 6px; background: rgb(255 255 255 / 3%); }
+.texte-legal__finalites dt { font-weight: 600; color: var(--texte-fort); }
+.texte-legal__finalites dd { margin: 0; color: var(--texte); line-height: 1.5; }
+.rubrique h3 { margin: 6px 0 0; font: 600 0.98rem var(--police-texte); color: var(--texte-fort); }
+.confidentialite__date { margin: 0; }
+
+/* « Signaler » : un lien discret près des boutons d'une demande d'ami ou d'une invitation d'équipe, et sous un classement.
+   Il prépare un e-mail vers le contact du jeu (composants/legal/signalement.ts). */
+.lien-signaler { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 6px; font-size: 0.85rem; color: var(--texte-doux); text-underline-offset: 3px; }
+@media (hover: hover) { .lien-signaler:hover { color: var(--texte-fort); } }
+.signalement-discret { margin: 8px 0 0; font-size: 0.85rem; color: var(--texte-doux); text-align: center; }
+.signalement-discret a, .fin-duel__signaler { color: inherit; text-underline-offset: 3px; }

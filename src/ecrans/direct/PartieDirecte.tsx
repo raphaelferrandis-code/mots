@@ -12,6 +12,7 @@ import { Timbre } from '../../composants/timbre/Timbre.tsx';
 import { useMaintenant } from '../../composants/usePartie.ts';
 import { useGardeDeSortie } from '../../composants/useGardeDeSortie.ts';
 import type { useJouteDirecte } from '../../composants/useJouteDirecte.ts';
+import { lienDeSignalement } from '../../composants/legal/signalement.ts';
 import { EQUILIBRAGE } from '../../config/equilibrage.ts';
 import { NOMS_DIRECTS } from '../../jeu/direct.ts';
 import type { BilanDirect, PoseDirect } from '../../jeu/direct.ts';
@@ -300,6 +301,7 @@ export function PartieDirecte({ sauvegarde, direct, sons, reduit }: Props) {
             {p.gains.reduite && <p className="fin-duel__note">Récompense du jour atteinte : les gains de cette joute sont réduits.</p>}
             {p.cotes ? <NoteDeCote cote={p.cotes} />
               : <p className="fin-duel__note">Tu as déjà affronté {equipe ? 'ces adversaires' : 'ce joueur'} {EQUILIBRAGE.joute.rencontresClasseesParJour} fois aujourd’hui : cette joute ne change pas la cote.</p>}
+            <p className="fin-duel__note"><a className="fin-duel__signaler" href={lienDeSignalement({ genre: equipe ? 'equipe' : 'joueur', nom: v.noms[eux] })}>Signaler {equipe ? 'cette équipe' : 'ce joueur'}</a></p>
           </>}
           stats={statsDeFin()}
           actions={<>

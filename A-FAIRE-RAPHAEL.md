@@ -392,6 +392,26 @@ l'assistant et un professionnel : en attendant, rien à déclarer, et les achats
   nom (seulement une association et des clubs de joueurs). Comme c'est un mot courant chez les joueurs, il sera
   peut-être difficile à protéger comme marque : la marque à protéger en premier est **Philamots**.
 
+### Étape 21 — Les pages légales : les faire relire, et deux accords à vérifier
+
+Tes décisions du 28 septembre : l'éditeur est « Raphaël Ferrandis » avec `contact@philamots.fr` ; un compte invité
+est supprimé après 12 mois sans visite, un compte relié à Google ou à une adresse e-mail après 3 ans ; on signale un
+joueur ou une équipe avec un lien « Signaler » dans le jeu. Les trois pages sont en ligne, lisibles sans ouvrir le
+jeu : https://philamots.fr/mentions-legales/, https://philamots.fr/confidentialite/ et https://philamots.fr/conditions/.
+
+- [ ] Les faire relire par un juriste, en même temps que le brouillon des CGV ([docs/CGV-brouillon.md](docs/CGV-brouillon.md)).
+      Lui poser en particulier ces questions : faut-il un numéro de téléphone pour chaque hébergeur (GitHub et
+      Supabase n'en publient pas sur leurs pages officielles) ? les bases légales choisies (le service que tu utilises,
+      l'intérêt légitime) sont-elles les bonnes ? la phrase « Moins de 15 ans : demande d'abord à un parent » suffit-elle ?
+- [ ] Supabase : vérifier dans le tableau de bord (réglages de l'organisation, documents juridiques) que l'accord de
+      traitement des données (« DPA ») est bien accepté, et le signer s'il faut le demander.
+- [ ] Cloudflare (le contrôle anti-robot) : vérifier que son accord de traitement des données s'applique à ton compte
+      gratuit (il fait en principe partie de ses conditions d'utilisation).
+- La suppression automatique des comptes inactifs arrive avec le prochain script (lot B de cette étape) : aucun compte
+  n'a encore 12 mois, rien ne presse, mais il faudra le coller.
+- Avant d'ouvrir les achats : ajouter l'adresse et le numéro d'entreprise du vendeur aux mentions légales (l'assistant
+  le fera quand la forme juridique sera choisie, étape 20).
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de

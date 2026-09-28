@@ -7,6 +7,7 @@ import { FondAnime } from '../composants/accueil/FondAnime.tsx';
 import { NouvellesDuParrainage } from '../composants/accueil/NouvellesDuParrainage.tsx';
 import { PremiersPas } from '../composants/accueil/PremiersPas.tsx';
 import { Comptoir } from '../composants/ceremonie/Comptoir.tsx';
+import { PiedDePage } from '../composants/PiedDePage.tsx';
 import { useChargement } from '../composants/useChargement.ts';
 import { usePartie } from '../composants/usePartie.ts';
 import { EQUILIBRAGE } from '../config/equilibrage.ts';
@@ -88,6 +89,7 @@ export function Accueil() {
       {partie.emplacement === 'mémoire seulement' && (
         <aside className="bloc bloc--alerte" role="alert"><p>Ce navigateur refuse d’enregistrer des données. Ta partie sera perdue à la fermeture de la page.</p></aside>
       )}
+      <PiedDePage />
     </main>
   );
 }
