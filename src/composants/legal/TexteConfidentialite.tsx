@@ -105,6 +105,7 @@ export function TexteConfidentialite({ enLigne, antiRobot, parrainage, liens, ef
       <section className="rubrique">
         <h2>Connexion avec Google ou par e-mail</h2>
         <p>Si tu crées un compte, Supabase conserve ton adresse e-mail et les informations nécessaires à la connexion. Avec Google, il reçoit aussi l’identifiant et les informations de profil autorisées par Google. Le jeu ne reçoit jamais ton mot de passe Google. La connexion par e-mail utilise un code à usage unique, envoyé par la messagerie d’OVHcloud.</p>
+        <p>Le bouton de Google n’est chargé que si tu touches « Continuer avec Google » : Google reçoit alors, comme pour tout site, l’adresse IP de ton appareil, et reconnaît ta session Google pour te proposer tes comptes. Rien de Google n’est chargé sinon.</p>
         <p>Ces informations servent à retrouver ton compte et ne sont pas affichées aux autres joueurs. Une session est conservée dans ton navigateur jusqu’à sa déconnexion ou son expiration.</p>
         <p>Tu as moins de 15 ans ? Demande à un parent avant de relier ton adresse e-mail ou ton compte Google.</p>
       </section>

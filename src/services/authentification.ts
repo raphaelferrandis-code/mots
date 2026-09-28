@@ -111,9 +111,32 @@ export function creerAuthentification(io: {
     if (!attente?.verificateur || !Number.isFinite(attente.creeLe) || io.maintenant() - attente.creeLe > 10 * 60_000) throw new Error('Cette connexion a expiré. Recommence avec Google.');
     return verifierSession(await demander<Jetons>('token?grant_type=pkce', 'POST', { auth_code: code, code_verifier: attente.verificateur }), attente.utilisateur);
   }
+  // Le bouton de Google dans le jeu (décision de Raphaël du 28/09/2026) : Google rend au jeu un jeton d'identité, que le
+  // serveur d'authentification échange contre une session, sans détour par l'adresse de Supabase (que Google afficherait
+  // au joueur). « nonce » : le nombre au hasard dont Google a reçu l'empreinte (nouveauNonce) ; le serveur la recalcule.
+  // En création, le compte Google est relié à l'invité : sa collection le suit.
+  async function entrerAvecGoogle(jeton: string, nonce: string, mode: ModeConnexion): Promise<Session> {
+    if (!jeton || !nonce) throw new Error('La connexion Google n’a pas abouti. Réessaie.');
+    const corps = { provider: 'google', id_token: jeton, nonce };
+    if (mode === 'creation') {
+      const u = await invite();
+      return verifierSession(await demander<Jetons>('token?grant_type=id_token', 'POST', { ...corps, link_identity: true }, u.acces), u.id);
+    }
+    return verifierSession(await demander<Jetons>('token?grant_type=id_token', 'POST', corps));
+  }
   async function deconnecter(): Promise<void> {
     const { acces } = await io.lireSession();
     await demander('logout?scope=local', 'POST', undefined, acces);
   }
-  return { utilisateur, envoyerCode, verifierCode, preparerGoogle, terminerGoogle, deconnecter };
+  return { utilisateur, envoyerCode, verifierCode, preparerGoogle, terminerGoogle, entrerAvecGoogle, deconnecter };
+}
+
+// Un nombre au hasard pour une connexion Google : Google reçoit son empreinte (SHA-256, en hexadécimal) et la recopie
+// dans le jeton qu'il rend ; le serveur reçoit le nombre lui-même et vérifie l'empreinte. Un jeton volé ailleurs ne
+// porte pas la bonne.
+export async function nouveauNonce(): Promise<{ brut: string; empreinte: string }> {
+  const hexa = (octets: Uint8Array): string => Array.from(octets, (n) => n.toString(16).padStart(2, '0')).join('');
+  const brut = hexa(crypto.getRandomValues(new Uint8Array(32)));
+  const empreinte = hexa(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(brut))));
+  return { brut, empreinte };
 }

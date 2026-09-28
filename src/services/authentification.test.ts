@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import assert from 'node:assert/strict';
-import { creerAuthentification, jetonDeVraiCompte } from './authentification.ts';
+import { creerAuthentification, jetonDeVraiCompte, nouveauNonce } from './authentification.ts';
 
 const JETONS = { access_token: 'nouveau', refresh_token: 'secret-test', expires_in: 3600 };
 function monde(options: { anonyme?: boolean; refuse?: string; google?: boolean; mauvaisCompte?: boolean; jeton?: string } = {}) {
@@ -91,6 +91,36 @@ it('refuse un retour Google expiré avant tout appel réseau', async () => {
   const { auth, appels } = monde();
   await assert.rejects(auth.terminerGoogle('code', { verificateur: 'test', creeLe: -600000 }), /expiré/);
   assert.equal(appels.length, 0);
+});
+it('le bouton de Google : en création, le jeton d’identité est relié à l’invité, avec la session de l’invité', async () => {
+  const { auth, appels } = monde();
+  assert.deepEqual(await auth.entrerAvecGoogle('jeton-google', 'nombre-brut', 'creation'), { acces: 'nouveau', renouvellement: 'secret-test', expireLe: 3601000 });
+  const echange = appels.find(a => a.url.pathname.endsWith('/token'))!;
+  assert.equal(echange.url.searchParams.get('grant_type'), 'id_token');
+  assert.equal(echange.acces, 'Bearer invite');
+  assert.deepEqual(echange.corps, { provider: 'google', id_token: 'jeton-google', nonce: 'nombre-brut', link_identity: true });
+  assert.equal(appels.at(-1)!.acces, 'Bearer nouveau', 'le compte rendu est vérifié avant d’être installé');
+});
+it('le bouton de Google : en connexion, le jeton ouvre le compte Google, sans la session de l’invité', async () => {
+  const { auth, appels } = monde();
+  await auth.entrerAvecGoogle('jeton-google', 'nombre-brut', 'connexion');
+  const echange = appels.find(a => a.url.pathname.endsWith('/token'))!;
+  assert.equal(echange.acces, null);
+  assert.deepEqual(echange.corps, { provider: 'google', id_token: 'jeton-google', nonce: 'nombre-brut' });
+});
+it('le bouton de Google : refus compréhensibles, et rien sans jeton ni nonce', async () => {
+  await assert.rejects(monde({ refuse: 'identity_already_exists' }).auth.entrerAvecGoogle('jeton', 'nonce', 'creation'), /déjà utilisé/);
+  await assert.rejects(monde({ anonyme: false }).auth.entrerAvecGoogle('jeton', 'nonce', 'creation'), /déjà un compte/);
+  const { auth, appels } = monde();
+  await assert.rejects(auth.entrerAvecGoogle('', 'nonce', 'connexion'), /n’a pas abouti/);
+  await assert.rejects(auth.entrerAvecGoogle('jeton', '', 'connexion'), /n’a pas abouti/);
+  assert.equal(appels.length, 0);
+});
+it('le nonce : Google reçoit l’empreinte SHA-256 du nombre au hasard que le serveur recevra', async () => {
+  const { brut, empreinte } = await nouveauNonce();
+  assert.match(brut, /^[0-9a-f]{64}$/);
+  assert.equal(empreinte, Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(brut))).toString('hex'));
+  assert.notEqual((await nouveauNonce()).brut, brut);
 });
 it('la déconnexion révoque seulement la session courante', async () => {
   const { auth, appels } = monde(); await auth.deconnecter();

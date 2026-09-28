@@ -34,14 +34,17 @@ process.env.VITE_DEVINETTES_OUVERTES = calendrier.debut ? 'oui' : 'non';
 function politiqueDeSecurite(): string {
   const serveur = SERVEUR.adresse ? new URL(SERVEUR.adresse).host : '';
   const turnstile = 'https://challenges.cloudflare.com';
+  // Le bouton de Google (services/boutonGoogle.ts) : son script, sa feuille de style, son cadre et ses échanges, et
+  // rien d'autre de Google (https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid).
+  const google = SERVEUR.clientGoogle ? 'https://accounts.google.com/gsi/' : '';
   return [
     "default-src 'self'",
-    `script-src 'self' ${turnstile}`,
-    "style-src 'self' 'unsafe-inline'", // les styles posés par React (style={…}) et l'écran d'attente d'index.html
+    `script-src 'self' ${turnstile}${google ? ` ${google}client` : ''}`,
+    `style-src 'self' 'unsafe-inline'${google ? ` ${google}style` : ''}`, // les styles posés par React (style={…}) et l'écran d'attente d'index.html
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self'${serveur ? ` https://${serveur} wss://${serveur}` : ''}`,
-    `frame-src ${turnstile}`,
+    `connect-src 'self'${serveur ? ` https://${serveur} wss://${serveur}` : ''}${google ? ` ${google}` : ''}`,
+    `frame-src ${turnstile}${google ? ` ${google}` : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

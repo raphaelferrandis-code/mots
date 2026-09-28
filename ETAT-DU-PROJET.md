@@ -2,6 +2,19 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 (soir) — le bouton de Google dans le jeu.** Décision de Raphaël (voie A) : l'écran de Google
+> nommait `…supabase.co`, et la vérification de la marque est impossible tant que le retour passe par ce domaine. La
+> connexion Google passe désormais par Google Identity Services : notre bouton « Continuer avec Google » charge, au
+> toucher seulement, le bouton de Google (`src/composants/BoutonGoogle.tsx`, `src/services/boutonGoogle.ts`) ; le
+> jeton d'identité rendu est échangé par `token?grant_type=id_token` avec un nonce (empreinte SHA-256 donnée à
+> Google), `link_identity` en création (`entrerAvecGoogle`, authentification.ts et connexion.ts). `SERVEUR.clientGoogle`
+> (identifiant public du client « Philamots Web ») ; vide, il rétablit l'ancienne voie. CSP ouverte à
+> `https://accounts.google.com/gsi/` seulement. Confidentialité : une phrase sur ce que Google reçoit quand on touche le
+> bouton. Vérifié : tests (595), de bout en bout sur le banc avec une doublure de Google (création reliée à l'invité,
+> connexion depuis un autre appareil, compte Google déjà utilisé refusé ; rien de Google avant le toucher), vrai bouton
+> de Google affiché par le site construit sans refus de la CSP. **Pour Raphaël : l'essai avec son compte Google, puis
+> le ménage dans Google Cloud et la demande de vérification (étape 23 d'A-FAIRE-RAPHAEL).**
+
 > **28 septembre 2026 (soir) — scripts 26 et 27 collés par Raphaël, vérifiés de l'extérieur.** Avec la clé publique du
 > jeu, sans compte : `animer_le_marche`, `pseudonyme_maison` et `purger_les_comptes_inactifs` existent et refusent un
 > visiteur (42501, et non « fonction introuvable ») ; les colonnes `encheres.simulee`, `vendeur_maison`,

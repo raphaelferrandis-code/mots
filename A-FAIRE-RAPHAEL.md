@@ -434,25 +434,30 @@ collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être re
 
 ### Étape 23 — Faire reconnaître Philamots par Google, et protéger le nom
 
-**A. Le nom affiché par Google à la connexion (en attente de ta décision).** Aujourd'hui, l'écran de Google dit
-« … pour continuer vers `cgubfyxyivgufslpwlld.supabase.co` ». Google n'affiche le nom d'une application qu'après la
-« vérification de la marque », et cette vérification exige de prouver qu'on possède **chaque** domaine utilisé par la
-connexion ; or le retour de Google passe par le domaine de Supabase, `supabase.co`, qui ne peut pas être le tien. Ajouter
-le logo et demander la vérification, dans l'état actuel, ne suffirait donc pas. Trois voies :
+**A. Le nom affiché par Google à la connexion.** L'écran de Google disait « … pour continuer vers
+`cgubfyxyivgufslpwlld.supabase.co` » : Google n'affiche le nom d'une application qu'après la « vérification de la
+marque », qui exige de posséder **chaque** domaine utilisé par la connexion, et le retour passait par celui de
+Supabase. Ta décision du 28 septembre : **le bouton de Google dans le jeu**. C'est fait et publié : la connexion Google
+se fait désormais sur philamots.fr même (rien de Google n'est chargé avant que le joueur touche « Continuer avec
+Google »). Il te reste, dans l'ordre :
 
-- **Le bouton de Google dans le jeu (gratuit, recommandé)** : l'assistant change la connexion Google du jeu pour
-  qu'elle se fasse sur philamots.fr même, sans passer par Supabase. L'écran de Google dira alors « philamots.fr »
-  tout de suite, puis « Philamots » avec le logo une fois la marque vérifiée. Il te restera trois réglages (Google Cloud
-  et Supabase, écran par écran) et un essai avec ton compte Google.
-- **Un domaine à ton nom chez Supabase** (`auth.philamots.fr`) : sans changer le jeu, mais il faut l'offre Pro de
-  Supabase (25 $ par mois) et l'option « Custom domain » (10 $ par mois).
-- **Ne rien changer pour l'instant** : la connexion marche, seule l'adresse affichée n'inspire pas confiance.
-
-Dans tous les cas, dès maintenant et sans risque :
-
-- [ ] Google Cloud (projet **philamots**) → **Google Auth Platform** → **Branding** : remplacer la page de
-      confidentialité par **https://philamots.fr/confidentialite/** (l'ancienne adresse, avec `#/`, ouvre le jeu) et
-      ajouter les conditions **https://philamots.fr/conditions/**. Ne pas ajouter le logo avant d'avoir choisi une voie.
+- [ ] **L'essai (5 minutes).** Sur ton téléphone, ouvrir philamots.fr dans une **fenêtre de navigation privée** (pour
+      être invité) → **Mon compte** → **Se connecter** → **Continuer avec Google** → toucher le bouton de Google qui
+      apparaît. La fenêtre de Google doit maintenant parler de **philamots.fr**. Choisir ton compte : tu es connecté.
+      Dis-le à l'assistant, puis referme la fenêtre privée.
+- [ ] **Ensuite seulement**, Google Cloud (projet **philamots**) → **Google Auth Platform** :
+      - **Clients** → « Philamots Web » → **URI de redirection autorisés** : retirer
+        `https://cgubfyxyivgufslpwlld.supabase.co/auth/v1/callback` → **Enregistrer** (les origines JavaScript gardent
+        `https://philamots.fr`) ;
+      - **Branding** → **Domaines autorisés** : retirer `supabase.co`, garder `philamots.fr` ; page de confidentialité
+        **https://philamots.fr/confidentialite/** (l'ancienne adresse, avec `#/`, ouvre le jeu) ; conditions
+        **https://philamots.fr/conditions/** ; logo : `public/identite/icone-site-512.png` → **Enregistrer** ;
+      - **Centre de validation** (Verification Center) → demander la **vérification de la marque**. Google vérifie
+        que tu possèdes philamots.fr avec la Search Console, où le site est déjà vérifié (même compte Google). Quelques
+        minutes, parfois deux ou trois jours ouvrés. Après : l'écran de Google dit « Philamots », avec le logo.
+- Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
+  `contact@philamots.fr` à la place, il faut un compte Google créé avec cette adresse et ajouté comme propriétaire du
+  projet (l'assistant peut te guider).
 - [ ] Search Console → **Inspection de l'URL** → `https://philamots.fr/` → **Tester l'URL en direct** → **Afficher la
       page testée** : vérifier que Google voit bien l'accueil du jeu (et pas un message d'erreur du contrôle anti-robot).
 

@@ -49,6 +49,16 @@ export async function connexionGoogle(mode: 'creation' | 'connexion'): Promise<v
   window.location.assign(url);
 }
 
+// Le bouton de Google dans le jeu (composants/BoutonGoogle.tsx) : le jeton d'identité rendu par Google devient une
+// session. En création, le compte Google est relié à l'invité et la collection reste ; en connexion, l'appareil prend
+// la collection du compte. La page repart ensuite avec la nouvelle session, comme après un code reçu par e-mail.
+export async function entrerAvecGoogle(jeton: string, nonce: string, mode: 'creation' | 'connexion'): Promise<void> {
+  verifierStockageConnexion();
+  const session = await authentification.entrerAvecGoogle(jeton, nonce, mode);
+  installerConnexion(session, mode === 'creation');
+  window.location.reload();
+}
+
 export let erreurDuRetour: string | null = null;
 // Exécuté avant de démarrer React : aucune requête du jeu ne part avec l'ancienne identité.
 export async function traiterRetourConnexion(): Promise<void> {
