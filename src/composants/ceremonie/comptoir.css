@@ -1,10 +1,9 @@
-/* Le comptoir des paquets (haut de l'accueil de la maquette). */
+/* Le comptoir des paquets (haut de l'accueil de la maquette). Sur ordinateur, voir la fin du fichier. */
 
 .comptoir {
   width: 100%; box-sizing: border-box;
   display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); align-items: center; gap: clamp(24px, 5vw, 80px);
   max-width: 1320px; margin: 0 auto; padding: clamp(20px, 5vh, 64px) 0 clamp(20px, 4vh, 48px);
-  min-height: calc(100svh - 160px);
   overflow-x: clip; color: var(--texte); font-family: var(--police-douce);
 }
 .comptoir__titre { margin: 0 0 38px; font-family: var(--police-serif); font-weight: 900; font-size: clamp(50px, 7.2vw, 110px); line-height: .93; letter-spacing: -.022em; color: var(--texte-fort); text-wrap: balance; }
@@ -82,4 +81,18 @@
 @media (max-width: 980px) {
   .comptoir-bas--double { grid-template-columns: 1fr; }
   .album-apercu__cases { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* Sur ordinateur, l'accueil tient dans l'écran (demande de Raphaël du 29/09/2026 : sur son écran de 2000 × 990, le
+   comptoir occupait à lui seul toute la hauteur, 830 px, et repoussait la collection et les duels). Il ne prend plus que
+   sa place : titre et paquet suivent la hauteur de la fenêtre, marges resserrées. Mesuré : tout se voit, jusqu'au fil
+   d'activité, en 2000 × 990 et 1920 × 950 ; en 1440 × 800 et 1536 × 730, la collection et les duels (le fil juste
+   dessous). Le téléphone et la tablette ne changent pas. */
+@media (min-width: 981px) {
+  .comptoir { padding: clamp(8px, 1.5vh, 32px) 0 clamp(12px, 3vh, 40px); } /* plus bas qu'en haut : la pile déborde vers le bas */
+  .comptoir__titre { margin-bottom: clamp(20px, 3.2vh, 38px); font-size: clamp(46px, min(7.2vw, 8.8vh), 110px); }
+  .comptoir__scene { --pw: min(330px, 28vh); min-height: clamp(320px, 42vh, 640px); }
+  /* Le halo déborde de la scène sans l'agrandir : plus large que le paquet, il en fixait la hauteur. */
+  .comptoir__scene::before { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
+  .comptoir-bas { padding: clamp(20px, 3vh, 44px) 0 clamp(20px, 3vh, 52px); }
 }
