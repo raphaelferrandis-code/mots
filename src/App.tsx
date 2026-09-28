@@ -3,6 +3,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 import { Recompenses } from './composants/Recompenses.tsx';
 import { BandeauNavigateurIntegre } from './composants/BandeauNavigateurIntegre.tsx';
+import { FondAnime } from './composants/accueil/FondAnime.tsx';
 import { FiletDErreur } from './composants/FiletDErreur.tsx';
 import { HoteDesConfirmations } from './composants/Confirmation.tsx';
 import { Navigation } from './composants/Navigation.tsx';
@@ -72,6 +73,11 @@ const EssaiPaquets = import.meta.env.DEV ? aLaDemande(() => import('./ecrans/Ess
 
 // Les onglets et l'ouverture d'un paquet, préchargés dès que la page est prête : y aller ne fait rien attendre.
 const PRECHARGES = [Collection, FicheCarte, OuverturePaquet, Duel, Marche];
+
+// Les onglets posés sur les rosaces immobiles : l'accueil, l'album et le marché (décision de Raphaël du 28/09/2026).
+// Le fond est rendu ici, hors des écrans : d'un de ces onglets à l'autre, il reste en place, sans être redessiné.
+// (Le duel et l'ouverture d'un paquet ont le leur, qui tourne.)
+const SUR_LES_ROSACES: ReadonlySet<Route['ecran']> = new Set(['accueil', 'collection', 'marche']);
 
 function Ecran({ route }: { route: Route }) {
   switch (route.ecran) {
@@ -163,6 +169,7 @@ export function App() {
 
   return (
     <Recompenses profil={partie.etat === 'prete' ? partie.sauvegarde.profil : null} repere={repereDesRecompenses()}><div className="application">
+      {SUR_LES_ROSACES.has(route.ecran) && <FondAnime immobile />}
       <button type="button" className="evitement" onClick={() => allerAuContenu()}>Aller au contenu</button>
       <Navigation ecran={route.ecran} encre={partie.etat === 'prete' ? partie.sauvegarde.encre : null} xp={partie.etat === 'prete' ? partie.sauvegarde.profil.xp : null}
         pseudo={partie.etat === 'prete' ? pseudoDuJoueur(partie.sauvegarde) : ''} portrait={partie.etat === 'prete' ? profilVisible(partie.sauvegarde.profil, partie.compte?.formule ?? null) : null}

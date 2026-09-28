@@ -3,7 +3,6 @@ import { Courrier } from '../composants/accueil/Courrier.tsx';
 import { DevinetteDuJour } from '../composants/accueil/DevinetteDuJour.tsx';
 import { DuelsDuBureau } from '../composants/accueil/DuelsDuBureau.tsx';
 import { FilDActivite } from '../composants/accueil/FilDActivite.tsx';
-import { FondAnime } from '../composants/accueil/FondAnime.tsx';
 import { NouvellesDuParrainage } from '../composants/accueil/NouvellesDuParrainage.tsx';
 import { PremiersPas } from '../composants/accueil/PremiersPas.tsx';
 import { Comptoir } from '../composants/ceremonie/Comptoir.tsx';
@@ -28,7 +27,7 @@ function lireLeReport(): number | null {
 }
 
 // L'accueil de la refonte (maquette de la cérémonie) : le comptoir des paquets, l'album en aperçu et les duels,
-// la devinette du jour, le fil d'activité des collectionneurs, sur le fond vivant.
+// la devinette du jour, le fil d'activité des collectionneurs, sur les rosaces du fond (posées par App.tsx).
 export function Accueil() {
   const partie = usePartie();
   const [reporteA, setReporteA] = useState(lireLeReport);
@@ -66,7 +65,6 @@ export function Accueil() {
 
   return (
     <main className="ecran ecran--large accueil-refonte">
-      <FondAnime immobile />
       <NouvellesDuParrainage />
       <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} suite={<><PremiersPas sauvegarde={sauvegarde} carnet={deck} /><Courrier /></>} />
       <DevinetteDuJour />

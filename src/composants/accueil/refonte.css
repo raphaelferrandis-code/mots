@@ -1,6 +1,6 @@
 /* L'accueil de la refonte (maquette) : fond vivant, bloc Duels, fil d'activité. */
 
-.fond-anime { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.fond-anime { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; } /* sa taille en pixels : FondAnime.tsx */
 .fond-anime__grain, .fond-anime__vignette { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
 .fond-anime__grain { background-image: var(--grain-papier); opacity: .14; mix-blend-mode: overlay; }
 .fond-anime__vignette { background: radial-gradient(120% 90% at 50% 35%, transparent 55%, rgba(3, 6, 14, .65)); }
