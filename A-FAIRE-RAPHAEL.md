@@ -467,8 +467,11 @@ Google »). Il te reste, dans l'ordre :
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
   `contact@philamots.fr` à la place, il faut un compte Google créé avec cette adresse et ajouté comme propriétaire du
   projet (l'assistant peut te guider).
-- [ ] Search Console → **Inspection de l'URL** → `https://philamots.fr/` → **Tester l'URL en direct** → **Afficher la
-      page testée** : vérifier que Google voit bien l'accueil du jeu (et pas un message d'erreur du contrôle anti-robot).
+- [ ] Search Console (https://search.google.com/search-console, propriété `https://philamots.fr/`) → coller
+      `https://philamots.fr/` dans la barre du haut (« Inspecter n'importe quelle URL ») → Entrée → **Tester l'URL en
+      ligne** (en haut à droite) → attendre une minute → **Afficher la page testée** → onglet **Capture d'écran** :
+      vérifier que Google voit bien l'accueil du jeu (et pas « Chargement du jeu… » ni un message d'erreur du contrôle
+      anti-robot). Envoyer la capture à l'assistant, avec l'onglet **Plus d'infos** s'il signale des erreurs.
 
 **B. Déposer le nom Philamots à l'INPI (à faire toi-même, environ 30 minutes, 230 € pour deux classes).**
 
