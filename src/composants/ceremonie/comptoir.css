@@ -27,9 +27,7 @@
 .comptoir__scene::before {
   content: ''; grid-area: 1 / 1; width: calc(var(--pw) * 1.9); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, rgba(216, 154, 92, .2), rgba(216, 154, 92, .05) 40%, transparent 64%);
-  animation: comptoir-souffle 6s ease-in-out infinite;
 }
-@keyframes comptoir-souffle { 50% { transform: scale(1.07); opacity: .75; } }
 .comptoir__fantome { width: var(--pw); pointer-events: none; filter: brightness(.5) saturate(.8); transition: opacity .5s, transform .5s; }
 .comptoir__fantome--1 { transform: translate(-36px, 18px) rotate(-8deg); }
 .comptoir__fantome--2 { transform: translate(32px, 28px) rotate(6.5deg); }
@@ -57,8 +55,8 @@
   .comptoir__accroche { order: 1; margin: 22px 0 0; }
   .comptoir__infos { order: 2; }
 }
-@media (prefers-reduced-motion: reduce) { .comptoir__paquet, .comptoir__scene::before { animation: none; } }
-:root[data-animations-reduites] :is(.comptoir__paquet, .comptoir__scene::before) { animation: none; }
+@media (prefers-reduced-motion: reduce) { .comptoir__paquet { animation: none; } }
+:root[data-animations-reduites] .comptoir__paquet { animation: none; }
 
 /* ── Sous le comptoir : l'album en aperçu (et, sur l'accueil, les duels à côté) ── */
 

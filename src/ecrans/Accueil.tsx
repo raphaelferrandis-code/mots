@@ -64,7 +64,7 @@ export function Accueil() {
 
   return (
     <main className="ecran ecran--large accueil-refonte">
-      <FondAnime />
+      <FondAnime immobile />
       <NouvellesDuParrainage />
       <Comptoir aCote={<DuelsDuBureau sauvegarde={sauvegarde} deck={deck} />} accroche={accroche || undefined} suite={<PremiersPas sauvegarde={sauvegarde} carnet={deck} />} />
       <DevinetteDuJour />

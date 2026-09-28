@@ -2,6 +2,7 @@
 // dernières trouvailles dans leurs cases dentelées, les Hors-série et le lien vers l'album complet.
 // Pendant l'envol d'un paquet, les cases qui attendent leur timbre restent vides et le compte monte à chaque arrivée.
 
+import { memo, useMemo } from 'react';
 import type { Ref } from 'react';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
@@ -28,10 +29,12 @@ type Props = {
   refAlbum?: Ref<HTMLElement>;
 };
 
-export function ApercuDeLAlbum({ sauvegarde, cartes, cachees, compte = null, refAlbum }: Props) {
-  const collection = cartes ? preparerAccueil(sauvegarde, cartes).collection : null;
+// Mémorisé : le comptoir se redessine chaque seconde (compte à rebours du prochain paquet) ; l'aperçu, lui, ne se
+// recalcule (3 016 cartes filtrées, les trouvailles triées) que si l'album change (audit de finition, P17).
+export const ApercuDeLAlbum = memo(function ApercuDeLAlbum({ sauvegarde, cartes, cachees, compte = null, refAlbum }: Props) {
+  const collection = useMemo(() => (cartes ? preparerAccueil(sauvegarde, cartes).collection : null), [sauvegarde, cartes]);
   const affiche = useNombreAnime(compte ?? collection?.possedees ?? null, 250);
-  const trouvailles = cartes ? dernieresTrouvailles(sauvegarde, cartes) : [];
+  const trouvailles = useMemo(() => (cartes ? dernieresTrouvailles(sauvegarde, cartes) : []), [sauvegarde, cartes]);
 
   return (
     <section className="album-apercu" id="album-apercu" ref={refAlbum} aria-labelledby="titre-album-apercu">
@@ -55,4 +58,4 @@ export function ApercuDeLAlbum({ sauvegarde, cartes, cachees, compte = null, ref
       </p>
     </section>
   );
-}
+});

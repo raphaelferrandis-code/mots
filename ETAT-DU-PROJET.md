@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 4 « Rapide et sobre », lot A : l'accueil se repose.** Décision de Raphaël
+> (option B) : sur l'accueil, seul le paquet bouge. Le fond (`FondAnime immobile`) est dessiné une fois, le halo ne
+> respire plus, le fil d'activité ne défile plus (on le fait glisser ; plus de bouton « Pause »). L'encre vivante du
+> paquet se fige après 15 s sans geste et repart au moindre geste ; l'inclinaison vers la souris ne tourne qu'avec une
+> souris et le temps de rejoindre sa cible (plus de mesure à chaque image). L'aperçu de l'album est mémorisé (il se
+> recalculait à chaque seconde du compte à rebours). Mesure (site construit, téléphone simulé, processeur ×4) : au
+> repos, 548 → 10 ms de calcul par seconde (ordinateur : 108 → 3) ; 324 ms/s pendant les 15 s où l'encre bouge.
+
 > **26 septembre 2026 (soir) — finitions, étape 3, lot D : typographie et sobriété (fin de l'étape 3).** Un plancher de
 > 12 px pour les textes qui informent (Profil sur téléphone surtout ; les dessins et les pastilles du duel, calées au
 > pixel, gardent leur taille) ; chiffres alignés partout (`font-variant-numeric: lining-nums` sur `body`, chiffres de

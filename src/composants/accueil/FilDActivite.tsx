@@ -1,5 +1,6 @@
-// Le fil d'activité défilant du bas de l'accueil (maquette : ticker), nourri par les vrais événements du serveur.
-// Sans événement (ou sans serveur), il ne s'affiche pas. Il se met à jour toutes les deux minutes.
+// Le fil d'activité du bas de l'accueil, nourri par les vrais événements du serveur. Sans événement (ou sans serveur),
+// il ne s'affiche pas. Il se met à jour toutes les deux minutes. Il ne défile plus tout seul (décision de Raphaël du
+// 28/09/2026 : seul le paquet bouge sur l'accueil) : on le fait glisser.
 
 import { useEffect, useState } from 'react';
 import { chargerLeFil, phraseDuFil } from '../../services/activite.ts';
@@ -7,8 +8,6 @@ import type { EvenementDuFil } from '../../services/activite.ts';
 
 export function FilDActivite({ evenements: fournis }: { evenements?: EvenementDuFil[] } = {}) {
   const [charges, setCharges] = useState<EvenementDuFil[] | null>(null);
-  // Un texte qui défile doit pouvoir s’arrêter (WCAG 2.2.2) : au survol, au clavier, ou d’un bouton.
-  const [enPause, setEnPause] = useState(false);
   useEffect(() => {
     if (fournis) return;
     let actif = true;
@@ -20,14 +19,11 @@ export function FilDActivite({ evenements: fournis }: { evenements?: EvenementDu
 
   const evenements = fournis ?? charges;
   if (!evenements || evenements.length === 0) return null;
-  // Deux fois la même suite : le défilement boucle sans à-coup (il s'arrête au survol et au bouton « Pause »).
-  const suite = (copie: number) => evenements.map((e, i) => <span key={`${copie}-${i}`} className="fil__evenement" aria-hidden={copie === 1 || undefined}>
-    <span>{phraseDuFil(e).map((m, k) => m.fort ? <b key={k}>{m.texte}</b> : m.texte)}</span><i aria-hidden="true">✦</i>
-  </span>);
   return (
-    <section className="fil" aria-label="Activité récente du bureau" data-pause={enPause}>
-      <div className="fil__fenetre"><div className="fil__piste" style={{ animationDuration: `${Math.max(40, evenements.length * 9)}s` }}>{suite(0)}{suite(1)}</div></div>
-      <button type="button" className="fil__pause" aria-pressed={enPause} onClick={() => setEnPause((p) => !p)}>{enPause ? 'Reprendre' : 'Pause'}</button>
+    <section className="fil" aria-label="Activité récente du bureau">
+      <div className="fil__fenetre" tabIndex={0}><div className="fil__piste">{evenements.map((e, i) => <span key={i} className="fil__evenement">
+        <span>{phraseDuFil(e).map((m, k) => m.fort ? <b key={k}>{m.texte}</b> : m.texte)}</span><i aria-hidden="true">✦</i>
+      </span>)}</div></div>
     </section>
   );
 }

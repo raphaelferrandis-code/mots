@@ -1,6 +1,8 @@
 // Le fond vivant de l'accueil (maquette : BG) : de grandes rosaces qui tournent lentement, décalées par le pointeur,
 // et une poussière dorée qui monte. Les rosaces sont dessinées une fois dans des canevas hors écran.
 // Le fond s'arrête quand l'onglet est caché ou qu'une cérémonie occupe l'écran ; immobile si le mouvement est réduit.
+// « immobile » : dessiné une seule fois, sans boucle ni suivi du pointeur (l'accueil, décision de Raphaël du 28/09/2026 :
+// seul le paquet y bouge ; redessiné à chaque image, ce fond occupait le processeur d'un téléphone au repos).
 
 import { useEffect, useRef } from 'react';
 import { rosace } from '../timbre/dessins.ts';
@@ -13,7 +15,7 @@ const ROSACES = [
   { x: .3, y: 1.02, s: .55, R: 70, r: 23, d: 43, couleur: 'rgba(216,154,92,.11)', vitesse: -.04, profondeur: 22 },
 ];
 
-export function FondAnime() {
+export function FondAnime({ immobile = false }: { immobile?: boolean } = {}) {
   const toile = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -74,10 +76,10 @@ export function FondAnime() {
 
     construire();
     dessiner(performance.now());
-    if (!reduit()) { cadre = requestAnimationFrame(boucle); window.addEventListener('pointermove', suivre, { passive: true }); }
+    if (!immobile && !reduit()) { cadre = requestAnimationFrame(boucle); window.addEventListener('pointermove', suivre, { passive: true }); }
     window.addEventListener('resize', redimensionner);
     return () => { cancelAnimationFrame(cadre); clearTimeout(minuterie); window.removeEventListener('pointermove', suivre); window.removeEventListener('resize', redimensionner); };
-  }, []);
+  }, [immobile]);
 
   return <>
     <canvas className="fond-anime" ref={toile} aria-hidden="true" />

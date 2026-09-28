@@ -54,31 +54,60 @@ export function Comptoir({ aCote, accroche, suite }: { aCote?: ReactNode; accroc
   // Les récompenses (niveau, succès) attendent la fin de la cérémonie.
   useRecompensesSuspendues(ouverture !== null);
 
-  // Le paquet s'incline doucement vers le pointeur, sauf quand la cérémonie occupe l'écran.
+  // Le paquet s'incline doucement vers la souris, sauf quand la cérémonie occupe l'écran. Pas sur un écran tactile, où
+  // rien ne le fait pencher ; et la boucle ne tourne que le temps de rejoindre l'inclinaison voulue, puis s'arrête. Le
+  // paquet est mesuré à l'arrivée, au défilement et au redimensionnement, pas à chaque image (audit de finition, P01 :
+  // au repos, cette boucle occupait le processeur d'un téléphone sans que rien ne bouge).
   useEffect(() => {
     if (ouverture) return;
-    const reduit = mouvementReduit(); // (le réglage du jeu compte aussi, pas seulement celui de l'appareil)
+    if (mouvementReduit() || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const pointeur = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
     const penche = { rx: 0, ry: 0 };
-    const suivre = (e: PointerEvent): void => { pointeur.x = e.clientX; pointeur.y = e.clientY; };
+    const paquet = (): HTMLElement | null | undefined => scene.current?.querySelector<HTMLElement>('.comptoir__paquet .cp'); // celui du devant, pas la pile
     let cadre = 0;
-    const boucle = (): void => {
-      const paquet = scene.current?.querySelector<HTMLElement>('.comptoir__paquet .cp'); // celui du devant, pas la pile
-      const incline = paquet?.querySelector<HTMLElement>('.cp__inclinaison');
-      const r = paquet?.getBoundingClientRect();
-      if (paquet && incline && r?.width && !document.hidden) {
-        const dx = Math.max(-1, Math.min(1, (pointeur.x - (r.left + r.width / 2)) / (window.innerWidth * .45)));
-        const dy = Math.max(-1, Math.min(1, (pointeur.y - (r.top + r.height / 2)) / (window.innerHeight * .45)));
-        penche.rx += (-dy * 12 - penche.rx) * .08; penche.ry += (dx * 22 - penche.ry) * .08;
-        incline.style.transform = `rotateX(${penche.rx.toFixed(2)}deg) rotateY(${penche.ry.toFixed(2)}deg)`;
-        const mx = .5 + penche.ry / 44, my = .5 - penche.rx / 24;
-        paquet.style.setProperty('--mx', mx.toFixed(3)); paquet.style.setProperty('--my', my.toFixed(3));
-        paquet.style.setProperty('--gx', `${(mx * 100).toFixed(1)}%`); paquet.style.setProperty('--gy', `${(my * 60).toFixed(1)}%`);
-      }
-      cadre = requestAnimationFrame(boucle);
+    let r: DOMRect | null = null;
+    const mesurer = (): void => { r = paquet()?.getBoundingClientRect() ?? null; };
+    const pas = (): void => {
+      const p = paquet();
+      const incline = p?.querySelector<HTMLElement>('.cp__inclinaison');
+      if (!p || !incline || !r?.width || document.hidden) { cadre = 0; return; }
+      const dx = Math.max(-1, Math.min(1, (pointeur.x - (r.left + r.width / 2)) / (window.innerWidth * .45)));
+      const dy = Math.max(-1, Math.min(1, (pointeur.y - (r.top + r.height / 2)) / (window.innerHeight * .45)));
+      const cible = { rx: -dy * 12, ry: dx * 22 };
+      penche.rx += (cible.rx - penche.rx) * .08; penche.ry += (cible.ry - penche.ry) * .08;
+      incline.style.transform = `rotateX(${penche.rx.toFixed(2)}deg) rotateY(${penche.ry.toFixed(2)}deg)`;
+      const mx = .5 + penche.ry / 44, my = .5 - penche.rx / 24;
+      p.style.setProperty('--mx', mx.toFixed(3)); p.style.setProperty('--my', my.toFixed(3));
+      p.style.setProperty('--gx', `${(mx * 100).toFixed(1)}%`); p.style.setProperty('--gy', `${(my * 60).toFixed(1)}%`);
+      cadre = Math.abs(cible.rx - penche.rx) + Math.abs(cible.ry - penche.ry) > .05 ? requestAnimationFrame(pas) : 0;
     };
-    if (!reduit) { window.addEventListener('pointermove', suivre, { passive: true }); cadre = requestAnimationFrame(boucle); }
-    return () => { cancelAnimationFrame(cadre); window.removeEventListener('pointermove', suivre); };
+    const suivre = (e: PointerEvent): void => {
+      pointeur.x = e.clientX; pointeur.y = e.clientY;
+      if (!r) mesurer();
+      if (!cadre) cadre = requestAnimationFrame(pas);
+    };
+    mesurer();
+    window.addEventListener('pointermove', suivre, { passive: true });
+    window.addEventListener('resize', mesurer);
+    window.addEventListener('scroll', mesurer, { passive: true });
+    return () => { cancelAnimationFrame(cadre); window.removeEventListener('pointermove', suivre); window.removeEventListener('resize', mesurer); window.removeEventListener('scroll', mesurer); };
+  }, [ouverture]);
+
+  // L'encre vivante du paquet bouge tant qu'on est là ; après 15 s sans un geste, elle se fige (le paquet continue de
+  // flotter) et le processeur se repose. Elle repart au moindre geste.
+  useEffect(() => {
+    if (ouverture) return;
+    const encres = (): SVGSVGElement[] => [...(scene.current?.querySelectorAll<SVGSVGElement>('.comptoir__paquet svg') ?? [])];
+    let minuterie = 0;
+    const reveiller = (): void => {
+      window.clearTimeout(minuterie);
+      encres().forEach((svg) => { if (svg.animationsPaused()) svg.unpauseAnimations(); });
+      minuterie = window.setTimeout(() => encres().forEach((svg) => svg.pauseAnimations()), 15_000);
+    };
+    const gestes = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'wheel'] as const;
+    reveiller();
+    gestes.forEach((g) => window.addEventListener(g, reveiller, { passive: true }));
+    return () => { window.clearTimeout(minuterie); gestes.forEach((g) => window.removeEventListener(g, reveiller)); };
   }, [ouverture]);
 
   // Si l'on quitte la page en plein envol, les compteurs reprennent leur vraie valeur.
