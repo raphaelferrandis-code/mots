@@ -107,13 +107,14 @@ export default defineConfig(({ mode }) => {
         liste = ['./', 'demarrage.js', 'manifest.webmanifest', 'identite/favicon-site.svg', 'identite/icone-site-32.png', 'identite/icone-site-192.png',
           'identite/philamots-clair.svg', ...fichiers, `data/edition-1.index.json?v=${process.env.VITE_VERSION_DES_DONNEES}`];
         // Les fichiers sans empreinte dans leur nom (demarrage.js, le manifeste, identite/) comptent par leur contenu :
-        // sinon leur nouvelle version ne remplacerait jamais la copie gardée.
-        const hache = createHash('sha256').update(liste.join('\n'));
+        // sinon leur nouvelle version ne remplacerait jamais la copie gardée. Le code du service worker aussi : une
+        // nouvelle façon de garder repart d'une copie neuve.
+        const modele = readFileSync(path.join(process.cwd(), 'scripts', 'sw.modele.js'), 'utf8');
+        const hache = createHash('sha256').update(modele).update(liste.join('\n'));
         const publics = ['demarrage.js', 'manifest.webmanifest', ...readdirSync(path.join(process.cwd(), 'public', 'identite'), { withFileTypes: true })
           .filter((entree) => entree.isFile()).map((entree) => `identite/${entree.name}`).sort()];
         for (const nom of publics) hache.update(nom).update(readFileSync(path.join(process.cwd(), 'public', nom)));
         const version = hache.digest('hex').slice(0, 12);
-        const modele = readFileSync(path.join(process.cwd(), 'scripts', 'sw.modele.js'), 'utf8');
         this.emitFile({ type: 'asset', fileName: 'sw.js', source: modele.replace("'%VERSION%'", JSON.stringify(version)).replace("'%FICHIERS%'", JSON.stringify(liste)) });
       },
       writeBundle(_options, bundle) {

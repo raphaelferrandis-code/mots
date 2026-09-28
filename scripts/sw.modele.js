@@ -35,8 +35,9 @@ self.addEventListener('activate', (evenement) => {
     .then(() => self.clients.claim()));
 });
 
-const garder = (demande, reponse) => {
-  if (reponse.ok && reponse.type === 'basic') { const copie = reponse.clone(); void caches.open(CACHE).then((cache) => cache.put(demande, copie)); }
+// Une copie de la réponse, gardée pour la prochaine fois (le service worker reste éveillé le temps de l'écrire).
+const garder = (evenement, cle, reponse) => {
+  if (reponse.ok && reponse.type === 'basic') { const copie = reponse.clone(); evenement.waitUntil(caches.open(CACHE).then((cache) => cache.put(cle, copie))); }
   return reponse;
 };
 
@@ -47,17 +48,26 @@ self.addEventListener('fetch', (evenement) => {
   if (adresse.origin !== RACINE.origin || !adresse.pathname.startsWith(RACINE.pathname)) return;
   const chemin = adresse.pathname.slice(RACINE.pathname.length);
 
-  // La page du jeu : le réseau d'abord, la copie hors ligne.
+  // La page du jeu : le réseau d'abord ; la copie hors ligne, ou si le réseau reste muet 3,5 s (métro, train : connecté
+  // mais rien ne passe). La réponse du réseau, même tardive, remplace la copie pour la prochaine fois.
   if (demande.mode === 'navigate') {
     if (chemin !== '' && chemin !== 'index.html') return;
-    evenement.respondWith(fetch(demande)
-      .then((reponse) => garder(RACINE.href, reponse))
-      .catch(() => caches.match(RACINE.href).then((copie) => copie ?? Response.error())));
+    const reseau = fetch(demande).then((reponse) => garder(evenement, RACINE.href, reponse));
+    evenement.waitUntil(reseau.catch(() => undefined));
+    evenement.respondWith(new Promise((repondre) => {
+      let repondu = false;
+      const une = (reponse) => { if (!repondu) { repondu = true; repondre(reponse); } };
+      const copie = () => caches.match(RACINE.href);
+      const minuterie = setTimeout(() => { void copie().then((gardee) => { if (gardee) une(gardee); }); }, 3500);
+      reseau
+        .then((reponse) => { clearTimeout(minuterie); une(reponse); })
+        .catch(() => { clearTimeout(minuterie); void copie().then((gardee) => une(gardee ?? Response.error())); });
+    }));
     return;
   }
 
   // Les fichiers à empreinte : depuis l'appareil, sinon le réseau (et on les garde).
   if (/^(assets|data|identite)\//.test(chemin) || chemin === 'demarrage.js' || chemin === 'manifest.webmanifest') {
-    evenement.respondWith(caches.match(demande).then((copie) => copie ?? fetch(demande).then((reponse) => garder(demande, reponse))));
+    evenement.respondWith(caches.match(demande).then((copie) => copie ?? fetch(demande).then((reponse) => garder(evenement, demande, reponse))));
   }
 });

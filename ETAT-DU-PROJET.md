@@ -10,7 +10,10 @@
 > d'avance ; `main.tsx` attend cette police au plus 0,3 s avant le premier rendu et lance le catalogue dès le début.
 > `src/services/auCalme.ts` : le préchargement des écrans (pas en « économie de données ») et l'installation du
 > service worker attendent le catalogue et les polices. Essayé puis écarté : catalogue et trois polices demandés
-> d'avance (accueil retardé de 0,6 s en 4G lente). En 4G normale, rien ne bouge de plus de 0,1 s.
+> d'avance (accueil retardé de 0,6 s en 4G lente). En 4G normale, rien ne bouge de plus de 0,1 s. Complément : si le
+> réseau reste muet (connecté mais rien ne passe, métro, train), le service worker affiche la copie de la page au bout
+> de 3,5 s (vérifié : accueil à 3,6 s au lieu de 9 s), et la réponse tardive la remplace ; sa version compte aussi son
+> propre code. Essai à faire par Raphaël : installer le jeu sur son téléphone (A-FAIRE-RAPHAEL.md, étape 5).
 
 > **28 septembre 2026 — finitions, étape 4, lot C : retour instantané, hors ligne, installable.**
 > Un service worker (`scripts/sw.modele.js`, rempli à la construction par le greffon `service-worker` de
