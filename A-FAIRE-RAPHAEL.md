@@ -1,6 +1,6 @@
 # Ce qu'il reste à faire — pour Raphaël
 
-*Mis à jour le 26 septembre 2026.* Une seule page pour reprendre le travail, sur n'importe quel ordinateur.
+*Mis à jour le 28 septembre 2026.* Une seule page pour reprendre le travail, sur n'importe quel ordinateur.
 L'état complet du projet est dans [ETAT-DU-PROJET.md](ETAT-DU-PROJET.md).
 
 ---
@@ -376,6 +376,21 @@ n'est pas collé, le marché reste comme avant.
       au public. Au premier passage d'un joueur, une douzaine de ventes apparaissent au marché.
 - Pour couper l'animation un jour : le demander à l'assistant (un interrupteur, puis ce même script à recoller).
 
+### Étape 20 — Réserver l'adresse ludophile.fr (le nom de ton futur studio)
+
+Ta décision du 28 septembre : ta future micro-entreprise, à créer après la sortie gratuite, aura pour nom commercial
+**« Studio Ludophile »**. Philamots reste le nom du jeu : « Philamots, un jeu édité par Studio Ludophile ». On ne peut
+avoir qu'une seule micro-entreprise : tes prochains jeux iront dans la même.
+
+- [ ] OVHcloud (là où est déjà `philamots.fr`) → commander **`ludophile.fr`**. L'adresse était libre le 28 septembre,
+      mais une adresse libre peut être prise à tout moment. Inutile de chercher `ludophile.com` : il est pris depuis 2005.
+- [ ] Plus tard, en créant la micro-entreprise : donner « Studio Ludophile » comme **nom commercial** (le nom officiel
+      sera ton nom suivi de « EI ») et décrire l'activité largement, par exemple « conception et édition de jeux en
+      ligne », pour que tes prochains jeux soient couverts eux aussi.
+- À savoir : le 28 septembre, aucune marque « Ludophile » n'était déposée à l'INPI et aucune entreprise ne portait ce
+  nom (seulement une association et des clubs de joueurs). Comme c'est un mot courant chez les joueurs, il sera
+  peut-être difficile à protéger comme marque : la marque à protéger en premier est **Philamots**.
+
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 
 Ta décision du 25 septembre : rester sur l'offre gratuite, et passer à **Pro (25 $/mois)** avant une grosse campagne de
@@ -412,6 +427,7 @@ L'étape 3 (anti-robot) est faite : on peut lancer une vraie campagne auprès d'
 - Juger les sons du jeu à l'oreille (duels, carillon des paquets).
 - Essayer le marché sur deux appareils.
 - Avant tout paiement réel : remplir les blancs de [docs/CGV-brouillon.md](docs/CGV-brouillon.md) et consulter un juriste.
+  Le vendeur sera ta micro-entreprise, « Studio Ludophile » (étape 20).
   **Les achats restent fermés** ; ils ne s'ouvrent que sur une demande explicite de Raphaël.
 
 ---

@@ -19,6 +19,13 @@
 > parties : solo (ordinateur contre téléphone), 2 contre 2 (deux navigateurs, deux joueurs pilotés), garde de sortie,
 > abandon (`scratchpad/chantier1/verif-joute*.mjs`). 568 tests.
 
+> **28 septembre 2026 — le nom du futur studio : « Studio Ludophile ».** Décision de Raphaël : sa future
+> micro-entreprise, à créer après la sortie gratuite, aura pour nom commercial « Studio Ludophile ». Philamots reste le
+> nom du jeu (« Philamots, un jeu édité par Studio Ludophile ») ; ses prochains jeux iront dans la même
+> micro-entreprise. `ludophile.fr` était libre le 28 septembre : à réserver chez OVHcloud (étape 20 d'A-FAIRE-RAPHAEL).
+> Aucune marque « Ludophile » à l'INPI ; mot courant chez les joueurs, donc marque peut-être difficile à protéger.
+> L'entreprise n'existe pas encore : ne toujours pas inventer de SIREN ni d'adresse dans les CGV. Aucun code changé.
+
 > **28 septembre 2026 — finitions, étape 5, lot F : les sons.** Raphaël a choisi à l'oreille, son par son, sur une page
 > d'écoute privée (https://claude.ai/artifact/9WYfGETfkAMYP7imvtCevi : 18 moments, le son d'aujourd'hui et le son
 > proposé ; ses choix sont enregistrés dans la base de la page). Une seule banque de sons,
