@@ -1017,7 +1017,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
           <PaquetDeCeremonie modele={modelePaquet} lueur={lueur ?? undefined} className="cp--scene" />
         </div>}
         {apercu !== null && cartes && <button type="button" ref={apercuDom} className="c-carte c-apercu" aria-label={`${cartes[apercu].carte.mot}, fermer l’aperçu`} onClick={() => setApercu(null)}>
-          <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere cliquable={false} reagir={false} /></div></div>
+          <div className="c-inclinaison"><div className="c-retourne"><Timbre carte={cartes[apercu].carte} finition={cartes[apercu].finition} oblitere cliquable={false} reagir={false} fin /></div></div>
         </button>}
       </div>
 
@@ -1050,7 +1050,7 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
         <button type="button" ref={grosPlanDom} className="c-gros-plan__timbre" onClick={() => void rangerLeTimbre()}
           aria-label={grosPlan.fiche ? `${detail.carte.mot}, ranger ce timbre` : 'Timbre détaché'}>
           <div className="c-inclinaison"><div className="c-retourne">
-            <Timbre carte={detail.carte} finition={detail.finition} verso montrerVerso={grosPlan.face === 'verso'} dos={dos} oblitere={grosPlan.dejaRevele} cliquable={false} reagir />
+            <Timbre carte={detail.carte} finition={detail.finition} verso montrerVerso={grosPlan.face === 'verso'} dos={dos} oblitere={grosPlan.dejaRevele} cliquable={false} reagir fin />
           </div></div>
         </button>
         <div ref={ficheDom} className={`c-gros-plan__fiche${grosPlan.fiche ? ' c-gros-plan__fiche--visible' : ''}`} aria-live="polite">

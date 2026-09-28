@@ -42,6 +42,7 @@ type Props = {
   dentele?: boolean; // false : sans découpe dentelée (timbre encore dans sa feuille : les perforations dessinent ses bords)
   reagir?: boolean; // les reflets suivent le pointeur (par défaut : dès qu'il y a un reflet à faire jouer)
   cliquable?: boolean; // ouvre la fiche de la carte
+  fin?: boolean; // un grand timbre (fiche, gros plan, image de partage) : rosaces dessinées finement
   sansDefinition?: boolean; // compatibilité avec la carte précédente : la définition n'est plus sur le timbre
   onChoisir?: () => void; // le timbre devient un bouton
   action?: string; // ce que fait ce bouton, pour les lecteurs d'écran
@@ -50,7 +51,7 @@ type Props = {
 };
 
 // Mémorisé : un timbre ne se redessine que si ce qu'il montre change (la cérémonie en anime plusieurs à la fois).
-export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, reagir, cliquable = true, onChoisir, action, className, style }: Props) {
+export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblitere = false, obtenuLe = null, verso = false, montrerVerso = false, dosRenseigne = false, dos = 'gomme', dentele = true, reagir, cliquable = true, fin = false, onChoisir, action, className, style }: Props) {
   const racine = useRef<HTMLElement>(null);
   const niveau = NIVEAU[carte.rarete];
   const horsSerie = carte.rarete === 'Hors-série';
@@ -77,8 +78,8 @@ export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblite
       <span className="tb__face tb__recto">
         <span className="tb__papier" />
         <span className="tb__impression">
-          {horsSerie && <FondDesHorsSerie idCarte={carte.id} />}
-          <VignetteDuTimbre carte={carte} />
+          {horsSerie && <FondDesHorsSerie idCarte={carte.id} fin={fin} />}
+          <VignetteDuTimbre carte={carte} fin={fin} />
           <span className="tb__haut">
             <span className="tb__valeur">{attaque}<small>Att.</small></span>
             <span className="tb__origine">Origine<br />{NOM_COURT[carte.faction] ?? carte.faction}<span className="tb__rang" aria-hidden="true">{horsSerie ? '✦' : '◆'.repeat(niveau)}</span></span>
@@ -114,7 +115,7 @@ export const Timbre = memo(function Timbre({ carte, finition = 'Normale', oblite
 });
 
 // La rosace guillochée, unique à chaque mot, avec l'initiale au centre. Les Hors-série ont leur dessin à eux.
-function VignetteDuTimbre({ carte }: { carte: CarteIndex }) {
+function VignetteDuTimbre({ carte, fin }: { carte: CarteIndex; fin: boolean }) {
   const id = useId();
   const illustration = VIGNETTES[carte.id];
   if (illustration) {
@@ -125,7 +126,7 @@ function VignetteDuTimbre({ carte }: { carte: CarteIndex }) {
       <svg className="tb__illustration" x="-66" y="-66" width="132" height="132" viewBox="0 0 60 60">{illustration(id)}</svg>
     </svg></span>;
   }
-  const [grande, petite] = tracesDeLaVignette(carte.id);
+  const [grande, petite] = tracesDeLaVignette(carte.id, fin);
   return <span className="tb__vignette" aria-hidden="true"><svg viewBox="-110 -110 220 220">
     <circle className="tb__trait" r="106" strokeWidth=".7" opacity=".45" />
     <circle className="tb__trait" r="101" strokeWidth=".45" strokeDasharray="1 2.4" opacity=".55" />
@@ -140,8 +141,8 @@ function VignetteDuTimbre({ carte }: { carte: CarteIndex }) {
 // Le fond vivant des Hors-série : deux grandes rosaces qui tournent lentement en sens contraire, et une poussière
 // dorée et irisée qui monte en scintillant, comme le fond de la maquette. Positions propres au mot, donc stables.
 const POUSSIERES = 14;
-function FondDesHorsSerie({ idCarte }: { idCarte: string }) {
-  const [grande, petite] = tracesDeLaVignette(`${idCarte}-fond`);
+function FondDesHorsSerie({ idCarte, fin }: { idCarte: string; fin: boolean }) {
+  const [grande, petite] = tracesDeLaVignette(`${idCarte}-fond`, fin);
   const h = hasardReproductible(empreinte(idCarte) ^ 0x5bd1e995);
   const grains = Array.from({ length: POUSSIERES }, (_, i) => ({
     '--x': `${(4 + h() * 92).toFixed(1)}%`,

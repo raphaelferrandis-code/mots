@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape 4, lot B : l'album des gros collectionneurs.** Rosaces des timbres d'album à
+> 48 points par boucle et une décimale (deux fois moins de données ; 24 et 36 crénelaient, comparé à l'œil), fines (90)
+> pour les grands timbres (`fin` : fiche, gros plan de la cérémonie, image de partage) ; souvenir des tracés plafonné à
+> 400. Album par lots de 30 chargés à l'approche du bas (bouton gardé) ; recherche différée (`useDeferredValue`), mots
+> sans accents mémorisés, comparateur français partagé (`ordreFrancais`, `rangement.ts`). Au retour d'une fiche,
+> l'album se reconstruit caché par lots, sans gel (« Retour à ta page… »), puis retrouve la position exacte (vérifié :
+> 810 timbres, repère à l'écran).
+
 > **28 septembre 2026 — finitions, étape 4 « Rapide et sobre », lot A : l'accueil se repose.** Décision de Raphaël
 > (option B) : sur l'accueil, seul le paquet bouge. Le fond (`FondAnime immobile`) est dessiné une fois, le halo ne
 > respire plus, le fil d'activité ne défile plus (on le fait glisser ; plus de bouton « Pause »). L'encre vivante du

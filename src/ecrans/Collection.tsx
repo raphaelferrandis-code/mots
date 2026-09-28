@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Carte } from '../composants/carte/Carte.tsx';
 import { Entete } from '../composants/Entete.tsx';
 import { ErreurDeChargement } from '../composants/ErreurDeChargement.tsx';
@@ -14,7 +14,9 @@ import type { Nature, Rarete } from '../partage/types.ts';
 import { chargerEdition } from '../services/cartes.ts';
 
 const TYPES: Nature[] = ['Nom', 'Adjectif', 'Verbe', 'Adverbe'];
-const PAR_PAGE = 60;
+// Des lots de 30 timbres, chargés tout seuls à l'approche du bas (audit de finition, P04 : 60 à la fois, au bouton,
+// faisaient attendre plus d'une demi-seconde sur téléphone).
+const PAR_PAGE = 30;
 
 const TRIS = {
   recentes: 'Les plus récents',
@@ -38,14 +40,18 @@ export function Collection() {
   const [faction, setFaction] = useState(souvenir?.faction ?? '');
   const [recherche, setRecherche] = useState(souvenir?.recherche ?? '');
   const [tri, setTri] = useState<Tri>(souvenir?.tri ?? 'recentes');
-  const [pages, setPages] = useState(souvenir?.pages ?? 1);
+  // Au retour d'une fiche, l'album se reconstruit par petits lots, caché, sans geler l'écran (il redessinait tout d'un
+  // coup : plusieurs secondes de gel pour un gros album), puis retrouve la position où l'on en était.
+  const pagesVoulues = useRef(souvenir?.pages ?? 1);
+  const [pages, setPages] = useState(() => Math.min(pagesVoulues.current, 2));
+  const enReconstruction = pages < pagesVoulues.current;
   const [progressionVisible, setProgressionVisible] = useState(false);
   const [filtresVisibles, setFiltresVisibles] = useState(souvenir?.filtresVisibles ?? false);
 
   // Le souvenir est pris en quittant l'album, avant que la page suivante ne remplace la sienne (d'où « layout ») ;
   // la position revient une fois les timbres affichés.
   const vue = useRef({ rarete, type, faction, recherche, tri, pages, filtresVisibles });
-  vue.current = { rarete, type, faction, recherche, tri, pages, filtresVisibles };
+  vue.current = { rarete, type, faction, recherche, tri, pages: Math.max(pages, pagesVoulues.current), filtresVisibles };
   useLayoutEffect(() => () => { souvenir = { ...vue.current, defilement: window.scrollY }; }, []);
   const aRetrouver = useRef(souvenir?.defilement ?? 0);
 
@@ -88,25 +94,45 @@ export function Collection() {
     return [...table].sort((a, b) => b[1].total - a[1].total);
   }, [visibles, sauvegarde]);
 
+  // La recherche : le champ suit la frappe tout de suite, la liste juste après (elle bloquait chaque lettre).
+  const rechercheDifferee = useDeferredValue(recherche);
   const affichees = useMemo(() => {
     if (!sauvegarde) return [];
     const ordres: Record<Tri, Comparaison> = { ...COMPARAISONS, recentes: (a, b) => sauvegarde.cartes[b.id].obtenueLe - sauvegarde.cartes[a.id].obtenueLe };
-    return trierLesCartes(possedees.filter(correspond({ recherche, rarete, nature: type, origine: faction })), ordres[tri]);
-  }, [possedees, sauvegarde, rarete, type, faction, recherche, tri]);
+    return trierLesCartes(possedees.filter(correspond({ recherche: rechercheDifferee, rarete, nature: type, origine: faction })), ordres[tri]);
+  }, [possedees, sauvegarde, rarete, type, faction, rechercheDifferee, tri]);
 
+  // La reconstruction : deux lots de plus à chaque image, en tâche de fond.
   useEffect(() => {
-    if (!pret || aRetrouver.current === 0) return;
+    if (!pret || !enReconstruction) return;
+    const cadre = requestAnimationFrame(() => startTransition(() => setPages((p) => Math.min(p + 2, pagesVoulues.current))));
+    return () => cancelAnimationFrame(cadre);
+  }, [pret, enReconstruction, pages]);
+  // La position retrouvée, avant que l'image ne s'affiche.
+  useLayoutEffect(() => {
+    if (!pret || enReconstruction || aRetrouver.current === 0) return;
     window.scrollTo(0, aRetrouver.current);
     aRetrouver.current = 0;
-  }, [pret]);
+  }, [pret, enReconstruction]);
+
+  // Le lot suivant, à l'approche du bas (le bouton reste, pour le clavier et au cas où).
+  const suite = useRef<HTMLButtonElement>(null);
+  const encoreDesTimbres = affichees.length > pages * PAR_PAGE;
+  useEffect(() => {
+    const bouton = suite.current;
+    if (!bouton || enReconstruction || !encoreDesTimbres || typeof IntersectionObserver === 'undefined') return;
+    const guetteur = new IntersectionObserver((vues) => { if (vues.some((v) => v.isIntersecting)) startTransition(() => setPages((p) => p + 1)); }, { rootMargin: '900px 0px' });
+    guetteur.observe(bouton);
+    return () => guetteur.disconnect();
+  }, [pages, enReconstruction, encoreDesTimbres]);
 
   if (edition.etat === 'erreur') return <main className="ecran"><h1>Ton album</h1><ErreurDeChargement quoi="Le catalogue des timbres" reessayer={edition.relancer} /></main>;
   if (!pret) return <main className="ecran"><p className="texte-doux">Chargement…</p></main>;
 
-  const filtrer = <T,>(regler: (valeur: T) => void) => (valeur: T): void => { regler(valeur); setPages(1); };
+  const filtrer = <T,>(regler: (valeur: T) => void) => (valeur: T): void => { regler(valeur); pagesVoulues.current = 1; setPages(1); };
   const nombreDeFiltres = [rarete, type, faction].filter(Boolean).length;
   const rechercheActive = recherche.trim() !== '' || nombreDeFiltres > 0;
-  const reinitialiser = (): void => { setRecherche(''); setRarete(''); setType(''); setFaction(''); setPages(1); };
+  const reinitialiser = (): void => { setRecherche(''); setRarete(''); setType(''); setFaction(''); pagesVoulues.current = 1; setPages(1); };
 
   return (
     <main className="ecran ecran--large album">
@@ -166,11 +192,12 @@ export function Collection() {
             </div>
           )}
           {affichees.length === 0 && <div className="etat-vide"><h2>Aucun timbre ne correspond</h2><p>Modifie ta recherche ou efface les filtres.</p></div>}
-          <div className="rangee-de-cartes">
+          {enReconstruction && <p className="texte-doux petit" role="status">Retour à ta page…</p>}
+          <div className="rangee-de-cartes" aria-busy={enReconstruction || undefined} style={enReconstruction ? { visibility: 'hidden' } : undefined}>
             {affichees.slice(0, pages * PAR_PAGE).map((carte) => <Carte key={carte.id} carte={carte} finition={meilleureFinition(sauvegarde!.cartes[carte.id])} obtenuLe={sauvegarde!.cartes[carte.id].obtenueLe} />)}
           </div>
-          {affichees.length > pages * PAR_PAGE && (
-            <button type="button" className="bouton bouton--discret" onClick={() => setPages((p) => p + 1)}>Afficher plus de timbres</button>
+          {encoreDesTimbres && !enReconstruction && (
+            <button ref={suite} type="button" className="bouton bouton--discret" onClick={() => startTransition(() => setPages((p) => p + 1))}>Afficher plus de timbres</button>
           )}
         </>
       )}

@@ -4,6 +4,7 @@
 
 import { memo, useMemo } from 'react';
 import type { Ref } from 'react';
+import { ordreFrancais } from '../../jeu/rangement.ts';
 import { meilleureFinition } from '../../jeu/sauvegarde.ts';
 import type { Sauvegarde } from '../../jeu/sauvegarde.ts';
 import { lien } from '../../navigation/routes.ts';
@@ -17,7 +18,7 @@ export const CASES_DE_L_APERCU = 12;
 // Les douze timbres obtenus le plus récemment, du plus ancien au plus récent (les nouveaux arrivent à droite).
 export function dernieresTrouvailles(sauvegarde: Sauvegarde, cartes: readonly CarteIndex[]): CarteIndex[] {
   return cartes.filter((c) => c.id in sauvegarde.cartes)
-    .sort((a, b) => sauvegarde.cartes[a.id].obtenueLe - sauvegarde.cartes[b.id].obtenueLe || a.mot.localeCompare(b.mot, 'fr'))
+    .sort((a, b) => sauvegarde.cartes[a.id].obtenueLe - sauvegarde.cartes[b.id].obtenueLe || ordreFrancais(a.mot, b.mot))
     .slice(-CASES_DE_L_APERCU);
 }
 

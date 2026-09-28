@@ -57,7 +57,7 @@ export function TimbreManipulable({ carte, finition, obtenuLe = null }: { carte:
       onPointerDown={debut} onPointerMove={bouger} onPointerUp={fin} onPointerCancel={fin} onLostPointerCapture={fin} onKeyDown={clavier}
       data-saisie={saisie}>
       <div className="timbre-objet__rotation" style={{ '--rotation-x': `${angle.x}deg`, '--rotation-y': `${angle.y}deg` } as CSSProperties}>
-        <div className="timbre-objet__face" aria-hidden={verso}><Carte carte={carte} finition={finition} obtenuLe={obtenuLe} cliquable={false} /></div>
+        <div className="timbre-objet__face" aria-hidden={verso}><Carte carte={carte} finition={finition} obtenuLe={obtenuLe} cliquable={false} fin /></div>
         <div className="timbre-objet__face timbre-objet__face--dos" aria-hidden={!verso}><DosDeCarte etiquette={`Dos de ${carte.mot}`} /></div>
       </div>
     </div>

@@ -758,7 +758,7 @@ export async function dessinerLeTimbre(carte: CarteIndex, habillage: Habillage, 
   try {
     flushSync(() => racine.render(createElement(Timbre, {
       carte, finition: habillage.finition, oblitere: true, obtenuLe: habillage.obtenuLe ?? null,
-      cliquable: false, reagir: false,
+      cliquable: false, reagir: false, fin: true,
     })));
     const timbre = support.querySelector<HTMLElement>('.tb');
     if (!timbre) throw new Error("Le timbre n'a pas pu être préparé.");

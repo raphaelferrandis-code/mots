@@ -27,9 +27,13 @@ function pgcd(a: number, b: number): number {
 }
 
 // Une rosace de spirographe (hypotrochoïde) : un cercle de rayon r roule dans un cercle de rayon R.
-export function rosace(rayon: number, R: number, r: number, d: number, cx = 0, cy = 0, rotation = 0): string {
+// « parBoucle » : points par boucle. 90 (et deux décimales) pour un grand dessin ; 48 (et une décimale) suffisent à la
+// taille d'un timbre d'album, pour deux fois moins de données (audit de finition, P04 : l'album de 1 000 timbres pesait
+// plus de 170 Mo, dont 30 de tracés). Comparé à l'œil le 28/09/2026 : à 24 ou 36, le cercle intérieur crénelait.
+export function rosace(rayon: number, R: number, r: number, d: number, cx = 0, cy = 0, rotation = 0, parBoucle = 90): string {
   const boucles = r / pgcd(R, r);
-  const pas = Math.min(2400, Math.max(360, boucles * 90));
+  const pas = Math.min(parBoucle * 27, Math.max(parBoucle * 4, boucles * parBoucle));
+  const decimales = parBoucle >= 60 ? 2 : 1;
   const T = Math.PI * 2 * boucles;
   const k = (R - r) / r;
   const echelle = rayon / ((R - r) + d);
@@ -40,7 +44,7 @@ export function rosace(rayon: number, R: number, r: number, d: number, cx = 0, c
     const t = (T * i) / pas;
     const x = (R - r) * Math.cos(t) + d * Math.cos(k * t);
     const y = (R - r) * Math.sin(t) - d * Math.sin(k * t);
-    chemin += `${i ? 'L' : 'M'}${(cx + (x * cos - y * sin) * echelle).toFixed(2)} ${(cy + (x * sin + y * cos) * echelle).toFixed(2)}`;
+    chemin += `${i ? 'L' : 'M'}${(cx + (x * cos - y * sin) * echelle).toFixed(decimales)} ${(cy + (x * sin + y * cos) * echelle).toFixed(decimales)}`;
   }
   return `${chemin}Z`;
 }
@@ -62,16 +66,22 @@ export function dentelure(largeur: number, hauteur: number, rayon: number, pas: 
   return `${d}Z`;
 }
 
-// Les deux tracés de la vignette d'un timbre. Calculés une fois par carte : l'album en affiche des centaines.
+// Les deux tracés de la vignette d'un timbre, gardés pour les 400 derniers timbres dessinés (l'album en affiche des
+// centaines ; sans plafond, le souvenir de tous les tracés restait en mémoire). « fin » : pour un grand timbre (fiche,
+// gros plan de la cérémonie, image de partage) ; sinon, la finesse d'un timbre d'album.
 const vignettes = new Map<string, [string, string]>();
-export function tracesDeLaVignette(idCarte: string): [string, string] {
-  const deja = vignettes.get(idCarte);
-  if (deja) return deja;
+const PLAFOND_DES_TRACES = 400;
+export function tracesDeLaVignette(idCarte: string, fin = false): [string, string] {
+  const cle = fin ? `${idCarte}:fin` : idCarte;
+  const deja = vignettes.get(cle);
+  if (deja) { vignettes.delete(cle); vignettes.set(cle, deja); return deja; }
   const h = hasardReproductible(empreinte(idCarte) ^ 0x9e3779b9);
   const R = 60 + Math.floor(h() * 40), r = 11 + Math.floor(h() * 18), d = r * (0.7 + h() * 0.8);
   const R2 = 48 + Math.floor(h() * 30), r2 = 7 + Math.floor(h() * 14), d2 = r2 * (0.6 + h() * 0.9);
-  const traces: [string, string] = [rosace(100, R, r, d), rosace(70, R2, r2, d2, 0, 0, h() * 3)];
-  vignettes.set(idCarte, traces);
+  const parBoucle = fin ? 90 : 48;
+  const traces: [string, string] = [rosace(100, R, r, d, 0, 0, 0, parBoucle), rosace(70, R2, r2, d2, 0, 0, h() * 3, parBoucle)];
+  vignettes.set(cle, traces);
+  if (vignettes.size > PLAFOND_DES_TRACES) vignettes.delete(vignettes.keys().next().value!);
   return traces;
 }
 
