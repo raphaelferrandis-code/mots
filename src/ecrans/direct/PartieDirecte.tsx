@@ -60,6 +60,8 @@ export function PartieDirecte({ sauvegarde, direct, sons, reduit }: Props) {
   });
 
   // ── La chronologie d'une manche, du point de vue du joueur : les sons, la correction, le choc, la fin ──
+  // La sortie audio s'ouvre dès l'arrivée : le joueur vient de presser « J'y vais ! », le navigateur l'autorise.
+  useEffect(() => { sons.preparer(); }, [sons]);
   const { toile, jaillir } = useParticules(reduit);
   const medaillons = useRef<(HTMLDivElement | null)[]>([]);
   const [correctionJusqua, setCorrectionJusqua] = useState(0);
