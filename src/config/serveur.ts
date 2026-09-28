@@ -27,6 +27,7 @@ export const SERVEUR = {
   // La connexion Google (docs/GUIDE-connexion.md) : l'identifiant PUBLIC du client « Philamots Web » de Google Cloud (il
   // s'affiche dans l'adresse de la page de Google : ce n'est pas un secret). Réglé, le bouton de Google lui-même
   // s'affiche dans Mon compte et la connexion se fait sur philamots.fr, sans détour par l'adresse de Supabase, que
-  // l'écran de Google nommait (décision de Raphaël du 28/09/2026). Vide : l'ancienne connexion, par Supabase.
+  // l'écran de Google nommait (décision de Raphaël du 28/09/2026). Vide : l'ancienne connexion par Supabase, qui ne
+  // marche plus depuis que son adresse de retour a été retirée du client Google (28/09/2026) : il faudrait l'y remettre.
   clientGoogle: '268999826503-grrlop9dqrbelki19iquhb1tk0jp999a.apps.googleusercontent.com',
 };

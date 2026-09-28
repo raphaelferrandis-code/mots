@@ -445,7 +445,9 @@ Google »). Il te reste, dans l'ordre :
       être invité) → **Mon compte** → **Se connecter** → **Continuer avec Google** → toucher le bouton de Google qui
       apparaît. La fenêtre de Google doit maintenant parler de **philamots.fr**. Choisir ton compte : tu es connecté.
       **Fait par Raphaël le 28 septembre : la fenêtre de Google dit bien philamots.fr.**
-- [ ] **Ensuite seulement**, Google Cloud (projet **philamots**) → **Google Auth Platform** :
+- [x] **Ensuite seulement**, Google Cloud (projet **philamots**) → **Google Auth Platform** (**fait par Raphaël le
+      28 septembre, vérification de la marque demandée** ; vérifié de l'extérieur : Google refuse désormais l'ancienne
+      adresse de retour par Supabase, `redirect_uri_mismatch`) :
       - **Clients** → « Philamots Web » → **URI de redirection autorisés** : retirer
         `https://cgubfyxyivgufslpwlld.supabase.co/auth/v1/callback` → **Enregistrer** (les origines JavaScript gardent
         `https://philamots.fr`) ;
@@ -458,6 +460,10 @@ Google »). Il te reste, dans l'ordre :
       - À savoir : une fois l'adresse de retour de Supabase retirée, l'ancienne connexion Google (le secours du code,
         `SERVEUR.clientGoogle` vide) ne marche plus ; en cas de panne du bouton de Google, reste la connexion par e-mail.
         Si Google répond que philamots.fr n'est pas vérifié, le dire à l'assistant (vérification par le DNS chez OVH).
+- [ ] **Refaire l'essai en navigation privée** (comme plus haut), pour s'assurer que la connexion Google marche
+      toujours après ces réglages.
+- [ ] **Quand Google a validé la marque** (un e-mail, ou l'état dans le Centre de validation) : refaire l'essai ; la
+      fenêtre de Google doit dire « Philamots », avec le logo.
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
   `contact@philamots.fr` à la place, il faut un compte Google créé avec cette adresse et ajouté comme propriétaire du
   projet (l'assistant peut te guider).
