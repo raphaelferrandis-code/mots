@@ -460,8 +460,8 @@ Google »). Il te reste, dans l'ordre :
       - À savoir : une fois l'adresse de retour de Supabase retirée, l'ancienne connexion Google (le secours du code,
         `SERVEUR.clientGoogle` vide) ne marche plus ; en cas de panne du bouton de Google, reste la connexion par e-mail.
         Si Google répond que philamots.fr n'est pas vérifié, le dire à l'assistant (vérification par le DNS chez OVH).
-- [ ] **Refaire l'essai en navigation privée** (comme plus haut), pour s'assurer que la connexion Google marche
-      toujours après ces réglages.
+- [x] **Refaire l'essai en navigation privée** (comme plus haut), pour s'assurer que la connexion Google marche
+      toujours après ces réglages. **Fait par Raphaël le 28 septembre : la connexion Google marche toujours.**
 - [ ] **Quand Google a validé la marque** (un e-mail, ou l'état dans le Centre de validation) : refaire l'essai ; la
       fenêtre de Google doit dire « Philamots », avec le logo.
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
