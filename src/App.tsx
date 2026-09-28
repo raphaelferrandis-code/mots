@@ -12,6 +12,7 @@ import { profilVisible } from './jeu/personnalisation.ts';
 import { useRoute } from './navigation/useRoute.ts';
 import { titreDeLaRoute } from './navigation/routes.ts';
 import type { Route } from './navigation/routes.ts';
+import { auCalme } from './services/auCalme.ts';
 import { pseudoDuJoueur } from './services/identite.ts';
 import { repereDesRecompenses } from './services/partie.ts';
 
@@ -143,13 +144,11 @@ export function App() {
     allerAuContenu();
   }, [cle]); // « cle » résume la route
 
-  // Les onglets se préchargent quand la page est au calme (un échec n'est pas grave : l'écran se chargera à la visite).
+  // Les onglets se préchargent au calme, une fois le catalogue et les polices arrivés (un échec n'est pas grave : l'écran
+  // se chargera à la visite). Pas en mode « économie de données ».
   useEffect(() => {
-    const precharger = () => { for (const ecran of PRECHARGES) void ecran.precharger().catch(() => undefined); };
-    // (Safari n'a pas requestIdleCallback : une petite attente le remplace.)
-    if (typeof window.requestIdleCallback === 'function') { const id = window.requestIdleCallback(precharger, { timeout: 4000 }); return () => window.cancelIdleCallback(id); }
-    const minuterie = window.setTimeout(precharger, 1500);
-    return () => window.clearTimeout(minuterie);
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
+    return auCalme(() => { for (const ecran of PRECHARGES) void ecran.precharger().catch(() => undefined); });
   }, []);
 
   // Le réglage « réduire les animations » s'applique à tout le site (voir la fin de styles.css).

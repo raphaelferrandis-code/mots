@@ -2,7 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
-> **28 septembre 2026 — finitions, étape 4, lot C : retour instantané, hors ligne, installable (fin de l'étape 4).**
+> **28 septembre 2026 — finitions, étape 4, lot D : la première visite (fin de l'étape 4).** Mesuré sur le site
+> construit, téléphone simulé en 4G lente (processeur ×4), avant → après : accueil 1,74 → 1,80 s ; grand titre dans sa
+> police 2,96 → 1,80 s (dès le premier affichage : il ne change plus de forme) ; compteur de l'album 4,20 → 3,37 s ;
+> `devinettes.json` (115 Ko) plus demandé tant que la devinette est éteinte (`VITE_DEVINETTES_OUVERTES`, lu à la
+> construction). Greffon `demander-tot` (vite.config.ts) : préconnexion au serveur du jeu et police du titre demandée
+> d'avance ; `main.tsx` attend cette police au plus 0,3 s avant le premier rendu et lance le catalogue dès le début.
+> `src/services/auCalme.ts` : le préchargement des écrans (pas en « économie de données ») et l'installation du
+> service worker attendent le catalogue et les polices. Essayé puis écarté : catalogue et trois polices demandés
+> d'avance (accueil retardé de 0,6 s en 4G lente). En 4G normale, rien ne bouge de plus de 0,1 s.
+
+> **28 septembre 2026 — finitions, étape 4, lot C : retour instantané, hors ligne, installable.**
 > Un service worker (`scripts/sw.modele.js`, rempli à la construction par le greffon `service-worker` de
 > `vite.config.ts` et écrit en `dist/sw.js`) garde le jeu sur l'appareil : tous les scripts, styles et polices woff2,
 > l'index de l'édition, le logo et les icônes. Retour sur le jeu : 3 demandes au réseau au lieu d'une centaine (la

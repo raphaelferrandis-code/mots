@@ -12,8 +12,15 @@ import { useChargement } from '../useChargement.ts';
 
 const LETTRES = ['A', 'B', 'C', 'D'];
 const NATURE: Record<string, string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adjectif', Adverbe: 'adverbe' };
+// Le calendrier ouvert ou non, lu à la construction du site (vite.config.ts) : éteinte, la devinette ne demande même
+// pas son fichier (115 Ko). En développement, elle est toujours là.
+const OUVERTE = import.meta.env.DEV || import.meta.env.VITE_DEVINETTES_OUVERTES === 'oui';
 
 export function DevinetteDuJour() {
+  return OUVERTE ? <LaDevinette /> : null;
+}
+
+function LaDevinette() {
   const devinettes = useChargement(chargerLesDevinettes, 'devinettes');
   const [serie, setSerie] = useState<Serie>(lireLaSerie);
   const aujourdhui = jourAParis(Date.now());

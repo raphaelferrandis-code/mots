@@ -22,6 +22,11 @@ function empreinteDesDonnees(): string {
 }
 process.env.VITE_VERSION_DES_DONNEES = empreinteDesDonnees();
 
+// La devinette du jour n'est ouverte que si son calendrier a un premier jour (npm run motdujour:dater) : éteinte, le jeu
+// ne demande même pas son fichier (src/composants/accueil/DevinetteDuJour.tsx).
+const calendrier = JSON.parse(readFileSync(path.join(process.cwd(), 'public', 'data', 'devinettes.json'), 'utf8')) as { debut: string | null };
+process.env.VITE_DEVINETTES_OUVERTES = calendrier.debut ? 'oui' : 'non';
+
 // La politique de sécurité du contenu (CSP) : le navigateur refuse tout script, cadre ou connexion qui ne vient pas du
 // jeu, de son serveur (Supabase) ou du contrôle anti-robot (Cloudflare Turnstile). Une ceinture de sécurité : si une
 // faille laissait un jour passer du code étranger, il ne pourrait ni s'exécuter, ni envoyer la session ailleurs.
@@ -66,6 +71,25 @@ export default defineConfig(({ mode }) => {
         const feuilles = html.match(/<link rel="stylesheet"[^>]*>/g) ?? [];
         const sansFeuilles = feuilles.reduce((page, feuille) => page.replace(feuille, ''), html);
         return sansFeuilles.replace(marque, feuilles.join('\n    '));
+      },
+    },
+  }, {
+    // Demandés dès la lecture de la page plutôt qu'après le script du jeu (audit de finition du 26/09/2026, P07, P11) :
+    // la connexion au serveur du jeu, et la police du grand titre de l'accueil (sans elle, il change de forme sous les
+    // yeux une seconde après). Pas le catalogue ni les autres polices : mesuré en 4G lente, leur part de réseau
+    // retardait l'accueil lui-même (0,6 s pour le catalogue) — le catalogue part au tout début du script (main.tsx).
+    name: 'demander-tot',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, contexte) {
+        if (!contexte.filename.endsWith('index.html') || !contexte.bundle) return [];
+        const titre = Object.keys(contexte.bundle).find((nom) => nom.startsWith('assets/playfair-display-latin-900-normal-') && nom.endsWith('.woff2'));
+        if (!titre) throw new Error('demander-tot : la police du titre (Playfair Display 900) est introuvable dans le site construit');
+        return [
+          ...(SERVEUR.adresse ? [{ tag: 'link', attrs: { rel: 'preconnect', href: new URL(SERVEUR.adresse).origin, crossorigin: true }, injectTo: 'head' as const }] : []),
+          { tag: 'link', attrs: { rel: 'preload', href: `./${titre}`, as: 'font', type: 'font/woff2', crossorigin: true }, injectTo: 'head' as const },
+        ];
       },
     },
   }, (() => {
