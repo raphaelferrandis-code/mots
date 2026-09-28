@@ -54,8 +54,8 @@
 > **28 septembre 2026 — le nom du futur studio : « Studio Ludophile ».** Décision de Raphaël : Philamots sera vendu
 > sous le nom « Studio Ludophile » (« Philamots, un jeu édité par Studio Ludophile »), ses prochains jeux aussi. La
 > **forme juridique reste à choisir** : ne pas écrire « micro-entreprise », ne pas inventer de SIREN ni d'adresse dans
-> les CGV. `ludophile.fr` : commande annoncée par Raphaël le 28 septembre, pas encore visible au registre le jour même
-> (étape 20 d'A-FAIRE-RAPHAEL). Aucune marque « Ludophile » à l'INPI ; mot courant chez les joueurs, donc marque
+> les CGV. `ludophile.fr` réservé chez OVHcloud le 28 septembre, enregistré jusqu'au 28 septembre 2027 (étape 20
+> d'A-FAIRE-RAPHAEL ; prochaine étape : l'avis du comptable, puis la déclaration). Aucune marque « Ludophile » à l'INPI ; mot courant chez les joueurs, donc marque
 > peut-être difficile à protéger. Aucun code changé.
 
 > **28 septembre 2026 — finitions, étape 5, lot F : les sons.** Raphaël a choisi à l'oreille, son par son, sur une page
