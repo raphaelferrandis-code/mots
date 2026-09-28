@@ -11,7 +11,7 @@ import { ALPHABET_DU_CODE, LONGUEUR_DU_CODE } from '../src/jeu/codeDeSecours.ts'
 import { examinerLePseudo } from '../src/jeu/pseudo.ts';
 import type { CarteDetails, Definition, IndexEdition } from '../src/partage/types.ts';
 import { cartes, migrationPersonnalisation } from './collections.ts';
-import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours, migrationApparence, migrationSixTimbres, migrationPaquetsDException, migrationBoutique, migrationMarcheAnime } from './fabriquer-le-script.ts';
+import { joueursMaison, structure, migrationOffres, migrationIntegrite, migrationCombats, migrationAmis, migrationSecoursEtParrainage, migrationParrainageConfirme, migrationTenueDuServeur, migrationClassement, migrationPaiements, migrationPointsSecondaires, migrationAdversaireDeSecours, migrationApparence, migrationSixTimbres, migrationPaquetsDException, migrationBoutique, migrationMarcheAnime, migrationConservation } from './fabriquer-le-script.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const edition: IndexEdition = JSON.parse(readFileSync(path.join(RACINE, 'public', 'data', 'edition-1.index.json'), 'utf8'));
@@ -52,6 +52,7 @@ describe('les scripts du serveur', () => {
     assert.equal(lire('24-paquets-d-exception.sql'), migrationPaquetsDException());
     assert.equal(lire('25-boutique.sql'), migrationBoutique());
     assert.equal(lire('26-marche-anime.sql'), migrationMarcheAnime());
+    assert.equal(lire('27-comptes-inactifs.sql'), migrationConservation());
   });
 
   it('refuse les anciens appels d’achat cosmétique sans débiter le compte', () => {

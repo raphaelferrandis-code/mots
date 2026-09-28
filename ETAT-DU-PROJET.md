@@ -2,6 +2,19 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **28 septembre 2026 — finitions, étape « Confiance », lot B : la suppression des comptes inactifs (script 27).**
+> Ce que promettent les pages légales (`SITE.conservation`) : un invité sans visite depuis 12 mois est supprimé, un
+> compte relié après 3 ans. `comptes.dernier_passage` (défaut : l'heure du collage, personne n'est supprimé plus tôt
+> que promis), noté par `mon_compte` à chaque ouverture du jeu, au plus une fois par heure ; un compte sans collection
+> compte depuis sa création (`auth.users`). `purger_les_comptes_inactifs()` (`serveur/conservation.ts`) efface comme
+> `supprimer_mon_compte` (mêmes verrous, le marché rembourse les tiers, cascade), au plus 500 comptes par nuit ; jamais un
+> compte qui a payé (achat unique ou abonnement) ; un compte qu'un contrôle refuse est gardé sans arrêter les autres ;
+> fermée aux visiteurs et aux joueurs. Planifiée chaque nuit à 3 h 23 UTC par pg_cron (tâche nommée
+> `philamots-comptes-inactifs`, remplacée si l'on recolle ; sans pg_cron, le script s'arrête avec un message qui dit
+> quoi activer). Tests `serveur/conservation.test.ts` (6, et 6 sabotages attrapés) ; ancienne base + script 27 joué deux
+> fois = nouvelle base (instantanés PGlite identiques). 583 tests. **Script 27 à coller par Raphaël (étape 22 d'A-FAIRE-
+> RAPHAEL).** La dernière migration est désormais la 27.
+
 > **28 septembre 2026 — finitions, étape « Confiance » (chantier 8), lot A : les pages légales et « Signaler ».**
 > Décisions de Raphaël : éditeur « Raphaël Ferrandis » avec `contact@philamots.fr` (adresse et numéro d'entreprise
 > avant tout achat) ; compte invité supprimé après 12 mois sans visite, compte relié après 3 ans (`SITE.conservation`,

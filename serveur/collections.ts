@@ -1,4 +1,5 @@
 import { preparerOffres, fonctionsOffres } from './offres.ts';
+import { DERNIER_PASSAGE_SQL, NOTER_LE_PASSAGE_SQL } from './conservation.ts';
 import { schemaProgression, INTERNES_PROGRESSION } from './progression-serveur.ts';
 import { CATEGORIES_D_APPARENCE, XP } from '../src/jeu/personnalisation.ts';
 // La partie du script du serveur qui tient les collections (décision du 22/09/2026, docs/BRIEF-marche.md §5a) :
@@ -137,6 +138,7 @@ alter table public.comptes add column if not exists personnalisations text[] not
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
 ${APPARENCE_SQL}
+${DERNIER_PASSAGE_SQL}
 ${INDEX_DU_CODE_SQL}
 ${DEMANDES_TRAITEES_SQL}
 
@@ -498,12 +500,14 @@ $$;
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
 -- Le compte du joueur, ou rien s'il n'en a pas encore ici. (Au passage, les enchères échues sont clôturées : un vendeur
--- retrouve ainsi son Encre en ouvrant le jeu, sans que personne ait à visiter le marché.)
+-- retrouve ainsi son Encre en ouvrant le jeu, sans que personne ait à visiter le marché.) Le jeu l'appelle à chaque
+-- ouverture : c'est le dernier passage du compte (serveur/conservation.ts).
 create or replace function public.mon_compte() returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  ${NOTER_LE_PASSAGE_SQL}
   perform public.cloturer_les_encheres();
   perform public.verser_la_rente(auth.uid());
   return public.etat_du_compte(auth.uid());

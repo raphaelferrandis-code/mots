@@ -403,6 +403,7 @@ alter table public.comptes add column if not exists personnalisations text[] not
 alter table public.comptes add column if not exists debuts_joutes timestamptz[] not null default '{}';
 alter table public.comptes add column if not exists mois_de_naissance smallint;
 alter table public.comptes add column if not exists apparence jsonb;
+alter table public.comptes add column if not exists dernier_passage timestamptz not null default now();
 drop index if exists public.comptes_par_code;
 create unique index if not exists comptes_code_unique on public.comptes (code_hache) where code_hache is not null;
 create table if not exists public.demandes_traitees (
@@ -921,12 +922,14 @@ $$;
 -- ── Les fonctions appelées par le jeu ────────────────────────────────────────
 
 -- Le compte du joueur, ou rien s'il n'en a pas encore ici. (Au passage, les enchères échues sont clôturées : un vendeur
--- retrouve ainsi son Encre en ouvrant le jeu, sans que personne ait à visiter le marché.)
+-- retrouve ainsi son Encre en ouvrant le jeu, sans que personne ait à visiter le marché.) Le jeu l'appelle à chaque
+-- ouverture : c'est le dernier passage du compte (serveur/conservation.ts).
 create or replace function public.mon_compte() returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
 begin
   if auth.uid() is null then raise exception 'Connexion requise.'; end if;
+  update public.comptes set dernier_passage = now() where utilisateur = auth.uid() and dernier_passage < now() - interval '1 hour';
   perform public.cloturer_les_encheres();
   perform public.verser_la_rente(auth.uid());
   return public.etat_du_compte(auth.uid());
@@ -2385,6 +2388,58 @@ end $$;
 
 revoke execute on function public.acheter_a_la_boutique(text), public.commander_un_hors_serie(text, uuid) from public, anon;
 grant execute on function public.acheter_a_la_boutique(text), public.commander_un_hors_serie(text, uuid) to authenticated;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- LA CONSERVATION DES COMPTES SANS VISITE (serveur/conservation.ts)
+-- Un compte invité sans visite depuis 12 mois est supprimé ; un compte relié à Google ou à une adresse e-mail,
+-- après 3 ans. Un compte sans collection (jamais ouvert) compte depuis sa création. Jamais un compte qui a payé.
+-- Le dernier passage est la colonne comptes.dernier_passage, que mon_compte tient à jour.
+-- ═════════════════════════════════════════════════════════════════════════════
+
+-- Rend le nombre de comptes supprimés. Un compte qu'un contrôle refuse de supprimer est gardé (et signalé dans les
+-- journaux de la base) sans arrêter les autres.
+create or replace function public.purger_les_comptes_inactifs() returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  u uuid;
+  supprimes integer := 0;
+begin
+  -- Les verrous dans l'ordre, comme supprimer_mon_compte (serveur/verrous.ts).
+  perform pg_advisory_xact_lock(20260923);
+  perform pg_advisory_xact_lock(20260924);
+  for u in
+    select a.id from auth.users a left join public.comptes c on c.utilisateur = a.id
+    where coalesce(c.dernier_passage, a.last_sign_in_at, a.created_at)
+            < now() - case when a.is_anonymous then interval '12 months' else interval '3 years' end
+      and not coalesce(c.achat_unique or c.abonnement <> 'aucun', false)
+    order by coalesce(c.dernier_passage, a.last_sign_in_at, a.created_at)
+    limit 500
+  loop
+    begin
+      delete from auth.users where id = u;
+      supprimes := supprimes + 1;
+    exception when others then
+      raise warning 'Compte % gardé : %', u, sqlerrm;
+    end;
+  end loop;
+  return supprimes;
+end $$;
+revoke execute on function public.purger_les_comptes_inactifs() from public, anon, authenticated;
+
+-- Chaque nuit, avec pg_cron (présent chez Supabase ; absent de la base des tests, où rien n'est planifié). Recoller ce
+-- script ne crée pas de seconde tâche : la tâche porte un nom, et pg_cron la remplace.
+do $$
+begin
+  if not exists (select 1 from pg_available_extensions where name = 'pg_cron') then
+    raise notice 'pg_cron absent : la purge des comptes inactifs n''est pas planifiée.';
+    return;
+  end if;
+  create extension if not exists pg_cron;
+  perform cron.schedule('philamots-comptes-inactifs', '23 3 * * *', 'select public.purger_les_comptes_inactifs()');
+exception when others then
+  raise exception 'La purge des comptes inactifs n''a pas pu être planifiée (%). Dans Supabase : Database, puis Extensions, activer « pg_cron », puis recoller ce script.', sqlerrm;
+end $$;
 
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.

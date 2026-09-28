@@ -6,7 +6,7 @@ export async function baseDeTest(combats = false) {
   const db = new PGlite({ extensions: { unaccent } });
   await db.exec(`create role anon; create role authenticated;
     create schema auth; create schema extensions;
-    create table auth.users(id uuid primary key, is_anonymous boolean not null default false);
+    create table auth.users(id uuid primary key, is_anonymous boolean not null default false, created_at timestamptz default now(), last_sign_in_at timestamptz);
     create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     grant usage on schema auth to authenticated, anon;
     -- Comme Supabase : toute nouvelle fonction est ouverte d'office aux visiteurs et aux joueurs connectés. Les scripts

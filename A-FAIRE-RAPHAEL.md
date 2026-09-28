@@ -407,10 +407,28 @@ jeu : https://philamots.fr/mentions-legales/, https://philamots.fr/confidentiali
       traitement des données (« DPA ») est bien accepté, et le signer s'il faut le demander.
 - [ ] Cloudflare (le contrôle anti-robot) : vérifier que son accord de traitement des données s'applique à ton compte
       gratuit (il fait en principe partie de ses conditions d'utilisation).
-- La suppression automatique des comptes inactifs arrive avec le prochain script (lot B de cette étape) : aucun compte
-  n'a encore 12 mois, rien ne presse, mais il faudra le coller.
+- La suppression automatique des comptes inactifs vient avec le script 27 (étape 22).
 - Avant d'ouvrir les achats : ajouter l'adresse et le numéro d'entreprise du vendeur aux mentions légales (l'assistant
   le fera quand la forme juridique sera choisie, étape 20).
+
+### Étape 22 — Coller le script 27 (la suppression des comptes inactifs)
+
+Ce que tes pages légales promettent : un compte invité sans visite depuis 12 mois est supprimé, un compte relié à Google
+ou à une adresse e-mail après 3 ans. Le serveur note désormais le dernier passage de chaque compte (à chaque ouverture
+du jeu), et chaque nuit à 3 h 23 (heure universelle) il supprime les comptes trop anciens, comme le ferait « Supprimer
+mon compte » : au marché, les mises des autres joueurs leur sont rendues. Un compte qui a payé n'est jamais supprimé
+d'office. Personne ne peut être supprimé avant septembre 2027 : pour les comptes existants, le décompte part du jour du
+collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être republié.
+
+- [ ] https://github.com/raphaelferrandis-code/mots/blob/main/serveur/27-comptes-inactifs.sql → **Copy raw file** →
+      Supabase → **SQL Editor** → **New query** → menu à gauche de Save sur **Database** → coller → **Run**. Réponse
+      attendue : **Success. No rows returned**.
+- [ ] Si la réponse parle de **pg_cron** (le programmateur de tâches de Supabase) : Supabase → **Database** →
+      **Extensions** → chercher « pg_cron » → l'activer, puis recoller le script.
+- [ ] Vérifier que la tâche de la nuit existe : dans une nouvelle requête, coller
+      `select jobname, schedule from cron.job;` → **Run**. Réponse attendue : une ligne
+      **philamots-comptes-inactifs**, **23 3 \* \* \***.
+- [ ] Dis-le à l'assistant : il vérifie de l'extérieur que la nouvelle fonction est en place et fermée au public.
 
 ### Chaque semaine — Surveiller la consommation de Supabase (offre gratuite)
 

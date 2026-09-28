@@ -29,6 +29,8 @@ import { direct, OUBLIER_L_EQUIPE_SQL } from './direct.ts';
 import { classement } from './classement.ts';
 import { paiementsSuppressionEtVerification } from './paiements.ts';
 import { VERROU_DU_DIRECT, VERROU_DU_MARCHE } from './verrous.ts';
+import { DERNIER_PASSAGE_SQL, conservation } from './conservation.ts';
+import { SITE } from '../src/config/site.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const J = EQUILIBRAGE.joute;
@@ -405,6 +407,7 @@ ${amis()}
 ${equipes()}
 ${activite()}
 ${boutique()}
+${conservation()}
 -- ── Les droits ───────────────────────────────────────────────────────────────
 -- Seuls les joueurs connectés (compte anonyme compris) peuvent appeler les fonctions du jeu ; les aides internes, personne.
 revoke execute on function ${[...FONCTIONS_DES_JOUTES, 'public.pseudo_refuse(text)', ...FONCTIONS_DES_COLLECTIONS, ...FONCTIONS_DE_RECUPERATION, ...FONCTIONS_DU_MARCHE, ...FONCTIONS_INTERNES, ...FONCTIONS_INTERNES_DE_RECUPERATION, ...FONCTIONS_INTERNES_DU_MARCHE].join(', ')} from public, anon;
@@ -601,6 +604,20 @@ export function migrationMarcheAnime(): string {
     + '\ncommit;\n';
 }
 
+// Script 27 : la conservation des comptes sans visite (décision de Raphaël du 28/09/2026) — le dernier passage, noté par
+// mon_compte, et la purge de chaque nuit (pg_cron). Après 26-marche-anime.sql. Aucune fonction Edge à redéployer : le
+// jeu appelle déjà mon_compte à chaque ouverture.
+export function migrationConservation(): string {
+  const { inviteMois, relieAns } = SITE.conservation;
+  return `-- Les comptes sans visite : un invité supprimé après ${inviteMois} mois, un compte relié après ${relieAns} ans (chaque nuit, avec pg_cron). Après 26-marche-anime.sql.\n`
+    + '-- Aucune fonction serveur (Edge) à redéployer : le jeu peut être publié avant ou après ce script.\n'
+    + '-- Si Supabase répond que pg_cron manque : Database, puis Extensions, activer « pg_cron », puis recoller ce script.\nbegin;\n'
+    + DERNIER_PASSAGE_SQL + '\n\n'
+    + reprise(structure(), 'mon_compte') + '\n'
+    + conservation()
+    + '\ncommit;\n';
+}
+
 export function joueursMaison(edition: IndexEdition): string {
   const joueurs = fabriquerLesJoueursMaison(edition.cartes).map((p) => ({ id: p.id, pseudo: p.pseudo, cote: p.cote, deck: p.deck, savoirs: p.savoirs, parades: p.parades }));
   return `-- ═════════════════════════════════════════════════════════════════════════════
@@ -644,5 +661,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   writeFileSync(path.join(RACINE, 'serveur', '24-paquets-d-exception.sql'), migrationPaquetsDException());
   writeFileSync(path.join(RACINE, 'serveur', '25-boutique.sql'), migrationBoutique());
   writeFileSync(path.join(RACINE, 'serveur', '26-marche-anime.sql'), migrationMarcheAnime());
+  writeFileSync(path.join(RACINE, 'serveur', '27-comptes-inactifs.sql'), migrationConservation());
   console.log('Scripts générés : structure, joueurs maison, cartes, personnalisation, offres, intégrité et combats (9-combats.sql).');
 }
