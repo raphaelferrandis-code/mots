@@ -2,6 +2,24 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **29 septembre 2026 — passe de contrôle du site entier.** Le parcours complet d'un nouveau joueur, rejoué sur le banc
+> à trois tailles (téléphone 390 × 844, petit téléphone 320 × 640, ordinateur 1440 × 900) : arrivée, trois paquets,
+> album, fiche, carnet, premier duel joué jusqu'au bout, puis tous les écrans (profil, succès, réglages, compte,
+> confidentialité, marché, boutique, formules, amis, équipe, classement, joutes, menu du joueur), avec le relevé des
+> erreurs de la console, des refus du serveur et des débordements ; site statique : 3 752 pages, environ 84 000 liens,
+> aucun cassé, plan du site et adresses canoniques en ordre. Corrigé : **résumé d'un paquet** — sur un petit écran, un
+> niveau et plusieurs succès poussaient « Ranger dans l'album » sous le bord, sans défilement possible : le résumé
+> défile (`ceremonie.css`, `[data-fin]`), repart d'en haut, et l'aperçu d'un timbre garde sa place ; **fiche d'un
+> timbre** — la définition et l'origine d'abord, puis l'album, le marché et la vente ; un compte de moins de trois
+> jours lit « Le marché s'ouvre pour toi le … » au lieu d'un formulaire que le serveur refuserait (script 26) ;
+> **carte de fin** (duel et joute) — le meilleur coup se coupe en français et garde « · 12 » d'un bloc ; **duel à
+> 320 px** — une longue origine (« Allemand et néerlandais ») passe sur deux lignes au lieu de sortir de l'écran ;
+> **profil** — les filtres du vestiaire passent sous le titre (débordement de 20 px) ; **pastille du niveau** — son
+> coup de tampon part du coin : la page ne s'élargit plus pendant l'animation. Vérifié : tests (596), construction,
+> parcours rejoués (journal vide). **Propositions laissées à Raphaël** : premier duel sur téléphone (le conseil et la
+> barre d'onglets repoussent la main sous le pli), « Les formules » et les prix pendant la période gratuite, identité
+> du joueur en tête du profil.
+
 > **29 septembre 2026 — Google a validé la marque Philamots ; la Search Console voit le vrai accueil.** Après le bouton
 > de Google dans le jeu, Raphaël a retiré de Google Cloud l'adresse de retour par Supabase et le domaine `supabase.co`,
 > ajouté liens et logo, puis demandé la vérification : approuvée le 29/09 (projet 268999826503, « philamots »). Toute

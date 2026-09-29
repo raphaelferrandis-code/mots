@@ -77,7 +77,9 @@
 .vestiaire__outils { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:24px 0 20px; }
 .vestiaire__outils h2 { font:500 1.15rem var(--police-serif); }
 .vestiaire__outils h2 small { margin-left:8px; color:var(--texte-doux); font:.75rem var(--police-texte); }
-.vestiaire__outils [role=group] { display:flex; gap:4px; }
+/* Sur un petit téléphone (320 px), les quatre filtres passent sous le titre au lieu de déborder (passe du 29/09/2026). */
+.vestiaire__outils { flex-wrap:wrap; row-gap:6px; }
+.vestiaire__outils [role=group] { display:flex; flex-wrap:wrap; gap:4px; }
 .vestiaire__outils button { min-height:40px; padding:6px 12px; border:1px solid transparent; background:transparent; color:var(--texte-doux); font-size:.8rem; border-radius:3px; }
 .vestiaire__outils button[aria-pressed=true] { color:var(--texte-fort); border-color:var(--cuivre); background:rgb(216 154 92 / 15%); }
 /* Chaque pièce a son propre logement ; la grille reste ouverte sur le fond du jeu. */

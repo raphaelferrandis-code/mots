@@ -15,11 +15,21 @@ import { lien } from '../navigation/routes.ts';
 import { chargerCarte, chargerDetails, pageDuTimbre } from '../services/cartes.ts';
 import { partagerLeTimbre } from '../services/partage.ts';
 import { lireLesCotes } from '../services/partie.ts';
+import { serveurDuMarche } from '../services/marche.ts';
 import { messageDe } from '../partage/messages.ts';
 
 async function chargerFiche(id: string) {
   const [carte, details, page] = await Promise.all([chargerCarte(id), chargerDetails(id), pageDuTimbre(id)]);
   return carte && details ? { carte, details, page } : null;
+}
+
+// Quand le marché s'ouvre pour ce compte (null : il l'est déjà). Retenu une fois ouvert : inutile de le redemander.
+let marcheDejaOuvert = false;
+async function dateDOuvertureDuMarche(): Promise<number | null> {
+  if (marcheDejaOuvert || !serveurDuMarche.actif) return null;
+  const ouvertLe = (await serveurDuMarche.mesEncheres()).ouvertLe;
+  if (ouvertLe === null || ouvertLe <= Date.now()) marcheDejaOuvert = true;
+  return ouvertLe;
 }
 
 const enToutesLettres = (date: number): string => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -38,6 +48,10 @@ export function FicheCarte({ id }: { id: string }) {
   const payant = partie.etat === 'prete' && partie.compte !== null && histoireDesPrix(partie.compte.formule);
   // La cote du timbre (décision n° 38), dès que le marché est ouvert et la fiche connue.
   const cotes = useChargement(async () => (marcheOuvert && fiche.etat === 'pret' && fiche.donnees ? lireLesCotes(id) : null), `cotes:${id}:${marcheOuvert}:${fiche.etat}`);
+  // Un compte neuf ne vend qu'après trois jours (script 26) : la fiche le dit, au lieu d'un formulaire que le serveur
+  // refuserait (passe de contrôle du 29/09/2026). Une fois le marché ouvert pour lui, on ne le redemande plus.
+  const possede = partie.etat === 'prete' && Boolean(partie.sauvegarde.cartes[id]);
+  const ouverture = useChargement(async () => (marcheOuvert && possede ? dateDOuvertureDuMarche() : null), `ouverture:${marcheOuvert}:${possede}`);
 
   if (fiche.etat === 'en cours') return <main className="ecran"><p className="texte-doux">Chargement de la fiche…</p></main>;
   if (fiche.etat === 'erreur') return <main className="ecran"><h1 className="visuellement-cache">Fiche du timbre</h1><ErreurDeChargement quoi="La fiche de ce timbre" feminin reessayer={fiche.relancer} /></main>;
@@ -52,6 +66,9 @@ export function FicheCarte({ id }: { id: string }) {
 
   const { carte, details, page } = fiche.donnees;
   const possedee = partie.etat === 'prete' ? partie.sauvegarde.cartes[carte.id] : undefined;
+  // Tant que la date n'est pas connue, pas de formulaire ; si elle ne vient pas (panne), le serveur jugera à l'envoi.
+  const ouvertLe = ouverture.etat === 'pret' ? ouverture.donnees : null;
+  const venteFermeeJusquAu = ouvertLe !== null && ouvertLe > Date.now() ? ouvertLe : null;
   const finition = possedee && exemplaire?.id === carte.id && (possedee.finitions[exemplaire.finition] ?? 0) > 0
     ? exemplaire.finition : possedee ? meilleureFinition(possedee) : 'Normale';
   const dansLeDeck = partie.etat === 'prete' && partie.sauvegarde.deck.includes(carte.id);
@@ -86,7 +103,37 @@ export function FicheCarte({ id }: { id: string }) {
           )}
         </div>
 
+        {/* Le mot d'abord (ce qu'il veut dire, d'où il vient), puis le timbre dans l'album et au marché : un nouveau joueur
+            lisait le formulaire de vente avant la définition (passe de contrôle du 29/09/2026). */}
         <div className="fiche__contenu">
+          <section className="rubrique">
+            <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>
+            <ol className="definitions">
+              {details.definitions.map((definition) => (
+                <li key={definition.texte}>
+                  {definition.registre?.map((r) => <em key={r} className="texte-doux">({r.toLowerCase()}) </em>)}
+                  {definition.texte}
+                </li>
+              ))}
+            </ol>
+            {page && <p className="petit"><a href={page} target="_blank" rel="noreferrer">Toutes les définitions</a></p>}
+          </section>
+
+          <section className="rubrique">
+            <h2>Origine</h2>
+            <p>{details.etymologie || 'Le Wiktionnaire ne donne pas l\'étymologie de ce mot.'}</p>
+            <dl className="donnees">
+              {details.attestation && (<><dt>Attesté depuis</dt><dd>{details.attestation}</dd></>)}
+              {details.prevalence !== null && (<><dt>Connu de</dt><dd>{details.prevalence} % des gens interrogés</dd></>)}
+              <dt>Fréquence</dt>
+              <dd>{details.frequence.toLocaleString('fr-FR')} fois par million de mots</dd>
+            </dl>
+            <p className="texte-doux petit">
+              Définitions et étymologie adaptées du <a href={pageDuWiktionnaire(carte.mot)} target="_blank" rel="noreferrer">Wiktionnaire, page « {carte.mot} »</a> (licence CC BY-SA 4.0).
+              Fréquence et prévalence : Lexique{' '}4.
+            </p>
+          </section>
+
           <section className="rubrique">
             <h2>Dans ton album</h2>
             {possedee ? (
@@ -113,38 +160,11 @@ export function FicheCarte({ id }: { id: string }) {
                 </p>
               )}
               {vente && possedee && <div className="rangee-de-boutons"><button type="button" className="bouton bouton--discret" onClick={() => setVente(null)}>Vendre un autre exemplaire</button></div>}
-              {!vente && possedee && <MiseEnVente carte={carte} possedee={possedee} dansLeDeck={dansLeDeck} cotes={cotes.etat === 'pret' ? cotes.donnees : null} onVendu={setVente} />}
+              {!vente && possedee && ouverture.etat !== 'en cours' && (venteFermeeJusquAu !== null
+                ? <p className="message message--info">Le marché s’ouvre pour toi le {enDateEtHeure(venteFermeeJusquAu)} : tu pourras alors vendre ce timbre.</p>
+                : <MiseEnVente carte={carte} possedee={possedee} dansLeDeck={dansLeDeck} cotes={cotes.etat === 'pret' ? cotes.donnees : null} onVendu={setVente} />)}
             </section>
           )}
-
-          <section className="rubrique">
-            <h2>{details.definitions.length > 1 ? 'Définitions' : 'Définition'}</h2>
-            <ol className="definitions">
-              {details.definitions.map((definition) => (
-                <li key={definition.texte}>
-                  {definition.registre?.map((r) => <em key={r} className="texte-doux">({r.toLowerCase()}) </em>)}
-                  {definition.texte}
-                </li>
-              ))}
-            </ol>
-            {page && <p className="petit"><a href={page} target="_blank" rel="noreferrer">Toutes les définitions</a></p>}
-          </section>
-
-          <section className="rubrique">
-            <h2>Origine</h2>
-            <p>{details.etymologie || 'Le Wiktionnaire ne donne pas l\'étymologie de ce mot.'}</p>
-            <dl className="donnees">
-              {details.attestation && (<><dt>Attesté depuis</dt><dd>{details.attestation}</dd></>)}
-              {details.prevalence !== null && (<><dt>Connu de</dt><dd>{details.prevalence} % des gens interrogés</dd></>)}
-              <dt>Fréquence</dt>
-              <dd>{details.frequence.toLocaleString('fr-FR')} fois par million de mots</dd>
-            </dl>
-          </section>
-
-          <p className="texte-doux petit">
-            Définitions et étymologie adaptées du <a href={pageDuWiktionnaire(carte.mot)} target="_blank" rel="noreferrer">Wiktionnaire, page « {carte.mot} »</a> (licence CC BY-SA 4.0).
-            Fréquence et prévalence : Lexique 4.
-          </p>
         </div>
       </article>
     </main>

@@ -135,7 +135,9 @@
 .menu-profil__identite { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .menu-profil__identite > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: italic 700 1.55rem/1.15 var(--police-serif); }
 /* Un niveau gagné : le chiffre de l’avatar reçoit un coup de tampon. */
-.avatar__niveau[data-monte] { animation: avatar-tampon .45s cubic-bezier(.3, 1.4, .5, 1) both; }
+/* Le coup de tampon part du coin bas-droit : agrandie depuis son centre, la pastille dépassait du bord d'un petit
+   téléphone et la page s'élargissait le temps de l'animation (passe de contrôle du 29/09/2026, 320 px). */
+.avatar__niveau[data-monte] { transform-origin: 100% 100%; animation: avatar-tampon .45s cubic-bezier(.3, 1.4, .5, 1) both; }
 @keyframes avatar-tampon { from { transform: scale(1.8) rotate(-12deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .avatar__niveau[data-monte] { animation: none; } }
 :root[data-animations-reduites] .avatar__niveau[data-monte] { animation: none; }

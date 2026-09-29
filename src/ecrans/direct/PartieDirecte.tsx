@@ -196,7 +196,7 @@ export function PartieDirecte({ sauvegarde, direct, sons, reduit }: Props) {
     return complet ? [
       { nom: 'Parades réussies', valeur: `${r.parades} sur ${r.attaques}` },
       { nom: equipe ? 'Dégâts de ton camp' : 'Dégâts infligés', valeur: r.infliges },
-      { nom: 'Ton meilleur coup', valeur: r.meilleur ? <><span lang="fr">{r.meilleur.mot}</span> · {r.meilleur.degats}</> : '—' },
+      { nom: 'Ton meilleur coup', valeur: r.meilleur ? <><span lang="fr" className="fin-duel__mot">{r.meilleur.mot}</span> <span className="fin-duel__insecable">· {r.meilleur.degats}</span></> : '—' },
     ] : [
       { nom: 'Manches', valeur: v.manche },
       { nom: equipe ? 'Vie de ton camp' : 'Tes points de vie', valeur: v.pv[nous] },

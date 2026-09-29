@@ -215,6 +215,15 @@ body.ceremonie-ouverte { overflow: hidden; }
 .ceremonie[data-fin] .c-case--pleine { cursor: pointer; filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .45)); }
 .ceremonie[data-fin] .c-case--pleine:hover, .ceremonie[data-fin] .c-case--pleine:focus-visible { translate: 0 -10px; outline: none; }
 .ceremonie[data-fin] .c-case--pleine:focus-visible .tb { filter: drop-shadow(0 0 8px var(--cuivre-clair)); }
+/* Un niveau et plusieurs succès ne tiennent pas sur un petit téléphone : le résumé défile alors, et « Ranger dans
+   l'album » reste à portée (passe de contrôle du 29/09/2026 : 320 × 640, un niveau et trois succès, le bouton restait
+   sous le bord de l'écran). Le texte prend la hauteur de son contenu, le plateau la sienne ; pendant l'aperçu d'un
+   timbre, le plateau effacé cède sa place au timbre agrandi. (Le plateau occupant la 2e rangée, la scène passe à la 3e
+   et le texte à la 4e.) */
+.ceremonie[data-fin] { grid-template-rows: auto minmax(auto, 1fr) auto auto; overflow-y: auto; overscroll-behavior: contain; }
+.ceremonie[data-fin] .ceremonie__infos { min-height: auto; }
+.ceremonie[data-fin] .ceremonie__plateau--estompe { min-height: 0; }
+.ceremonie[data-fin] .ceremonie__scene { touch-action: pan-y; }
 
 .ceremonie__particules { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 70; pointer-events: none; }
 

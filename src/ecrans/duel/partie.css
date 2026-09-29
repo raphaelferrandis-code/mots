@@ -56,6 +56,9 @@
 .ring__medaillon { align-self: center; display: grid; place-items: center; width: clamp(44px, 7dvh, 64px); height: clamp(44px, 7dvh, 64px); margin-top: 14px; border: 1px solid var(--filet); border-radius: 50%; background: radial-gradient(circle, rgb(216 154 92 / 14%), transparent 70%); }
 .ring__medaillon .sceau-duel--empreinte { width: 70%; height: 70%; margin: 0; }
 .ring__puces { list-style: none; margin: 0; padding: 0; gap: 6px; max-width: calc(var(--rw) + 48px); }
+/* Une longue origine (« Allemand et néerlandais ») passe sur deux lignes au lieu de sortir de l'écran d'un petit
+   téléphone (passe de contrôle du 29/09/2026, 320 px). */
+.ring__puces .c-pastille { white-space: normal; text-align: center; line-height: 1.15; }
 .ring__puces .c-pastille, .partie__calcul .c-pastille { font-size: 10px; letter-spacing: .12em; }
 .ring__puces :is(.c-vignette, .c-dorure), .partie__calcul :is(.c-vignette, .c-dorure) { padding: 6px 9px 5px 8px; gap: 5px; }
 .ring__puces .c-tampon { padding: 4px 7px 3px; font-size: 10.5px; letter-spacing: .08em; text-transform: none; }
@@ -327,7 +330,9 @@
 .fin-duel__stats { width: 100%; margin: 6px 0 4px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .fin-duel__stats > div { display: grid; gap: 4px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 8px; background: rgb(255 255 255 / 3%); }
 .fin-duel__stats dt { font: 600 12px var(--police-etroite); letter-spacing: .14em; text-transform: uppercase; color: var(--texte-doux); }
-.fin-duel__stats dd { margin: 0; font: 700 15px var(--police-douce); overflow-wrap: anywhere; }
+.fin-duel__stats dd { margin: 0; font: 700 15px var(--police-douce); overflow-wrap: break-word; }
+.fin-duel__mot { hyphens: auto; }
+.fin-duel__insecable { white-space: nowrap; }
 .fin-duel__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; margin-top: 6px; }
 @keyframes fin-sceau { from { opacity: 0; transform: scale(2.4) rotate(-20deg); } }
 @media (max-width: 480px) {

@@ -271,6 +271,8 @@ export function Ceremonie({ premier, tirer, continuer, reserve, numero = 1, depu
       cible?.focus({ preventScroll: true });
       retourALaFeuille.current = 'principal';
     }
+    // Le résumé, qui défile sur un petit écran (ceremonie.css), repart d'en haut : sur les timbres, ou sur celui qu'on admire.
+    if (phase === 'resume') infos.current?.parentElement?.scrollTo({ top: 0 });
     if (phase === 'resume' && apercu === null) dans<HTMLButtonElement>(infos.current, '[data-action="ranger"]')?.focus({ preventScroll: true });
     if (apercu !== null) apercuDom.current?.focus({ preventScroll: true });
   }, [phase, apercu]);

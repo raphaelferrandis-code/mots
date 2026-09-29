@@ -62,7 +62,8 @@ export function FinDuDuel(p: Props) {
       stats={[
         { nom: 'Parades réussies', valeur: `${p.bilan.paradesReussies} sur ${p.bilan.parades}` },
         { nom: 'Dégâts infligés', valeur: total },
-        { nom: 'Meilleur coup', valeur: meilleure && meilleure.joueur.infliges > 0 ? <><span lang="fr">{meilleure.joueur.carte.mot}</span> · {meilleure.joueur.infliges}</> : '—' },
+        // Le mot se coupe en français (« panto-graphe ») s'il le faut, jamais au milieu d'une syllabe ; les dégâts restent ensemble.
+        { nom: 'Meilleur coup', valeur: meilleure && meilleure.joueur.infliges > 0 ? <><span lang="fr" className="fin-duel__mot">{meilleure.joueur.carte.mot}</span> <span className="fin-duel__insecable">· {meilleure.joueur.infliges}</span></> : '—' },
       ]}
       actions={<>
         {p.rejouer
