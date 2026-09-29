@@ -1,12 +1,12 @@
 # Rapport de génération des cartes
 
-*Généré par `npm run pipeline` en 34 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
+*Généré par `npm run pipeline` en 25 secondes — version des données : 2026-09-18. Ne pas modifier à la main. Les réglages sont dans `pipeline/config.ts`.*
 
 ## 1. En bref
 
 - Base complète : **52 046 cartes possibles**.
 - Édition 1 : **3 016 cartes**, choisies parmi 22 757 cartes éligibles.
-- Poids pour le jeu : 694 Ko chargés au démarrage, plus 1 412 Ko de détails répartis en 16 fichiers chargés à la demande.
+- Poids pour le jeu : 694 Ko chargés au démarrage, plus 1 413 Ko de détails répartis en 16 fichiers chargés à la demande.
 - L'édition est en jeu : ses cartes sont gardées telles quelles, seuls leurs textes et leurs notes sont recalculés (réglage `figee` de `pipeline/config.ts`, détail au §4).
 
 ## 2. Du fichier brut aux cartes
@@ -453,7 +453,7 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 | jachère | Vieux français |  | En ancien français jaschier (« terre de labour ») et jascherer (« labourer »), gasker, gieskerech (« juin, mois des labo |
 | pareil | Latin |  | Du latin parilis (« semblable, égal »). |
 | gamelle | Espagnol et portugais |  | De l’espagnol gamella (« auge, récipient »), lui-même du latin gamella (« coupe à boire »). |
-| musard | Latin | muser | Motdérivé de muser, avec le suffixe -ard. |
+| musard | Latin | muser | Mot dérivé de muser, avec le suffixe -ard. |
 | polygame | Grec |  | Du grec ancien πολύγαμος, polygamos → voir poly- et -game. |
 | burnous | Arabe |  | De l’arabe برنوس, barnous, lui-même du berbère abernus, qui a aussi donné les variantes albornoz et alburno avec l’artic |
 | trogne | Gaulois |  | Du gaulois trugna (« nez, museau »), voir aussi le gallois trwyn (« nez, museau »), cornique troen (« nez »), breton str |
@@ -484,7 +484,7 @@ Corrections d'origine faites à la main (`data/corrections-factions.txt`) : goul
 | vachette | Latin | vache | Dérivé de vache, avec le suffixe -ette. (champignon) car, jeune, il forme des gouttes de lait. |
 | hallebarde | Allemand et néerlandais |  | De l’allemand Hellebarde (« hache à hampe »), composé de Halm (« hampe ») et de Barte (« hache »). |
 | tyranniser | Grec |  | Dérivé de tyran, avec le suffixe -iser; en grec ancien τυραννίζω, turannízô a le sens de « être partisan de la tyrannie  |
-| fardeau | Arabe | farde | En ancien français fardel (« botte d'herbe »)dérivé de farde, avec le suffixe -eau. |
+| fardeau | Arabe | farde | En ancien français fardel (« botte d'herbe ») dérivé de farde, avec le suffixe -eau. |
 | mânes | Latin |  | L’accent circonflexe est tardif, du latin manes (« âmes des morts »). |
 | ciseau | Vieux français |  | De l’ancien français cisel ou chisel. |
 | pieux | Latin |  | Du latin pius (« pieux, qui remplit ses devoirs envers la divinité, religieux, saint, sacré »). pius. |

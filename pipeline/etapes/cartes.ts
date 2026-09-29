@@ -6,7 +6,7 @@ import { valeurDesLettres } from '../../src/partage/lettres.ts';
 import type { CONFIG } from '../config.ts';
 import { cle } from './lexique.ts';
 import { resoudreOrigines } from './factions.ts';
-import { construireDefinitions, couper } from './nettoyage.ts';
+import { construireDefinitions, couper, espacerLesMotsColles, sansReferences } from './nettoyage.ts';
 import { attribuerRaretes, prevalenceMesuree } from './rarete.ts';
 import { registresDeLaCarte, registresDuSens, sensActuelsDAbord } from './registre.ts';
 import { notesSurDix } from './stats.ts';
@@ -64,7 +64,7 @@ export function assemblerCartes(mots: Map<string, MotBrut>, config: typeof CONFI
 
     const details: CarteDetails = {
       definitions,
-      etymologie: couper(m.etymologies[0] ?? '', LONGUEUR_MAXIMALE_ETYMOLOGIE),
+      etymologie: couper(espacerLesMotsColles(sansReferences(m.etymologies[0] ?? '')), LONGUEUR_MAXIMALE_ETYMOLOGIE),
       langueOrigine: origine.langue,
       frequence: m.lexique.frequence,
       prevalence: mesuree ? m.lexique.prevalence : null,

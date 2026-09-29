@@ -15,8 +15,12 @@
 > **carte de fin** (duel et joute) — le meilleur coup se coupe en français et garde « · 12 » d'un bloc ; **duel à
 > 320 px** — une longue origine (« Allemand et néerlandais ») passe sur deux lignes au lieu de sortir de l'écran ;
 > **profil** — les filtres du vestiaire passent sous le titre (débordement de 20 px) ; **pastille du niveau** — son
-> coup de tampon part du coin : la page ne s'élargit plus pendant l'animation. Vérifié : tests (596), construction,
-> parcours rejoués (journal vide). **Propositions laissées à Raphaël** : premier duel sur téléphone (le conseil et la
+> coup de tampon part du coin : la page ne s'élargit plus pendant l'animation ; **étymologies** — le Wiktionnaire
+> collait « dérivé de » et « composé de » au mot précédent (« Motdérivé de juif », « plebiscitum,composé de ») :
+> `espacerLesMotsColles` (`pipeline/etapes/nettoyage.ts`), pour l'affichage seulement (les origines se calculent
+> toujours sur le texte d'origine) ; 164 étymologies du jeu et 170 pages des mots corrigées, rien d'autre ne bouge
+> (définitions, origines et raretés identiques, aucune fonction serveur à redéployer ; `pages-des-mots.json` garde sa
+> version 2026-09-23). Vérifié : tests (599), construction, parcours rejoués (journal vide). **Propositions laissées à Raphaël** : premier duel sur téléphone (le conseil et la
 > barre d'onglets repoussent la main sous le pli), « Les formules » et les prix pendant la période gratuite, identité
 > du joueur en tête du profil.
 

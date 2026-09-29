@@ -11,7 +11,7 @@ import type { IndexEdition } from '../src/partage/types.ts';
 import type { TextesDesPages } from '../src/partage/pagesDesMots.ts';
 import { cle, chargerLexique } from './etapes/lexique.ts';
 import { registresDuSens, sensActuelsDAbord } from './etapes/registre.ts';
-import { sansReferences } from './etapes/nettoyage.ts';
+import { espacerLesMotsColles, sansReferences } from './etapes/nettoyage.ts';
 import { lireWiktionnaire } from './etapes/wiktionnaire.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
@@ -45,7 +45,7 @@ for (const carte of edition.cartes) {
       const registre = registresDuSens(s.etiquettes);
       return registre.length ? { texte: s.definition, registre } : { texte: s.definition };
     });
-  textes.mots[carte.id] = { definitions, etymologies: [...new Set(m.etymologies.map(sansReferences))], sens: m.sens.length };
+  textes.mots[carte.id] = { definitions, etymologies: [...new Set(m.etymologies.map((e) => espacerLesMotsColles(sansReferences(e))))], sens: m.sens.length };
 }
 
 // Un mot introuvable garde les textes du jeu : sa page existe quand même.

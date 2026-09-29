@@ -56,6 +56,20 @@ export function sansReferences(texte: string): string {
   return texte.replace(/(?<=[)»\]])\p{Lu}[^]*?ISBN [\dXx-]+,?\s*/gu, ' ').replace(/\s+([,.;])/g, '$1').replace(/\s+/g, ' ').trim();
 }
 
+// Le Wiktionnaire colle parfois « dérivé de » ou « composé de » au mot qui précède : « Motdérivé de juif », « Du latin
+// plebiscitum,composé de plebs », « de même sens.Dérivé de faisable », « (Meuble)Dérivé de plaquer ». Il laisse aussi un
+// deux-points en tête (« : Emprunt à l’anglais soft. ») et une parenthèse collée à la phrase qui suit. Les vrais mots
+// restent entiers : « décomposé de ses parties » (passe de contrôle du 29/09/2026 : 66 étymologies du jeu, 125 des pages).
+// Seulement pour l'affichage : les origines se calculent sur le texte d'origine (etapes/factions.ts), l'édition ne bouge pas.
+const COLLE_AU_MOT_PRECEDENT = /(?<=\S)(?=(?:[dD]érivé|[cC]omposé) d)/gu;
+const VRAI_PREFIXE = /(?:^|\P{L})(?:dé|re|ré|sur|pré|sous|in|non)$/iu;
+export function espacerLesMotsColles(texte: string): string {
+  return texte
+    .replace(COLLE_AU_MOT_PRECEDENT, (_vide: string, position: number) => (VRAI_PREFIXE.test(texte.slice(0, position)) ? '' : ' '))
+    .replace(/\)(?=\p{Lu}\p{Ll})/gu, ') ')
+    .replace(/^\s*:\s*/, '');
+}
+
 // Coupe proprement un texte trop long, à la fin d'un mot.
 export function couper(texte: string, longueurMaximale: number): string {
   if (texte.length <= longueurMaximale) return texte;

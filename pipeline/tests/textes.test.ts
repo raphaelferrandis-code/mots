@@ -7,7 +7,7 @@ import path from 'node:path';
 import { valeurDesLettres } from '../../src/partage/lettres.ts';
 import { lotDeLaCarte } from '../../src/partage/lots.ts';
 import type { CarteDetails } from '../../src/partage/types.ts';
-import { construireDefinitions, contientLeMot, couper, estRenvoi, estUneDefinitionVide, nettoyerTexte, sansReferences } from '../etapes/nettoyage.ts';
+import { construireDefinitions, contientLeMot, couper, espacerLesMotsColles, estRenvoi, estUneDefinitionVide, nettoyerTexte, sansReferences } from '../etapes/nettoyage.ts';
 import { dater, ecrireCalendrier, lireCalendrier } from '../etapes/motDuJour.ts';
 import { registresDeLaCarte, registresDuSens, sensActuelsDAbord } from '../etapes/registre.ts';
 
@@ -165,6 +165,28 @@ describe('textes des pages par mot', () => {
     const texte = 'par la racine *ǵeus (« goûter, apprécier »)Michiel de Vaan, Dictionary of Latin, Brill, série « Leiden », 2008, 825 pages, ISBN 978-90-04-16797-1, qui donne aussi l’anglais choose.';
     assert.equal(sansReferences(texte), 'par la racine *ǵeus (« goûter, apprécier ») qui donne aussi l’anglais choose.');
     assert.equal(sansReferences('Du latin (« fantôme »). Rien à retirer.'), 'Du latin (« fantôme »). Rien à retirer.');
+  });
+});
+
+describe('étymologies : les mots que le Wiktionnaire colle', () => {
+  it('sépare « dérivé de » et « composé de » du mot qui les précède', () => {
+    assert.equal(espacerLesMotsColles('Motdérivé de juif, avec le suffixe -erie.'), 'Mot dérivé de juif, avec le suffixe -erie.');
+    assert.equal(espacerLesMotsColles('Mot-valisecomposé de bidon et de ville.'), 'Mot-valise composé de bidon et de ville.');
+    assert.equal(espacerLesMotsColles('Du latin plebiscitum,composé de plebs (« peuple »).'), 'Du latin plebiscitum, composé de plebs (« peuple »).');
+    assert.equal(espacerLesMotsColles('De l’anglais feasibility, de même sens.Dérivé de faisable.'), 'De l’anglais feasibility, de même sens. Dérivé de faisable.');
+    assert.equal(espacerLesMotsColles('(Meuble)Dérivé de plaquer. (Pancarte) Le TLFi distingue les deux mots.'), '(Meuble) Dérivé de plaquer. (Pancarte) Le TLFi distingue les deux mots.');
+    assert.equal(espacerLesMotsColles('Italien : Undérivé de niveau, avec le préfixe ca-.'), 'Italien : Un dérivé de niveau, avec le préfixe ca-.');
+  });
+  it('retire le deux-points laissé en tête et décolle une parenthèse de la phrase qui suit', () => {
+    assert.equal(espacerLesMotsColles(':Dérivé de dix, avec le suffixe -ième.'), 'Dérivé de dix, avec le suffixe -ième.');
+    assert.equal(espacerLesMotsColles(': Emprunt à l’anglais soft.'), 'Emprunt à l’anglais soft.');
+    assert.equal(espacerLesMotsColles('*ser-u-o- (« garde »)Michiel de Vaan, Dictionary.'), '*ser-u-o- (« garde ») Michiel de Vaan, Dictionary.');
+  });
+  it('laisse entiers les vrais mots et les textes déjà propres', () => {
+    for (const texte of ['Participe passé de décomposer : décomposé de ses parties.', 'Un temps recomposé de deux autres.', 'Mot dérivé de juif.', 'Dérivé de cap (« tête »), (re)fait à neuf.']) {
+      assert.equal(espacerLesMotsColles(texte), texte);
+    }
+    assert.equal(espacerLesMotsColles(espacerLesMotsColles('Motdérivé de cap.')), 'Mot dérivé de cap.');
   });
 });
 
