@@ -7,7 +7,7 @@
 > ajouté liens et logo, puis demandé la vérification : approuvée le 29/09 (projet 268999826503, « philamots »). Toute
 > modification de l'écran Branding demandera une nouvelle vérification. Test en ligne de la Search Console sur
 > l'accueil : « Google a accès à cette URL », page indexable, capture montrant l'accueil du jeu (pas de blocage par le
-> contrôle anti-robot). Reste l'essai final de Raphaël : la fenêtre de Google doit dire « Philamots », avec le logo.
+> contrôle anti-robot). Essai final de Raphaël le 29/09 : la fenêtre de Google dit « Philamots », avec le logo.
 
 > **28 septembre 2026 (soir) — le bouton de Google dans le jeu.** Décision de Raphaël (voie A) : l'écran de Google
 > nommait `…supabase.co`, et la vérification de la marque est impossible tant que le retour passe par ce domaine. La

@@ -434,7 +434,8 @@ collage. **Aucune fonction à redéployer**, et le jeu n'a pas besoin d'être re
 
 ### Étape 23 — Faire reconnaître Philamots par Google, et protéger le nom
 
-**A. Le nom affiché par Google à la connexion.** L'écran de Google disait « … pour continuer vers
+**A. Le nom affiché par Google à la connexion — FAIT le 29 septembre** (la fenêtre de Google dit « Philamots », avec
+le logo). L'écran de Google disait « … pour continuer vers
 `cgubfyxyivgufslpwlld.supabase.co` » : Google n'affiche le nom d'une application qu'après la « vérification de la
 marque », qui exige de posséder **chaque** domaine utilisé par la connexion, et le retour passait par celui de
 Supabase. Ta décision du 28 septembre : **le bouton de Google dans le jeu**. C'est fait et publié : la connexion Google
@@ -464,8 +465,8 @@ Google »). Il te reste, dans l'ordre :
       toujours après ces réglages. **Fait par Raphaël le 28 septembre : la connexion Google marche toujours.**
 - [x] **Google a validé la marque le 29 septembre** (e-mail « We've approved your OAuth App Verification request for
       project 268999826503 (Project ID: philamots) for brand verification »).
-- [ ] **Refaire l'essai une dernière fois** en navigation privée : la fenêtre de Google doit dire « Philamots », avec
-      le logo.
+- [x] **Refaire l'essai une dernière fois** en navigation privée : la fenêtre de Google doit dire « Philamots », avec
+      le logo. **Fait par Raphaël le 29 septembre : la fenêtre dit « Philamots », avec le logo.**
 - À savoir : toute modification de l'écran **Branding** (nom, logo, liens, domaines autorisés) demandera à Google une
   nouvelle vérification ; ne rien y changer sans raison.
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
