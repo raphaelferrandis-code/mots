@@ -94,15 +94,28 @@ export function Profil() {
     e.currentTarget.style.setProperty('--inclinaison-x', `${(e.clientY-b.top-b.height/2)/b.height*-7}deg`);
     e.currentTarget.style.setProperty('--inclinaison-y', `${(e.clientX-b.left-b.width/2)/b.width*9}deg`);
   }
+  const titrePorte = profil.titre ? ornement(profil.titre) : undefined;
+  // En tête, qui tu es (portrait, nom, titre, niveau), puis tes amis et ton équipe, puis les onglets (décision de Raphaël
+  // du 29/09/2026 : la page commençait par « Mes amis » et « Mon équipe », le nom n'arrivait qu'après, en petit).
   return <main className="ecran vestiaire" style={{ '--selection': teinte } as CSSProperties}>
-    <nav className="vestiaire__liens" aria-label="Amis et équipe">
-      <a className="bouton bouton--discret" href={lien({ ecran: 'amis' })}>Mes amis · échanges et défis</a>
-      <a className="bouton bouton--discret" href={lien({ ecran: 'equipe' })}>Mon équipe</a>
-    </nav>
-    <header className="vestiaire__entete">
-      <h1 className="visuellement-cache">Mon profil</h1><div className="vestiaire__vues" role="group" aria-label="Section du profil"><button aria-pressed={vue === 'personnalisation'} onClick={() => changerVue('personnalisation')}>Personnalisation</button><button aria-pressed={vue === 'succes'} onClick={() => { ciblerSucces(null); changerVue('succes'); }}>Succès <small>{profil.succes.length}/{SUCCES.length}</small></button></div>
-      <div className="vestiaire__compte"><div><strong>{profil.pseudo || sauvegarde.joutes.pseudo || 'Collectionneur'}</strong><button className="vestiaire__renommer" aria-label={pseudoDuJoueur(sauvegarde) ? 'Changer mon pseudonyme' : 'Choisir mon pseudonyme'} onClick={() => { signaler(''); editer(true); }}>✎</button></div><div className="vestiaire__niveau"><span>Niv. {niveau.niveau}</span><progress aria-label={`Niveau ${niveau.niveau} : ${niveau.acquis} sur ${niveau.requis} XP`} value={niveau.acquis} max={niveau.requis} /><small>{niveau.acquis}/{niveau.requis} XP</small></div></div>
+    <header className="vestiaire__tete" style={{ '--profil-couleur': ornement(profil.couleur)?.valeur } as CSSProperties}>
+      <h1 className="visuellement-cache">Mon profil</h1>
+      <div className="vestiaire__moi">
+        <Portrait avatar={profil.avatar} cadre={profil.cadre} anime={false} />
+        <div className="vestiaire__compte">
+          <div><strong>{profil.pseudo || sauvegarde.joutes.pseudo || 'Collectionneur'}</strong><button className="vestiaire__renommer" aria-label={pseudoDuJoueur(sauvegarde) ? 'Changer mon pseudonyme' : 'Choisir mon pseudonyme'} onClick={() => { signaler(''); editer(true); }}>✎</button></div>
+          {titrePorte && <span data-titre={profil.titre} className={`titre-grave ${titrePorte.premium ? 'titre-grave--premium' : ''}`}>{titrePorte.nom}</span>}
+          <div className="vestiaire__niveau"><span>Niv. {niveau.niveau}</span><progress aria-label={`Niveau ${niveau.niveau} : ${niveau.acquis} sur ${niveau.requis} XP`} value={niveau.acquis} max={niveau.requis} /><small>{niveau.acquis}/{niveau.requis} XP</small></div>
+        </div>
+      </div>
+      <nav className="vestiaire__liens" aria-label="Amis et équipe">
+        <a className="bouton bouton--discret" href={lien({ ecran: 'amis' })}>Mes amis · échanges et défis</a>
+        <a className="bouton bouton--discret" href={lien({ ecran: 'equipe' })}>Mon équipe</a>
+      </nav>
     </header>
+    <div className="vestiaire__entete">
+      <div className="vestiaire__vues" role="group" aria-label="Section du profil"><button aria-pressed={vue === 'personnalisation'} onClick={() => changerVue('personnalisation')}>Personnalisation</button><button aria-pressed={vue === 'succes'} onClick={() => { ciblerSucces(null); changerVue('succes'); }}>Succès <small>{profil.succes.length}/{SUCCES.length}</small></button></div>
+    </div>
     {vue === 'succes' ? <AlbumDesSucces profil={profil} cible={cibleSucces} /> : <div className="vestiaire__atelier">
       <aside ref={essayage} className="vestiaire__essayage" aria-label="Aperçu de la personnalisation">
         <div className="vestiaire__scene" onPointerMove={incliner} onPointerLeave={(e) => { e.currentTarget.style.setProperty('--inclinaison-x','0deg'); e.currentTarget.style.setProperty('--inclinaison-y','0deg'); }}>

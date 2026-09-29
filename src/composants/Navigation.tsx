@@ -229,11 +229,11 @@ export function Navigation({ ecran, encre: encreReelle, xp: xpReel = null, pseud
                   </button>
                 </li>}
               </ul>
-              <a className="menu-profil__formules" href={lien({ ecran: 'formules' })} aria-current={ecran === 'formules' ? 'page' : undefined}>
+              {SITE.formulesVisibles && <a className="menu-profil__formules" href={lien({ ecran: 'formules' })} aria-current={ecran === 'formules' ? 'page' : undefined}>
                 <Eclat id="eclat-profil" />
                 <span><strong>Les formules</strong><em>Un peu plus de merveille.</em></span>
                 {DESSINS.suite}
-              </a>
+              </a>}
               {connecte && <div className="menu-profil__pied">
                 <button type="button" className="menu-profil__sortie" disabled={sortie.enCours} onClick={() => void sortir()}>{DESSINS.sortie}{sortie.enCours ? 'Déconnexion…' : 'Se déconnecter'}</button>
                 {sortie.erreur && <p role="alert">{sortie.erreur}</p>}

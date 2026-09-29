@@ -68,6 +68,11 @@ disponibles. Sinon faire les mêmes contrôles dans Stripe/Supabase et régler
 la page Formules et l'accès au portail des clients existants. Ne jamais annoncer
 une ouverture réussie sans l'avoir constatée.
 
+Remettre aussi « Les formules » en vue : depuis le 29/09/2026 (jeu d'abord gratuit),
+l'entrée du menu du portrait et le lien de « Mon compte » sont cachés. Passer
+`formulesVisibles` à `true` dans `src/config/site.ts`, publier, puis vérifier que
+l'entrée réapparaît dans le menu.
+
 Pour revenir en arrière : `npm run paiements:fermer`. Cette action bloque uniquement
 les nouvelles sessions Checkout ; elle ne résilie pas les abonnements ni les sessions
 déjà créées. Ne pas changer les secrets ou tarifs de test.

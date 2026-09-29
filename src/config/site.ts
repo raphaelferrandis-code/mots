@@ -23,6 +23,10 @@ export const SITE = {
   // La conservation des comptes sans visite (décision de Raphaël du 28/09/2026) ; le serveur applique les mêmes durées
   // (serveur/conservation.ts).
   conservation: { inviteMois: 12, relieAns: 3 },
+  // « Les formules » (menu du portrait, lien de Mon compte) restent cachées tant que le jeu est d'abord gratuit
+  // (décision de Raphaël du 29/09/2026) ; la page garde son adresse (#/formules). Le jour où la vente ouvre : true
+  // (docs/ACTIVATION-paiements.md, « Le jour de l'ouverture »).
+  formulesVisibles: false,
 } as const;
 
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];

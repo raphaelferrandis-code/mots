@@ -20,12 +20,16 @@
 
 .ecran.vestiaire { max-width:1380px; padding:40px 32px 60px; gap:0; --selection:var(--cuivre); }
 .vestiaire button,.vestiaire a { -webkit-tap-highlight-color:transparent; }
-.vestiaire__liens { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+/* En tête : le portrait, le nom, le titre et le niveau ; à côté (ou dessous sur téléphone), les amis et l'équipe. */
+.vestiaire__tete { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px 28px; margin-bottom:28px; }
+.vestiaire__moi { display:flex; align-items:center; gap:16px; min-width:0; }
+.vestiaire__moi .portrait { width:76px; }
+.vestiaire__liens { display:flex; flex-wrap:wrap; gap:12px; }
 .vestiaire__entete { display:flex; justify-content:space-between; align-items:center; gap:28px; margin-bottom:32px; }
 .vestiaire__surtitre { display:block; color:var(--texte-doux); font:500 .75rem var(--police-texte); letter-spacing:.21em; margin-bottom:9px; }
 .vestiaire h1 { font:500 clamp(26px,3vw,38px)/1.2 var(--police-serif); letter-spacing:-.035em; }
-.vestiaire__compte { min-width:250px; text-align:right; }
-.vestiaire__compte strong { font:500 1rem var(--police-serif); }
+.vestiaire__compte { display:grid; justify-items:start; gap:2px; min-width:0; }
+.vestiaire__compte strong { font:500 1.4rem var(--police-serif); overflow-wrap:anywhere; }
 .vestiaire__renommer { background:none; border:0; color:var(--texte-doux); margin-left:7px; min-width:40px; min-height:40px; }
 .vestiaire__niveau { display:flex; gap:10px; align-items:center; font-size:.75rem; color:var(--texte-doux); }
 .vestiaire__niveau span { color:var(--texte-fort); white-space:nowrap; }
@@ -186,8 +190,10 @@
 /* Sur téléphone, l'essayage tient au-dessus de la collection. */
 @media(max-width:767px) {
   .vestiaire__entete { gap:10px; margin-bottom:20px; }
-  .vestiaire__compte { display:flex; align-items:center; flex-wrap:wrap; gap:0 16px; }
-  .vestiaire__compte strong { font-size:.85rem; }
+  .vestiaire__tete { gap:14px; margin-bottom:22px; }
+  .vestiaire__moi { gap:12px; }
+  .vestiaire__moi .portrait { width:64px; }
+  .vestiaire__compte strong { font-size:1.2rem; }
   .vestiaire__niveau progress { width:65px; }
   .vestiaire__essayage { grid-template-columns:1fr 1fr; align-items:center; border-bottom:1px solid var(--filet); scroll-margin-top:12px; }
   .vestiaire__scene { min-height:210px; }

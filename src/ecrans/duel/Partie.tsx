@@ -130,13 +130,14 @@ export function Partie(p: Props) {
   }, [etape.nom, main, arrive, p.onChoisir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Le tout premier duel (contre l'ordinateur) : trois conseils, chacun à son moment, qu'un « Compris » écarte
-  // (audit de finition du 26/09/2026 : le débutant comprenait le geste, pas le sens des chiffres).
+  // (audit de finition du 26/09/2026 : le débutant comprenait le geste, pas le sens des chiffres). Une phrase chacun
+  // (décision de Raphaël du 29/09/2026 : sur téléphone, la fiche du conseil poussait la main sous l'écran).
   const premierDuel = sauvegarde.duels.joues === 0 && p.adversaire.type === 'entrainement';
   const [conseilsLus, setConseilsLus] = useState<string[]>([]);
   const conseil = !premierDuel || intro ? null
-    : etape.nom === 'choix' && arrive && adverse && !choisie ? { id: 'face', texte: 'Son mot est posé face cachée : tu vois sa nature (nom, verbe, adjectif ou adverbe) et ses deux chiffres, l’attaque et la défense.' }
-    : etape.nom === 'choix' && choisie ? { id: 'chiffres', texte: `Ton attaque frappe, sa défense amortit : tu infliges ton attaque moins la moitié de sa défense, plus d’éventuels bonus.${aides ? ' En Facile, le jeu te les annonce avant de jouer.' : ''}` }
-    : recap && duel.manche === 1 ? { id: 'rarete', texte: 'Plus un timbre est rare, plus il frappe fort, et plus sa définition est dure à retrouver pour l’adversaire. Ta main se complète à chaque manche.' }
+    : etape.nom === 'choix' && arrive && adverse && !choisie ? { id: 'face', texte: 'Son mot reste caché : tu vois sa nature, son attaque et sa défense.' }
+    : etape.nom === 'choix' && choisie ? { id: 'chiffres', texte: 'Tu infliges ton attaque moins la moitié de sa défense, bonus en plus.' }
+    : recap && duel.manche === 1 ? { id: 'rarete', texte: 'Plus un timbre est rare, plus il frappe fort et plus il est dur à parer.' }
     : null;
   const conseilAffiche = conseil && !conseilsLus.includes(conseil.id) ? conseil : null;
 

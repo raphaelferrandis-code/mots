@@ -20,9 +20,13 @@
 > `espacerLesMotsColles` (`pipeline/etapes/nettoyage.ts`), pour l'affichage seulement (les origines se calculent
 > toujours sur le texte d'origine) ; 164 étymologies du jeu et 170 pages des mots corrigées, rien d'autre ne bouge
 > (définitions, origines et raretés identiques, aucune fonction serveur à redéployer ; `pages-des-mots.json` garde sa
-> version 2026-09-23). Vérifié : tests (599), construction, parcours rejoués (journal vide). **Propositions laissées à Raphaël** : premier duel sur téléphone (le conseil et la
-> barre d'onglets repoussent la main sous le pli), « Les formules » et les prix pendant la période gratuite, identité
-> du joueur en tête du profil.
+> version 2026-09-23). Vérifié : tests (599), construction, parcours rejoués (journal vide). **Puis les trois choix de
+> Raphaël (1B, 2A, 3A), faits le même soir** : les trois conseils du premier duel tiennent en une phrase, sur une rangée
+> (sur téléphone, le tampon et « Compris » au-dessus de la phrase : la fiche passe d'environ 200 à 100 px en 320 × 640) ;
+> « Les formules » ne sont plus en vue (menu du portrait, lien de Mon compte) tant que la vente attend : la page garde
+> son adresse, et `SITE.formulesVisibles` (`src/config/site.ts`) repasse à `true` le jour de l'ouverture
+> (`docs/ACTIVATION-paiements.md`) ; le profil commence par le portrait, le nom, le titre porté et le niveau, puis
+> « Mes amis » et « Mon équipe », puis les onglets.
 
 > **29 septembre 2026 — Google a validé la marque Philamots ; la Search Console voit le vrai accueil.** Après le bouton
 > de Google dans le jeu, Raphaël a retiré de Google Cloud l'adresse de retour par Supabase et le domaine `supabase.co`,

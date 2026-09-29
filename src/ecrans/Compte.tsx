@@ -11,6 +11,7 @@ import { demarrerLaPartie, synchroniser } from '../services/partie.ts';
 import { authentification, connexionGoogle, deconnecter, entrerAvecGoogle, erreurDuRetour, installerConnexion, verifierStockageConnexion } from '../services/connexion.ts';
 import { BoutonGoogle, LogoGoogle } from '../composants/BoutonGoogle.tsx';
 import { SERVEUR } from '../config/serveur.ts';
+import { SITE } from '../config/site.ts';
 import type { ModeConnexion, Utilisateur, VerificationMail } from '../services/authentification.ts';
 import './compte.css';
 
@@ -115,7 +116,7 @@ export function Compte() {
         <p className="petit">
           <strong>Formule « {nomDeFormule} ».</strong>
           {formule.jusquAu !== null && ` Jusqu’au ${new Date(formule.jusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.`}
-          {' '}<a href={lien({ ecran: 'formules' })}>Voir ce que donne chaque formule</a>
+          {SITE.formulesVisibles && <>{' '}<a href={lien({ ecran: 'formules' })}>Voir ce que donne chaque formule</a></>}
         </p>
       )}
     </section>
