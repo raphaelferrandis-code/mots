@@ -2,6 +2,13 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **29 septembre 2026 — Google a validé la marque Philamots ; la Search Console voit le vrai accueil.** Après le bouton
+> de Google dans le jeu, Raphaël a retiré de Google Cloud l'adresse de retour par Supabase et le domaine `supabase.co`,
+> ajouté liens et logo, puis demandé la vérification : approuvée le 29/09 (projet 268999826503, « philamots »). Toute
+> modification de l'écran Branding demandera une nouvelle vérification. Test en ligne de la Search Console sur
+> l'accueil : « Google a accès à cette URL », page indexable, capture montrant l'accueil du jeu (pas de blocage par le
+> contrôle anti-robot). Reste l'essai final de Raphaël : la fenêtre de Google doit dire « Philamots », avec le logo.
+
 > **28 septembre 2026 (soir) — le bouton de Google dans le jeu.** Décision de Raphaël (voie A) : l'écran de Google
 > nommait `…supabase.co`, et la vérification de la marque est impossible tant que le retour passe par ce domaine. La
 > connexion Google passe désormais par Google Identity Services : notre bouton « Continuer avec Google » charge, au

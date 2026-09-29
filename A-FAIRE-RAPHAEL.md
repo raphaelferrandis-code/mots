@@ -462,16 +462,21 @@ Google »). Il te reste, dans l'ordre :
         Si Google répond que philamots.fr n'est pas vérifié, le dire à l'assistant (vérification par le DNS chez OVH).
 - [x] **Refaire l'essai en navigation privée** (comme plus haut), pour s'assurer que la connexion Google marche
       toujours après ces réglages. **Fait par Raphaël le 28 septembre : la connexion Google marche toujours.**
-- [ ] **Quand Google a validé la marque** (un e-mail, ou l'état dans le Centre de validation) : refaire l'essai ; la
-      fenêtre de Google doit dire « Philamots », avec le logo.
+- [x] **Google a validé la marque le 29 septembre** (e-mail « We've approved your OAuth App Verification request for
+      project 268999826503 (Project ID: philamots) for brand verification »).
+- [ ] **Refaire l'essai une dernière fois** en navigation privée : la fenêtre de Google doit dire « Philamots », avec
+      le logo.
+- À savoir : toute modification de l'écran **Branding** (nom, logo, liens, domaines autorisés) demandera à Google une
+  nouvelle vérification ; ne rien y changer sans raison.
 - Au choix : l'adresse d'assistance montrée par Google est ton adresse Google personnelle. Pour montrer
   `contact@philamots.fr` à la place, il faut un compte Google créé avec cette adresse et ajouté comme propriétaire du
   projet (l'assistant peut te guider).
-- [ ] Search Console (https://search.google.com/search-console, propriété `https://philamots.fr/`) → coller
+- [x] Search Console (https://search.google.com/search-console, propriété `https://philamots.fr/`) → coller
       `https://philamots.fr/` dans la barre du haut (« Inspecter n'importe quelle URL ») → Entrée → **Tester l'URL en
       ligne** (en haut à droite) → attendre une minute → **Afficher la page testée** → onglet **Capture d'écran** :
       vérifier que Google voit bien l'accueil du jeu (et pas « Chargement du jeu… » ni un message d'erreur du contrôle
-      anti-robot). Envoyer la capture à l'assistant, avec l'onglet **Plus d'infos** s'il signale des erreurs.
+      anti-robot). **Fait par Raphaël le 29 septembre : « Google a accès à cette URL », « La page peut être indexée » ;
+      la capture montre l'accueil (« Trois paquets t'attendent », le bouton « Ouvrir un paquet »).**
 
 **B. Déposer le nom Philamots à l'INPI (à faire toi-même, environ 30 minutes, 230 € pour deux classes).**
 
