@@ -1,8 +1,9 @@
 # Le mot du jour : un mot par ligne (son identifiant de carte), dans l'ordre des jours.
-# Premier jour : à fixer au lancement, avec « npm run motdujour:dater -- AAAA-MM-JJ ».
+# Premier jour : 2026-10-29. Retirer une ligne décale les suivants d'un jour ; en ajouter une, c'est l'inverse.
 # Les mots à date fixe (Halloween, Noël…) sont dans pipeline/etapes/motDuJour.ts.
 contempteur-nom
 abstrus-adj
+fantasmagorie-nom
 intercourse-nom
 loisible-adj
 foucade-nom
@@ -13,7 +14,6 @@ astrakan-nom
 épiphane-adj
 felouque-nom
 rapetasser-verbe
-pignouf-nom
 faunesque-adj
 basane-nom
 interlope-adj
@@ -23,6 +23,7 @@ caravansérail-nom
 marmiteux-adj
 bégum-nom
 musard-adj
+conchier-verbe
 cellular-nom
 piauler-verbe
 macrocosme-nom
@@ -35,7 +36,6 @@ ardillon-nom
 hiératique-adj
 cuvier-nom
 madré-adj
-fantasmagorie-nom
 pusillanime-adj
 lazzi-nom
 quantième-adj
@@ -55,10 +55,10 @@ fanfan-nom
 aboucher-verbe
 haubert-nom
 brimbaler-verbe
-conchier-verbe
 négus-nom
 capitulaire-adj
 rosserie-nom
+cadeau-nom
 layer-verbe
 carole-nom
 marengo-adj
@@ -90,7 +90,6 @@ aboulie-nom
 marmotter-verbe
 avanie-nom
 senestre-adj
-cadeau-nom
 embosser-verbe
 pantographe-nom
 surseoir-verbe
@@ -110,6 +109,7 @@ ganse-nom
 calfater-verbe
 glaçure-nom
 prognathe-adj
+amour-nom
 greluchon-nom
 vasouillard-adj
 ikebana-nom
@@ -141,7 +141,6 @@ dessiller-verbe
 estoc-nom
 cinoque-adj
 dumper-nom
-amour-nom
 déjeté-adj
 faquin-nom
 komi-adj
@@ -347,6 +346,7 @@ mainteneur-nom
 syriaque-nom
 velum-nom
 fiat-nom
+pignouf-nom
 futaie-nom
 mouchette-nom
 palimpseste-nom

@@ -2,6 +2,14 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **27 octobre 2026 — la devinette du jour démarre le jeudi 29 octobre.** Choix de Raphaël :
+> `npm run motdujour:dater -- 2026-10-29` (« fantasmagorie » tombe le 31/10). L'accueil montre la devinette à partir
+> du 29 ; la publication sur Bluesky attend l'interrupteur `PUBLICATION_ACTIVE` et un essai de connexion (étape 24
+> d'A-FAIRE-RAPHAEL.md). Essai à blanc sur le site en ligne (jours 1 et 2) : textes et images corrects. Vérifié : tests
+> (599), construction (3 016 pages par mot, 365 devinettes). **Fréquentation au 27/10** (requête lancée par Raphaël
+> dans Supabase) : 83 comptes la semaine du 21/09, 10 la suivante, puis 3 en quatre semaines et un seul joueur revenu ;
+> fil d'activité muet depuis le 30/09 ; Bluesky à 0 publication.
+
 > **29 septembre 2026 — passe de contrôle du site entier.** Le parcours complet d'un nouveau joueur, rejoué sur le banc
 > à trois tailles (téléphone 390 × 844, petit téléphone 320 × 640, ordinateur 1440 × 900) : arrivée, trois paquets,
 > album, fiche, carnet, premier duel joué jusqu'au bout, puis tous les écrans (profil, succès, réglages, compte,
