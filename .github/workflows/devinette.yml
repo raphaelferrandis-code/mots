@@ -1,6 +1,6 @@
 # La devinette du jour sur Bluesky (scripts/publier-la-devinette.ts).
 #
-# Chaque matin, GitHub lance le programme. Il ne publie que si la variable du dépôt PUBLICATION_ACTIVE vaut « oui »
+# Chaque nuit, GitHub lance le programme. Il ne publie que si la variable du dépôt PUBLICATION_ACTIVE vaut « oui »
 # (Settings → Secrets and variables → Actions → onglet Variables) : c'est l'interrupteur. Sinon, il fait tout à blanc.
 # Rien n'est publié non plus tant que le calendrier n'a pas de premier jour (npm run motdujour:dater).
 #
@@ -15,7 +15,11 @@ name: Devinette du jour
 
 on:
   schedule:
-    - cron: '30 6 * * *' # 8 h 30 à Paris en été, 7 h 30 en hiver (GitHub peut prendre quelques minutes de retard)
+    # GitHub lance ses tâches programmées avec des heures de retard (octobre 2026 : prévue à 6 h 30 UTC, partie entre
+    # 11 h et 16 h UTC). Prévue à 1 h 17 UTC, la devinette paraît donc dans la matinée ; sans retard, dans la nuit, déjà
+    # là au réveil. Le second départ sert si GitHub saute le premier : une devinette déjà publiée n'est pas refaite.
+    - cron: '17 1 * * *'
+    - cron: '17 9 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -52,3 +56,22 @@ jobs:
           JOUR: ${{ inputs.jour }}
           BLUESKY_MOT_DE_PASSE: ${{ secrets.MDPAPPLICATION }}
         run: node scripts/publier-la-devinette.ts --mode "$MODE" ${JOUR:+--jour "$JOUR"}
+
+  # GitHub coupe les tâches programmées d'un dépôt public après 60 jours sans commit. Passé 45 jours sans commit, ce
+  # travail en pose un vide : rien ne change, et le site n'est pas remis en ligne (un commit fait par GitHub ne relance
+  # aucune tâche). À part, sans npm : lui seul a le droit d'écrire dans le dépôt.
+  garder-active:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Un commit vide après 45 jours sans commit
+        run: |
+          jours=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          if [ "$jours" -lt 45 ]; then echo "Dernier commit il y a $jours jours : rien à faire."; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --allow-empty -m "La devinette du jour reste programmée (aucun commit depuis $jours jours) [skip ci]"
+          git push

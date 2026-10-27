@@ -4,9 +4,14 @@
 
 > **27 octobre 2026 — la devinette du jour démarre le jeudi 29 octobre.** Choix de Raphaël :
 > `npm run motdujour:dater -- 2026-10-29` (« fantasmagorie » tombe le 31/10). L'accueil montre la devinette à partir
-> du 29 ; la publication sur Bluesky attend l'interrupteur `PUBLICATION_ACTIVE` et un essai de connexion (étape 24
-> d'A-FAIRE-RAPHAEL.md). Essai à blanc sur le site en ligne (jours 1 et 2) : textes et images corrects. Vérifié : tests
-> (599), construction (3 016 pages par mot, 365 devinettes). **Fréquentation au 27/10** (requête lancée par Raphaël
+> du 29. Réglages de Raphaël faits le même jour (étape 24 d'A-FAIRE-RAPHAEL.md) : profil Bluesky (nom, description),
+> essai de connexion vert, interrupteur `PUBLICATION_ACTIVE` allumé. Essai à blanc sur le site en ligne (jours 1 et
+> 2) : textes et images corrects. Vérifié : tests (599), construction (3 016 pages par mot, 365 devinettes).
+> **`devinette.yml` fiabilisé** : GitHub lançait la tâche de 6 h 30 UTC entre 11 h et 16 h UTC ; elle part désormais à
+> 1 h 17 UTC (devinette en matinée malgré le retard), avec un second départ à 9 h 17 UTC si le premier saute (rien
+> n'est publié deux fois). Le travail `garder-active` pose un commit vide après 45 jours sans commit : GitHub coupe les
+> tâches programmées d'un dépôt public après 60 jours sans activité. Essayé sur un dépôt jetable (50 jours : un commit
+> vide poussé ; 10 jours : rien). **Fréquentation au 27/10** (requête lancée par Raphaël
 > dans Supabase) : 83 comptes la semaine du 21/09, 10 la suivante, puis 3 en quatre semaines et un seul joueur revenu ;
 > fil d'activité muet depuis le 30/09 ; Bluesky à 0 publication.
 

@@ -500,25 +500,26 @@ Google »). Il te reste, dans l'ordre :
   au registre de l'INPI) ; à voir avec ton comptable.
 - [ ] Vérifier aussi à qui appartient `philamots.com`.
 
-### Étape 24 — Lancer la devinette du jour sur Bluesky (premier jour : jeudi 29 octobre)
+### Étape 24 — Lancer la devinette du jour sur Bluesky (premier jour : jeudi 29 octobre) — réglages FAITS le 27 octobre
 
 Le calendrier commence le **jeudi 29 octobre 2026** (publié le 27/10). Ce jour-là, l'accueil du jeu montre la
-devinette, et GitHub la publie chaque matin vers **7 h 30** (8 h 30 en été) sur @philamots.fr, avec la réponse de la
-veille en commentaire. Essai à blanc fait le 27/10 : textes et images des jours 1 et 2 corrects. Il te reste,
-**avant mercredi 28 au soir** :
+devinette, et GitHub la publie chaque jour sur @philamots.fr, avec la réponse de la veille en commentaire. GitHub
+décale ses départs de plusieurs heures : la tâche est prévue à 2 h 17 (3 h 17 en été), la devinette paraît en général
+dans la matinée. Elle se maintient seule : après 45 jours sans commit, GitHub pose un commit vide pour ne pas la
+couper. Essai à blanc fait le 27/10 : textes et images des jours 1 et 2 corrects. Tes réglages, tous faits le 27/10 :
 
-- [ ] **Le profil Bluesky** (bsky.app, connecté en @philamots.fr → Profil → **Modifier le profil**) : nom affiché
+- [x] **Le profil Bluesky** (bsky.app, connecté en @philamots.fr → Profil → **Modifier le profil**) : nom affiché
       **Philamots** ; description, par exemple : « Collectionne les mots de la langue française. Une devinette chaque
       matin. philamots.fr »
-- [ ] **Vérifier le mot de passe** : GitHub → dépôt **mots** → onglet **Actions** → **Devinette du jour** (à gauche) →
+- [x] **Vérifier le mot de passe** (coche verte le 27/10) : GitHub → dépôt **mots** → onglet **Actions** → **Devinette du jour** (à gauche) →
       **Run workflow** → mode **connexion** → **Run workflow**. Une coche verte au bout d'une ou deux minutes : le mot de
       passe d'application marche (rien n'est publié). Une croix rouge : refaire un mot de passe d'application sur
       Bluesky (Paramètres → Confidentialité et sécurité → Mots de passe d'application) et le recoller dans le secret
       **MDPAPPLICATION** (Settings → Secrets and variables → Actions → onglet Secrets).
-- [ ] **Allumer l'interrupteur** : GitHub → dépôt **mots** → **Settings** → **Secrets and variables** → **Actions** →
+- [x] **Allumer l'interrupteur** : GitHub → dépôt **mots** → **Settings** → **Secrets and variables** → **Actions** →
       onglet **Variables** → **New repository variable** → Name : `PUBLICATION_ACTIVE`, Value : `oui` → **Add variable**.
-- [ ] **Jeudi matin**, ouvrir https://bsky.app/profile/philamots.fr : la première devinette doit y être. Vendredi, la
-      réponse apparaît en commentaire sous celle de jeudi.
+- [ ] **Jeudi 29 en fin de matinée**, ouvrir https://bsky.app/profile/philamots.fr : la première devinette doit y
+      être. Vendredi, la réponse apparaît en commentaire sous celle de jeudi.
 
 Allumé plus tard, l'interrupteur reprend au jour du calendrier, pas au premier. Pour arrêter : remettre la variable à
 `non`.
