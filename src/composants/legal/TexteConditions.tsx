@@ -61,6 +61,7 @@ export function TexteConditions({ liens }: { liens: { confidentialite: string; m
           <li>L’Encre et les timbres n’existent que dans le jeu : ils n’ont aucune valeur en argent, et ne s’achètent ni ne se revendent en dehors du jeu.</li>
           <li>Au marché, une enchère remportée est définitive. Le vendeur reçoit le prix, moins une commission de {Math.round(EQUILIBRAGE.marche.commission * 100)} % en Encre.</li>
           <li>Pour animer le marché tant qu’il y a peu de monde, Philamots peut y faire vendre des timbres, et racheter des ventes restées sans mise, par des joueurs simulés : leur fiche le dit, et leurs ventes ne comptent pas dans la cote.</li>
+          <li>Pour la même raison, le fil d’activité de l’accueil mêle aux trouvailles et aux victoires des joueurs celles de joueurs simulés.</li>
           <li>Le parrainage offre des paquets au nouveau venu et à celui qui l’a invité, dans les limites décrites dans le jeu (au plus {EQUILIBRAGE.parrainage.filleulsRecompensesParMois} filleuls récompensés par mois).</li>
         </ul>
       </section>

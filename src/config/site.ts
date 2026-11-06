@@ -19,7 +19,7 @@ export const SITE = {
   contact: 'contact@philamots.fr',
   // La date des textes légaux (année-mois-jour), affichée en haut de chacun et donnée à Google dans le plan du site : à
   // changer à chaque modification de leur contenu.
-  textesLegauxLe: '2026-09-28',
+  textesLegauxLe: '2026-11-06',
   // La conservation des comptes sans visite (décision de Raphaël du 28/09/2026) ; le serveur applique les mêmes durées
   // (serveur/conservation.ts).
   conservation: { inviteMois: 12, relieAns: 3 },

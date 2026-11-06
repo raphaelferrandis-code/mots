@@ -2,6 +2,17 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **6 novembre 2026 — les joueurs simulés dans le fil d'activité de l'accueil.** Deux vrais joueurs réguliers
+> (samuel et leopold, amis dans le jeu) : le fil restait presque vide. Choix de Raphaël : leurs trouvailles
+> (Légendaires, holographiques, sans mot familier ni injurieux) et leurs victoires en joute (sans cote, celle des
+> joueurs maison ne bouge pas) se mêlent aux vraies, **sans mention dans le fil** ; jamais de fausse arrivée ; un
+> rythme de vrai jeu (2 à 5 par heure de 8 h à minuit, davantage le soir, presque rien la nuit, heure de Paris).
+> `src/services/filSimule.ts` : chaque tranche de dix minutes tire ses événements de son numéro (le même fil pour tous,
+> stable au rechargement), pseudonymes des 240 joueurs maison du serveur (`fabriquerLesJoueursMaison`).
+> `melangerLeFil` (`activite.ts`) garde toujours les vrais événements des deux derniers jours. Rien à coller dans
+> Supabase : tout se fait dans le jeu. Les Conditions d'utilisation le disent (article 5, à côté du marché animé ;
+> `SITE.textesLegauxLe` passé au 06/11).
+
 > **6 novembre 2026 — partager son résultat de la devinette.** Choix de Raphaël, pour faire revenir (la série) et
 > faire venir (le partage) : après la réponse, un bouton « Partager » à côté de « La page du mot ». Le texte ne dévoile
 > ni le mot ni la lettre : « Philamots · devinette n° 9 », une case par essai (🟥🟩⬜ pour le mot à trouver, une seule

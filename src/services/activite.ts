@@ -28,6 +28,17 @@ export function phraseDuFil(e: EvenementDuFil): Morceau[] {
   return morceaux;
 }
 
+// Le fil montré : les vrais événements des deux derniers jours d'abord, complétés par ceux des joueurs simulés
+// (src/services/filSimule.ts), puis par les vrais plus anciens ; du plus récent au plus ancien.
+const DEUX_JOURS = 2 * 24 * 3_600_000;
+export function melangerLeFil(reels: readonly EvenementDuFil[], simules: readonly EvenementDuFil[], maintenant: number, nombre = 24): EvenementDuFil[] {
+  const parDate = (a: EvenementDuFil, b: EvenementDuFil): number => b.le - a.le;
+  const recents = reels.filter((e) => maintenant - e.le <= DEUX_JOURS);
+  const choisis = [...recents, ...[...simules].sort(parDate).slice(0, Math.max(0, nombre - recents.length))];
+  const anciens = reels.filter((e) => maintenant - e.le > DEUX_JOURS).sort(parDate).slice(0, Math.max(0, nombre - choisis.length));
+  return [...choisis, ...anciens].sort(parDate).slice(0, nombre);
+}
+
 export async function chargerLeFil(): Promise<EvenementDuFil[] | null> {
   if (!serveurUtilise) return null;
   try {
