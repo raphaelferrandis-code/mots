@@ -3,6 +3,7 @@
 
 import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
+import type { Theme } from './themes.ts';
 
 export const ADRESSE_DU_SITE = 'https://philamots.fr/';
 const NATURE: Record<CarteIndex['type'], string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adjectif', Adverbe: 'adverbe' };
@@ -10,9 +11,10 @@ const NATURE: Record<CarteIndex['type'], string> = { Nom: 'nom', Verbe: 'verbe',
 export const echapper = (texte: string): string => texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const majuscule = (mot: string): string => mot.charAt(0).toLocaleUpperCase('fr-FR') + mot.slice(1);
 
-// La description que Google affiche sous le titre : la première définition, coupée vers 155 caractères.
-export function descriptionDuMot(carte: CarteIndex, premiere: string): string {
-  const debut = `${majuscule(carte.mot)} (${NATURE[carte.type]}) : `;
+// La description que Google affiche sous le titre : la part des gens qui connaissent le mot (ce que les dictionnaires
+// ne disent pas), puis la première définition, coupée vers 155 caractères.
+export function descriptionDuMot(carte: CarteIndex, premiere: string, prevalence: number | null = null): string {
+  const debut = `${majuscule(carte.mot)} (${NATURE[carte.type]})${prevalence !== null ? `, connu de ${prevalence} % des gens` : ''} : `;
   const place = 155 - debut.length;
   if (premiere.length <= place) return debut + premiere;
   const coupe = premiere.slice(0, place - 1);
@@ -29,7 +31,7 @@ export function enteteDeLaPage(carte: CarteIndex, details: CarteDetails, texte: 
   const url = `${ADRESSE_DU_SITE}mot/${adresse}/`;
   const titre = `${majuscule(carte.mot)}${homonyme ? ` (${NATURE[carte.type]})` : ''} : définition et origine — Philamots`;
   const premiere = (texte?.definitions[0] ?? details.definitions[0])?.texte ?? carte.definition;
-  const description = descriptionDuMot(carte, premiere);
+  const description = descriptionDuMot(carte, premiere, details.prevalence);
   // Un terme défini, dans un ensemble : ce que Google sait lire d'une page de dictionnaire.
   const terme = {
     '@context': 'https://schema.org',
@@ -96,6 +98,37 @@ export function enteteDeLaListe(nombre: number): string {
   ].join('\n    ');
 }
 
+// Une liste par thème (/mots/<adresse>/, src/pages/themes.ts), avec son fil d'Ariane : Philamots › Tous les mots › la liste.
+export function enteteDuTheme(theme: Pick<Theme, 'adresse' | 'titre' | 'titreGoogle' | 'description'>): string {
+  const url = `${ADRESSE_DU_SITE}mots/${theme.adresse}/`;
+  const fil = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Philamots', item: ADRESSE_DU_SITE },
+      { '@type': 'ListItem', position: 2, name: 'Tous les mots', item: `${ADRESSE_DU_SITE}mots/` },
+      { '@type': 'ListItem', position: 3, name: theme.titre, item: url },
+    ],
+  };
+  return [
+    `<title>${echapper(theme.titreGoogle)}</title>`,
+    `<meta name="description" content="${echapper(theme.description)}" />`,
+    `<link rel="canonical" href="${url}" />`,
+    '<meta property="og:type" content="article" />',
+    '<meta property="og:site_name" content="Philamots" />',
+    '<meta property="og:locale" content="fr_FR" />',
+    `<meta property="og:url" content="${url}" />`,
+    `<meta property="og:title" content="${echapper(theme.titre)}" />`,
+    `<meta property="og:description" content="${echapper(theme.description)}" />`,
+    `<meta property="og:image" content="${ADRESSE_DU_SITE}identite/vignette-partage.jpg" />`,
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    `<meta property="og:image:alt" content="${IMAGE_DE_PARTAGE_ALT}" />`,
+    '<meta name="twitter:card" content="summary_large_image" />',
+    donneesStructurees(fil),
+  ].join('\n    ');
+}
+
 // Une page légale fixe (/mentions-legales/, /confidentialite/, /conditions/).
 export function enteteDeLaPageLegale(chemin: string, titre: string, description: string): string {
   const url = `${ADRESSE_DU_SITE}${chemin}/`;
@@ -134,14 +167,15 @@ export function voisinsDe<T extends Pick<CarteIndex, 'id' | 'faction'>>(carte: T
 
 // Des dates que Google peut croire (audit de finition, E07) : l'accueil et la liste changent à chaque mise en ligne
 // (« site », le jour de la fabrication) ; les pages des mots, avec leurs textes (« mots », la version des textes) ;
-// les pages légales, avec leur contenu (« legales »).
-export function planDuSite(adresses: string[], jours: { mots: string; site: string; legales: string }, pagesFixes: readonly string[] = []): string {
+// les pages légales, avec leur contenu (« legales ») ; les listes par thème, faites des mêmes textes que les mots.
+export function planDuSite(adresses: string[], jours: { mots: string; site: string; legales: string }, pagesFixes: readonly string[] = [], themes: readonly string[] = []): string {
   const url = (chemin: string, jour: string): string => `  <url>\n    <loc>${ADRESSE_DU_SITE}${chemin}</loc>\n    <lastmod>${jour}</lastmod>\n  </url>`;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     url('', jours.site),
     url('mots/', jours.site),
+    ...themes.map((t) => url(`mots/${t}/`, jours.mots)),
     ...pagesFixes.map((p) => url(`${p}/`, jours.legales)),
     ...adresses.map((a) => url(`mot/${a}/`, jours.mots)),
     '</urlset>',

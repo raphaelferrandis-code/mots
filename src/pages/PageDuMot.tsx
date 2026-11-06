@@ -10,6 +10,7 @@ import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex } from '../partage/types.ts';
 import { attestationEnClair, avecLesRenvois } from './assemblage.ts';
 import { Bandeau, Pied } from './Cadre.tsx';
+import type { Liste } from './themes.ts';
 
 const NATURE: Record<CarteIndex['type'], string> = { Nom: 'nom', Verbe: 'verbe', Adjectif: 'adjectif', Adverbe: 'adverbe' };
 
@@ -34,10 +35,31 @@ function Texte({ texte, liens, soi }: { texte: string; liens: ReadonlyMap<string
   return <>{avecLesRenvois(texte, liens).map((m, i) => m.adresse && m.adresse !== soi ? <a key={i} href={`../${m.adresse}/`}>{m.texte}</a> : <Fragment key={i}>{m.texte}</Fragment>)}</>;
 }
 
+// L'appel à jouer, au bas des pages des mots et des listes : comme le comptoir de l'accueil, trois timbres en éventail
+// et le bouton dentelé.
+export function Appel({ racine, accroche, timbres }: { racine: string; accroche: string; timbres: CarteIndex[] }) {
+  return (
+    <section className="page-mot__appel">
+      <div className="page-mot__eventail" aria-hidden="true">
+        {timbres.map((c) => <span key={c.id} className="page-mot__vignette"><Timbre carte={c} cliquable={false} reagir={false} /></span>)}
+      </div>
+      <div className="page-mot__invitation">
+        <p className="page-mot__accroche">{accroche}</p>
+        <p>
+          Philamots est un jeu gratuit, sans inscription : plus de 3 000 vrais mots de la langue française, imprimés comme
+          des timbres. Ouvre des paquets, complète ton album et défie d’autres joueurs en duels de définitions.
+        </p>
+      </div>
+      <a className="btn-primary" href={`${racine}#/paquet`}>Ouvrir un paquet</a>
+    </section>
+  );
+}
+
 // adresse : celle de la page ; homographes : les autres pages du même mot, ou d'un mot qui s'écrit pareil sans accent
-// (« beau » nom et adjectif, « sale » et « salé ») ; liens : un mot → l'adresse de sa page, pour les renvois.
-export function PageDuMot({ carte, details, texte, voisins, adresse = '', homographes = [], liens = new Map() }: {
-  carte: CarteIndex; details: CarteDetails; texte: TexteDUnePage | undefined; voisins: Voisin[]; adresse?: string; homographes?: Voisin[]; liens?: ReadonlyMap<string, string>;
+// (« beau » nom et adjectif, « sale » et « salé ») ; liens : un mot → l'adresse de sa page, pour les renvois ; listes :
+// les listes par thème où figure le mot (src/pages/themes.ts).
+export function PageDuMot({ carte, details, texte, voisins, adresse = '', homographes = [], liens = new Map(), listes = [] }: {
+  carte: CarteIndex; details: CarteDetails; texte: TexteDUnePage | undefined; voisins: Voisin[]; adresse?: string; homographes?: Voisin[]; liens?: ReadonlyMap<string, string>; listes?: Liste[];
 }) {
   const racine = '../../';
   const definitions = texte?.definitions ?? details.definitions;
@@ -55,6 +77,7 @@ export function PageDuMot({ carte, details, texte, voisins, adresse = '', homogr
             <h1>{carte.mot}</h1>
             <p className="page-mot__nature">
               {NATURE[carte.type]}{details.langueOrigine ? ` · ${details.langueOrigine}` : ''}{attestation ? ` · ${attestation}` : ''}
+              {details.prevalence !== null ? ` · connu de ${details.prevalence} % des gens` : ''}
             </p>
             {homographes.length > 0 && <p className="page-mot__aussi">
               Voir aussi : {homographes.map((h, i) => <Fragment key={h.carte.id}>{i > 0 ? ', ' : ''}<a href={`../${h.adresse}/`}>{h.carte.mot}</a> ({NATURE[h.carte.type]})</Fragment>)}
@@ -75,6 +98,9 @@ export function PageDuMot({ carte, details, texte, voisins, adresse = '', homogr
               <h2>Origine</h2>
               {etymologies.map((e, i) => <p key={i} className="page-mot__origine"><Texte texte={e} liens={liens} soi={adresse} /></p>)}
             </>}
+            {listes.length > 0 && <p className="page-mot__listes">
+              Dans les listes : {listes.map((l, i) => <Fragment key={l.adresse}>{i > 0 ? ' · ' : ''}<a href={`${racine}mots/${l.adresse}/`}>{l.titre}</a></Fragment>)}
+            </p>}
 
             <dl className="page-mot__releve">
               {details.prevalence !== null && <div>
@@ -96,20 +122,7 @@ export function PageDuMot({ carte, details, texte, voisins, adresse = '', homogr
           </div>
         </article>
 
-        <section className="page-mot__appel">
-          <div className="page-mot__eventail" aria-hidden="true">
-            {voisins.slice(0, 2).map((v) => <span key={v.carte.id} className="page-mot__vignette"><Timbre carte={v.carte} cliquable={false} reagir={false} /></span>)}
-            <span className="page-mot__vignette"><Timbre carte={carte} cliquable={false} reagir={false} /></span>
-          </div>
-          <div className="page-mot__invitation">
-            <p className="page-mot__accroche">Ce mot est un timbre à collectionner.</p>
-            <p>
-              Philamots est un jeu gratuit, sans inscription : plus de 3 000 vrais mots de la langue française, imprimés comme
-              des timbres. Ouvre des paquets, complète ton album et défie d’autres joueurs en duels de définitions.
-            </p>
-          </div>
-          <a className="btn-primary" href={`${racine}#/paquet`}>Ouvrir un paquet</a>
-        </section>
+        <Appel racine={racine} accroche="Ce mot est un timbre à collectionner." timbres={[...voisins.slice(0, 2).map((v) => v.carte), carte]} />
 
         {voisins.length > 0 && <section className="page-mot__voisins">
           <h2>D’autres timbres « {carte.faction} »</h2>
@@ -129,8 +142,9 @@ export function PageDuMot({ carte, details, texte, voisins, adresse = '', homogr
   );
 }
 
-// La liste de tous les mots, par lettre : un chemin vers chaque page, pour les lecteurs comme pour Google.
-export function ListeDesMots({ mots }: { mots: { mot: string; adresse: string; type: CarteIndex['type'] }[] }) {
+// La liste de tous les mots, par lettre : un chemin vers chaque page, pour les lecteurs comme pour Google. Les listes
+// par thème d'abord (src/pages/themes.ts).
+export function ListeDesMots({ mots, themes = [] }: { mots: { mot: string; adresse: string; type: CarteIndex['type'] }[]; themes?: (Liste & { nombre: number })[] }) {
   const racine = '../';
   const parLettre = new Map<string, typeof mots>();
   for (const m of mots) {
@@ -145,6 +159,12 @@ export function ListeDesMots({ mots }: { mots: { mot: string; adresse: string; t
       <Bandeau racine={racine} />
       <main className="page-mot__corps">
         <h1 className="page-mots__titre">Tous les mots</h1>
+        {themes.length > 0 && <nav className="page-mots__themes" aria-label="Listes par thème">
+          <h2>Par thème</h2>
+          <ul>
+            {themes.map((t) => <li key={t.adresse}><a href={`${t.adresse}/`}>{t.titre}</a> <span className="page-mots__nature">{t.nombre.toLocaleString('fr-FR')}</span></li>)}
+          </ul>
+        </nav>}
         <nav className="page-mots__lettres" aria-label="Lettres">
           {lettres.map((l) => <a key={l} href={`#${l}`}>{l}</a>)}
         </nav>

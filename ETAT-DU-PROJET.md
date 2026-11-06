@@ -2,6 +2,21 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **6 novembre 2026 — les listes par thème, pour revenir dans Google.** Search Console lue le 06/11 (données jusqu'au
+> 03/11) : 78 clics et 64 700 apparitions en six semaines, presque tout fin septembre ; depuis le 29/10, 0 à
+> 6 apparitions par jour. Ni action manuelle ni panne (hôte sain, plan du site lu) : les pages des mots passent en
+> « Explorée, actuellement non indexée » (« brasser », « patriote »), sans doute parce qu'elles reprennent le
+> Wiktionnaire. Choix de Raphaël (options 1 et 2) : **15 listes par thème** (`src/pages/themes.ts`,
+> `PageDuTheme.tsx`, `/mots/<thème>/`) faites de ce que seules nos données disent — 13 origines, les mots connus de
+> moins d'une personne sur cinq (`mots-rares`), les 16 records (`records`) —, chaque mot avec son sens et « connu de
+> X % », par paliers de notoriété ; sommaire en tête de `/mots/`, plan du site. Une liste d'origine ne garde que les
+> mots dont l'étymologie nomme la langue dès la première phrase, ou qui viennent d'un mot sûr de la même origine
+> (`originesSures`) : la faction du jeu range par exemple « accabler », « bagage » ou « barrer » parmi les mots arabes
+> sur la foi d'une hypothèse citée plus loin (environ 1 800 mots sur 3 016 gardés ; les factions du jeu ne changent
+> pas). **Pages des mots** : « connu de X % des gens » sur la ligne de nature et en tête de la description Google,
+> « Dans les listes » sous l'origine (1 926 pages). Vérifié : tests, construction (3 016 pages, 15 listes), aucun des
+> 46 737 liens internes cassé, aperçu sur ordinateur et téléphone. Effet attendu dans Google : plusieurs semaines.
+
 > **6 novembre 2026 — première devinette sur Bluesky.** Du 28/10 au 06/11, la tâche est partie deux fois par jour
 > (vers 8 h 30 et 17-18 h à Paris), toujours à blanc : la variable `PUBLICATION_ACTIVE` n'existait pas (l'onglet
 > Variables était vide). Créée par Raphaël le 06/11, puis publication lancée à la main : jour 9, « fuligineux », avec

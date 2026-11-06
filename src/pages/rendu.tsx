@@ -6,6 +6,8 @@ import { CarteQuestion, CarteReponse } from './CarteDePartage.tsx';
 import type { Devinette } from '../jeu/devinette.ts';
 import { ListeDesMots, PageDuMot } from './PageDuMot.tsx';
 import type { Voisin } from './PageDuMot.tsx';
+import { PageDuTheme } from './PageDuTheme.tsx';
+import type { Liste, Theme } from './themes.ts';
 import { PageIntrouvable, PageLegale } from './PageLegale.tsx';
 import type { PageLegaleFixe } from './PageLegale.tsx';
 import type { TexteDUnePage } from '../partage/pagesDesMots.ts';
@@ -14,12 +16,17 @@ import type { CarteDetails, CarteIndex } from '../partage/types.ts';
 export { TEXTURES_DU_TIMBRE } from '../composants/timbre/dessins.ts';
 
 export function rendrePage(carte: CarteIndex, details: CarteDetails, texte: TexteDUnePage | undefined, voisins: Voisin[],
-  lieux: { adresse: string; homographes: Voisin[]; liens: ReadonlyMap<string, string> } = { adresse: '', homographes: [], liens: new Map() }): string {
+  lieux: { adresse: string; homographes: Voisin[]; liens: ReadonlyMap<string, string>; listes?: Liste[] } = { adresse: '', homographes: [], liens: new Map() }): string {
   return allegerLesTimbres(renderToStaticMarkup(<PageDuMot carte={carte} details={details} texte={texte} voisins={voisins} {...lieux} />), '<div class="page-mot__texte">');
 }
 
-export function rendreListe(mots: { mot: string; adresse: string; type: CarteIndex['type'] }[]): string {
-  return renderToStaticMarkup(<ListeDesMots mots={mots} />);
+export function rendreListe(mots: { mot: string; adresse: string; type: CarteIndex['type'] }[], themes: (Liste & { nombre: number })[] = []): string {
+  return renderToStaticMarkup(<ListeDesMots mots={mots} themes={themes} />);
+}
+
+// Une liste par thème : pas de grand timbre, les petits de l'éventail perdent tous leurs guillochis.
+export function rendreTheme(theme: Theme, adresses: ReadonlyMap<string, string>, autres: Liste[]): string {
+  return allegerLesTimbres(renderToStaticMarkup(<PageDuTheme theme={theme} adresses={adresses} autres={autres} />), '');
 }
 
 // Les pages légales fixes, et la page introuvable (404.html).

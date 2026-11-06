@@ -516,10 +516,21 @@ couper. Essai à blanc fait le 27/10 : textes et images des jours 1 et 2 correct
       passe d'application marche (rien n'est publié). Une croix rouge : refaire un mot de passe d'application sur
       Bluesky (Paramètres → Confidentialité et sécurité → Mots de passe d'application) et le recoller dans le secret
       **MDPAPPLICATION** (Settings → Secrets and variables → Actions → onglet Secrets).
-- [x] **Allumer l'interrupteur** : GitHub → dépôt **mots** → **Settings** → **Secrets and variables** → **Actions** →
-      onglet **Variables** → **New repository variable** → Name : `PUBLICATION_ACTIVE`, Value : `oui` → **Add variable**.
-- [ ] **Jeudi 29 en fin de matinée**, ouvrir https://bsky.app/profile/philamots.fr : la première devinette doit y
-      être. Vendredi, la réponse apparaît en commentaire sous celle de jeudi.
+- [x] **Allumer l'interrupteur** (en réalité fait le 6 novembre : la variable manquait jusque-là) : GitHub → dépôt
+      **mots** → **Settings** → **Secrets and variables** → **Actions** → onglet **Variables** → **New repository
+      variable** → Name : `PUBLICATION_ACTIVE`, Value : `oui` → **Add variable**.
+- [x] **La première devinette** : publiée à la main le 6 novembre (jour 9, « fuligineux »). Les suivantes partent seules.
+
+### Étape 25 — Faire lire les nouvelles listes à Google (5 minutes, après leur mise en ligne)
+
+Les 15 listes par thème (https://philamots.fr/mots/, rubrique « Par thème ») sont dans le plan du site : Google les
+trouvera seul, en quelques jours ou semaines. Pour aller plus vite :
+
+- [ ] Search Console → barre du haut **Inspecter n'importe quelle URL** → coller
+      `https://philamots.fr/mots/records/` → **Demander une indexation**. Pareil pour `https://philamots.fr/mots/mots-rares/`
+      et `https://philamots.fr/mots/` (Google limite ces demandes à une dizaine par jour).
+- [ ] **Fin novembre** : Search Console → **Performances**, sur 28 jours. On regarde si les listes apparaissent dans
+      l'onglet **Pages**, et si les apparitions remontent.
 
 Allumé plus tard, l'interrupteur reprend au jour du calendrier, pas au premier. Pour arrêter : remettre la variable à
 `non`.

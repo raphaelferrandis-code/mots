@@ -1,6 +1,7 @@
 // Fabrique les pages par mot dans dist/, après « vite build » (npm run build) :
 //   dist/mot/<adresse>/index.html  → une page par timbre de l'édition
 //   dist/mots/index.html           → la liste de tous les mots
+//   dist/mots/<thème>/index.html   → les listes par thème : par origine, les mots rares, les records (src/pages/themes.ts)
 //   dist/mentions-legales/, dist/confidentialite/, dist/conditions/
 //                                  → les pages légales, lisibles sans lancer le jeu
 //   dist/404.html                  → la page introuvable, que l'hébergeur sert pour toute adresse inconnue
@@ -20,7 +21,8 @@ import { lotDeLaCarte, nomDuLot } from '../src/partage/lots.ts';
 import { SITE } from '../src/config/site.ts';
 import type { CarteDetails, IndexEdition } from '../src/partage/types.ts';
 import type { Devinettes } from '../src/jeu/devinette.ts';
-import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
+import { adapterLeModele, enteteDeLaCarte, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, enteteDuTheme, planDuSite, voisinsDe } from '../src/pages/assemblage.ts';
+import { listesParMot, themesDeLEdition } from '../src/pages/themes.ts';
 
 const RACINE = path.join(import.meta.dirname, '..');
 const DIST = path.join(RACINE, 'dist');
@@ -39,6 +41,9 @@ const textes = JSON.parse(lire('data', 'pages-des-mots.json')) as TextesDesPages
 // Tous les mots de l'édition, injurieux compris : ils font partie de la langue (décision de Raphaël, 26/09).
 const cartes = edition.cartes;
 const adresses = adressesDesPages(cartes);
+const detailsDe = (id: string): CarteDetails => lots[lotDeLaCarte(id, edition.meta.lots)][id];
+const themes = themesDeLEdition(cartes, detailsDe);
+const listes = listesParMot(themes);
 
 // Vite lit les composants du jeu (TSX, feuilles de style importées) comme il le fait pour le site.
 const vite = await createServer({ root: RACINE, logLevel: 'error', appType: 'custom', server: { middlewareMode: true, hmr: false, ws: false } });
@@ -61,7 +66,7 @@ try {
 
   let octets = 0;
   for (const carte of cartes) {
-    const details = lots[lotDeLaCarte(carte.id, edition.meta.lots)][carte.id];
+    const details = detailsDe(carte.id);
     const adresse = adresses.get(carte.id)!;
     const texte = textes.mots[carte.id];
     const voisins = voisinsDe(carte, cartes).map((c) => ({ carte: c, adresse: adresses.get(c.id)! }));
@@ -69,7 +74,7 @@ try {
     // Remplacements par une fonction : un « $ » dans une définition ne serait pas lu comme un motif.
     const html = pourUnePage
       .replace('<!--tete-->', () => `${enteteDeLaPage(carte, details, texte, adresse, nombreDePages.get(carte.mot)! > 1)}\n    ${textures}`)
-      .replace('<!--page-->', () => rendu.rendrePage(carte, details, texte, voisins, { adresse, homographes, liens }));
+      .replace('<!--page-->', () => rendu.rendrePage(carte, details, texte, voisins, { adresse, homographes, liens, listes: listes.get(carte.id) ?? [] }));
     const dossier = path.join(DIST, 'mot', adresse);
     mkdirSync(dossier, { recursive: true });
     writeFileSync(path.join(dossier, 'index.html'), html);
@@ -78,10 +83,20 @@ try {
 
   const mots = cartes.map((c) => ({ mot: c.mot, adresse: adresses.get(c.id)!, type: c.type }))
     .sort((a, b) => a.adresse.localeCompare(b.adresse, 'fr'));
+  const sommaire = themes.map((t) => ({ adresse: t.adresse, titre: t.titre, nombre: t.nombre }));
   mkdirSync(path.join(DIST, 'mots'), { recursive: true });
   writeFileSync(path.join(DIST, 'mots', 'index.html'), pourLaListe
     .replace('<!--tete-->', () => enteteDeLaListe(mots.length))
-    .replace('<!--page-->', () => rendu.rendreListe(mots)));
+    .replace('<!--page-->', () => rendu.rendreListe(mots, sommaire)));
+
+  // Les listes par thème, à la même profondeur que les pages des mots (mots/<thème>/).
+  for (const theme of themes) {
+    const dossier = path.join(DIST, 'mots', theme.adresse);
+    mkdirSync(dossier, { recursive: true });
+    writeFileSync(path.join(dossier, 'index.html'), pourUnePage
+      .replace('<!--tete-->', () => `${enteteDuTheme(theme)}\n    ${textures}`)
+      .replace('<!--page-->', () => rendu.rendreTheme(theme, adresses, sommaire.filter((t) => t.adresse !== theme.adresse))));
+  }
 
   // Les pages légales fixes (/mentions-legales/, /confidentialite/, /conditions/) : lisibles sans lancer le jeu, donc
   // sans ouvrir de compte (audit de finition du 26/09/2026, E19).
@@ -108,7 +123,7 @@ try {
   for (const devinette of jours) {
     const carte = cartes.find((c) => c.id === devinette.id);
     if (!carte) { console.warn(`    ⚠️ Devinette d'un mot inconnu : ${devinette.id}`); continue; }
-    const details = lots[lotDeLaCarte(carte.id, edition.meta.lots)][carte.id];
+    const details = detailsDe(carte.id);
     for (const [genre, corps] of [['question', rendu.rendreQuestion(carte, devinette)], ['reponse', rendu.rendreReponse(carte, details, devinette)]] as const) {
       const dossier = path.join(DIST, 'partage', genre, adresses.get(carte.id)!);
       mkdirSync(dossier, { recursive: true });
@@ -119,9 +134,9 @@ try {
   }
 
   const dates = { mots: textes.version, site: new Date().toISOString().slice(0, 10), legales: SITE.textesLegauxLe };
-  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), dates, rendu.PAGES_LEGALES));
+  writeFileSync(path.join(DIST, 'sitemap.xml'), planDuSite(mots.map((m) => m.adresse), dates, rendu.PAGES_LEGALES, themes.map((t) => t.adresse)));
   rmSync(modele);
-  console.log(`${cartes.length} pages par mot et ${jours.length} devinettes (question et réponse) fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
+  console.log(`${cartes.length} pages par mot, ${themes.length} listes par thème et ${jours.length} devinettes (question et réponse) fabriquées (${Math.round(octets / 1e6)} Mo) en ${Math.round((Date.now() - depart) / 1000)} s.`);
 } finally {
   await vite.close();
 }

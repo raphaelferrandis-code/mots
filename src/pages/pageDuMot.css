@@ -21,6 +21,7 @@
 .page-mot__suite { margin-top: 12px; font-size: 15px; }
 .page-mot__origine { margin: 0; line-height: 1.6; color: var(--encre-douce); }
 .page-mot__origine + .page-mot__origine { margin-top: 12px; }
+.page-mot__listes { margin: 20px 0 0; font-size: 15px; line-height: 1.6; color: var(--texte-doux); }
 .page-mot a { color: var(--texte-fort); text-decoration-color: rgba(216, 154, 92, .65); text-underline-offset: 4px; }
 
 /* Le relevé : pas de cartes, des filets fins comme au bas du timbre, la jauge des duels et le rang de rareté. */
@@ -88,6 +89,27 @@
 .page-mots__section ul { list-style: none; margin: 0; padding: 0; columns: 4 140px; column-gap: 24px; }
 .page-mots__section li { padding: 3px 0; break-inside: avoid; hyphens: auto; overflow-wrap: anywhere; }
 .page-mots__nature { font-size: 13px; color: var(--encre-douce); font-style: italic; }
+.page-mots__themes { padding-bottom: 20px; margin-bottom: 4px; border-bottom: 1px solid var(--filet); }
+.page-mots__themes h2, .page-theme__palier h2, .page-theme__autres h2 { margin: 0 0 12px; font-family: var(--police-mention); font-weight: 500; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.page-mots__themes ul { list-style: none; margin: 0; padding: 0; columns: 3 240px; column-gap: 24px; }
+.page-mots__themes li { padding: 3px 0; break-inside: avoid; }
+
+/* Les listes par thème (src/pages/PageDuTheme.tsx) : chaque mot avec son sens, par paliers de notoriété. */
+.page-theme__tete { padding: 0 0 24px; border-bottom: 1px solid var(--filet); }
+.page-theme__tete .page-mots__titre { margin-bottom: 0; }
+.page-theme__chapeau { margin: 12px 0 0; max-width: 62ch; font-size: 18px; line-height: 1.55; color: var(--texte); }
+.page-theme__palier { margin-top: 32px; }
+.page-theme__liste { list-style: none; margin: 0; padding: 0; columns: 2 320px; column-gap: 40px; }
+.page-theme__liste li { padding: 10px 0 12px; border-bottom: 1px solid var(--filet); break-inside: avoid; }
+.page-theme__liste a { font-family: var(--police-serif); font-size: 20px; }
+.page-theme__nature { font-size: 14px; font-style: italic; color: var(--encre-douce); }
+.page-theme__connu { float: right; margin-left: 12px; font-family: var(--police-etroite); font-size: 13px; letter-spacing: .06em; line-height: 28px; color: var(--cuivre); }
+.page-theme__sens { margin: 4px 0 0; font-size: 15px; line-height: 1.45; color: var(--texte-doux); }
+.page-theme__record { margin: 0 0 2px; font-family: var(--police-etroite); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--cuivre); }
+.page-theme__legende { margin: 20px 0 0; font-size: 13px; color: var(--encre-douce); }
+.page-theme__autres { padding-top: 28px; border-top: 1px solid var(--filet); }
+.page-theme__autres ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+.page-theme__autres li { min-height: 32px; display: inline-flex; align-items: center; }
 
 @media (max-width: 700px) {
   .page-mot__article { grid-template-columns: 1fr; gap: 24px; padding-top: 24px; }

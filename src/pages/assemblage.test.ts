@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { adresseDuMot, adressesDesPages } from '../partage/pagesDesMots.ts';
 import type { CarteDetails, CarteIndex, IndexEdition } from '../partage/types.ts';
-import { adapterLeModele, allegerLesTimbres, attestationEnClair, avecLesRenvois, descriptionDuMot, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, planDuSite, voisinsDe } from './assemblage.ts';
+import { adapterLeModele, allegerLesTimbres, attestationEnClair, avecLesRenvois, descriptionDuMot, enteteDeLaListe, enteteDeLaPage, enteteDeLaPageIntrouvable, enteteDeLaPageLegale, enteteDuTheme, planDuSite, voisinsDe } from './assemblage.ts';
 
 const edition = JSON.parse(readFileSync(path.join(import.meta.dirname, '..', '..', 'public', 'data', 'edition-1.index.json'), 'utf8')) as IndexEdition;
 const carte = (mot: string, type: CarteIndex['type'], autres: Partial<CarteIndex> = {}): CarteIndex => ({
@@ -43,6 +43,19 @@ describe('en-tête des pages', () => {
     assert.ok(d.startsWith('Zakouski (nom) : Une très longue'));
     assert.ok(d.endsWith('…'));
     assert.equal(descriptionDuMot(carte('zakouski', 'Nom'), 'Court.'), 'Zakouski (nom) : Court.');
+  });
+  it('la description dit d’abord combien de gens connaissent le mot', () => {
+    assert.equal(descriptionDuMot(carte('zakouski', 'Nom'), 'Hors-d’œuvre variés.', 18), 'Zakouski (nom), connu de 18 % des gens : Hors-d’œuvre variés.');
+    assert.match(enteteDeLaPage(carte('zakouski', 'Nom'), details, undefined, 'zakouski'), /content="Zakouski \(nom\), connu de 18 % des gens : Hors-d’œuvre variés\."/);
+    assert.ok(descriptionDuMot(carte('zakouski', 'Nom'), 'Une très longue définition qui continue encore et encore, bien au-delà de ce que Google accepte d’afficher sous le titre, vraiment.', 7).length <= 155);
+  });
+  it('une liste par thème a son adresse canonique, son fil d’Ariane et ses textes échappés', () => {
+    const tete = enteteDuTheme({ adresse: 'origine-arabe', titre: 'Les mots venus de l’arabe', titreGoogle: 'Mots d’origine arabe : 99 mots et leur sens — Philamots', description: 'De « café » à « douar » & plus' });
+    assert.ok(tete.includes('<title>Mots d’origine arabe : 99 mots et leur sens — Philamots</title>'));
+    assert.ok(tete.includes('<link rel="canonical" href="https://philamots.fr/mots/origine-arabe/" />'));
+    assert.ok(tete.includes('content="De « café » à « douar » &amp; plus"'));
+    const fil = JSON.parse(tete.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1]);
+    assert.deepEqual(fil.itemListElement.map((e: { item: string }) => e.item), ['https://philamots.fr/', 'https://philamots.fr/mots/', 'https://philamots.fr/mots/origine-arabe/']);
   });
   it('échappe les textes, et une définition ne peut pas refermer le script des données', () => {
     const tete = enteteDeLaPage(carte('zakouski', 'Nom'), { ...details, definitions: [{ texte: 'Des « guillemets » et </script><b>', quiz: true }] }, undefined, 'zakouski');
@@ -91,6 +104,13 @@ describe('voisins et plan du site', () => {
     assert.equal(plan.match(/<url>/g)?.length, 6);
     const ordre = ['mots/', 'mentions-legales/', 'confidentialite/', 'conditions/', 'mot/zakouski/'].map((c) => plan.indexOf(`<loc>https://philamots.fr/${c}</loc>`));
     assert.ok(ordre.every((position, i) => position > (ordre[i - 1] ?? 0)), ordre.join(', '));
+  });
+  it('le plan du site déclare les listes par thème juste après la liste de tous les mots', () => {
+    const plan = planDuSite(['zakouski'], jours, ['conditions'], ['records', 'origine-arabe']);
+    assert.equal(plan.match(/<url>/g)?.length, 6);
+    const ordre = ['mots/', 'mots/records/', 'mots/origine-arabe/', 'conditions/', 'mot/zakouski/'].map((c) => plan.indexOf(`<loc>https://philamots.fr/${c}</loc>`));
+    assert.ok(ordre.every((position, i) => position > (ordre[i - 1] ?? 0)), ordre.join(', '));
+    assert.match(plan, /<loc>https:\/\/philamots\.fr\/mots\/records\/<\/loc>\s*<lastmod>2026-09-23<\/lastmod>/);
   });
   it('le plan du site date chaque page de son dernier vrai changement', () => {
     const plan = planDuSite(['zakouski'], jours, ['conditions']);
