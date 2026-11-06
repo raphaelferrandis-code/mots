@@ -526,9 +526,10 @@ couper. Essai à blanc fait le 27/10 : textes et images des jours 1 et 2 correct
 Les 15 listes par thème (https://philamots.fr/mots/, rubrique « Par thème ») sont dans le plan du site : Google les
 trouvera seul, en quelques jours ou semaines. Pour aller plus vite :
 
-- [ ] Search Console → barre du haut **Inspecter n'importe quelle URL** → coller
-      `https://philamots.fr/mots/records/` → **Demander une indexation**. Pareil pour `https://philamots.fr/mots/mots-rares/`
-      et `https://philamots.fr/mots/` (Google limite ces demandes à une dizaine par jour).
+- [x] Search Console → barre du haut **Inspecter n'importe quelle URL** → coller l'adresse → **Demander une
+      indexation** (Google limite ces demandes à une dizaine par jour). **Fait le 6 novembre** pour `/mots/`,
+      `/mots/records/`, `/mots/mots-rares/`, `/mots/origine-arabe/`, `/mots/origine-latine/`, `/mots/onomatopees/` et
+      `/mots/origine-gauloise/` ; les huit autres listes seront trouvées par le plan du site et les liens.
 - [ ] **Fin novembre** : Search Console → **Performances**, sur 28 jours. On regarde si les listes apparaissent dans
       l'onglet **Pages**, et si les apparitions remontent.
 
