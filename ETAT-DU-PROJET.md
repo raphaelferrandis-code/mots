@@ -2,6 +2,12 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **6 novembre 2026 — première devinette sur Bluesky.** Du 28/10 au 06/11, la tâche est partie deux fois par jour
+> (vers 8 h 30 et 17-18 h à Paris), toujours à blanc : la variable `PUBLICATION_ACTIVE` n'existait pas (l'onglet
+> Variables était vide). Créée par Raphaël le 06/11, puis publication lancée à la main : jour 9, « fuligineux », avec
+> l'image de la réponse d'hier (« lésine »), visible sur bsky.app/profile/philamots.fr. Bluesky commence donc au
+> 9e jour du calendrier. À surveiller : le premier départ automatique (07/11 au matin) et sa réponse sous ce post.
+
 > **27 octobre 2026 — la devinette du jour démarre le jeudi 29 octobre.** Choix de Raphaël :
 > `npm run motdujour:dater -- 2026-10-29` (« fantasmagorie » tombe le 31/10). L'accueil montre la devinette à partir
 > du 29. Réglages de Raphaël faits le même jour (étape 24 d'A-FAIRE-RAPHAEL.md) : profil Bluesky (nom, description),
