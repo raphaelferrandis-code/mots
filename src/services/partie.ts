@@ -263,12 +263,19 @@ function declarerLInvitation(): Promise<void> {
   return declaration;
 }
 
+// Le code d'invitation du compte, retenu à chaque lecture du parrainage (l'accueil la fait à chaque visite) : la
+// devinette le met dans le lien qu'elle partage sans redemander le serveur. Oublié dès que le compte change.
+let codeRetenu: { compte: number; code: string } | undefined;
+export const monCodeDInvitation = (): string | null => (codeRetenu?.compte === generationDuCompte ? codeRetenu.code : null);
+
 // Le lien d'invitation du joueur et ce qu'il a donné ; verse au passage les paquets de parrainage qui l'attendaient.
 export async function lireMonParrainage(): Promise<MonParrainage> {
+  const compte = generationDuCompte;
   return surLeServeur(async () => {
     await declarerLInvitation();
     return chacunSonTour(async () => {
       const lu = lireParrainage(await clientDuServeur().appeler<unknown>('mon_parrainage'));
+      if (lu.code && compte === generationDuCompte) codeRetenu = { compte, code: lu.code };
       if (lu.etat) appliquer(lu.etat);
       return { ...lu, nouveaux: retenirLesFilleulsRecompenses(lu.nouveaux) };
     });

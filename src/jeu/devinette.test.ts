@@ -66,6 +66,12 @@ describe('réponses et série', () => {
     s = repondre(s, '2026-11-06', false);
     assert.deepEqual([s.serie, s.meilleure], [0, 2]);
   });
+  it('retient le nombre d’essais du jour, pour le partage', () => {
+    const s = repondre(SERIE_VIERGE, '2026-11-02', true, 'fuligineux', 2);
+    assert.equal(s.essais, 2);
+    assert.equal(repondre(s, '2026-11-03', false, 'lésine', 3).essais, 3);
+    assert.equal(repondre(SERIE_VIERGE, '2026-11-02', true).essais, null);
+  });
   it('affiche zéro si le joueur a laissé passer un jour', () => {
     const s = repondre(SERIE_VIERGE, '2026-11-02', true);
     assert.equal(serieEnCours(s, '2026-11-02'), 1);

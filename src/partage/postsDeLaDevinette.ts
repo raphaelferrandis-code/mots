@@ -3,7 +3,7 @@
 // d'écran, et les liens et mots-dièse que Bluesky veut repérés à l'octet près. Fonctions pures, testées.
 
 import type { Devinette } from '../jeu/devinette.ts';
-import { bonneDefinition } from '../jeu/devinette.ts';
+import { ESSAIS_POUR_LE_MOT, bonneDefinition } from '../jeu/devinette.ts';
 
 export const SITE_DES_POSTS = 'philamots.fr';
 export const LIMITE_BLUESKY = 300; // en caractères visibles (graphèmes)
@@ -43,6 +43,26 @@ export function texteDeLaReponse(devinette: Devinette, adresse: string): string 
   const tete = devinette.format === 'definition' ? `Réponse ${LETTRES[devinette.bonne]} : « ${devinette.mot} »` : `Réponse : « ${devinette.mot} »`;
   const fin = `\n${CREDIT_COURT}\n${pageDuMot(adresse)}`;
   return `${couper(`${tete}, ${bonneDefinition(devinette).replace(/^\p{Lu}/u, (l) => l.toLowerCase())}`, LIMITE_BLUESKY - graphemes(fin))}${fin}`;
+}
+
+// Le résultat que le joueur partage après avoir répondu sur l'accueil : le numéro du jour (le même que sur Bluesky),
+// une case par essai, la série, le lien. Rien qui dévoile le mot ni la bonne lettre. « essais » : null quand le jeu ne
+// les a pas retenus (réponse donnée avant le 06/11/2026).
+export function texteDuResultat(numero: number, format: Devinette['format'], juste: boolean, essais: number | null, serie: number, lien: string): string {
+  const permis = format === 'mot' ? ESSAIS_POUR_LE_MOT : 1;
+  const faits = juste ? (essais === null ? 1 : Math.min(Math.max(essais, 1), permis)) : permis;
+  const cases = juste
+    ? (essais === null ? '🟩' : `${'🟥'.repeat(faits - 1)}🟩${'⬜'.repeat(permis - faits)}`)
+    : '🟥'.repeat(permis);
+  const verdict = !juste ? 'Ratée'
+    : format === 'definition' || essais === null ? 'Trouvée'
+    : faits === 1 ? 'Trouvée du premier coup' : `Trouvée au ${faits}e essai`;
+  return [
+    `Philamots · devinette n° ${numero}`,
+    cases,
+    juste && serie > 1 ? `${verdict}, ${serie} jours d'affilée` : verdict,
+    lien,
+  ].join('\n');
 }
 
 // Les descriptions des images (texte alternatif) : tout ce que l'image dit, pour qui ne la voit pas.

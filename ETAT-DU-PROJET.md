@@ -2,6 +2,18 @@
 
 > **Pour reprendre sur un autre poste et voir ce qu’il reste à faire : [A-FAIRE-RAPHAEL.md](A-FAIRE-RAPHAEL.md).**
 
+> **6 novembre 2026 — partager son résultat de la devinette.** Choix de Raphaël, pour faire revenir (la série) et
+> faire venir (le partage) : après la réponse, un bouton « Partager » à côté de « La page du mot ». Le texte ne dévoile
+> ni le mot ni la lettre : « Philamots · devinette n° 9 », une case par essai (🟥🟩⬜ pour le mot à trouver, une seule
+> pour la définition), « Trouvée au 2e essai, 5 jours d'affilée » (la série à partir de 2), puis le lien
+> (`texteDuResultat`, `src/partage/postsDeLaDevinette.ts`). Le numéro est celui de Bluesky. Le lien porte le code
+> d'invitation du joueur (`?parrain=`), retenu quand l'accueil lit le parrainage (`monCodeDInvitation`,
+> `services/partie.ts`, oublié au changement de compte) : un ami arrivé par là compte comme un filleul ; sans code,
+> l'adresse du site. Sur un téléphone, la feuille de partage ; ailleurs, le texte est copié (« Copié ») ou, si le
+> navigateur refuse, affiché pour être copié à la main. La série retient désormais le nombre d'essais (`Serie.essais`,
+> null pour une réponse donnée avant). Vérifié : tests (615), construction, aperçu sur ordinateur et téléphone, et
+> code d'invitation identique à celui de la page Amis sur le banc du parrainage.
+
 > **6 novembre 2026 — les listes par thème, pour revenir dans Google.** Search Console lue le 06/11 (données jusqu'au
 > 03/11) : 78 clics et 64 700 apparitions en six semaines, presque tout fin septembre ; depuis le 29/10, 0 à
 > 6 apparitions par jour. Ni action manuelle ni panne (hôte sain, plan du site lu) : les pages des mots passent en

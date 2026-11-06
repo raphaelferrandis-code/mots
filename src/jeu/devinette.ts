@@ -75,15 +75,16 @@ export const ESSAIS_POUR_LE_MOT = 3;
 // Rangée sur l'appareil (services/devinette.ts). Une seule réponse par jour : la première compte.
 
 // « choix » : la réponse donnée ce jour-là (la lettre, ou le mot tapé), pour la remontrer si l'on revient sur l'accueil.
-export type Serie = { jour: string | null; juste: boolean; choix: string | null; serie: number; meilleure: number };
-export const SERIE_VIERGE: Serie = { jour: null, juste: false, choix: null, serie: 0, meilleure: 0 };
+// « essais » : combien il en a fallu (1 pour la définition ; null dans une série rangée avant le 06/11/2026).
+export type Serie = { jour: string | null; juste: boolean; choix: string | null; essais: number | null; serie: number; meilleure: number };
+export const SERIE_VIERGE: Serie = { jour: null, juste: false, choix: null, essais: null, serie: 0, meilleure: 0 };
 
 const veilleDe = (jour: string): string => new Date(Date.parse(`${jour}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
 
-export function repondre(etat: Serie, jour: string, juste: boolean, choix: string | null = null): Serie {
+export function repondre(etat: Serie, jour: string, juste: boolean, choix: string | null = null, essais: number | null = null): Serie {
   if (etat.jour === jour) return etat;
   const serie = juste ? (etat.jour === veilleDe(jour) && etat.juste ? etat.serie + 1 : 1) : 0;
-  return { jour, juste, choix, serie, meilleure: Math.max(etat.meilleure, serie) };
+  return { jour, juste, choix, essais, serie, meilleure: Math.max(etat.meilleure, serie) };
 }
 
 // La série telle qu'on l'affiche : elle tombe à zéro si le joueur a laissé passer un jour sans répondre.

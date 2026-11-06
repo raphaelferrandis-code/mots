@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Devinettes } from '../jeu/devinette.ts';
 import { adressesDesPages } from './pagesDesMots.ts';
-import { LIMITE_BLUESKY, descriptionDeLaQuestion, descriptionDeLaReponse, facettes, graphemes, texteDeLaReponse, texteDuPost } from './postsDeLaDevinette.ts';
+import { LIMITE_BLUESKY, descriptionDeLaQuestion, descriptionDeLaReponse, facettes, graphemes, texteDeLaReponse, texteDuPost, texteDuResultat } from './postsDeLaDevinette.ts';
 import type { IndexEdition } from './types.ts';
 
 const racine = path.join(import.meta.dirname, '..', '..');
@@ -55,5 +55,23 @@ describe('posts de la devinette', () => {
     assert.deepEqual(f[0].features[0], { $type: 'app.bsky.richtext.facet#link', uri: 'https://philamots.fr/mot/epiphane/' });
     assert.equal(extrait(1), '#languefrançaise');
     assert.deepEqual(f[1].features[0], { $type: 'app.bsky.richtext.facet#tag', tag: 'languefrançaise' });
+  });
+
+  it('le résultat partagé : une case par essai, la série, le lien, sans rien dévoiler', () => {
+    const lien = 'https://philamots.fr/?parrain=ABCD2345';
+    assert.equal(texteDuResultat(10, 'mot', true, 2, 5, lien), `Philamots · devinette n° 10\n🟥🟩⬜\nTrouvée au 2e essai, 5 jours d'affilée\n${lien}`);
+    assert.equal(texteDuResultat(10, 'mot', true, 1, 1, lien).split('\n').slice(1, 3).join(' | '), '🟩⬜⬜ | Trouvée du premier coup');
+    assert.equal(texteDuResultat(10, 'mot', false, 3, 0, lien).split('\n').slice(1, 3).join(' | '), '🟥🟥🟥 | Ratée');
+    assert.equal(texteDuResultat(9, 'definition', true, 1, 3, lien).split('\n').slice(1, 3).join(' | '), '🟩 | Trouvée, 3 jours d\'affilée');
+    assert.equal(texteDuResultat(9, 'definition', false, 1, 0, lien).split('\n').slice(1, 3).join(' | '), '🟥 | Ratée');
+    // Une réponse rangée avant que le jeu retienne les essais : une seule case, sans compter.
+    assert.equal(texteDuResultat(10, 'mot', true, null, 2, lien).split('\n').slice(1, 3).join(' | '), '🟩 | Trouvée, 2 jours d\'affilée');
+    for (const d of jours.slice(0, 20)) {
+      for (const juste of [true, false]) {
+        const texte = texteDuResultat(1, d.format, juste, 1, 4, 'https://philamots.fr/');
+        assert.ok(!texte.toLowerCase().includes(d.mot.toLowerCase()), d.id);
+        assert.ok(!/\b[ABCD]\b/.test(texte), d.id);
+      }
+    }
   });
 });

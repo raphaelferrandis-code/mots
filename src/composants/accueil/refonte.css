@@ -60,4 +60,6 @@
 .devinette__essais { color: var(--texte-doux); font-size: 15px; }
 .devinette__verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; margin: 22px 0 0; color: var(--texte-doux); }
 .devinette__verdict span { color: var(--texte); }
+.devinette__partager { min-height: 44px; min-width: 7.5em; }
+.devinette__a-copier { display: block; width: min(420px, 100%); margin: 14px 0 0; padding: 10px 12px; resize: none; border: 1px solid var(--filet); background: rgba(233, 225, 208, .05); color: var(--texte); font: inherit; font-size: 15px; line-height: 1.5; }
 @media (max-width: 700px) { .devinette__propositions { grid-template-columns: 1fr; } .devinette__cases i { width: 30px; height: 40px; font-size: 22px; } }

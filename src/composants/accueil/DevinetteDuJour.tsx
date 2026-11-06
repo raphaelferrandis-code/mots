@@ -6,8 +6,12 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ESSAIS_POUR_LE_MOT, bonMot, jourAParis, rangDuJour, repondre, serieEnCours, venuDe } from '../../jeu/devinette.ts';
 import type { Devinette, Serie } from '../../jeu/devinette.ts';
+import { SITE } from '../../config/site.ts';
+import { lienDInvitation } from '../../jeu/parrainage.ts';
+import { texteDuResultat } from '../../partage/postsDeLaDevinette.ts';
 import { chargerLesDevinettes, pageDuTimbre } from '../../services/cartes.ts';
 import { ecrireLaSerie, lireLaSerie } from '../../services/devinette.ts';
+import { monCodeDInvitation } from '../../services/partie.ts';
 import { useChargement } from '../useChargement.ts';
 
 const LETTRES = ['A', 'B', 'C', 'D'];
@@ -34,12 +38,16 @@ function LaDevinette() {
   const devinette = devinettes.donnees.jours[rang];
   const dejaRepondu = serie.jour === aujourdhui;
 
-  const conclure = (juste: boolean, choix: string): void => {
-    const suivante = repondre(serie, aujourdhui, juste, choix);
+  const conclure = (juste: boolean, choix: string, essais: number): void => {
+    const suivante = repondre(serie, aujourdhui, juste, choix, essais);
     ecrireLaSerie(suivante);
     setSerie(suivante);
   };
   const enCours = serieEnCours(serie, aujourdhui);
+  const resultat = (): string => {
+    const code = monCodeDInvitation();
+    return texteDuResultat(rang + 1, devinette.format, serie.juste, serie.essais, enCours, code ? lienDInvitation(SITE.adresse, code) : SITE.adresse);
+  };
 
   return (
     <section className="comptoir-bas devinette" aria-labelledby="titre-devinette">
@@ -50,12 +58,12 @@ function LaDevinette() {
       {devinette.format === 'definition'
         ? <QuelleDefinition devinette={devinette} choix={dejaRepondu ? serie.choix : null} onRepondre={conclure} />
         : <QuelMot devinette={devinette} trouve={dejaRepondu ? serie.juste : null} onRepondre={conclure} />}
-      {dejaRepondu && <Suite id={devinette.id} juste={serie.juste} />}
+      {dejaRepondu && <Suite id={devinette.id} juste={serie.juste} resultat={resultat} />}
     </section>
   );
 }
 
-function QuelleDefinition({ devinette, choix, onRepondre }: { devinette: Extract<Devinette, { format: 'definition' }>; choix: string | null; onRepondre: (juste: boolean, choix: string) => void }) {
+function QuelleDefinition({ devinette, choix, onRepondre }: { devinette: Extract<Devinette, { format: 'definition' }>; choix: string | null; onRepondre: (juste: boolean, choix: string, essais: number) => void }) {
   const repondu = choix !== null;
   return <>
     <p className="devinette__mot">{devinette.mot}</p>
@@ -64,7 +72,7 @@ function QuelleDefinition({ devinette, choix, onRepondre }: { devinette: Extract
       {devinette.propositions.map((p, i) => {
         const etat = !repondu ? '' : i === devinette.bonne ? 'juste' : LETTRES[i] === choix ? 'faux' : 'eteint';
         return <li key={i}>
-          <button type="button" className={`devinette__proposition ${etat}`} disabled={repondu} onClick={() => onRepondre(i === devinette.bonne, LETTRES[i])}>
+          <button type="button" className={`devinette__proposition ${etat}`} disabled={repondu} onClick={() => onRepondre(i === devinette.bonne, LETTRES[i], 1)}>
             <b aria-hidden="true">{LETTRES[i]}</b><span>{p}</span>
           </button>
         </li>;
@@ -73,7 +81,7 @@ function QuelleDefinition({ devinette, choix, onRepondre }: { devinette: Extract
   </>;
 }
 
-function QuelMot({ devinette, trouve, onRepondre }: { devinette: Extract<Devinette, { format: 'mot' }>; trouve: boolean | null; onRepondre: (juste: boolean, choix: string) => void }) {
+function QuelMot({ devinette, trouve, onRepondre }: { devinette: Extract<Devinette, { format: 'mot' }>; trouve: boolean | null; onRepondre: (juste: boolean, choix: string, essais: number) => void }) {
   const [saisie, setSaisie] = useState('');
   const [essais, setEssais] = useState(0);
   const [rate, setRate] = useState(false);
@@ -84,11 +92,11 @@ function QuelMot({ devinette, trouve, onRepondre }: { devinette: Extract<Devinet
   const valider = (e: FormEvent): void => {
     e.preventDefault();
     if (!saisie.trim()) return;
-    if (bonMot(saisie, devinette.mot)) { onRepondre(true, saisie.trim()); return; }
     const faits = essais + 1;
+    if (bonMot(saisie, devinette.mot)) { onRepondre(true, saisie.trim(), faits); return; }
     setEssais(faits);
     setRate(true);
-    if (faits >= ESSAIS_POUR_LE_MOT) onRepondre(false, saisie.trim());
+    if (faits >= ESSAIS_POUR_LE_MOT) onRepondre(false, saisie.trim(), faits);
   };
 
   return <>
@@ -107,13 +115,38 @@ function QuelMot({ devinette, trouve, onRepondre }: { devinette: Extract<Devinet
   </>;
 }
 
-// Après la réponse : le verdict, la page du mot, et rendez-vous demain.
-function Suite({ id, juste }: { id: string; juste: boolean }) {
+// Après la réponse : le verdict, rendez-vous demain, la page du mot, et le résultat à partager. Sur un téléphone, la
+// feuille de partage ; ailleurs (la feuille de Windows ou de macOS n'a pas les messageries), le texte est copié. Le
+// lien porte le code d'invitation du joueur quand l'accueil l'a déjà lu (sans serveur : l'adresse du site).
+function Suite({ id, juste, resultat }: { id: string; juste: boolean; resultat: () => string }) {
   const page = useChargement(() => pageDuTimbre(id), `page:${id}`);
-  return (
+  const [copie, setCopie] = useState(false);
+  const [texteACopier, setTexteACopier] = useState<string | null>(null);
+
+  const partager = async (): Promise<void> => {
+    const texte = resultat();
+    if (typeof navigator.share === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+      try { await navigator.share({ text: texte }); return; }
+      catch (erreur) { if (erreur instanceof DOMException && erreur.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(texte);
+      setCopie(true);
+      window.setTimeout(() => setCopie(false), 2500);
+    } catch {
+      // Copie refusée par le navigateur : le texte s'affiche, prêt à être copié à la main.
+      setTexteACopier(texte);
+    }
+  };
+
+  return <>
     <p className="devinette__verdict" role="status">
       <span>{juste ? 'Bien vu.' : 'Raté.'} Nouvelle devinette demain.</span>
       {page.etat === 'pret' && page.donnees && <a className="comptoir__lien" href={page.donnees} target="_blank" rel="noreferrer">La page du mot</a>}
+      <button type="button" className="btn-secondary devinette__partager" onClick={() => void partager()}>
+        {copie ? 'Copié' : 'Partager'}
+      </button>
     </p>
-  );
+    {texteACopier && <textarea className="devinette__a-copier" readOnly rows={4} value={texteACopier} aria-label="Ton résultat, à copier" ref={(z) => z?.select()} />}
+  </>;
 }
